@@ -506,8 +506,7 @@ button.danger{color:#ae3847}
 
 <header class="topbar">
   <div class="brand">
-    QHMS · Referral Workspace
-    <small>共通資料填一次 · 三款 HTML 表格 · 本機操作</small>
+    QHMS · 3-in-ONE · Referral Machine
   </div>
   <div class="top-actions">
     <button id="demo">載入虛構示例</button>
@@ -520,13 +519,11 @@ button.danger{color:#ae3847}
 <div class="layout">
 <aside class="sidebar">
   <div class="notice">
-    HTML 重畫版，唔係官方電子表格。<br>
-    H01／B04 中心資料按所提供圖片轉錄；正式使用前請核對。
-    DA01 只包含第 1 頁。資料不會由本程式上傳或自動儲存，重新整理會清空。
+本頁沒有外部資源、沒有上傳功能；資料亦不會留於瀏覽器內，重新整理或關閉頁面後會清除。
   </div>
 
   <section class="section">
-    <h2>01　共通病人資料</h2>
+    <h2>01　病人資料</h2>
     <div class="section-body">
       <label class="field"><span>轉介日期</span>
         <input type="date" data-key="date">
@@ -553,7 +550,7 @@ button.danger{color:#ae3847}
   </section>
 
   <section class="section">
-    <h2>02　共通轉介醫生資料</h2>
+    <h2>02　轉介醫生資料</h2>
     <div class="section-body">
       <label class="field"><span>醫生姓名</span>
         <input data-key="doctor" autocomplete="off">
@@ -573,7 +570,7 @@ button.danger{color:#ae3847}
   </section>
 
   <section class="section">
-    <h2>03　共通臨床資料</h2>
+    <h2>03　臨床資料</h2>
     <div class="section-body">
       <label class="field"><span>Diagnosis／診斷</span>
         <textarea data-key="diagnosis" rows="2"></textarea>
@@ -581,15 +578,14 @@ button.danger{color:#ae3847}
       <label class="field"><span>Signs and Symptoms／症狀</span>
         <textarea data-key="symptoms" rows="2"></textarea>
       </label>
-      <label class="field"><span>Date of onset／發病日期或描述</span>
+      <label class="field"><span>Onset date or duration／發病日期或持續時間</span>
         <input data-key="onset" placeholder="例如：01/10/2026 或 2 weeks">
       </label>
-      <p class="help">診斷與症狀會合併到原表指定欄位。內容超出空間會阻止按鈕列印，請縮短文字。</p>
     </div>
   </section>
 
   <section class="section">
-    <h2>04　今次要求嘅檢查</h2>
+    <h2>04　是次所需檢查</h2>
     <div class="section-body">
       <label class="field"><span>Laboratory tests／X-ray／ECG</span>
         <textarea data-key="testLab" rows="2"></textarea>
@@ -604,11 +600,6 @@ button.danger{color:#ae3847}
       <label class="field"><span>Other tests</span>
         <textarea data-key="testOther" rows="2"></textarea>
       </label>
-      <p class="help">
-        DA01：按原表四個區域帶入。<br>
-        H01／B04：原表冇獨立檢查空白欄；有輸入檢查時，
-        列印會另加一張「非原表檢查附頁」。附頁不取代預先批核文件。
-      </p>
     </div>
   </section>
 
@@ -653,11 +644,6 @@ button.danger{color:#ae3847}
         <label class="field"><span>Chit No. — HSBC</span>
           <input data-key="hChit" autocomplete="off">
         </label>
-        <p class="help">
-          請直接喺右邊原表剔選轉介分支及中心。<br>
-          原文只有 INV &gt;$3000 及 INV &lt;$3000；
-          剛好 $3,000 不會自動歸類。分支由使用者確認。
-        </p>
       </div>
 
       <div class="plan-panel" data-plan="b" hidden>
@@ -667,11 +653,6 @@ button.danger{color:#ae3847}
         <label class="field"><span>Chit No. — Bupa</span>
           <input data-key="bChit" autocomplete="off">
         </label>
-        <p class="help">
-          請直接喺右邊原表剔選轉介分支及中心。<br>
-          按所提供 B04 文字，CT／MRI／PET 涉及額外轉介及預先批核表；
-          本 app 冇包含該額外表格。
-        </p>
       </div>
     </div>
   </section>
@@ -685,9 +666,10 @@ button.danger{color:#ae3847}
         <label><input type="checkbox" class="print-pick" value="b"> Bupa</label>
       </div>
       <p class="help">
-        簽名、診所蓋章及 QHMS 採樣欄留空。<br>
-        H01：H01/202601 · B04：B04/202606<br>
-        DA01：Last update 20260305
+	Last Update version <br>
+        H01：2026 Jan<br> 
+	B04：2026 Jun<br>
+        DA01：2026 March
       </p>
     </div>
   </section>
@@ -831,7 +813,7 @@ function signatureBox(){
   <div class="signature-box">
     <div>
       <span>Doctor's Name, Signature &amp; Clinic Chop:</span>
-      <span class="signature-rule"></span>
+      <span class="signature-rule">${bind("doctor")}</span>
     </div>
     <div>
       <span>Patient's Signature:</span>
@@ -1246,12 +1228,12 @@ $("#group-da").innerHTML = `
     ${logo()}
     <div class="da-heading">
       <h1>Quality HealthCare Medical Services Ltd.</h1>
-      <h2><u>Form DA01</u> –
+      <h2>Form DA01 –
         Direct Access for Appointed Laboratories &amp; Diagnostic Imaging Centre
       </h2>
     </div>
     <p class="da-intro">
-      Patients can use medical card at the appointed centres
+      <br>Patients can use medical card at the appointed centres
       (see reverse side for details) for investigations by<br>
       presenting together with this referral form.
     </p>
@@ -1410,10 +1392,10 @@ function updateAppendix(plans){
   $("#group-appendix").innerHTML=`
   <article class="page appendix">
     <div class="paper-content">
-      <h1>Investigation Request</h1>
+      <h1>Investigation Memorandum 檢查備忘表</h1>
       <div class="subtitle">
-        Supplementary sheet · 檢查附加頁（非 QHMS 原表）<br>
-        Accompanies: ${applicable.map(p=>titles[p]).join(" / ")}
+        This is a supplementary sheet that accompanies the form ${applicable.map(p=>titles[p]).join(" / ")}<br>
+	此乃附加資料頁附隨於申請表 ${applicable.map(p=>titles[p]).join(" / ")}
       </div>
 
       <div class="meta">
@@ -1446,12 +1428,12 @@ function updateAppendix(plans){
 
       <div class="signature-box">
         <div>
-          <span>Doctor’s Signature &amp; Clinic Chop:</span>
+          <span>Official Chop:</span>
           <span class="signature-rule"></span>
         </div>
         <div>
           <span>Date:</span>
-          <span class="signature-rule"></span>
+          <span class="signature-rule">${bind("dateDisplay")}</span>
         </div>
       </div>
     </div>
@@ -1517,10 +1499,10 @@ function setActive(plan){
   updateCaption();
   setStatus(
     plan==="da"
-      ? "DA01 只重畫第 1 頁；原表標示共 4 頁，其餘 3 頁未包含。"
+      ? ""
       : plan==="h"
-      ? "H01 兩頁。分支及中心請直接剔選；未有自動判定保險資格或批核狀態。"
-      : "B04 一頁。QR code 未重製；熱線及中心資料按所提供版本轉錄。"
+      ? ""
+      : ""
   );
 }
 
@@ -2550,8 +2532,8 @@ setActive("da");
 
   const replacements = [
     [
-      "DA01 只包含第 1 頁。",
-      "DA01 已包含第 1–4 頁及中心列表。"
+      "",
+      ""
     ],
     [
       "H01／B04 中心資料按所提供圖片轉錄；正式使用前請核對。",
@@ -2591,10 +2573,7 @@ setActive("da");
     const help = document.createElement("p");
     help.className = "help";
     help.textContent =
-      "中心列表已加入第 2–4 頁，共 " +
-      centreCount +
-      " 個條目。可直接在右邊中心名稱前剔選。" +
-      "剔選只作標記，不會刪走其他中心或省略列表頁。";
+      "";
 
     daPanel.appendChild(help);
   }
@@ -2611,7 +2590,7 @@ setActive("da");
 
     if (active === "da") {
       document.getElementById("pageCaption").textContent =
-        "DA01 · 4 頁（轉介表 ＋ 3 頁中心列表）";
+        "DA01 · 4 頁";
     }
   };
 
@@ -2622,9 +2601,7 @@ setActive("da");
 
     if (plan === "da") {
       setStatus(
-        "DA01 已包含第 1–4 頁：" +
-        "第 1 頁轉介表，第 2–4 頁中心列表。" +
-        "中心名稱旁可剔選；列印 DA01 時會包含全部 4 頁。"
+        ""
       );
     }
   };
