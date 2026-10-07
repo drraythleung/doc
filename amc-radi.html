@@ -1,0 +1,2020 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>AMC Imaging Request Form — Draft</title>
+
+  <style>
+    /* ==========================================================
+       01. 基本設定
+       ========================================================== */
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #e9edf1;
+      color: #111;
+      font-family: Arial, "Microsoft JhengHei", sans-serif;
+    }
+
+    button {
+      padding: 8px 15px;
+      border: 1px solid #777;
+      border-radius: 5px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button.primary {
+      border-color: #165a73;
+      background: #165a73;
+      color: #fff;
+    }
+
+    input,
+    textarea,
+    select {
+      padding: 0.4mm;
+      border: 0;
+      border-bottom: 1px solid #999;
+      border-radius: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: 1px solid #1884ac;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 16mm;
+      resize: vertical;
+      line-height: 1.35;
+    }
+
+    input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      display: inline-grid;
+      place-content: center;
+      width: 2.6mm;
+      height: 2.6mm;
+      min-width: 2.6mm;
+      margin: 0;
+      padding: 0;
+      border: 1px solid #333;
+      vertical-align: middle;
+    }
+
+    input[type="checkbox"]:checked::after {
+      content: "✓";
+      font-size: 9pt;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .full {
+      width: 100%;
+    }
+
+    .small-area {
+      min-height: 8mm;
+    }
+
+    .print-value {
+      display: none;
+    }
+
+
+    /* ==========================================================
+       02. 工具列及提示
+       ========================================================== */
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-bottom: 1px solid #bbb;
+      background: #fff;
+    }
+
+    .toolbar strong {
+      margin-right: auto;
+    }
+
+    .notice {
+      max-width: 1050px;
+      margin: 14px auto;
+      padding: 12px 16px;
+      border: 1px solid #cfb35f;
+      background: #fff4d4;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+
+    /* ==========================================================
+       03. 紙張及頂部資料
+       ========================================================== */
+
+    .sheet {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 18px auto;
+      padding: 8mm;
+      background: #fff;
+      box-shadow: 0 2px 12px #0002;
+    }
+
+    .header {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr 0.8fr;
+      min-height: 0;
+      border: 1px solid #222;
+    }
+
+    .header > div {
+      padding: 1mm 1.5mm;
+    }
+
+    .header > div + div {
+      border-left: 1px solid #222;
+    }
+
+    .patient label {
+      display: flex;
+      align-items: center;
+      gap: 1mm;
+      margin-bottom: 0.5mm;
+      font-size: 8pt;
+    }
+
+    .patient input {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .title {
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    .title h1,
+    .title h2 {
+      margin: 0 0 0.5mm;
+      line-height: 1.1;
+    }
+
+    .title h1 {
+      font-size: 12pt;
+    }
+
+    .title h2 {
+      font-size: 10pt;
+    }
+
+    .title p {
+      margin: 0.4mm 0 0;
+      font-size: 7pt;
+      line-height: 1.15;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      color: #93436b;
+      font-size: 13pt;
+      font-weight: bold;
+    }
+
+    .brand small {
+      font-size: 7pt;
+      line-height: 1.5;
+    }
+
+
+    /* ==========================================================
+       04. 檢查區標題及預約欄
+       ========================================================== */
+
+    .section-title {
+      padding: 0.3mm 1.2mm;
+      border: 1px solid #222;
+      border-top: 0;
+      background: #eee78b;
+      font-size: 9pt;
+      font-weight: bold;
+      line-height: 1.1;
+    }
+
+    .section-title small {
+      font-size: 6.5pt;
+      font-weight: normal;
+    }
+
+    .us-title {
+      background: #e6b883;
+    }
+
+    .appointment {
+      display: flex;
+      align-items: center;
+      gap: 2mm;
+      margin-top: 1mm;
+      font-size: 8pt;
+    }
+
+    .appointment input {
+      width: 32mm;
+    }
+
+
+    /* ==========================================================
+       05. 檢查項目：共用樣式
+       ========================================================== */
+
+    .columns {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-left: 1px solid #222;
+    }
+
+    .column {
+      min-width: 0;
+      border-right: 1px solid #222;
+    }
+
+    .group-title {
+      padding: 0.3mm 1mm;
+      border-bottom: 1px solid #222;
+      background: #d0d0d0;
+      font-size: 8pt;
+      font-weight: bold;
+      line-height: 1.1;
+    }
+
+    .exam {
+      padding: 0.65mm 1mm;
+      border-bottom: 1px solid #777;
+      font-size: 7.5pt;
+      line-height: 1.12;
+      break-inside: avoid;
+    }
+
+    .exam.selected {
+      background: #e7f4ec;
+    }
+
+    .exam-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 1mm;
+    }
+
+    .exam-name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .price {
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5mm;
+      margin-top: 0.5mm;
+      font-size: 7pt;
+    }
+
+    .option {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4mm;
+      max-width: 100%;
+      cursor: pointer;
+    }
+
+    .code {
+      font-size: 6.5pt;
+      line-height: 1.12;
+      overflow-wrap: anywhere;
+    }
+
+    .flag {
+      color: #855100;
+      font-weight: bold;
+    }
+
+    .extra {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1mm;
+      margin-top: 0.7mm;
+    }
+
+    .extra input[type="text"] {
+      width: 100%;
+    }
+
+    .extra input[type="number"] {
+      width: 14mm;
+    }
+
+    /*
+      檢查項目的緊湊設定。
+      只縮小 exam 內的 checkbox，問卷 checkbox 維持原尺寸。
+    */
+
+    #xrColumns > .exam,
+    #usColumns .exam {
+      min-height: 0;
+      padding: 0.7mm;
+      line-height: 1.05;
+    }
+
+    #xrColumns .exam-top,
+    #usColumns .exam-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      margin: 0;
+      padding: 0;
+      line-height: 1.05;
+    }
+
+    #xrColumns .exam-name,
+    #usColumns .exam-name {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    #xrColumns .options,
+    #usColumns .options {
+      align-items: center;
+      min-height: 0;
+      margin-top: 0;
+      row-gap: 0;
+      column-gap: 1mm;
+      line-height: 1;
+    }
+
+    #xrColumns .option,
+    #usColumns .option {
+      min-height: 0;
+      line-height: 1;
+    }
+
+    .exam input[type="checkbox"] {
+      flex-shrink: 0;
+      width: 2.3mm;
+      height: 2.3mm;
+      min-width: 2.3mm;
+    }
+
+    .exam input[type="checkbox"]:checked::after {
+      font-size: 8pt;
+    }
+
+    .exam .code {
+      line-height: 1;
+    }
+
+    .exam .extra {
+      gap: 0.5mm;
+      margin-top: 0.2mm;
+    }
+
+    .exam .extra input {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+
+    /* ==========================================================
+       06. X-Ray：三欄共用 Grid
+       ========================================================== */
+
+    /*
+      同一橫行對齊，但不強制所有橫行使用相同高度。
+      各格的 grid-column / grid-row 由 JavaScript 設定。
+    */
+
+    #xrColumns {
+      grid-template-rows: none;
+      grid-auto-rows: auto;
+      align-content: start;
+      align-items: stretch;
+      gap: 0;
+    }
+
+    #xrColumns > .exam,
+    #xrColumns > .group-title,
+    #xrColumns > .xr-blank {
+      min-width: 0;
+      margin: 0;
+      border-right: 1px solid #222;
+    }
+
+    #xrColumns > .group-title {
+      display: flex;
+      align-items: center;
+      align-self: stretch;
+      height: auto;
+      min-height: 0;
+      padding-right: 0.8mm;
+      padding-left: 0.8mm;
+      border-bottom: 1px solid #777;
+    }
+
+    #xrColumns > .xr-top-title {
+      border-bottom: 1px solid #222;
+    }
+
+    #xrColumns .exam-top {
+      gap: 1mm;
+    }
+
+    #xrColumns .price {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    #xrColumns .option > span:empty {
+      display: none;
+    }
+
+    #xrColumns > .xr-blank {
+      border-bottom: 1px solid #777;
+      background: #fff;
+    }
+
+
+    /* ==========================================================
+       07. Ultrasound：名稱及價錢排列
+       ========================================================== */
+
+    #usColumns .exam-top {
+      gap: 0.8mm;
+    }
+
+    #usColumns .price {
+      max-width: 28mm;
+      text-align: right;
+      white-space: normal;
+    }
+
+
+    /* ==========================================================
+       08. Workflow：三欄框架及黃色標題
+       ========================================================== */
+
+    .workflow {
+      /* 常用高度設定 */
+      --short-area-height: 6mm;
+      --clinical-area-height: 12mm;
+      --field-gap: 0.7mm;
+
+      display: grid;
+      grid-template-columns: 1.05fr 1.55fr 1fr;
+      border-left: 1px solid #222;
+    }
+
+    .workflow > section {
+      min-width: 0;
+      border-right: 1px solid #222;
+      border-bottom: 1px solid #222;
+    }
+
+    .workflow h3 {
+      margin: 0;
+      padding: 0.3mm 1mm;
+      border-bottom: 1px solid #222;
+      background: #eee78b;
+      font-size: 9pt;
+      line-height: 1.1;
+    }
+
+    .workflow .inside {
+      padding: 1mm;
+      font-size: 7.5pt;
+      line-height: 1.12;
+    }
+
+    .subheading {
+      margin: 1mm -1mm;
+      padding: 0.3mm 1mm;
+      border-top: 1px solid #222;
+      border-bottom: 1px solid #222;
+      background: #eee78b;
+      font-size: 8pt;
+      font-weight: bold;
+      line-height: 1.1;
+    }
+
+    .exposure-heading {
+      font-weight: bold;
+    }
+
+
+    /* ==========================================================
+       09. Workflow：問答及 Yes / No / N/A
+       ========================================================== */
+
+    .screening-row {
+      border-bottom: 1px solid #aaa;
+      font-size: 7pt;
+      break-inside: avoid;
+    }
+
+    .answers {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1mm;
+      margin-top: 0.5mm;
+    }
+
+    .answers label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5mm;
+    }
+
+    .workflow .answers {
+      margin-top: 0.25mm;
+      row-gap: 0.3mm;
+    }
+
+    /*
+      左欄 Sign In、Time Out，以及右欄 Sign Out：
+      問題在左，選項在右。
+      長問題可以換行，選項保持同一行。
+    */
+
+    .workflow .screening-row,
+    .workflow .qa-inline {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      column-gap: 1mm;
+    }
+
+    .workflow .screening-row {
+      padding: 0.6mm 1mm;
+      line-height: 1.15;
+    }
+
+    .workflow .qa-inline {
+      padding: 0.4mm 0;
+    }
+
+    .workflow .screening-row > div:first-child,
+    .workflow .qa-inline > div:first-child {
+      min-width: 0;
+      line-height: 1.15;
+    }
+
+    .workflow .screening-row > .answers,
+    .workflow .qa-inline > .answers {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 0.8mm;
+      margin: 0;
+    }
+
+    .workflow .screening-row > .answers > label,
+    .workflow .qa-inline > .answers > label {
+      gap: 0.3mm;
+      white-space: nowrap;
+    }
+
+    .workflow .screening-row input[type="checkbox"],
+    .workflow .qa-inline input[type="checkbox"] {
+      flex-shrink: 0;
+    }
+
+
+    /* ==========================================================
+       10. Workflow：填寫欄位
+       ========================================================== */
+
+    .workflow .writing-label {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: 1mm;
+      row-gap: 0.3mm;
+      margin-bottom: var(--field-gap);
+      line-height: 1.15;
+    }
+
+    .workflow .writing-label > input.editable {
+      flex: 1 1 18mm;
+      width: auto;
+      min-width: 0;
+      min-height: 3.5mm;
+      padding: 0.2mm 0.3mm;
+    }
+
+    .workflow .writing-label > textarea {
+      flex: 0 0 100%;
+      width: 100%;
+      height: var(--short-area-height);
+      min-height: var(--short-area-height);
+      margin: 0;
+      padding: 0.3mm;
+      resize: vertical;
+      line-height: 1.15;
+    }
+
+    .workflow .writing-label > textarea.clinical-area {
+      height: var(--clinical-area-height);
+      min-height: var(--clinical-area-height);
+    }
+
+    .inline-fields {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2mm;
+    }
+
+    .inline-fields input {
+      flex: 1;
+      width: 15mm;
+      min-width: 0;
+    }
+
+    /* Send Bill 的 checkbox 不跟隨一般 input 拉闊 */
+    .workflow .inline-fields input[type="checkbox"] {
+      flex: 0 0 2.6mm;
+      width: 2.6mm;
+      height: 2.6mm;
+      min-width: 2.6mm;
+      padding: 0;
+    }
+
+
+    /* ==========================================================
+       11. 總計及警告
+       ========================================================== */
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 3mm;
+      margin-top: 2mm;
+      padding: 2mm;
+      border: 1.3px solid #222;
+      font-size: 11pt;
+      font-weight: bold;
+    }
+
+    .total-warnings {
+      margin-top: 1mm;
+      color: #8c3300;
+      font-size: 7pt;
+      line-height: 1.4;
+    }
+
+
+    /* ==========================================================
+       12. 列印設定
+       ========================================================== */
+
+    @page {
+      size: A4 portrait;
+      margin: 5mm;
+    }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #fff;
+      }
+
+      .toolbar,
+      .notice {
+        display: none !important;
+      }
+
+      /*
+        保留原本列印寬度及縮放設定。
+        注意：250mm × 0.9 並非 A4 的 200mm 可用寬度。
+        如需調整，請配合列印預覽確認。
+      */
+      .sheet {
+        width: 250mm;
+        height: auto;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        zoom: 0.9;
+      }
+
+      input,
+      textarea {
+        border-bottom-color: #777;
+      }
+
+      input[type="checkbox"] {
+        flex-shrink: 0;
+      }
+
+      .exam.selected {
+        background: #edf5ee;
+      }
+
+      #xrColumns > .exam,
+      #xrColumns > .group-title {
+        break-inside: avoid;
+      }
+
+      .appointment {
+        gap: 1.5mm;
+        margin-top: 0.4mm;
+        font-size: 7.5pt;
+      }
+
+      .workflow .inside {
+        padding: 0.7mm;
+      }
+
+      .answers {
+        column-gap: 0.8mm;
+      }
+
+      .subheading {
+        margin: 0.6mm -0.7mm;
+      }
+
+      /*
+        列印時以文字副本代替輸入框，
+        讓長內容可以自然換行，避免被輸入框裁切。
+      */
+      .editable {
+        display: none !important;
+      }
+
+      .print-value {
+        display: inline-block;
+        min-height: 2.8mm;
+        vertical-align: bottom;
+        line-height: 1.15;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .print-value.print-block {
+        display: block;
+        width: 100%;
+      }
+
+      .patient .print-value {
+        flex: 1;
+        min-width: 0 !important;
+      }
+
+      .workflow .writing-label > .print-value:not(.print-block) {
+        flex: 1 1 18mm;
+        min-width: 0 !important;
+        min-height: 3.5mm;
+        border-bottom: 1px solid #999;
+        line-height: 1.15;
+      }
+
+      .workflow .writing-label > .print-value.print-block {
+        flex: 0 0 100%;
+        height: auto;
+        min-height: 3mm;
+        border-bottom: 1px solid #999;
+        line-height: 1.15;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .summary,
+      .workflow {
+        break-inside: avoid;
+      }
+
+      .summary {
+        margin-top: 0.8mm;
+        padding: 0.8mm 1mm;
+        font-size: 10pt;
+      }
+
+      .total-warnings {
+        margin-top: 0.5mm;
+        font-size: 6.5pt;
+        line-height: 1.15;
+      }
+
+      .total-warnings:empty {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ========================================================
+       工具列及提示
+       ======================================================== -->
+
+  <div class="toolbar">
+    <strong id="toolbarTotal" aria-live="polite">
+      TOTAL ITEM: 0 ｜ TOTAL AMOUNT: $0.00
+    </strong>
+
+    <button class="primary" type="button" id="printButton">
+      列印／另存 PDF
+    </button>
+
+    <button type="button" id="resetButton">
+      下一位病人
+    </button>
+  </div>
+
+  <div class="notice">
+    本頁沒有外部資源、沒有上傳功能，資料亦不會留於瀏覽器內，重新整理或關閉頁面後會清除。
+  </div>
+
+  <form id="imagingForm" autocomplete="off">
+    <main class="sheet">
+      <!-- ====================================================
+           頂部：病人資料、表格名稱及品牌
+           ==================================================== -->
+
+      <header class="header">
+        <div class="patient">
+          <label>
+            Name:
+            <input class="editable" aria-label="Patient name">
+          </label>
+
+          <label>
+            Sex:
+            <input class="editable" aria-label="Sex">
+          </label>
+
+          <label>
+            DOB:
+            <input
+              class="editable"
+              aria-label="Date of birth"
+              placeholder="DD/MM/YYYY"
+            >
+          </label>
+
+          <label>
+            Patient No:
+            <input class="editable" aria-label="Patient number">
+          </label>
+        </div>
+
+        <div class="title">
+          <h1>Adventist Medical Center</h1>
+          <h1>X-Ray &amp; Ultrasound Request Form</h1>
+          <h2>港安醫療中心 X 光及超聲波檢查預訂表</h2>
+
+          <p>Tel: 2309 5000　Fax: 2309 5099</p>
+          <p>19/F Oxford House, Taikoo Place, 979 King's Road, Hong Kong</p>
+        </div>
+
+        <div class="brand">
+          Adventist <br>
+          Health 港安
+          <small>Medical Center · Taikoo Place<br>
+ 	  港安醫療中心 · 太古坊</small>
+        </div>
+      </header>
+
+      <!-- ====================================================
+           X-Ray
+           ==================================================== -->
+
+      <div class="section-title">
+        X-Ray Exam, Please Tick:
+
+        <small>
+          (No Appointment Required. Exam Time Range from 10 to 20 min.
+          Please Arrive During Office Hours.)
+        </small>
+      </div>
+
+      <div class="columns" id="xrColumns"></div>
+
+      <!-- ====================================================
+           Ultrasound
+           ==================================================== -->
+
+      <div class="section-title us-title">
+        Ultrasound Exam, Please Tick:
+
+        <small>
+          (Appointment Required. Please Check Reverse Side for Preparation.)
+        </small>
+
+        <div class="appointment">
+          Appointment Date:
+          <input
+            class="editable"
+            aria-label="Appointment date"
+            placeholder="DD/MM/YYYY"
+          >
+
+          Time:
+          <input class="editable" aria-label="Appointment time">
+        </div>
+      </div>
+
+      <div class="columns" id="usColumns"></div>
+
+      <!-- ====================================================
+           Workflow
+           ==================================================== -->
+
+      <div class="workflow">
+        <!-- 左欄：Sign In / Time Out -->
+        <section>
+          <h3>Sign In:</h3>
+
+          <div id="screening"></div>
+
+          <div class="inside">
+            <label class="writing-label">
+              Previous Exam — Type / Date:
+              <textarea class="editable small-area"></textarea>
+            </label>
+
+            <label class="writing-label">
+              Previous Operation — Specify:
+              <textarea class="editable small-area"></textarea>
+            </label>
+
+            <div class="subheading">Time Out:</div>
+
+            <div class="qa-inline">
+              <div>Correct Patient Name + DOB Checked:</div>
+
+              <div class="answers" data-answer-group>
+                <label><input type="checkbox">Yes</label>
+                <label><input type="checkbox">No</label>
+                <label><input type="checkbox">N/A</label>
+              </div>
+            </div>
+
+            <label class="writing-label">
+              Name:
+              <input class="editable full">
+            </label>
+
+            <label class="writing-label">
+              Signature:
+              <input class="editable full">
+            </label>
+          </div>
+        </section>
+
+        <!-- 中欄：Clinical Information / Payment / Report / Referral -->
+        <section>
+          <h3>Clinical Information:</h3>
+
+          <div class="inside">
+            <label class="writing-label">
+              Clinical details:
+              <textarea class="editable clinical-area"></textarea>
+            </label>
+
+
+            <label class="writing-label">
+              For female between 12 to 55 only — LMP:
+              <input class="editable full">
+            </label>
+
+            <div class="answers" data-answer-group>
+	    Pregnancy:
+              <label><input type="checkbox">Yes</label>
+              <label><input type="checkbox">No</label>
+              <label><input type="checkbox">Unsure</label>
+            </div>
+
+
+            <div class="subheading">Payment / Report and Bill Delivery</div>
+
+            <div class="answers" data-answer-group>
+Payment
+              <label><input type="checkbox">On Account</label>
+              <label><input type="checkbox">Cash</label>
+              <label><input type="checkbox">Medical Card</label>
+            </div>
+
+            <label class="writing-label">
+              Cash $:
+              <input class="editable full">
+            </label>
+
+            <label class="writing-label">
+              Delivery / Collection:
+
+            </label>
+            <div class="answers">
+              <label><input type="checkbox">Send to Doctor</label>
+              <label><input type="checkbox">By Patient</label>
+              <label><input type="checkbox">Fax Report</label>
+            </div>
+
+            <label class="writing-label">
+              Requested By Dr:
+              <input class="editable full">
+            </label>
+
+            <label class="writing-label">
+              Signature:
+              <input class="editable full">
+            </label>
+
+            <div class="inline-fields">
+              Send Bill:
+
+              <span class="answers" data-answer-group>
+                <label><input type="checkbox">Yes</label>
+                <label><input type="checkbox">No</label>
+              </span>
+            </div>
+
+            <label class="writing-label">
+              Address:
+              <textarea class="editable small-area"></textarea>
+            </label>
+
+            <label class="writing-label">
+              Tel:
+              <input class="editable full">
+            </label>
+          </div>
+        </section>
+
+        <!-- 右欄：Sign Out / Billing -->
+        <section>
+          <h3>Sign Out:</h3>
+
+          <div class="inside">
+            <label class="writing-label">
+              Exam Date:
+              <input class="editable full">
+            </label>
+
+            <div class="exposure-heading">Exposure record</div>
+            <div id="exposures"></div>
+
+            <div class="qa-inline">
+              <div>Post Exam Patient Fit:</div>
+
+              <div class="answers" data-answer-group>
+                <label><input type="checkbox">Yes</label>
+                <label><input type="checkbox">No</label>
+                <label><input type="checkbox">N/A</label>
+              </div>
+            </div>
+
+            <div class="qa-inline">
+              <div>Post Exam Instruction:</div>
+
+              <div class="answers" data-answer-group>
+                <label><input type="checkbox">Yes</label>
+                <label><input type="checkbox">No</label>
+                <label><input type="checkbox">N/A</label>
+              </div>
+            </div>
+
+            <div class="qa-inline">
+              <div>Procedure &amp; Side Recorded:</div>
+
+              <div class="answers" data-answer-group>
+                <label><input type="checkbox">Yes</label>
+                <label><input type="checkbox">No</label>
+                <label><input type="checkbox">N/A</label>
+              </div>
+            </div>
+
+            <label class="writing-label">
+              Tech Name:
+              <input class="editable full">
+            </label>
+
+            <label class="writing-label">
+              Tech Signature:
+              <input class="editable full">
+            </label>
+
+            <div class="subheading">Billing</div>
+
+            <label class="writing-label">
+              Billing AR Code:
+              <input class="editable full">
+            </label>
+
+            <label class="writing-label">
+              Charge Code(s):
+              <textarea class="editable small-area"></textarea>
+            </label>
+
+            <label class="writing-label">
+              Data Entry by:
+              <input class="editable full">
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <!-- ====================================================
+           總計及警告
+           ==================================================== -->
+
+      <div class="summary" aria-live="polite">
+        <span>
+          TOTAL ITEM:
+          <span id="totalItems">0</span>
+        </span>
+
+        <span>
+          TOTAL AMOUNT:
+          <span id="totalAmount">$0.00</span>
+        </span>
+      </div>
+
+      <div class="total-warnings" id="totalWarnings"></div>
+    </main>
+  </form>
+
+  <script>
+    "use strict";
+
+    /* ========================================================
+       01. 共用工具
+       ======================================================== */
+
+    const $ = (id) => document.getElementById(id);
+
+    const money = (amount) => amount.toLocaleString("en-HK", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+
+    function node(tag, className, text) {
+      const element = document.createElement(tag);
+
+      if (className) {
+        element.className = className;
+      }
+
+      if (text !== undefined) {
+        element.textContent = text;
+      }
+
+      return element;
+    }
+
+
+    /* ========================================================
+       02. 檢查資料建立工具
+       ======================================================== */
+
+    /*
+      檢查名稱、價錢及編號沿用原有資料，未重新核對。
+
+      原始資料包含重複編號，因此：
+      - code 不作為唯一識別碼
+      - checkbox ID 由 sequence 另外產生
+    */
+
+    function single(name, price, code, flag = false) {
+      return { name, price, code, flag };
+    }
+
+    function sides(name, price, left, right) {
+      return {
+        name,
+        price,
+        left,
+        right,
+        sided: true
+      };
+    }
+
+    function choices(name, code, variants, flag = false) {
+      return { name, code, variants, flag };
+    }
+
+
+    /* ========================================================
+       03. X-Ray 資料
+       外層陣列依次代表左、中、右三欄
+       ======================================================== */
+
+    const xrGroups = [
+      // 左欄
+      [
+        {
+          title: "Head & Neck",
+          items: [
+            single("Facial Bones (3 views)", 1140, "AM2PR002"),
+            single("XR Nasal Bone (1 view)", 380, "AM2PR007"),
+            single("XR Nasal Bone (3 views)", 1140, "AM2PR008"),
+            single("XR Soft Tissue Neck Adenoid (Lat)", 380, "AM2PR009"),
+            single("XR Orbits (Lat & OM)", 760, "AM2PR011"),
+            single("XR Orbits (Lat & OM & OF)", 1140, "AM2PR011"),
+            single("XR PNS / Facial Bones (1 view)", 380, "AM2PR012"),
+            single("XR PNS (3 views)", 1140, "AM2PR013"),
+            single("XR Skull (2 views)", 760, "AM2PR015"),
+            single("XR Skull (3 views)", 1140, "AM2PR016"),
+            single("XR TM Joint (both sides)", 1520, "AM2PR017")
+          ]
+        },
+        {
+          title: "Thorax",
+          items: [
+            single("XR Chest (PA, AP or Lat, 1 view)", 380, "AM2PR101"),
+            single("XR Chest (PA and Lat, 2 views)", 760, "AM2PR102"),
+            single("XR 3D Mammogram", 3300, "AM2PR124"),
+            single("XR 2D Mammogram", 2400, "AM2PR111")
+          ]
+        },
+        {
+          title: "Abdomen & Pelvis",
+          items: [
+            single("XR Abdomen (AP)", 380, "AM2PR201"),
+            single("XR Abdomen (Erect & Supine)", 760, "AM2PR202"),
+            single("XR KUB (AP)", 380, "AM2PR211"),
+            single("XR Pelvis (AP)", 380, "AM2PR221")
+          ]
+        }
+      ],
+
+      // 中欄
+      [
+        {
+          title: "Extremity — Left / Right",
+          items: [
+            sides("XR Shoulder / Clavicle", 380, "AM2PR402", "AM2PR401"),
+            sides("XR Shoulder (AP, Lat)", 760, "AM2PR404", "AM2PR403"),
+            sides("XR Humerus (AP, Lat)", 760, "AM2PR406", "AM2PR405"),
+            sides("XR Elbow (AP, Lat)", 760, "AM2PR408", "AM2PR407"),
+            sides("XR Forearm (AP, Lat)", 760, "AM2PR410", "AM2PR409"),
+            sides("XR Wrist (AP, Lat)", 760, "AM2PR412", "AM2PR411"),
+            sides("XR Hand (AP, Lat)", 760, "AM2PR416", "AM2PR415"),
+            sides("XR Finger (AP, Lat)", 760, "AM2PR418", "AM2PR417"),
+            sides("XR Both Hips (AP)", 760, "AM2PR432", "AM2PR431"),
+            sides("XR Hip (AP, Obl)", 760, "AM2PR434", "AM2PR433"),
+            sides("XR Femur (AP, Lat)", 760, "AM2PR436", "AM2PR435"),
+            sides("XR Knee (AP, Lat)", 760, "AM2PR438", "AM2PR437"),
+            sides("XR Leg (AP, Lat)", 760, "AM2PR444", "AM2PR443"),
+            sides("XR Ankle (AP, Lat, Obl)", 1140, "AM2PR446", "AM2PR445"),
+            sides("XR Ankle (AP, Lat)", 760, "AM2PR448", "AM2PR447"),
+            sides("XR Foot (AP, Lat, Obl)", 1140, "AM2PR450", "AM2PR449"),
+            sides("XR Foot (AP, Lat)", 760, "AM2PR452", "AM2PR451"),
+            sides("XR Heel (Axial, Lat)", 760, "AM2PR454", "AM2PR453"),
+            sides("XR Toe (2 views)", 760, "AM2PR456", "AM2PR455"),
+            sides("XR Toe Foot & Ankle", 1520, "AM2PR456", "AM2PR455"),
+            single("XR Bone Age (AP Lt Hand + Wrist)", 760, "AM2PR471")
+          ]
+        }
+      ],
+
+      // 右欄
+      [
+        {
+          title: "Spine & Iliac Joints",
+          items: [
+            single("XR Cervical Spine (AP, Lat)", 760, "AM2PR302"),
+            single("XR Cervical Spine (AP, Lat, Obls)", 1140, "AM2PR303"),
+            single("XR Thoracic Spine (AP, Lat)", 760, "AM2PR305"),
+            single("XR Lumbo-sacral Spine (AP, Lat)", 760, "AM2PR308"),
+            single("XR Sacrum / Coccyx (AP, Lat)", 760, "AM2PR311"),
+            single("XR Sacroiliac Joints (AP, Obls)", 760, "AM2PR312"),
+            single("XR Whole Spine (4 views)", 1520, "AM2PR322"),
+            single("XR Whole Spine (6 views)", 2280, "AM2PR322"),
+            single("XR DEXA (L Spine, Hip) — Osteoporosis", 1800, "AM2PR331"),
+            single("XR DEXA (Whole Body) — Fat composition", 2500, "AM2PR333"),
+            sides("XR Ribs (AP, Obl)", 760, "AM2PR122", "AM2PR121")
+          ]
+        },
+        {
+          title: "Extremity — Left / Right",
+          items: [
+            sides("XR Wrist Scaphoid 5 views", 1900, "AM2PR414", "AM2PR413"),
+            sides(
+              "XR Knee AP / LAT + Patella Skyline View",
+              1140,
+              "AM2PR440",
+              "AM2PR439"
+            )
+          ]
+        },
+        {
+          title: "Other X-Ray",
+          items: [
+            {
+              name: "XR Other Exam — Specify",
+              price: 380,
+              code: "AM2PR999",
+              perView: true,
+              specify: true
+            },
+            single("XR Mandible PA & Obli (both sides)", 760, "AM2PR004")
+          ]
+        }
+      ]
+    ];
+
+
+    /* ========================================================
+       04. Ultrasound 資料
+       外層陣列依次代表左、中、右三欄
+       ======================================================== */
+
+    const usGroups = [
+      // 左欄
+      [
+        {
+          title: "Head & Neck",
+          items: [
+            single("US Thyroid", 1450, "AM2PU002"),
+            single("US Neck", 1900, "AM2PU003")
+          ]
+        },
+        {
+          title: "Extremity — Left / Right",
+          items: [
+            sides("US Shoulder", 2200, "AM2PU402", "AM2PU401"),
+            sides("US Achilles", 2200, "AM2PU416", "AM2PU415")
+          ]
+        }
+      ],
+
+      // 中欄
+      [
+        {
+          title: "Thorax, Abdomen & Pelvis",
+          items: [
+            single("US Breast Bilateral", 1750, "AM2PU101"),
+            single("US Upper Abdomen", 2600, "AM2PU201"),
+            single("US Whole Abdomen", 3200, "AM2PU202"),
+            single("US Kidneys, Ureters & U. Bladder", 1700, "AM2PU204"),
+            single("US U. Bladder (pre & post void)", 1050, "AM2PU208"),
+            single("US Prostate Trans-rectal", 1450, "AM2PU207"),
+            single("US Testes", 1450, "AM2PU211"),
+            single("US Liver", 1200, "AM2PU210"),
+            single("US Liver, Gall Bladder, Spleen", 1450, "AM2PU251"),
+            single("US Prostate (TA) & Urinary Bladder", 1550, "AM2PU209"),
+            single("US Pelvic (Trans-abdominal)", 1350, "AM2PU205")
+          ]
+        }
+      ],
+
+      // 右欄
+      [
+        {
+          title: "Other Regional Examinations",
+          items: [
+            single("US Appendix", 2200, "AM2PU203"),
+            {
+              ...single("US Unilateral Breast", 1200, "AM2PU103"),
+              specify: true,
+            },
+            {
+              ...choices("US Groin", "AM2PU217", [
+                ["One side", 1600],
+                ["Both sides", 2300]
+              ]),
+              specify: true,
+
+            }
+          ]
+        },
+        {
+          title: "Vascular Studies",
+          items: [
+            single("US Carotid IMT (both sides)", 1050, "AM2PU501"),
+            single("US Carotid Doppler (both sides)", 4750, "AM2PU501"),
+            {
+              ...choices("US Lower Limb DVT", "AM2PU999", [
+                ["One side", 3000],
+                ["Both sides", 5000]
+              ]),
+              specify: true,
+              note: "單側請註明 Left / Right。"
+            }
+          ]
+        },
+        {
+          title: "Other Ultrasound",
+          items: [
+            {
+              ...single("US Other US Exam — Specify", 2200, "AM2PU999"),
+              specify: true
+            }
+          ]
+        }
+      ]
+    ];
+
+
+    /* ========================================================
+       05. 問卷及 Exposure 資料
+       ======================================================== */
+
+    const screeningQuestions = [
+      "Unable to lie on the back / being positioned",
+      "Kid / Aged / Confused (extra care needed)",
+      "Pre-Medication / Preparation (if needed)",
+      "Difficult Airway / Aspiration Risk",
+      "Pregnancy (women only)",
+      "Previous Exam",
+      "Previous Operation"
+    ];
+
+    const exposureSizes = [
+      "8 × 10",
+      "10 × 12",
+      "14 × 17"
+    ];
+
+
+    /* ========================================================
+       06. 畫面狀態
+       ======================================================== */
+
+    const rows = [];
+    let sequence = 0;
+
+
+    /* ========================================================
+       07. 檢查選項及檢查項目
+       ======================================================== */
+
+    function addOption(
+      container,
+      labelText,
+      price,
+      code,
+      id,
+      exclusive
+    ) {
+      const label = node("label", "option");
+      const check = document.createElement("input");
+
+      check.type = "checkbox";
+      check.id = id;
+      check.dataset.exam = "1";
+      check.dataset.price = String(price);
+      check.setAttribute("aria-label", labelText);
+
+      if (exclusive) {
+        check.dataset.exclusive = exclusive;
+      }
+
+      label.append(
+        check,
+        node("span", "", labelText)
+      );
+
+      if (code) {
+        label.append(node("span", "code", code));
+      }
+
+      container.append(label);
+
+      return check;
+    }
+
+    function renderExam(item, parent) {
+      const id = `exam-${++sequence}`;
+      const row = node("div", "exam");
+      const top = node("div", "exam-top");
+
+      // 名稱及價錢
+      top.append(node("span", "exam-name", item.name));
+
+      const priceText = item.variants
+        ? item.variants
+            .map((variant) => `$${money(variant[1])}`)
+            .join(" / ")
+        : `$${money(item.price)}${item.perView ? " / view" : ""}`;
+
+      top.append(node("span", "price", priceText));
+      row.append(top);
+
+      // 剔選選項
+      const options = node("div", "options");
+      const checks = [];
+
+      if (item.sided) {
+        checks.push(
+          addOption(options, "L", item.price, item.left, `${id}-L`),
+          addOption(options, "R", item.price, item.right, `${id}-R`)
+        );
+      } else if (item.variants) {
+        item.variants.forEach(([label, price], index) => {
+          checks.push(
+            addOption(
+              options,
+              label,
+              price,
+              item.code,
+              `${id}-${index}`,
+              id
+            )
+          );
+        });
+      } else if (item.codeOptions) {
+        item.codeOptions.forEach(([label, code], index) => {
+          checks.push(
+            addOption(
+              options,
+              label,
+              item.price,
+              code,
+              `${id}-${index}`,
+              id
+            )
+          );
+        });
+      } else {
+        checks.push(
+          addOption(options, "", item.price, item.code, id)
+        );
+      }
+
+      if (item.flag) {
+        options.append(node("span", "flag", "† 待核對"));
+      }
+
+      row.append(options);
+
+      // Other X-Ray：Views
+      let views = null;
+
+      if (item.perView) {
+        const extra = node("label", "extra", "Views:");
+
+        views = document.createElement("input");
+        views.type = "number";
+        views.min = "1";
+        views.max = "99";
+        views.step = "1";
+        views.value = "1";
+        views.className = "editable";
+        views.setAttribute("aria-label", "Other X-Ray number of views");
+
+        extra.append(views);
+        row.append(extra);
+      }
+
+      // Specify / Side
+      let detail = null;
+
+      if (item.specify) {
+        const extra = node("div", "extra");
+
+        detail = document.createElement("input");
+        detail.type = "text";
+        detail.className = "editable";
+        detail.placeholder = "Specify / Side";
+        detail.setAttribute(
+          "aria-label",
+          `${item.name} details / side`
+        );
+
+        extra.append(detail);
+        row.append(extra);
+      }
+
+      // 額外提示
+      if (item.note) {
+        row.append(node("div", "code flag", item.note));
+      }
+
+      parent.append(row);
+
+      // 保留 DOM 及資料參照，供計價及互斥選項使用
+      rows.push({
+        row,
+        item,
+        checks,
+        views,
+        detail
+      });
+
+      return row;
+    }
+
+
+    /* ========================================================
+       08. X-Ray：共用 Grid 排列
+       ======================================================== */
+
+    function renderAlignedXRay() {
+      const container = $("xrColumns");
+      const endRows = [];
+
+      // Other X-Ray 有額外欄位，因此跨三行
+      const spanFor = (item) => item.perView ? 3 : 1;
+
+      function position(element, column, row, span = 1) {
+        element.style.gridColumn = String(column);
+        element.style.gridRow = `${row} / span ${span}`;
+      }
+
+      xrGroups.forEach((groups, columnIndex) => {
+        const column = columnIndex + 1;
+        let currentRow = 1;
+
+        groups.forEach((group, groupIndex) => {
+          const className = groupIndex === 0
+            ? "group-title xr-top-title"
+            : "group-title";
+
+          const heading = node("div", className, group.title);
+
+          position(heading, column, currentRow);
+          container.append(heading);
+          currentRow++;
+
+          group.items.forEach((item) => {
+            const exam = renderExam(item, container);
+            const span = spanFor(item);
+
+            position(exam, column, currentRow, span);
+            currentRow += span;
+          });
+        });
+
+        endRows.push(currentRow);
+      });
+
+      const lastRow = Math.max(...endRows) - 1;
+
+      /*
+        較短欄位只在底部補白色留白。
+        不設定統一行高；行高由 CSS 及內容自然決定。
+      */
+      endRows.forEach((nextRow, columnIndex) => {
+        if (nextRow > lastRow) {
+          return;
+        }
+
+        const blank = node("div", "xr-blank");
+        blank.setAttribute("aria-hidden", "true");
+
+        position(
+          blank,
+          columnIndex + 1,
+          nextRow,
+          lastRow - nextRow + 1
+        );
+
+        container.append(blank);
+      });
+    }
+
+
+    /* ========================================================
+       09. Ultrasound：獨立三欄排列
+       ======================================================== */
+
+    function renderColumns(targetId, groups) {
+      const container = $(targetId);
+
+      groups.forEach((columnGroups) => {
+        const column = node("div", "column");
+
+        columnGroups.forEach((group) => {
+          column.append(node("div", "group-title", group.title));
+
+          group.items.forEach((item) => {
+            renderExam(item, column);
+          });
+        });
+
+        container.append(column);
+      });
+    }
+
+
+    /* ========================================================
+       10. Sign In 問卷及 Exposure 欄位
+       ======================================================== */
+
+    function renderScreening() {
+      const container = $("screening");
+
+      screeningQuestions.forEach((text) => {
+        const row = node("div", "screening-row");
+        const answers = node("div", "answers");
+
+        answers.dataset.answerGroup = "1";
+        row.append(node("div", "", text));
+
+        ["Yes", "No", "N/A"].forEach((value) => {
+          const label = node("label");
+          const input = document.createElement("input");
+
+          input.type = "checkbox";
+          input.setAttribute("aria-label", `${text} ${value}`);
+
+          label.append(
+            input,
+            document.createTextNode(value)
+          );
+
+          answers.append(label);
+        });
+
+        row.append(answers);
+        container.append(row);
+      });
+    }
+
+    function renderExposures() {
+      const container = $("exposures");
+
+      exposureSizes.forEach((size) => {
+        const label = node(
+          "label",
+          "writing-label",
+          `${size} — mAs / kVp / Rejected:`
+        );
+
+        const input = document.createElement("input");
+        input.className = "editable full";
+
+        label.append(input);
+        container.append(label);
+      });
+    }
+
+
+    /* ========================================================
+       11. 總計及警告
+       ======================================================== */
+
+    function updateTotals() {
+      let count = 0;
+      let cents = 0;
+
+      let incomplete = false;
+      let bilateral = false;
+      let flagged = false;
+      let missingDetails = false;
+
+      rows.forEach(({ row, item, checks, views, detail }) => {
+        const active = checks.filter((check) => check.checked);
+
+        row.classList.toggle("selected", active.length > 0);
+        count += active.length;
+
+        if (active.length === 0) {
+          return;
+        }
+
+        if (item.sided && active.length === 2) {
+          bilateral = true;
+        }
+
+        if (item.flag || item.codeOptions) {
+          flagged = true;
+        }
+
+        if (detail && !detail.value.trim()) {
+          missingDetails = true;
+        }
+
+        let quantity = 1;
+
+        if (views) {
+          quantity = Number(views.value);
+
+          const invalidQuantity =
+            views.value.trim() === "" ||
+            !Number.isInteger(quantity) ||
+            quantity < 1 ||
+            quantity > 99;
+
+          if (invalidQuantity) {
+            incomplete = true;
+            return;
+          }
+        }
+
+        active.forEach((check) => {
+          const priceInCents = Math.round(
+            Number(check.dataset.price) * 100
+          );
+
+          cents += priceInCents * quantity;
+        });
+      });
+
+      const amount =
+        `${incomplete ? "部分合計 " : ""}$${money(cents / 100)}`;
+
+      $("totalItems").textContent = count;
+      $("totalAmount").textContent = amount;
+      $("toolbarTotal").textContent =
+        `TOTAL ITEM: ${count} ｜ TOTAL AMOUNT: ${amount}`;
+
+      const notes = [];
+
+      if (incomplete) {
+        notes.push("Other X-Ray views 無效：未計入該項費用。");
+      }
+
+      if (bilateral) {
+        notes.push("已同時選左右側，暫按兩側收費相加，請核對。");
+      }
+
+      if (flagged) {
+        notes.push("已選項目包含待核對編號。");
+      }
+
+      if (missingDetails) {
+        notes.push("部分已選項目尚未填寫 Specify / Side。");
+      }
+
+      $("totalWarnings").textContent = notes.join(" ");
+    }
+
+
+    /* ========================================================
+       12. Checkbox 互斥處理
+       ======================================================== */
+
+    function handleFormChange(event) {
+      const target = event.target;
+
+      if (
+        target.matches('input[type="checkbox"]') &&
+        target.checked
+      ) {
+        // One side / Both sides 等替代選項互斥
+        if (target.dataset.exclusive) {
+          rows.forEach(({ checks }) => {
+            checks.forEach((check) => {
+              const sameGroup =
+                check.dataset.exclusive === target.dataset.exclusive;
+
+              if (check !== target && sameGroup) {
+                check.checked = false;
+              }
+            });
+          });
+        }
+
+        // 同一答案組內的 Yes / No / N/A 等選項互斥
+        const group = target.closest("[data-answer-group]");
+
+        if (group) {
+          group.querySelectorAll('input[type="checkbox"]')
+            .forEach((check) => {
+              if (check !== target) {
+                check.checked = false;
+              }
+            });
+        }
+      }
+
+      updateTotals();
+    }
+
+
+    /* ========================================================
+       13. 列印
+       ======================================================== */
+
+    function clearPrintValues() {
+      document.querySelectorAll(".print-value").forEach((element) => {
+        element.remove();
+      });
+    }
+
+    function preparePrint() {
+      updateTotals();
+      clearPrintValues();
+
+      document.querySelectorAll(".editable").forEach((input) => {
+        const isTextarea = input.tagName === "TEXTAREA";
+
+        const value = node(
+          "span",
+          `print-value${isTextarea ? " print-block" : ""}`,
+          input.value || "\u00a0"
+        );
+
+        if (!isTextarea) {
+          value.style.minWidth =
+            input.type === "number" ? "8mm" : "12mm";
+
+          value.style.maxWidth = "100%";
+        }
+
+        input.insertAdjacentElement("afterend", value);
+      });
+    }
+
+    function printForm() {
+      preparePrint();
+      window.print();
+    }
+
+
+    /* ========================================================
+       14. 下一位病人
+       ======================================================== */
+
+    function resetForm() {
+      const confirmed = window.confirm(
+        "清除所有病人資料、檢查選擇及填寫內容，開始下一位病人？"
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      $("imagingForm").reset();
+      clearPrintValues();
+      updateTotals();
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    }
+
+
+    /* ========================================================
+       15. 事件綁定及初始化
+       ======================================================== */
+
+    function bindEvents() {
+      const form = $("imagingForm");
+
+      form.addEventListener("change", handleFormChange);
+      form.addEventListener("input", updateTotals);
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+      });
+
+      $("printButton").addEventListener("click", printForm);
+      $("resetButton").addEventListener("click", resetForm);
+
+      // 支援瀏覽器選單及鍵盤快捷鍵列印
+      window.addEventListener("beforeprint", preparePrint);
+    }
+
+    function initialize() {
+      renderAlignedXRay();
+      renderColumns("usColumns", usGroups);
+      renderScreening();
+      renderExposures();
+
+      bindEvents();
+      updateTotals();
+    }
+
+    initialize();
+  </script>
+</body>
+</html>

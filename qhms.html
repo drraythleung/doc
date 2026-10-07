@@ -1,0 +1,2648 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QHMS — Referral Forms</title>
+<style>
+:root{
+  --navy:#183448;
+  --teal:#087f8c;
+  --paper:#fff;
+  --line:#444;
+  --muted:#607585;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#e8edf2;
+  color:#172f40;
+  font-family:Arial,"Microsoft JhengHei","PingFang TC",sans-serif;
+}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,
+textarea:focus-visible,select:focus-visible{
+  outline:3px solid #68bfd5;
+  outline-offset:2px;
+}
+button{
+  border:1px solid #ccd6de;
+  border-radius:7px;
+  background:white;
+  color:#243c4c;
+  padding:9px 13px;
+}
+button.primary{
+  background:var(--teal);
+  border-color:var(--teal);
+  color:white;
+}
+button.danger{color:#ae3847}
+.topbar{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:15px;padding:12px 22px;
+  background:var(--navy);color:white;
+  box-shadow:0 2px 10px #122a4026;
+}
+.brand{font-size:18px;font-weight:700;letter-spacing:.3px}
+.brand small{
+  display:block;font-size:11px;font-weight:400;
+  color:#c4d6df;margin-top:4px;
+}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+.layout{
+  display:grid;
+  grid-template-columns:350px minmax(0,1fr);
+  align-items:start;
+}
+.sidebar{
+  position:sticky;top:73px;
+  max-height:calc(100vh - 73px);
+  overflow:auto;
+  padding:18px;
+  background:#f6f8fa;
+  border-right:1px solid #d4dde5;
+}
+.section{
+  background:white;
+  border:1px solid #dce4ea;
+  border-radius:10px;
+  margin-bottom:13px;
+  overflow:hidden;
+}
+.section h2{
+  margin:0;padding:12px 14px;
+  font-size:13px;
+  background:#eef4f7;
+  border-bottom:1px solid #e0e8ed;
+}
+.section-body{padding:12px}
+.field{display:block;margin-bottom:10px}
+.field:last-child{margin-bottom:0}
+.field>span{
+  display:block;font-size:12px;font-weight:600;
+  margin-bottom:5px;color:#415c6b;
+}
+.field input,.field select,.field textarea{
+  display:block;width:100%;min-width:0;
+  border:1px solid #cbd7df;border-radius:6px;
+  padding:8px;background:#fff;color:#152f40;
+  font-size:13px;
+}
+.field textarea{resize:vertical;min-height:66px;line-height:1.45}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.help{
+  color:#657a89;font-size:11px;
+  line-height:1.6;margin:8px 0 0;
+}
+.notice{
+  margin-bottom:13px;padding:11px 12px;
+  border:1px solid #e5d3a6;border-radius:8px;
+  background:#fff9eb;font-size:12px;line-height:1.6;
+  color:#745c28;
+}
+.plan-panel[hidden]{display:none}
+.print-picks{
+  display:flex;gap:10px;flex-wrap:wrap;
+  padding:8px 0;font-size:12px;
+}
+.preview-area{min-width:0}
+.preview-tools{
+  padding:15px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+  background:#f7f9fb;
+  border-bottom:1px solid #d7e0e7;
+}
+.tabs{
+  display:flex;gap:5px;
+  padding:4px;border-radius:9px;background:#e5ecf1;
+}
+.tabs button{border:0;background:transparent;padding:9px 15px}
+.tabs button.active{
+  background:white;color:var(--teal);font-weight:700;
+  box-shadow:0 1px 4px #0001;
+}
+.preview-caption{font-size:12px;color:#607483}
+.preview-scroll{padding:22px;overflow:auto}
+.status{
+  padding:9px 20px;font-size:12px;line-height:1.5;
+  color:#586e7e;background:#edf3f7;
+}
+.status.error{background:#ffeded;color:#a72535}
+.form-group[hidden]{display:none!important}
+
+/* ───────── A4 共用 ───────── */
+.page{
+  position:relative;
+  width:210mm;height:297mm;
+  margin:0 auto 24px;
+  padding:10mm 12mm;
+  color:#111;background:#fff;
+  box-shadow:0 4px 22px #20394d25;
+  font-family:Arial,"Microsoft JhengHei","PingFang TC",sans-serif;
+}
+.paper-content{width:100%}
+.paper-head{position:relative;height:23mm}
+.qlogo{
+  position:absolute;right:0;top:0;
+  display:flex;gap:1.5mm;align-items:center;
+  color:#161616;
+}
+.qmark{
+  font-family:Arial,sans-serif;
+  font-size:35pt;font-weight:700;line-height:1;
+}
+.qwords{
+  font-style:italic;font-size:14pt;
+  font-weight:700;line-height:.96;
+}
+.qwords small{font-style:normal;font-size:9pt}
+.qwords span{display:block}
+.scheme-title{
+  position:absolute;bottom:5.5mm;left:0;right:0;
+  text-align:center;font-size:12pt;font-weight:700;
+}
+.scheme-subtitle{
+  position:absolute;bottom:1.4mm;left:0;right:0;
+  text-align:center;font-size:10.6pt;font-weight:700;
+}
+.date-top{
+  position:absolute;left:0;bottom:0;
+  display:flex;gap:1mm;align-items:baseline;
+  font-size:8pt;
+}
+.date-top .v{width:27mm}
+.v{
+  color:#111;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  font-weight:400;
+  font-style:normal;
+  min-width:0;
+}
+.value-inline{display:inline-block}
+.paper-info{
+  display:grid;grid-template-columns:1fr 1fr;
+  height:34mm;border:.25mm solid #333;
+  font-size:8.2pt;
+}
+.info-half:first-child{border-right:.25mm solid #333}
+.info-heading{
+  height:5mm;padding:.8mm 1mm;
+  border-bottom:.2mm solid #444;
+  background:#f0f0f0;font-size:8.3pt;font-weight:700;
+}
+.info-line{
+  height:5.65mm;padding:.6mm 1mm;
+  display:flex;align-items:center;gap:1mm;
+  border-bottom:.15mm solid #777;
+  overflow:hidden;
+}
+.info-line:last-child{border-bottom:0}
+.info-line .v{flex:1;max-height:100%;overflow:hidden}
+.info-line .fixed{flex:0 0 auto;white-space:nowrap}
+.info-line .sex-out{flex:0 0 39mm;white-space:nowrap;font-size:8pt}
+.info-line .short{flex:0 0 15mm}
+.info-line.diagnosis-line{
+  height:8.3mm;align-items:flex-start;font-size:8pt;
+}
+.info-line.onset-line{height:3mm;padding-top:0;padding-bottom:0}
+.info-line.doctor-line{height:5.9mm}
+.square{
+  display:inline-block;width:2.1mm;height:2.1mm;
+  border:.22mm solid #222;
+  vertical-align:-.25mm;position:relative;margin-right:1mm;
+}
+.square.checked::after{
+  content:"✓";position:absolute;left:-.1mm;top:-1mm;
+  font-size:10pt;font-weight:700;
+}
+.paper-check{
+  appearance:none;-webkit-appearance:none;
+  display:inline-grid;place-content:center;
+  width:2.2mm;height:2.2mm;padding:0;margin:0 1mm 0 0;
+  border:.22mm solid #222;border-radius:0;background:#fff;
+  vertical-align:-.3mm;cursor:pointer;
+}
+.paper-check:checked::after{
+  content:"✓";font:bold 9pt Arial;line-height:1;color:#111;
+}
+.route{
+  border-left:.25mm solid #333;
+  border-right:.25mm solid #333;
+  border-bottom:.25mm solid #333;
+  font-size:9pt;
+}
+.route label{display:block;line-height:1.22;cursor:pointer}
+.route strong{font-weight:700}
+.h-route-block{
+  height:29mm;padding:1.6mm 1mm;
+  font-size:10.5pt;font-weight:700;
+}
+.h-route-block+.h-route-block{border-top:.55mm solid #333}
+.h-route-block p{margin:.6mm 0 0}
+.b-route{height:20mm;padding:1mm}
+.b-route label:first-child{font-weight:700;margin-bottom:1mm}
+.b-route .indent{padding-left:3.4mm}
+.directory{
+  border-collapse:collapse;
+  width:100%;table-layout:fixed;color:#111;
+}
+.directory th,.directory td{
+  border:.2mm solid #333;
+  vertical-align:middle;
+  padding:.55mm .7mm;
+  overflow-wrap:normal;
+}
+.directory th{text-align:left;font-weight:700}
+.directory .pick{text-align:center;padding:.3mm}
+.directory .pick input{margin:0}
+.directory .district{font-weight:700}
+.directory .centre-name{font-weight:700}
+.directory .cn{font-size:.92em}
+.directory .tel,.directory .fax{
+  text-align:center;white-space:pre-line;
+}
+.h-directory{font-size:7.5pt;line-height:1.1}
+.h-directory thead tr{height:4.8mm}
+.h-directory .centre-name{font-size:7.8pt}
+.h-directory .service{font-size:7.5pt}
+.h-directory .tel,.h-directory .fax{font-size:7.7pt}
+.h-directory .r0{height:16mm}
+.h-directory .r1{height:20mm}
+.h-directory .r2{height:20mm}
+.h-directory .r3{height:10mm}
+.h-directory .r4{height:20mm}
+.h-directory .r5{height:20mm}
+.h-directory .r6{height:12mm}
+.h-directory .r7{height:14mm}
+.h-directory .r8{height:16mm}
+.h-second .paper-head{height:13mm}
+.h-second .h-directory tr{height:16mm}
+.h-second .h-directory tr:first-child{height:17mm}
+.signature-box{
+  border:.25mm solid #333;
+  display:grid;grid-template-columns:1.15fr 1fr;
+  height:18mm;margin-top:3mm;
+  font-size:8.2pt;
+}
+.signature-box>div{
+  padding:1.5mm 1mm;
+  display:flex;flex-direction:column;justify-content:space-between;
+}
+.signature-rule{border-bottom:.2mm solid #444;height:5mm}
+.version{
+  margin-top:1mm;text-align:right;font-size:7pt;
+}
+.h-second .version{
+  position:absolute;right:12mm;bottom:10mm;
+}
+.bupa{padding-top:8mm;padding-bottom:8mm}
+.bupa .paper-head{height:22mm}
+.bupa .paper-info{height:34mm}
+.b-directory{font-size:6.15pt;line-height:1.04}
+.b-directory th,.b-directory td{padding:.42mm .6mm}
+.b-directory thead tr{height:4mm}
+.b-directory .centre-name{font-size:6.35pt}
+.b-directory .district{font-size:6.35pt}
+.b-directory .tel{font-size:6.65pt}
+.b-directory .paper-check{width:1.65mm;height:1.65mm}
+.b-directory .paper-check:checked::after{font-size:7pt}
+.b-directory .other-row{height:4.5mm}
+.bupa .signature-box{margin-top:0;height:17mm}
+.b-footer{
+  display:flex;justify-content:space-between;gap:2mm;
+  margin-top:2mm;font-size:7pt;line-height:1.2;
+}
+
+/* ───────── DA01：保留之前版面尺寸及結構 ───────── */
+.da01{font-size:9pt;padding:10mm 12mm 12mm}
+.da-header{height:38.5mm;position:relative}
+.da-confidential{
+  position:absolute;left:0;top:3mm;
+  font-size:10.5pt;font-weight:700;
+}
+.da-header .qlogo{top:.5mm}
+.da-heading{
+  position:absolute;top:16mm;left:0;right:0;text-align:center;
+}
+.da-heading h1{margin:0;font-size:14pt;line-height:1.1}
+.da-heading h2{margin:.8mm 0 0;font-size:10.7pt;line-height:1.12}
+.da-intro{
+  position:absolute;top:25.5mm;left:0;right:0;
+  margin:0;font-size:9pt;line-height:1.28;font-weight:700;
+}
+.da-date{
+  position:absolute;right:0;bottom:1mm;
+  display:flex;gap:1mm;align-items:flex-end;
+}
+.da-date .v{width:39mm;border-bottom:.2mm solid #444;min-height:3.5mm}
+.da-form{border:.22mm solid #646464}
+.da-bar{
+  height:4.4mm;padding:.6mm .8mm;
+  border-top:.22mm solid #646464;
+  border-bottom:.22mm solid #646464;
+  background:#c7c7c7;font-size:9.6pt;
+  line-height:1;font-weight:700;
+}
+.da-form>.da-bar:first-child{border-top:0}
+.da-doctor{
+  display:grid;grid-template-columns:59.5% 40.5%;height:25.6mm;
+}
+.da-doctor-left{
+  padding:1mm .8mm 1.2mm;
+  border-right:.22mm solid #646464;
+  display:flex;flex-direction:column;justify-content:space-between;
+}
+.da-inline{display:flex;gap:1mm;align-items:flex-start}
+.da-inline .v{flex:1}
+.da-doctor-right{display:grid;grid-template-rows:1fr 1fr}
+.da-doctor-right>div{padding:1.1mm .8mm;overflow:hidden}
+.da-doctor-right>div:first-child{border-bottom:.22mm solid #646464}
+.da-doctor-right .v{margin-top:1mm;max-height:6mm;overflow:hidden}
+.da-patient-top{
+  display:grid;grid-template-columns:56.8% 19% 24.2%;height:9.8mm;
+}
+.da-patient-top>div{
+  padding:.8mm;border-right:.22mm solid #646464;overflow:hidden;
+}
+.da-patient-top>div:last-child{border-right:0}
+.da-age{display:flex;gap:1mm;height:3.5mm}
+.da-gender{font-size:8.5pt;margin-top:.65mm;white-space:nowrap}
+.da-contact .v{margin-top:.7mm}
+.da-patient-second{
+  display:grid;grid-template-columns:34.2% 41.8% 24%;
+  height:9.8mm;border-top:.22mm solid #646464;
+  border-bottom:.22mm solid #646464;
+}
+.da-patient-second>div{
+  padding:.8mm;border-right:.22mm solid #646464;overflow:hidden;
+}
+.da-patient-second>div:last-child{border:0}
+.da-patient-second .v{
+  margin-top:.6mm;max-height:4.5mm;overflow:hidden;
+}
+.da-consent{height:21.7mm;padding:.8mm}
+.da-consent p{margin:0;font-size:9pt;line-height:1.15}
+.da-consent-sign{
+  display:flex;justify-content:flex-end;
+  align-items:flex-end;gap:1mm;margin-top:3mm;
+}
+.blank-line{
+  display:inline-block;width:53mm;height:4mm;
+  border-bottom:.22mm solid #444;
+}
+.da-diagnosis{
+  height:11mm;padding:.75mm .8mm;
+  border-bottom:.22mm solid #646464;
+}
+.da-diagnosis .v{margin-top:.5mm;height:6mm;overflow:hidden}
+.da-clinical-bottom{
+  display:grid;grid-template-columns:45.3% 54.7%;height:13mm;
+}
+.da-onset{padding:.8mm;border-right:.22mm solid #646464}
+.da-onset .v{margin-top:1mm;max-height:7mm;overflow:hidden}
+.da-questions{padding:.5mm .8mm}
+.da-question{
+  display:grid;grid-template-columns:1fr auto auto;
+  align-items:center;gap:1.4mm;height:3.8mm;font-size:8.5pt;
+}
+.da-question>span{white-space:nowrap}
+.da-question .square{width:1.9mm;height:1.9mm;margin-right:.6mm}
+.da-lab{height:18mm;padding:1mm}
+.da-lab .v{height:15.5mm;overflow:hidden}
+.da-imaging-head{
+  display:grid;grid-template-columns:45.3% 54.7%;
+  height:8mm;background:#c7c7c7;
+  border-top:.22mm solid #646464;
+  border-bottom:.22mm solid #646464;
+}
+.da-imaging-head>div{padding:.75mm .8mm;font-size:9.2pt;line-height:1.12}
+.da-imaging-head>div:first-child{border-right:.22mm solid #646464}
+.da-imaging-body{
+  display:grid;grid-template-columns:45.3% 54.7%;height:17mm;
+}
+.da-imaging-body>div{padding:.6mm .8mm}
+.da-imaging-body>div:first-child{border-right:.22mm solid #646464}
+.da-booking{margin-bottom:1mm;text-decoration:underline;font-size:9pt}
+.da-imaging-body .v{height:10.5mm;overflow:hidden}
+.da-other{height:17.7mm;padding:1mm}
+.da-other .v{height:15mm;overflow:hidden}
+.da-qhms{margin-top:2.2mm;border:.22mm solid #646464}
+.da-qhms-title{
+  height:4mm;padding:.6mm .8mm;border-bottom:.22mm solid #646464;
+  background:#c7c7c7;font-size:8.2pt;font-weight:700;line-height:1;
+}
+.da-collection{padding:1.2mm .8mm .7mm;font-size:8.4pt}
+.da-collection-top{
+  display:flex;align-items:flex-end;gap:1mm;white-space:nowrap;
+}
+.da-collection-top .blank-line{flex:1;min-width:5mm}
+.da-collection-bottom{
+  display:flex;align-items:center;gap:1.6mm;margin-top:2mm;
+  white-space:nowrap;
+}
+.da-collection-bottom .blank-line{flex:1;min-width:4mm;height:3mm}
+.da-validity{
+  margin-top:.8mm;text-align:center;font-size:9.4pt;
+  line-height:1.2;font-weight:700;
+}
+.da-footer{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  margin-top:11mm;font-size:8.6pt;
+}
+.da-footer .middle{text-align:center;font:10pt "Times New Roman",serif}
+.da-footer .right{text-align:right;font-size:7.8pt}
+
+/* 附加頁：清楚區分，唔冒充原表 */
+.appendix h1{font-size:18pt;margin:6mm 0 2mm}
+.appendix .subtitle{font-size:10pt;color:#444;margin-bottom:8mm}
+.appendix .meta{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:3mm;font-size:10pt;padding:4mm;
+  border:.25mm solid #444;margin-bottom:6mm;
+}
+.appendix h2{font-size:11pt;border-bottom:.25mm solid #555;padding-bottom:2mm}
+.appendix .v{font-size:10pt;line-height:1.5}
+.appendix .test-section{margin-bottom:6mm}
+.appendix .test-section .v{max-height:38mm;overflow:hidden}
+.appendix .appendix-note{
+  margin-top:8mm;font-size:9pt;line-height:1.5;
+}
+.appendix .signature-box{margin-top:8mm}
+.over-limit{outline:2px solid #df344b!important;background:#fff0f0}
+@media(max-width:1050px){
+  .layout{grid-template-columns:300px minmax(0,1fr)}
+  .sidebar{padding:12px}
+  .topbar{padding:10px 14px}
+}
+@media(max-width:720px){
+  .layout{display:block}
+  .sidebar{position:static;max-height:none}
+  .topbar{position:static;align-items:flex-start;flex-direction:column}
+}
+@page{size:A4 portrait;margin:0}
+@media print{
+  html,body{margin:0;padding:0;background:white;color:#111}
+  body{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .topbar,.sidebar,.preview-tools,.status{display:none!important}
+  .layout,.preview-area,.preview-scroll{
+    display:block;margin:0;padding:0;overflow:visible;
+  }
+  .form-group[hidden]{display:none!important}
+  .page{
+    margin:0;box-shadow:none;
+    break-after:page;page-break-after:always;
+  }
+  .page.last-print{break-after:auto;page-break-after:auto}
+  .over-limit{outline:0!important;background:transparent}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    QHMS · Referral Workspace
+    <small>共通資料填一次 · 三款 HTML 表格 · 本機操作</small>
+  </div>
+  <div class="top-actions">
+    <button id="demo">載入虛構示例</button>
+    <button id="reset" class="danger">清空全部資料</button>
+    <button id="printCurrent" class="primary">列印目前表格</button>
+    <button id="printSelected">列印已選表格</button>
+  </div>
+</header>
+
+<div class="layout">
+<aside class="sidebar">
+  <div class="notice">
+    HTML 重畫版，唔係官方電子表格。<br>
+    H01／B04 中心資料按所提供圖片轉錄；正式使用前請核對。
+    DA01 只包含第 1 頁。資料不會由本程式上傳或自動儲存，重新整理會清空。
+  </div>
+
+  <section class="section">
+    <h2>01　共通病人資料</h2>
+    <div class="section-body">
+      <label class="field"><span>轉介日期</span>
+        <input type="date" data-key="date">
+      </label>
+      <label class="field"><span>病人姓名</span>
+        <input data-key="name" autocomplete="off">
+      </label>
+      <div class="two">
+        <label class="field"><span>年齡</span>
+          <input data-key="age" inputmode="numeric" autocomplete="off">
+        </label>
+        <label class="field"><span>性別</span>
+          <select data-key="sex">
+            <option value="">未填寫</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </label>
+      </div>
+      <label class="field"><span>聯絡電話</span>
+        <input data-key="contact" type="tel" autocomplete="off">
+      </label>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>02　共通轉介醫生資料</h2>
+    <div class="section-body">
+      <label class="field"><span>醫生姓名</span>
+        <input data-key="doctor" autocomplete="off">
+      </label>
+      <label class="field"><span>Clinic Code — H01／B04</span>
+        <input data-key="clinicCode" autocomplete="off">
+      </label>
+      <div class="two">
+        <label class="field"><span>診所電話</span>
+          <input data-key="clinicTel" type="tel" autocomplete="off">
+        </label>
+        <label class="field"><span>診所傳真</span>
+          <input data-key="clinicFax" type="tel" autocomplete="off">
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>03　共通臨床資料</h2>
+    <div class="section-body">
+      <label class="field"><span>Diagnosis／診斷</span>
+        <textarea data-key="diagnosis" rows="2"></textarea>
+      </label>
+      <label class="field"><span>Signs and Symptoms／症狀</span>
+        <textarea data-key="symptoms" rows="2"></textarea>
+      </label>
+      <label class="field"><span>Date of onset／發病日期或描述</span>
+        <input data-key="onset" placeholder="例如：01/10/2026 或 2 weeks">
+      </label>
+      <p class="help">診斷與症狀會合併到原表指定欄位。內容超出空間會阻止按鈕列印，請縮短文字。</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>04　今次要求嘅檢查</h2>
+    <div class="section-body">
+      <label class="field"><span>Laboratory tests／X-ray／ECG</span>
+        <textarea data-key="testLab" rows="2"></textarea>
+      </label>
+      <label class="field"><span>CT／MRI／PET</span>
+        <textarea data-key="testAdvanced" rows="2"></textarea>
+      </label>
+      <label class="field">
+        <span>Ultrasound／Mammography／DEXA／Treadmill／Holter／Audiology</span>
+        <textarea data-key="testImaging" rows="2"></textarea>
+      </label>
+      <label class="field"><span>Other tests</span>
+        <textarea data-key="testOther" rows="2"></textarea>
+      </label>
+      <p class="help">
+        DA01：按原表四個區域帶入。<br>
+        H01／B04：原表冇獨立檢查空白欄；有輸入檢查時，
+        列印會另加一張「非原表檢查附頁」。附頁不取代預先批核文件。
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 id="planTitle">05　DA01 專用資料</h2>
+    <div class="section-body">
+
+      <div class="plan-panel" data-plan="da">
+        <label class="field"><span>Company</span>
+          <input data-key="daCompany" autocomplete="off">
+        </label>
+        <label class="field"><span>Medical Card Number — DA01</span>
+          <input data-key="daCard" autocomplete="off">
+        </label>
+        <label class="field"><span>Chit Number — DA01</span>
+          <input data-key="daChit" autocomplete="off">
+        </label>
+        <label class="field"><span>是否先天性病況？</span>
+          <select data-key="congenital">
+            <option value="">未回答</option>
+            <option value="Y">Yes</option><option value="N">No</option>
+          </select>
+        </label>
+        <label class="field"><span>是否與懷孕有關？</span>
+          <select data-key="pregnancy">
+            <option value="">未回答</option>
+            <option value="Y">Yes</option><option value="N">No</option>
+          </select>
+        </label>
+        <label class="field"><span>有否屬預防性質嘅檢查？</span>
+          <select data-key="preventive">
+            <option value="">未回答</option>
+            <option value="Y">Yes</option><option value="N">No</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="plan-panel" data-plan="h" hidden>
+        <label class="field"><span>Medical Card No. — HSBC</span>
+          <input data-key="hCard" autocomplete="off">
+        </label>
+        <label class="field"><span>Chit No. — HSBC</span>
+          <input data-key="hChit" autocomplete="off">
+        </label>
+        <p class="help">
+          請直接喺右邊原表剔選轉介分支及中心。<br>
+          原文只有 INV &gt;$3000 及 INV &lt;$3000；
+          剛好 $3,000 不會自動歸類。分支由使用者確認。
+        </p>
+      </div>
+
+      <div class="plan-panel" data-plan="b" hidden>
+        <label class="field"><span>Medical Card No. — Bupa</span>
+          <input data-key="bCard" autocomplete="off">
+        </label>
+        <label class="field"><span>Chit No. — Bupa</span>
+          <input data-key="bChit" autocomplete="off">
+        </label>
+        <p class="help">
+          請直接喺右邊原表剔選轉介分支及中心。<br>
+          按所提供 B04 文字，CT／MRI／PET 涉及額外轉介及預先批核表；
+          本 app 冇包含該額外表格。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>06　批次列印</h2>
+    <div class="section-body">
+      <div class="print-picks">
+        <label><input type="checkbox" class="print-pick" value="da" checked> DA01</label>
+        <label><input type="checkbox" class="print-pick" value="h"> HSBC</label>
+        <label><input type="checkbox" class="print-pick" value="b"> Bupa</label>
+      </div>
+      <p class="help">
+        簽名、診所蓋章及 QHMS 採樣欄留空。<br>
+        H01：H01/202601 · B04：B04/202606<br>
+        DA01：Last update 20260305
+      </p>
+    </div>
+  </section>
+</aside>
+
+<main class="preview-area">
+  <div class="preview-tools">
+    <div class="tabs" aria-label="選擇表格">
+      <button data-tab="da" class="active">DA01</button>
+      <button data-tab="h">HSBC · H01</button>
+      <button data-tab="b">Bupa · B04</button>
+    </div>
+    <span class="preview-caption" id="pageCaption">DA01 · 第 1 頁</span>
+  </div>
+  <div class="status" id="status" role="status">
+    左邊填寫資料，右邊即時更新。中心及轉介分支可直接剔選。
+  </div>
+  <div class="preview-scroll" id="preview">
+    <div id="group-da" class="form-group"></div>
+    <div id="group-h" class="form-group" hidden></div>
+    <div id="group-b" class="form-group" hidden></div>
+    <div id="group-appendix" class="form-group" hidden></div>
+  </div>
+</main>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   資料只存在記憶體：
+   無 fetch、無外部字型、無 localStorage、無病人資料上傳。
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const escapeHTML = value => String(value ?? "").replace(
+  /[&<>"']/g,
+  c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;",
+          '"':"&quot;", "'":"&#39;" }[c])
+);
+
+function localDate(){
+  const d = new Date();
+  return [
+    d.getFullYear(),
+    String(d.getMonth()+1).padStart(2,"0"),
+    String(d.getDate()).padStart(2,"0")
+  ].join("-");
+}
+
+const keys = $$("[data-key]").map(el => el.dataset.key);
+const state = Object.fromEntries(keys.map(k => [k,""]));
+state.date = localDate();
+
+let active = "da";
+let printing = false;
+
+const titles = {
+  da:"DA01",
+  h:"HSBC H01",
+  b:"Bupa B04"
+};
+
+const logo = () => `
+  <div class="qlogo" aria-label="Quality HealthCare 卓健，文字近似排版">
+    <div class="qmark">Q</div>
+    <div class="qwords">
+      <span>Quality <small>卓健</small></span>
+      <span>HealthCare</span>
+    </div>
+  </div>`;
+
+const bind = (key, cls="") =>
+  `<span class="v ${cls}" data-bind="${key}"></span>`;
+
+const mark = (key, value) =>
+  `<i class="square" data-mark="${key}" data-equals="${value}" aria-hidden="true"></i>`;
+
+function paperHead(scheme, form){
+  return `
+  <header class="paper-head">
+    ${logo()}
+    <div class="scheme-title">${scheme}</div>
+    <div class="scheme-subtitle">
+      X-Ray, Laboratory Investigation Referral Form (Form ${form})
+    </div>
+    <div class="date-top">Date: ${bind("dateDisplay")}</div>
+  </header>`;
+}
+
+function patientBlock(prefix){
+  return `
+  <div class="paper-info">
+    <div class="info-half">
+      <div class="info-heading">PATIENT'S INFORMATION</div>
+      <div class="info-line">
+        <span class="fixed">Name:</span>${bind("name")}
+      </div>
+      <div class="info-line">
+        <span class="fixed">Age:</span>${bind("age","short")}
+        <span class="sex-out">
+          ${mark("sex","M")} Male&nbsp;&nbsp;
+          ${mark("sex","F")} Female
+        </span>
+      </div>
+      <div class="info-line">
+        <span class="fixed">Chit No.:</span>${bind(prefix+"Chit")}
+      </div>
+      <div class="info-line">
+        <span class="fixed">Medical Card No.:</span>${bind(prefix+"Card")}
+      </div>
+      <div class="info-line">
+        <span class="fixed">Contact No.:</span>${bind("contact")}
+      </div>
+    </div>
+    <div class="info-half">
+      <div class="info-heading">REFFERING DOCTOR'S INFORMATION</div>
+      <div class="info-line doctor-line">
+        <span class="fixed">Doctor:</span>${bind("doctor")}
+      </div>
+      <div class="info-line doctor-line">
+        <span class="fixed">Clinic Code:</span>${bind("clinicCode")}
+      </div>
+      <div class="info-line doctor-line">
+        <span class="fixed">Tel:</span>${bind("clinicTel")}
+        <span class="fixed">Fax No:</span>${bind("clinicFax")}
+      </div>
+      <div class="info-line diagnosis-line">
+        <span class="fixed">Diagnosis / Signs and Symptoms:</span>
+        ${bind("clinical")}
+      </div>
+      <div class="info-line onset-line">
+        <span class="fixed">Date of onset</span>${bind("onset")}
+      </div>
+    </div>
+  </div>`;
+}
+
+function signatureBox(){
+  return `
+  <div class="signature-box">
+    <div>
+      <span>Doctor's Name, Signature &amp; Clinic Chop:</span>
+      <span class="signature-rule"></span>
+    </div>
+    <div>
+      <span>Patient's Signature:</span>
+      <span class="signature-rule"></span>
+    </div>
+  </div>`;
+}
+
+function routeCheck(id, text){
+  return `<label>
+    <input class="paper-check" type="checkbox" data-route="${id}">
+    ${text}
+  </label>`;
+}
+
+/* =========================================================
+   中心資料：按提供圖片版本轉錄。
+   不作即時名單、服務或保險資格核實。
+   ========================================================= */
+const ALPHA = "Alpha Medical Diagnostic Centre";
+const ALPHA_CN = "進領醫學診斷中心";
+const CENTRAL = "Central Medical Diagnostic Centre";
+const CENTRAL_CN = "宏康醫學診斷中心";
+const OTIC = "Otic Hearing & Speech Centre";
+const OTIC_CN = "奧迪聽力及言語中心";
+
+function centre(
+  district, districtCN, name, cn, address, addressCN,
+  service, tel, fax=""
+){
+  return {district,districtCN,name,cn,address,addressCN,service,tel,fax};
+}
+
+/* HSBC 第一頁 */
+const hFirst = [
+  centre("Admiralty","金鐘",ALPHA,ALPHA_CN,
+    "Unit 1605-09, 16/F, Tower 1, Admiralty Centre, 18 Harcourt Road",
+    "夏慤道18號海富中心一期16樓1605-09室",
+    "Lab + X-ray, Ultrasound, ECG, Lung Function, 24-hour Holter",
+    "2529 8668","2865 6512"),
+
+  centre("Causeway Bay","銅鑼灣",CENTRAL,CENTRAL_CN,
+    "Room 1304B, East Point Centre, 555 Hennessy Road",
+    "軒尼詩道555號東角中心13樓1304B室",
+    "Lab + X-ray, Ultrasound, DEXA, 2D Mammogram, ECG, 24-hour Holter, Lung Function, Fibroscan",
+    "2882 2266","2833 9930"),
+
+  centre("Central","中環",CENTRAL,CENTRAL_CN,
+    "1/F & 2/F, 10 Pottinger Street",
+    "砵甸乍街10號1樓及2樓",
+    "Lab + X-ray, Ultrasound, DEXA, 2D Mammogram, CT, MRI, ECG, Echo, 24-hour Holter",
+    "CT/MRI:\n3150 8120\n\nX-Ray/US/\nOthers:\n2522 0108",
+    "CT/MRI:\n3150 8121\n\nX-Ray/US/\nOthers:\n2522 1324"),
+
+  centre("Central","中環","Central PET/CT Scan Centre","宏康正電子掃描中心",
+    "4/F, EuBank Plaza, 9 Chiu Lung Street",
+    "昭隆街9號歐銀中心4樓",
+    "PET-CT","2896 1109","2896 1119"),
+
+  centre("Mongkok","旺角",ALPHA,ALPHA_CN,
+    "Unit 1220-30, 12/F, Pioneer Centre, 750 Nathan Road",
+    "彌敦道750號始創中心12樓1220-30室",
+    "Lab + X-ray, ECG, Ultrasound, DEXA, CT, MRI, Treadmill, 24-hour Holter, Echo, 3D/2D Mammogram",
+    "CT/MRI:\n2301 1318\n\nX-Ray/US/\nOthers:\n2301 1319",
+    "2845 5578"),
+
+  centre("Jordan","佐敦",ALPHA,ALPHA_CN,
+    "LG & UG Floors, 8 Jordan Road",
+    "佐敦道8號LG及UG",
+    "Lab + X-ray, Ultrasound, DEXA, 2D Mammogram, CT, MRI, Treadmill, ECG, Echo, 24-hour Holter, Lung Function",
+    "CT/MRI:\n2809 0708\n\nX-Ray/US/\nOthers:\n2809 0709",
+    "CT/MRI:\n2730 7989\n\nX-Ray/US/\nOthers:\n2730 7689"),
+
+  centre("Tsim Sha Tsui","尖沙咀",ALPHA,ALPHA_CN,
+    "Shop B, 1/F, Cameron Plaza, 23-25A Cameron Road",
+    "金馬倫道23-25A金馬倫廣場1樓B室",
+    "Lab, MRI, Ultrasound","2468 3221","2468 3211"),
+
+  centre("Tsim Sha Tsui","尖沙咀",ALPHA,ALPHA_CN,
+    "Room 608-613, 6/F, Hong Kong Pacific Centre, 28 Hankow Road",
+    "漢口道28號亞太中心6樓608-613室",
+    "Lab + X-ray, ECG, Ultrasound, Lung Function",
+    "2367 3011","2367 7262"),
+
+  centre("Tsuen Wan","荃灣",ALPHA,ALPHA_CN,
+    "Room 719-720, Nan Fung Centre, 264-298 Castle Peak Road",
+    "青山道264-298號南豐中心7樓719-720室",
+    "Lab, ECG, X-ray, Ultrasound, 2D Mammogram",
+    "2111 3313","2111 3373")
+];
+
+/* HSBC 第二頁 */
+const hSecond = [
+  centre("Jordan","佐敦",
+    "Quality Healthcare Eye and Surgery Centre","卓健醫療眼科及手術中心",
+    "Room 901-905, 9F, 238 Nathan Road, Jordan",
+    "彌敦道238號9樓901-905室",
+    "OCT, Pentacam, Fundus Photography, Visual Field, IOL Master",
+    "2243 3073","2834 9799"),
+
+  centre("Central","中環",OTIC,OTIC_CN,
+    "Room 505, 5/F, Manning House, 48 Queen's Road Central",
+    "皇后大道中48號萬年大廈5樓505室",
+    "Audiology","3579 5878","3579 5898"),
+
+  centre("Causeway Bay","銅鑼灣",OTIC,OTIC_CN,
+    "Room 1208, 12/F, East Point Centre (Old Wing), 555 Hennessy Road",
+    "軒尼詩道555號東角中心（舊翼）12樓1208室",
+    "Audiology","2295 6388","2295 6383"),
+
+  centre("Jordan","佐敦",OTIC,OTIC_CN,
+    "Room 1203-04, 12/F, The Sino Cheer Plaza, 23-29 Jordan Road",
+    "佐敦道23-29號新寶廣場12樓1203-04室",
+    "Audiology","3188 9269","3188 9259"),
+
+  centre("Tsim Sha Tsui","尖沙咀",OTIC,OTIC_CN,
+    "Room 501, Metropole Building, 53-63 Peking Road",
+    "北京道53-63號國都大廈5樓501室",
+    "Audiology","2115 9269","2115 9669"),
+
+  centre("Kwun Tong","觀塘",OTIC,OTIC_CN,
+    "Room 706, 7/F, Millennium City 2, 378 Kwun Tong Road",
+    "觀塘道378號創紀之城2期7樓706室",
+    "Audiology","2117 9473","2117 9470"),
+
+  centre("Shatin","沙田",OTIC,OTIC_CN,
+    "Room 1605, 16/F, Tower 2, Grand Central Plaza, 138 Shatin Rural Committee Road",
+    "鄉事會路138號新城市中央廣場2座16樓1605室",
+    "Audiology","3579 4278","3579 4253"),
+
+  centre("Tsuen Wan","荃灣",OTIC,OTIC_CN,
+    "Room 840, 8/F, Nan Fung Centre, 264-298 Castle Peak Road",
+    "青山道264-298號南豐中心8樓840室",
+    "Audiology","3188 9517","3571 9642"),
+
+  centre("Yuen Long","元朗",OTIC,OTIC_CN,
+    "Room 903, 9/F, HSBC Building Yuen Long, 150-160 Castle Peak Road",
+    "青山公路元朗段150-160號元朗匯豐大廈9樓903室",
+    "Audiology","3106 8088","2156 1233")
+];
+
+/* Bupa：獨立版本，唔直接引用 HSBC 服務欄 */
+const bCentres = [
+  centre("Admiralty","金鐘",ALPHA,ALPHA_CN,
+    "Unit 1605-09, 16/F, Tower 1, Admiralty Centre, 18 Harcourt Road",
+    "夏慤道18號海富中心一期16樓1605-09室",
+    "Lab, X-ray, Ultrasound, ECG, Lung Function, 24-hour Holter",
+    "2529 8668"),
+
+  centre("Causeway Bay","銅鑼灣",CENTRAL,CENTRAL_CN,
+    "Room 1304B, East Point Centre, 555 Hennessy Road",
+    "軒尼詩道555號東角中心13樓1304B室",
+    "Lab, X-ray, Ultrasound, DEXA, 2D Mammogram, ECG, 24-hour Holter, Lung Function, Fibroscan",
+    "2882 2266"),
+
+  centre("Central","中環",CENTRAL,CENTRAL_CN,
+    "1/F & 2/F, 10 Pottinger Street",
+    "砵甸乍街10號1樓及2樓",
+    "Lab, X-ray, Ultrasound, DEXA, 3D/2D Mammogram, CT, MRI, ECG, Echo, 24-hour Holter",
+    "CT/MRI:\n3150 8120\nX-Ray/US/Others:\n2522 0108"),
+
+  centre("Central","中環","Central PET/CT Scan Centre","宏康正電子掃描中心",
+    "4/F, EuBank Plaza, 9 Chiu Lung Street",
+    "昭隆街9號歐銀中心4樓",
+    "PET-CT","2896 1109"),
+
+  centre("Central","中環",ALPHA,ALPHA_CN,
+    "5/F, No. 10 Pottinger Street",
+    "砵甸乍街10號5樓",
+    "Lab, ECG, Lung Function","2525 9800"),
+
+  centre("North Point","北角",ALPHA,ALPHA_CN,
+    "Suites 2101-2102, 21/F, North Point Asia Pacific Center, 10 North Point Road",
+    "北角道10號北角亞太商業中心21樓2101-2102室",
+    "Lab, ECG","2508 6858"),
+
+  centre("Quarry Bay","鰂魚涌",ALPHA,ALPHA_CN,
+    "Suite 304, Oxford House, Taikoo Place, 979 King's Road",
+    "英皇道979號太古坊濠豐大廈304室",
+    "Lab, ECG, Lung Function","2560 2177"),
+
+  centre("Jordan","佐敦",ALPHA,ALPHA_CN,
+    "LG & UG Floors, 8 Jordan Road",
+    "佐敦道8號LG及UG",
+    "Lab, X-ray, Ultrasound, DEXA, 3D/2D Mammogram, CT, MRI, Treadmill, ECG, Echo, 24-hour Holter, Lung Function",
+    "CT/MRI:\n2809 0708\nX-Ray/US/Others:\n2809 0709"),
+
+  centre("Tsim Sha Tsui","尖沙咀",ALPHA,ALPHA_CN,
+    "Shop B, 1/F, Cameron Plaza, 23-25A Cameron Road",
+    "金馬倫道23-25A金馬倫廣場1樓B室",
+    "Lab, MRI, Ultrasound","2468 3221"),
+
+  centre("Tsim Sha Tsui","尖沙咀",ALPHA,ALPHA_CN,
+    "Room 608-613, 6/F, Hong Kong Pacific Centre, 28 Hankow Road",
+    "漢口道28號亞太中心6樓608-613室",
+    "Lab, X-ray, ECG, Ultrasound, Lung Function",
+    "2367 3011"),
+
+  centre("Kowloon Bay","九龍灣",ALPHA,ALPHA_CN,
+    "G/F, Block I, Telford Gardens",
+    "德福花園I座地下",
+    "Lab, X-ray, ECG, Ultrasound, Lung Function",
+    "2750 0782"),
+
+  centre("Kwun Tong","觀塘",ALPHA,ALPHA_CN,
+    "Unit 2502-03A, BEA Tower, Millennium City 5 (apm), 418 Kwun Tong Road",
+    "觀塘道418號創紀之城5期（apm）25樓2502-03A室",
+    "Lab, X-ray, ECG, Lung Function",
+    "2772 6628"),
+
+  centre("Mongkok","旺角",ALPHA,ALPHA_CN,
+    "Unit 1220-30, 12/F, Pioneer Centre, 750 Nathan Road",
+    "彌敦道750號始創中心12樓1220-30室",
+    "Lab, X-ray, Ultrasound, DEXA, CT, MRI, Treadmill, 3D/2D Mammogram, ECG, Echo, 24-hour Holter",
+    "CT/MRI:\n2301 1318\nX-Ray/US/Others:\n2301 1319"),
+
+  centre("Shatin","沙田",ALPHA,ALPHA_CN,
+    "Rm 905-907, New Town Tower, 10-18 Pak Hok Ting Street",
+    "白鶴汀街10-18號新城市商業大廈9樓905-907室",
+    "Lab, X-ray, ECG, Lung Function, Ultrasound",
+    "2698 9378"),
+
+  centre("Tseung Kwan O","將軍澳",ALPHA,ALPHA_CN,
+    "Shop 234-236, 1/F, Metro City Phase I",
+    "新都城一期商場1樓234-236號舖",
+    "Lab, X-ray, ECG, Lung Function",
+    "2623 7200"),
+
+  centre("Tsing Yi","青衣",ALPHA,ALPHA_CN,
+    "Shop 308D, Level 3, Maritime Square, 33 Tsing King Road",
+    "青敬路33號青衣城3樓308D號舖",
+    "Lab, X-ray, ECG, Lung Function, Ultrasound",
+    "2431 0230"),
+
+  centre("Tsuen Wan","荃灣",ALPHA,ALPHA_CN,
+    "Room 719-720, Nan Fung Centre, 264-298 Castle Peak Road",
+    "青山道264-298號南豐中心7樓719-720室",
+    "Lab, ECG, X-ray, Ultrasound, 2D Mammogram",
+    "2111 3313"),
+
+  centre("Lok Fu","樂富",ALPHA,ALPHA_CN,
+    "Shop 2213B, 2/F, Zone B, Lok Fu Place, 198 Junction Road",
+    "聯合道198號樂富廣場B區2樓2213B號舖",
+    "Lab, ECG, X-ray, Ultrasound",
+    "2219 5599"),
+
+  centre("Tuen Mun","屯門",ALPHA,ALPHA_CN,
+    "1/F, South Wing, Tuen Mun Parklane Square, No. 2 Tuen Hi Road",
+    "屯喜路2號屯門柏麗廣場南翼1樓",
+    "Lab + X-ray, ECG, Lung Function",
+    "2994 2468"),
+
+  centre("Yuen Long","元朗",ALPHA,ALPHA_CN,
+    "Shop 25, G/F, Luccia Square, No. 38 Yuen Long On Ning Road",
+    "元朗安寧路38號世宙商場地下25號舖",
+    "Lab, ECG, Lung Function",
+    "2976 0866"),
+
+  centre("Tung Chung","東涌",ALPHA,ALPHA_CN,
+    "Shop 18, G/F, Tung Chung Crescent, 1 Hing Tung Street",
+    "興東街1號東堤灣畔地下18號舖",
+    "Lab, ECG","2403 6623")
+];
+
+function directory(rows, plan, options={}){
+  const b = plan === "b";
+  const widths = b ? [4,16,104,40,22] : [4,15,85,33,25,24];
+  const header = options.noHeader ? "" : `
+    <thead><tr>
+      <th></th><th>District</th><th>Centre</th>
+      <th>Service</th><th>Tel</th>${b?"":"<th>Fax</th>"}
+    </tr></thead>`;
+
+  return `
+  <table class="directory ${b?"b-directory":"h-directory"}">
+    <colgroup>
+      ${widths.map(w=>`<col style="width:${w}mm">`).join("")}
+    </colgroup>
+    ${header}
+    <tbody>
+      ${rows.map((r,i)=>`
+      <tr class="r${i}">
+        <td class="pick">
+          <input type="checkbox" class="paper-check"
+            data-centre="${plan}-${options.offset||0}-${i}"
+            aria-label="${escapeHTML("選擇 "+r.name+" "+r.district+" "+r.address)}">
+        </td>
+        <td class="district">
+          ${escapeHTML(r.district)}<br>
+          <span class="cn">${escapeHTML(r.districtCN)}</span>
+        </td>
+        <td>
+          <div class="centre-name">
+            ${escapeHTML(r.name)}
+            <span class="cn">${escapeHTML(r.cn)}</span>
+            ${r.name===OTIC?"":" *"}
+          </div>
+          <div>${escapeHTML(r.address)}</div>
+          <div class="cn">${escapeHTML(r.addressCN)}</div>
+        </td>
+        <td class="service">${escapeHTML(r.service)}</td>
+        <td class="tel">${escapeHTML(r.tel)}</td>
+        ${b?"":`<td class="fax">${escapeHTML(r.fax)}</td>`}
+      </tr>`).join("")}
+      ${b?`
+      <tr class="other-row">
+        <td class="pick">
+          <input type="checkbox" class="paper-check" data-centre="b-other"
+            aria-label="Other Bupa designated centre">
+        </td>
+        <td colspan="4">
+          Other Bupa designated centre
+          (please remind patient to check with Bupa for updated centre details)
+        </td>
+      </tr>`:""}
+    </tbody>
+  </table>`;
+}
+
+/* =========================================================
+   HSBC H01 — 兩頁
+   ========================================================= */
+$("#group-h").innerHTML = `
+<article class="page hsbc">
+  <div class="paper-content">
+    ${paperHead("HSBC Insurance Scheme","H01")}
+    ${patientBlock("h")}
+
+    <div class="route">
+      <div class="h-route-block">
+        ${routeCheck("h-over",
+          "INV &gt;$3000 (For Red, Yellow and Silver Card)")}
+        ${routeCheck("h-advanced",
+          "CT Scan, MRI, PET Scan (For Red, Yellow and Silver Card)")}
+        <p>Please submit HSBC Outpatient Pre-authorization Form to QHMS
+          (fax: 2521 7971)</p>
+      </div>
+      <div class="h-route-block">
+        ${routeCheck("h-under",
+          "INV &lt;$3000 (For Red, Yellow and Silver Card)")}
+        ${routeCheck("h-green",
+          "All INV, CT Scan, MRI, PET Scan (For Green and Gold Card)")}
+        <p>Please refer patient to the following HSBC designated Centre
+          (Not require to fax to QHMS)</p>
+      </div>
+    </div>
+
+    ${directory(hFirst,"h")}
+    <div class="version">H01/202601</div>
+  </div>
+</article>
+
+<article class="page h-second">
+  <div class="paper-content">
+    <header class="paper-head">${logo()}</header>
+    ${directory(hSecond,"h",{noHeader:true,offset:9})}
+    ${signatureBox()}
+  </div>
+  <div class="version">H01/202601</div>
+</article>`;
+
+/* =========================================================
+   Bupa B04 — 一頁
+   ========================================================= */
+$("#group-b").innerHTML = `
+<article class="page bupa">
+  <div class="paper-content">
+    ${paperHead("Bupa HealthNet","B04")}
+    ${patientBlock("b")}
+
+    <div class="route b-route">
+      ${routeCheck("b-advanced",
+        "CT Scan, MRI &amp; PET Scan: Please submit " +
+        "<u>Advanced Imaging Referral and Pre-Authorisation Form</u> to QHMS")}
+
+      ${routeCheck("b-other",
+        "Blood test, Urine test, Stool Exam, X-ray, ECG, Mammogram, Ultrasound and others:")}
+      <div class="indent">
+        Please refer patient to the following Bupa designated Centre
+        (Not require to fax to QHMS)
+      </div>
+    </div>
+
+    ${directory(bCentres,"b")}
+    ${signatureBox()}
+
+    <div class="b-footer">
+      <span>Imaging booking hotline: 8100 0501</span>
+      <span>Imaging booking WhatsApp: 8301 8301</span>
+      <span>B04/202606</span>
+    </div>
+  </div>
+</article>`;
+
+/* =========================================================
+   DA01 — 延續之前版面
+   ========================================================= */
+function daQuestion(text,key){
+  return `
+    <div class="da-question">
+      <span>${text}</span>
+      <span>${mark(key,"Y")}Yes</span>
+      <span>${mark(key,"N")}No</span>
+    </div>`;
+}
+
+$("#group-da").innerHTML = `
+<article class="page da01">
+<div class="paper-content">
+  <header class="da-header">
+    <div class="da-confidential">CONFIDENTIAL</div>
+    ${logo()}
+    <div class="da-heading">
+      <h1>Quality HealthCare Medical Services Ltd.</h1>
+      <h2><u>Form DA01</u> –
+        Direct Access for Appointed Laboratories &amp; Diagnostic Imaging Centre
+      </h2>
+    </div>
+    <p class="da-intro">
+      Patients can use medical card at the appointed centres
+      (see reverse side for details) for investigations by<br>
+      presenting together with this referral form.
+    </p>
+    <div class="da-date">Date: ${bind("dateDisplay")}</div>
+  </header>
+
+  <section class="da-form">
+    <div class="da-bar">REFERRING DOCTOR’S INFORMATION</div>
+    <div class="da-doctor">
+      <div class="da-doctor-left">
+        <div class="da-inline">Doctor Name: ${bind("doctor")}</div>
+        <div>Doctor’s Signature &amp; Clinic chop:</div>
+      </div>
+      <div class="da-doctor-right">
+        <div>Clinic Tel:<div class="v" data-bind="clinicTel"></div></div>
+        <div>Clinic Fax:<div class="v" data-bind="clinicFax"></div></div>
+      </div>
+    </div>
+
+    <div class="da-bar">PATIENT’S INFORMATION</div>
+    <div class="da-patient-top">
+      <div class="da-inline">Name: ${bind("name")}</div>
+      <div>
+        <div class="da-age">Age: ${bind("age")}</div>
+        <div class="da-gender">
+          ${mark("sex","M")}Male&nbsp;&nbsp;${mark("sex","F")}Female
+        </div>
+      </div>
+      <div class="da-contact">
+        Contact Number:<div class="v" data-bind="contact"></div>
+      </div>
+    </div>
+
+    <div class="da-patient-second">
+      <div>Company:<div class="v" data-bind="daCompany"></div></div>
+      <div>Medical Card Number:<div class="v" data-bind="daCard"></div></div>
+      <div>Chit Number:<div class="v" data-bind="daChit"></div></div>
+    </div>
+
+    <div class="da-consent">
+      <p>
+        I hereby acknowledge that expenses that I will incur for the
+        investigations as ordered by my doctor will be charged towards
+        my Medical Scheme account and agree to be personally liable for
+        any charges which are in excess of my medical scheme coverage
+        or which are exclusion items under the medical scheme.
+      </p>
+      <div class="da-consent-sign">
+        Patient’s / Guardian’s Signature:
+        <span class="blank-line"></span>
+      </div>
+    </div>
+
+    <div class="da-bar">CLINICAL DIAGNOSIS</div>
+    <div class="da-diagnosis">
+      <div>Diagnosis / Sign and Symptoms:</div>
+      <div class="v" data-bind="clinical"></div>
+    </div>
+
+    <div class="da-clinical-bottom">
+      <div class="da-onset">
+        <div>Date of Onset:</div>
+        <div class="v" data-bind="onset"></div>
+      </div>
+      <div class="da-questions">
+        ${daQuestion("Is the condition congenital:","congenital")}
+        ${daQuestion("Is the condition related to pregnancy:","pregnancy")}
+        ${daQuestion("Are any of these tests preventive in nature?","preventive")}
+      </div>
+    </div>
+
+    <div class="da-bar">LABORATORY TESTS / X-RAY / ECG</div>
+    <div class="da-lab"><div class="v" data-bind="testLab"></div></div>
+
+    <div class="da-imaging-head">
+      <div>CT / MRI / PET</div>
+      <div>
+        ULTRASOUND / MAMMOGRAPHY / DEXA / TREADMILL<br>
+        24-HOUR HOLTER / AUDIOLOGY
+      </div>
+    </div>
+
+    <div class="da-imaging-body">
+      <div>
+        <div class="da-booking">Advance booking is needed</div>
+        <div class="v" data-bind="testAdvanced"></div>
+      </div>
+      <div>
+        <div class="da-booking">Advance booking is needed</div>
+        <div class="v" data-bind="testImaging"></div>
+      </div>
+    </div>
+
+    <div class="da-bar">Other tests</div>
+    <div class="da-other"><div class="v" data-bind="testOther"></div></div>
+  </section>
+
+  <section class="da-qhms">
+    <div class="da-qhms-title">To be completed by QHMS:</div>
+    <div class="da-collection">
+      <div class="da-collection-top">
+        <span>Name/Signature of Blood/Specimen Collector:</span>
+        <span class="blank-line"></span>
+        <span>Date/Time of Blood/Specimen Collection:</span>
+        <span class="blank-line"></span>
+      </div>
+      <div class="da-collection-bottom">
+        <span>Types of Specimen Collected:</span>
+        <span><i class="square"></i>CB</span>
+        <span><i class="square"></i>EDTA</span>
+        <span><i class="square"></i>FB</span>
+        <span><i class="square"></i>Urine</span>
+        <span><i class="square"></i>Stool</span>
+        <span><i class="square"></i>Swab</span>
+        <span><i class="square"></i>Others:</span>
+        <span class="blank-line"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="da-validity">
+    ❧ This referral is valid for 28days with effect from date of issuance ❧
+  </div>
+
+  <footer class="da-footer">
+    <div></div>
+    <div class="middle">Page&nbsp; 1&nbsp; of&nbsp; 4</div>
+    <div class="right">Last update: 20260305</div>
+  </footer>
+</div>
+</article>`;
+
+/* =========================================================
+   檢查附加頁：H01／B04 無獨立欄位，不亂填到診斷欄
+   ========================================================= */
+const testDefinitions = [
+  ["testLab","Laboratory tests / X-ray / ECG"],
+  ["testAdvanced","CT / MRI / PET"],
+  ["testImaging",
+   "Ultrasound / Mammography / DEXA / Treadmill / 24-hour Holter / Audiology"],
+  ["testOther","Other tests"]
+];
+
+function hasTests(){
+  return testDefinitions.some(([key])=>state[key].trim());
+}
+
+function updateAppendix(plans){
+  const applicable = plans.filter(p=>p==="h"||p==="b");
+  if(!applicable.length || !hasTests()){
+    $("#group-appendix").innerHTML="";
+    $("#group-appendix").hidden=true;
+    return;
+  }
+
+  $("#group-appendix").innerHTML=`
+  <article class="page appendix">
+    <div class="paper-content">
+      <h1>Investigation Request</h1>
+      <div class="subtitle">
+        Supplementary sheet · 檢查附加頁（非 QHMS 原表）<br>
+        Accompanies: ${applicable.map(p=>titles[p]).join(" / ")}
+      </div>
+
+      <div class="meta">
+        <div>Patient: ${bind("name")}</div>
+        <div>Date: ${bind("dateDisplay")}</div>
+        <div>Age: ${bind("age")}</div>
+        <div>Contact: ${bind("contact")}</div>
+        <div>Referring doctor: ${bind("doctor")}</div>
+        <div>Clinic tel: ${bind("clinicTel")}</div>
+        ${applicable.map(p=>`
+          <div>${titles[p]} Card No.: ${bind(p+"Card")}</div>
+          <div>${titles[p]} Chit No.: ${bind(p+"Chit")}</div>
+        `).join("")}
+      </div>
+
+      ${testDefinitions.filter(([key])=>state[key].trim()).map(([key,title])=>`
+        <section class="test-section">
+          <h2>${title}</h2>
+          <div class="v" data-bind="${key}"></div>
+        </section>
+      `).join("")}
+
+      <div class="appendix-note">
+        This supplementary sheet lists requested investigations only.
+        It is not a pre-authorisation approval and does not replace
+        any additional referral or pre-authorisation form.<br>
+        此頁只列出要求檢查項目，不代表已獲批核，
+        亦不取代所需額外轉介或預先批核表格。
+      </div>
+
+      <div class="signature-box">
+        <div>
+          <span>Doctor’s Signature &amp; Clinic Chop:</span>
+          <span class="signature-rule"></span>
+        </div>
+        <div>
+          <span>Date:</span>
+          <span class="signature-rule"></span>
+        </div>
+      </div>
+    </div>
+  </article>`;
+  $("#group-appendix").hidden=false;
+}
+
+function displayDate(value){
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
+}
+
+function derived(){
+  return {
+    ...state,
+    dateDisplay:displayDate(state.date),
+    clinical:[state.diagnosis.trim(),state.symptoms.trim()]
+      .filter(Boolean).join("; ")
+  };
+}
+
+function renderValues(){
+  const data = derived();
+  $$("[data-bind]").forEach(el=>{
+    el.textContent = data[el.dataset.bind] || "";
+  });
+  $$("[data-mark]").forEach(el=>{
+    el.classList.toggle(
+      "checked",
+      data[el.dataset.mark] === el.dataset.equals
+    );
+  });
+}
+
+function syncInputs(){
+  $$("[data-key]").forEach(el=>{
+    el.value = state[el.dataset.key] || "";
+  });
+}
+
+function setStatus(text,error=false){
+  $("#status").textContent=text;
+  $("#status").classList.toggle("error",error);
+}
+
+function setActive(plan){
+  active=plan;
+  ["da","h","b"].forEach(p=>{
+    $("#group-"+p).hidden = p!==plan;
+  });
+  $$("[data-tab]").forEach(el=>{
+    const selected=el.dataset.tab===plan;
+    el.classList.toggle("active",selected);
+    el.setAttribute("aria-pressed",String(selected));
+  });
+  $$(".plan-panel").forEach(el=>{
+    el.hidden=el.dataset.plan!==plan;
+  });
+  $("#planTitle").textContent="05　"+titles[plan]+" 專用資料";
+
+  updateAppendix([plan]);
+  renderValues();
+  updateCaption();
+  setStatus(
+    plan==="da"
+      ? "DA01 只重畫第 1 頁；原表標示共 4 頁，其餘 3 頁未包含。"
+      : plan==="h"
+      ? "H01 兩頁。分支及中心請直接剔選；未有自動判定保險資格或批核狀態。"
+      : "B04 一頁。QR code 未重製；熱線及中心資料按所提供版本轉錄。"
+  );
+}
+
+function updateCaption(){
+  let text=active==="da"?"DA01 · 第 1 頁":
+           active==="h"?"HSBC H01 · 2 頁":"Bupa B04 · 1 頁";
+  if(active!=="da" && hasTests()) text+=" ＋ 檢查附頁";
+  $("#pageCaption").textContent=text;
+}
+
+$$("[data-key]").forEach(el=>{
+  el.addEventListener("input",()=>{
+    state[el.dataset.key]=el.value;
+    updateAppendix([active]);
+    renderValues();
+    updateCaption();
+    $$(".over-limit").forEach(node=>node.classList.remove("over-limit"));
+  });
+});
+
+$$("[data-tab]").forEach(el=>{
+  el.addEventListener("click",()=>setActive(el.dataset.tab));
+});
+
+/* =========================================================
+   溢出檢查
+   - 不自動縮細到不可讀
+   - 不靜默截字
+   - 列印按鈕會檢查；Ctrl+P 不經這個檢查
+   ========================================================= */
+function visiblePages(){
+  return $$(".form-group:not([hidden]) .page");
+}
+
+function checkOverflow(){
+  $$(".over-limit").forEach(el=>el.classList.remove("over-limit"));
+  const problems=[];
+
+  visiblePages().forEach((page,index)=>{
+    page.querySelectorAll(".v").forEach(el=>{
+      if(!el.textContent.trim()) return;
+      const style=getComputedStyle(el);
+      if(style.display==="inline") return;
+
+      let bad = el.scrollHeight > el.clientHeight+2 ||
+                el.scrollWidth > el.clientWidth+2;
+
+      const parent=el.parentElement;
+      if(parent && getComputedStyle(parent).overflow==="hidden"){
+        const a=el.getBoundingClientRect();
+        const b=parent.getBoundingClientRect();
+        bad = bad || a.bottom>b.bottom+1 || a.right>b.right+1;
+      }
+      if(bad){
+        el.classList.add("over-limit");
+        problems.push(`第 ${index+1} 頁：${el.dataset.bind||"文字欄位"}`);
+      }
+    });
+
+    const content=page.querySelector(".paper-content");
+    if(content){
+      const rect=page.getBoundingClientRect();
+      const bottom=content.getBoundingClientRect().bottom;
+      const available=rect.bottom-parseFloat(getComputedStyle(page).paddingBottom);
+      if(bottom>available+2){
+        content.classList.add("over-limit");
+        problems.push(`第 ${index+1} 頁：整頁內容超出預留高度`);
+      }
+    }
+  });
+  return [...new Set(problems)];
+}
+
+function finishPrint(){
+  if(!printing) return;
+  printing=false;
+  $$(".last-print").forEach(el=>el.classList.remove("last-print"));
+  setActive(active);
+}
+
+async function printPlans(plans){
+  if(!plans.length){
+    alert("請先選擇至少一份表格。");
+    return;
+  }
+
+  ["da","h","b"].forEach(p=>{
+    $("#group-"+p).hidden=!plans.includes(p);
+  });
+  updateAppendix(plans);
+  renderValues();
+
+  if(document.fonts && document.fonts.ready){
+    await document.fonts.ready;
+  }
+  await new Promise(resolve=>requestAnimationFrame(resolve));
+
+  const problems=checkOverflow();
+  if(problems.length){
+    setStatus("未列印：有文字或頁面超出空間，請檢查紅框。",true);
+    alert(
+      "未列印，請先處理以下問題：\n\n"+
+      problems.join("\n")+
+      "\n\n請縮短欄位內容；如為整頁溢出，需校準表格字型或間距。"+
+      "\n唔會自動截走文字或將表格縮細。"
+    );
+    // 保留待印頁面及紅框，方便檢查。
+    return;
+  }
+
+  const pages=visiblePages();
+  $$(".last-print").forEach(el=>el.classList.remove("last-print"));
+  if(pages.length) pages[pages.length-1].classList.add("last-print");
+
+  printing=true;
+  setStatus(
+    `準備列印 ${pages.length} 頁。請於預覽選 A4、100%、無邊界、關閉頁首／頁尾。`
+  );
+  window.print();
+
+  // 一般桌面瀏覽器由 afterprint 還原，避免過早改動列印內容。
+}
+
+window.addEventListener("afterprint",finishPrint);
+
+$("#printCurrent").addEventListener("click",()=>{
+  printPlans([active]);
+});
+$("#printSelected").addEventListener("click",()=>{
+  printPlans($$(".print-pick:checked").map(el=>el.value));
+});
+
+/* =========================================================
+   清空／虛構示例
+   ========================================================= */
+function clearAll(){
+  keys.forEach(k=>state[k]="");
+  state.date=localDate();
+  $$("[data-route],[data-centre]").forEach(el=>el.checked=false);
+  syncInputs();
+  setActive(active);
+}
+
+$("#reset").addEventListener("click",()=>{
+  if(confirm("清空病人、醫生、各計劃卡號、臨床資料及所有剔選？")){
+    clearAll();
+  }
+});
+
+$("#demo").addEventListener("click",()=>{
+  if(!confirm("會覆蓋現有輸入，載入純虛構版面測試資料。繼續？")) return;
+
+  clearAll();
+  Object.assign(state,{
+    name:"SAMPLE PATIENT — TEST ONLY",
+    age:"40",
+    sex:"F",
+    contact:"0000 0000",
+    doctor:"DR SAMPLE — TEST ONLY",
+    clinicCode:"DEMO",
+    clinicTel:"0000 0000",
+    clinicFax:"0000 0000",
+    diagnosis:"Sample diagnosis",
+    symptoms:"Sample symptoms",
+    onset:"Sample onset",
+    daCompany:"DEMO COMPANY",
+    daCard:"DA-DEMO-001",
+    daChit:"DA-001",
+    hCard:"HSBC-DEMO-002",
+    hChit:"H-002",
+    bCard:"BUPA-DEMO-003",
+    bChit:"B-003",
+    testLab:"SAMPLE LAB REQUEST — NOT FOR CLINICAL USE",
+    testAdvanced:"",
+    testImaging:"SAMPLE IMAGING REQUEST — NOT FOR CLINICAL USE",
+    testOther:"",
+    congenital:"",
+    pregnancy:"",
+    preventive:""
+  });
+  syncInputs();
+  setActive(active);
+});
+
+syncInputs();
+setActive("da");
+</script>
+<!-- ======================================================
+     DA01 第 2–4 頁中心列表
+     貼在原本 qhms-app.html 的 </body> 前
+     需要保留上一版 app 的完整程式
+     ====================================================== -->
+
+<style>
+/* ── DA01 中心列表：獨立樣式，不影響 HSBC / Bupa ── */
+.da-centres-page{
+  padding:10mm 12mm;
+}
+
+.da-centres-head{
+  position:relative;
+  height:17mm;
+}
+
+.da-centres-head .qlogo{
+  top:0;
+  right:0;
+}
+
+.da-centres-confidential{
+  position:absolute;
+  left:0;
+  bottom:5.4mm;
+  font-size:9.5pt;
+  font-weight:700;
+}
+
+.da-centres-note{
+  position:absolute;
+  left:0;
+  bottom:1mm;
+  font-size:8.5pt;
+  font-weight:700;
+}
+
+.da-centres-page.continuation .da-centres-head{
+  height:15mm;
+}
+
+.da-centres-page.continuation .da-centres-confidential{
+  bottom:1mm;
+}
+
+.da-centres-table{
+  width:100%;
+  table-layout:fixed;
+  border-collapse:collapse;
+  color:#111;
+  font-family:Arial,"Microsoft JhengHei","PingFang TC",sans-serif;
+  font-size:7.5pt;
+  line-height:1.15;
+}
+
+.da-centres-table th,
+.da-centres-table td{
+  border:.2mm solid #333;
+  padding:.75mm .8mm;
+  vertical-align:middle;
+  overflow-wrap:break-word;
+}
+
+.da-centres-table thead th{
+  height:4.8mm;
+  text-align:left;
+  font-weight:700;
+  background:#f4f4f4;
+}
+
+.da-centres-table .da-region th{
+  padding:.55mm .8mm;
+  height:4.4mm;
+  background:#f2f2f2;
+  font-size:8pt;
+  text-align:left;
+}
+
+.da-centres-district{
+  font-weight:700;
+  font-size:7.7pt;
+  line-height:1.2;
+}
+
+.da-centres-district span{
+  display:block;
+  margin-top:.7mm;
+}
+
+.da-centres-name{
+  display:block;
+  font-weight:700;
+  line-height:1.16;
+  cursor:pointer;
+}
+
+.da-centres-name .paper-check{
+  width:2mm;
+  height:2mm;
+  margin-right:1mm;
+  vertical-align:-.25mm;
+}
+
+.da-centres-name .paper-check:checked::after{
+  font-size:8pt;
+}
+
+.da-centres-address{
+  margin-top:.7mm;
+  line-height:1.18;
+}
+
+.da-centres-service{
+  font-size:7.4pt;
+  line-height:1.16;
+}
+
+.da-centres-tel{
+  text-align:center;
+  white-space:pre-line;
+  font-size:7.6pt;
+  line-height:1.16;
+}
+
+.da-centres-booking{
+  margin-top:.7mm;
+}
+
+.da-centres-footer{
+  position:absolute;
+  left:12mm;
+  right:12mm;
+  bottom:10mm;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  align-items:end;
+  color:#111;
+  font-size:7.8pt;
+}
+
+.da-centres-footer .page-number{
+  text-align:center;
+  font-family:"Times New Roman",serif;
+  font-size:10pt;
+}
+
+.da-centres-footer .updated{
+  text-align:right;
+}
+
+@media print{
+  .da-centres-table{
+    print-color-adjust:exact;
+    -webkit-print-color-adjust:exact;
+  }
+
+  .da-centres-table tr{
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+}
+</style>
+
+<script>
+(() => {
+  "use strict";
+
+  // 避免重複貼入時新增兩次。
+  const host = document.getElementById("group-da");
+
+  if (!host) {
+    console.error("DA01 centre list：找不到原 app 的 group-da。");
+    return;
+  }
+
+  if (host.dataset.centreListAdded === "yes") return;
+
+  /*
+   * 本模組沿用上一版 app 的：
+   * escapeHTML、logo、active、setActive、
+   * updateCaption、setStatus 及 data-centre 清空機制。
+   *
+   * 中心資料獨立轉錄自 DA01：
+   * Last update: 20260305
+   * 不引用 HSBC / Bupa 的中心地址或電話。
+   */
+
+  const NAMES = {
+    alpha: "Alpha Medical Diagnostic Centre",
+    central: "Central Medical Diagnostic Centre",
+    pet: "Central PET/CT Scan Centre",
+    qh: "Quality HealthCare Medical Centre",
+    otic: "Otic Hearing & Speech Centre",
+    irad: "iRad Medical Diagnostic Centre",
+    logos: "Logos Medical & Diagnosis",
+    yuenfoong: "Yuen Foong Medical Diagnostic Centre"
+  };
+
+  const DISTRICTS = {
+    admiralty: ["Admiralty", "金鐘"],
+    causeway: ["Causeway Bay", "銅鑼灣"],
+    central: ["Central", "中環"],
+    northpoint: ["North Point", "北角"],
+    quarrybay: ["Quarry Bay", "鰂魚涌"],
+    stanley: ["Stanley", "赤柱"],
+    jordan: ["Jordan", "佐敦"],
+    kowloonbay: ["Kowloon Bay", "九龍灣"],
+    kwuntong: ["Kwun Tong", "觀塘"],
+    mongkok: ["Mongkok", "旺角"],
+    tsimshatsui: ["Tsim Sha Tsui", "尖沙咀"],
+    wongtaisin: ["Wong Tai Sin", "黃大仙"],
+    discoverybay: ["Discovery Bay", "愉景灣"],
+    maonshan: ["Ma On Shan", "馬鞍山"],
+    shatin: ["Shatin", "沙田"],
+    shekmun: ["Shek Mun", "石門"],
+    taipo: ["Tai Po", "大埔"],
+    tseungkwano: ["Tseung Kwan O", "將軍澳"],
+    tsingyi: ["Tsing Yi", "青衣"],
+    tsuenwan: ["Tsuen Wan", "荃灣"],
+    tuenmun: ["Tuen Mun", "屯門"],
+    tungchung: ["Tung Chung", "東涌"],
+    yuenlong: ["Yuen Long", "元朗"]
+  };
+
+  function entry(
+    district,
+    type,
+    address,
+    service,
+    tel,
+    booking = false,
+    starred = false
+  ) {
+    return {
+      district,
+      name: NAMES[type],
+      address,
+      service,
+      tel,
+      booking,
+      starred
+    };
+  }
+
+  function region(text) {
+    return { region: text };
+  }
+
+  /* ======================================================
+     DA01 — Page 2 of 4
+     香港島 + 佐敦首兩個中心
+     15 個中心條目
+     ====================================================== */
+
+  const page2 = [
+    region("Hong Kong Island 香港島"),
+
+    entry(
+      "admiralty",
+      "alpha",
+      "Unit 1605-11A, 16/F, Tower 1, Admiralty Centre, 18 Harcourt Road",
+      "Ultrasound, ECG, Lung Function, Treadmill, 24-hour Holter, ECHO, X-Ray, Lab",
+      "2529 8668",
+      true,
+      true
+    ),
+
+    entry(
+      "causeway",
+      "central",
+      "Room 1304B, East Point Centre, 555 Hennessy Road",
+      "Ultrasound, DEXA, 2D Mammogram, ECG, 24-hour Holter, Lung Function, Fibroscan, X-Ray, Lab",
+      "2882 2266",
+      true,
+      true
+    ),
+
+    entry(
+      "causeway",
+      "qh",
+      "Suite 2405-06, 24/F, World Trade Centre, 280 Gloucester Road",
+      "Lab, ECG, Lung Function",
+      "2890 3118",
+      true
+    ),
+
+    entry(
+      "causeway",
+      "otic",
+      "Room 1208, 12/F, East Point Centre (Old Wing), 555 Hennessy Road",
+      "Hearing Test",
+      "2296 6388"
+    ),
+
+    entry(
+      "central",
+      "central",
+      "1/F & 2/F, 10 Pottinger Street",
+      "CT, MRI, Ultrasound, DEXA, 2D Mammogram, ECG, Echo, 24-hour Holter, X-Ray, Lab",
+      "CT/MRI:\n3150 8120\nX-Ray/US/Other:\n2522 0108",
+      true,
+      true
+    ),
+
+    entry(
+      "central",
+      "pet",
+      "4/F, EuBank Plaza, 9 Chiu Lung Street",
+      "PET-CT",
+      "2896 1109",
+      true,
+      true
+    ),
+
+    entry(
+      "central",
+      "qh",
+      "5/F, No. 10 Pottinger Street",
+      "ECG, Lung Function, Lab",
+      "2525 9800",
+      true
+    ),
+
+    entry(
+      "central",
+      "qh",
+      "Rm 617-629, 6/F, Prince's Building, 10 Chater Road",
+      "Ultrasound, ECG, Lung Function, Treadmill, 24-hour Holter, ECHO, X-Ray, Lab, 3D Mammogram",
+      "2523 8166",
+      true
+    ),
+
+    entry(
+      "central",
+      "irad",
+      "12/F & 13/F, The L Place, No. 139 Queen's Road Central",
+      "CT, MRI, Ultrasound, 2D Mammogram, X-Ray",
+      "2523 2798"
+    ),
+
+    entry(
+      "central",
+      "otic",
+      "Room 505, 5/F, Manning House, 48 Queen's Road Central",
+      "Hearing Test",
+      "3579 5878"
+    ),
+
+    entry(
+      "northpoint",
+      "alpha",
+      "Suites 2101-2102, 21/F, North Point Asia Pacific Center, 10 North Point Road",
+      "ECG, Lung Function, Lab",
+      "2508 6858",
+      true,
+      true
+    ),
+
+    entry(
+      "quarrybay",
+      "alpha",
+      "Suite 304, Oxford House, Taikoo Place, 979 King's Road",
+      "Lab, ECG, Lung Function",
+      "2560 2177",
+      true,
+      true
+    ),
+
+    entry(
+      "stanley",
+      "qh",
+      "Shop 406, Level 4, Shopping Centre, Stanley Plaza",
+      "Lab, ECG",
+      "2812 2392",
+      true
+    ),
+
+    region("Kowloon 九龍"),
+
+    entry(
+      "jordan",
+      "alpha",
+      "LG & UG Floors, 8 Jordan Road",
+      "CT, MRI, Ultrasound, 2D Mammogram, DEXA, Treadmill, ECG, Echo, 24-hour Holter, Lung Function, X-Ray, Lab",
+      "CT/MRI:\n2809 0708\nX-Ray/US/Other:\n2809 0709",
+      true,
+      true
+    ),
+
+    entry(
+      "jordan",
+      "irad",
+      "Room 701-704, 7/F, No. 238 Nathan Road",
+      "MRI",
+      "2320 2377"
+    )
+  ];
+
+  /* ======================================================
+     DA01 — Page 3 of 4
+     九龍續頁 + 新界及離島
+     20 個中心條目
+     ====================================================== */
+
+  const page3 = [
+    entry(
+      "jordan",
+      "otic",
+      "Room 1203-04, 12/F, The Sino Cheer Plaza, 23-29 Jordan Road",
+      "Hearing Test",
+      "3188 9269"
+    ),
+
+    entry(
+      "jordan",
+      "logos",
+      "Room 1004, 10/F, Champion Building, 301-309 Nathan Road",
+      "Ultrasound, Mammogram",
+      "3460 2063"
+    ),
+
+    entry(
+      "kowloonbay",
+      "alpha",
+      "G/F, Block I, Telford Gardens",
+      "ECG, Ultrasound, Lung Function, X-Ray, Lab",
+      "2750 0782",
+      false,
+      true
+    ),
+
+    entry(
+      "kwuntong",
+      "alpha",
+      "Unit 2502-03A, BEA Tower, Millennium City 5 (apm), 418 Kwun Tong Road",
+      "ECG, Lung Function, X-Ray, Lab, Ultrasound",
+      "2772 6628",
+      true,
+      true
+    ),
+
+    entry(
+      "kwuntong",
+      "otic",
+      "Room 706, 7/F, Millennium City 2, 378 Kwun Tong Road",
+      "Hearing Test",
+      "2117 9473"
+    ),
+
+    entry(
+      "mongkok",
+      "alpha",
+      "Unit 1220-30, 12/F, Pioneer Centre, 750 Nathan Road",
+      "CT, MRI, Ultrasound, 3D/2D Mammogram, DEXA, ECG, Echo, Treadmill, 24-hour Holter, X-Ray, Lab",
+      "CT/MRI:\n2301 1318\nX-Ray/US/Other:\n2301 1319",
+      true,
+      true
+    ),
+
+    entry(
+      "mongkok",
+      "irad",
+      "Rm 1215, 12/F, Office Tower One, Grand Plaza, No. 639 Nathan Road",
+      "CT, MRI, Ultrasound, 2D Mammogram, X-Ray, FNA, Biopsy",
+      "2392 2334"
+    ),
+
+    entry(
+      "tsimshatsui",
+      "alpha",
+      "Shop B, 1/F, Cameron Plaza, 23-25A Cameron Road",
+      "MRI, Ultrasound, Lab",
+      "2468 3221",
+      true,
+      true
+    ),
+
+    entry(
+      "tsimshatsui",
+      "alpha",
+      "Rm 608-613, 6/F, Hong Kong Pacific Centre, 28 Hankow Road",
+      "ECG, Ultrasound, Lung Function, X-Ray, Lab, Treadmill",
+      "2367 3011",
+      true,
+      true
+    ),
+
+    entry(
+      "tsimshatsui",
+      "qh",
+      "Concession No. KOW 83, L2 Airport Express Line Arrival Concourse, MTR Kowloon Station, Tsim Sha Tsui",
+      "ECG, Lab",
+      "2314 8380",
+      true
+    ),
+
+    entry(
+      "tsimshatsui",
+      "otic",
+      "Room 1411, 14/F, Hong Kong Pacific Centre, 28 Hankow Road",
+      "Hearing Test",
+      "2115 9269"
+    ),
+
+    entry(
+      "wongtaisin",
+      "alpha",
+      "Shop No. 2213A, 2/F, Zone B, Lok Fu Place, 198 Junction Road",
+      "ECG, Ultrasound, X-Ray, Lab",
+      "2219 5587",
+      true,
+      true
+    ),
+
+    region("New Territories & Outlying Islands 新界及離島"),
+
+    entry(
+      "discoverybay",
+      "qh",
+      "Shop 108, Block B, 1/F, Discovery Bay Plaza",
+      "ECG, Lab",
+      "2987 5633",
+      true
+    ),
+
+    entry(
+      "maonshan",
+      "qh",
+      "Shop 210, Level 2, Ma On Shan Plaza, 608 Sai Sha Road",
+      "Lab",
+      "2631 6992",
+      true
+    ),
+
+    entry(
+      "shatin",
+      "alpha",
+      "Rm 905-907, New Town Tower, 10-18 Pak Hok Ting Street",
+      "ECG, Lung Function, Ultrasound (10/F), X-Ray, Lab",
+      "2698 9378",
+      true,
+      true
+    ),
+
+    entry(
+      "shatin",
+      "otic",
+      "Room 1605, 16/F, Tower 2, Grand Central Plaza, 138 Shatin Rural Committee Road",
+      "Hearing Test",
+      "3579 4278"
+    ),
+
+    entry(
+      "shekmun",
+      "qh",
+      "Shop G36, G/F, Kings Wing Plaza 1, No. 3 On Kwan Street",
+      "ECG, Lab",
+      "2219 5480",
+      true
+    ),
+
+    entry(
+      "taipo",
+      "qh",
+      "Shop on G/F, No. 71 Kwong Fuk Road",
+      "ECG, Lab",
+      "2219 5400",
+      true
+    ),
+
+    entry(
+      "tseungkwano",
+      "alpha",
+      "Shop 234-236, 1/F, Phase 1, Metro City Plaza",
+      "ECG, Lung Function, X-Ray, Lab",
+      "2623 7200",
+      true,
+      true
+    )
+  ];
+
+  /* ======================================================
+     DA01 — Page 4 of 4
+     新界及離島續頁
+     7 個中心條目
+     ====================================================== */
+
+  const page4 = [
+    entry(
+      "tsingyi",
+      "alpha",
+      "Shop 308D, Level 3, Maritime Square, 33 Tsing King Road",
+      "Ultrasound, ECG, Lung Function, X-Ray, Lab",
+      "2431 0230",
+      true,
+      true
+    ),
+
+    entry(
+      "tsuenwan",
+      "alpha",
+      "Room 719-720, Nan Fung Centre, 264-298 Castle Peak Road",
+      "Lab, ECG, X-ray, Ultrasound, 2D Mammogram",
+      "2111 3313",
+      true,
+      true
+    ),
+
+    entry(
+      "tsuenwan",
+      "otic",
+      "Room 840, 8/F, Nan Fung Centre, 264-298 Castle Peak Road",
+      "Hearing Test",
+      "3188 9517"
+    ),
+
+    entry(
+      "tuenmun",
+      "alpha",
+      "Unit 18, 23/F, South Wing, Tuen Mun Parklane Square, No. 2 Tuen Hi Road",
+      "ECG, Lung Function, X-Ray, Lab",
+      "2994 2468",
+      true,
+      true
+    ),
+
+    entry(
+      "tungchung",
+      "alpha",
+      "Shop 18, G/F, Tung Chung Crescent, 1 Hing Tung Street",
+      "ECG, Lab",
+      "2403 6623",
+      true,
+      true
+    ),
+
+    entry(
+      "yuenlong",
+      "alpha",
+      "Shop 25, G/F, Yuccie Square, No. 38 Yuen Long On Ning Road",
+      "Lab, ECG, Lung Function",
+      "2976 0866",
+      true,
+      true
+    ),
+
+    entry(
+      "yuenlong",
+      "yuenfoong",
+      "Shop 19-20, Golden Plaza, 28 Shui Che Kwun Street",
+      "CT, MRI, Ultrasound, DEXA, X-Ray, Lab",
+      "2117 0168",
+      false,
+      true
+    )
+  ];
+
+  /*
+   * 原圖第 3 頁共有 19 個中心條目。
+   * 三頁合計：15 + 19 + 7 = 41。
+   * 用下方實際資料數量更新介面，避免硬編碼頁面提示。
+   */
+  const centreCount = [page2, page3, page4]
+    .flat()
+    .filter(row => !row.region)
+    .length;
+
+  /*
+   * 同一地區合併儲存格，接近原本 centre list 排版。
+   * 新增剔選框放在中心名稱前，避免額外增加表格欄寬。
+   */
+  function makeTable(rows, pageNumber, showHeader) {
+    let previousDistrict = null;
+
+    const body = rows.map((row, index) => {
+      if (row.region) {
+        previousDistrict = null;
+
+        return `
+          <tr class="da-region">
+            <th colspan="4">
+              ${escapeHTML(row.region)}
+            </th>
+          </tr>
+        `;
+      }
+
+      let districtCell = "";
+
+      if (row.district !== previousDistrict) {
+        let span = 1;
+
+        for (let next = index + 1; next < rows.length; next++) {
+          if (
+            rows[next].region ||
+            rows[next].district !== row.district
+          ) break;
+
+          span++;
+        }
+
+        const district = DISTRICTS[row.district];
+
+        districtCell = `
+          <td class="da-centres-district" rowspan="${span}">
+            ${escapeHTML(district[0])}
+            <span>${escapeHTML(district[1])}</span>
+          </td>
+        `;
+      }
+
+      previousDistrict = row.district;
+
+      const id = `da-centre-${pageNumber}-${index}`;
+      const districtName = DISTRICTS[row.district][0];
+
+      return `
+        <tr>
+          ${districtCell}
+
+          <td>
+            <label class="da-centres-name">
+              <input
+                type="checkbox"
+                class="paper-check"
+                data-centre="${id}"
+                aria-label="${escapeHTML(
+                  "選擇 " + row.name + " — " +
+                  districtName + " — " + row.address
+                )}"
+              >
+              ${escapeHTML(row.name)}
+              ${row.starred ? " *" : ""}
+            </label>
+
+            <div class="da-centres-address">
+              ${escapeHTML(row.address)}
+            </div>
+          </td>
+
+          <td class="da-centres-service">
+            ${escapeHTML(row.service)}
+          </td>
+
+          <td class="da-centres-tel">${escapeHTML(row.tel)}${
+            row.booking
+              ? '<div class="da-centres-booking">Booking Hotline:<br>8100 0501</div>'
+              : ""
+          }</td>
+        </tr>
+      `;
+    }).join("");
+
+    return `
+      <table class="da-centres-table">
+        <colgroup>
+          <col style="width:19mm">
+          <col style="width:108mm">
+          <col style="width:33mm">
+          <col style="width:26mm">
+        </colgroup>
+
+        ${
+          showHeader
+            ? `
+              <thead>
+                <tr>
+                  <th colspan="2">Centre</th>
+                  <th>Service*</th>
+                  <th>Tel</th>
+                </tr>
+              </thead>
+            `
+            : ""
+        }
+
+        <tbody>${body}</tbody>
+      </table>
+    `;
+  }
+
+  function makePage(rows, pageNumber) {
+    const first = pageNumber === 2;
+
+    return `
+      <article
+        class="page da-centres-page ${first ? "" : "continuation"}"
+        aria-label="DA01 centre list page ${pageNumber} of 4"
+      >
+        <div class="paper-content">
+          <header class="da-centres-head">
+            ${logo()}
+
+            <div class="da-centres-confidential">
+              CONFIDENTIAL
+            </div>
+
+            ${
+              first
+                ? `
+                  <div class="da-centres-note">
+                    ** Booking for service of Lab test, ECG &amp;
+                    X-ray are NOT required.
+                  </div>
+                `
+                : ""
+            }
+          </header>
+
+          ${makeTable(rows, pageNumber, first)}
+        </div>
+
+        <footer class="da-centres-footer">
+          <div></div>
+          <div class="page-number">
+            Page&nbsp; ${pageNumber}&nbsp; of&nbsp; 4
+          </div>
+          <div class="updated">
+            Last update: 20260305
+          </div>
+        </footer>
+      </article>
+    `;
+  }
+
+  host.insertAdjacentHTML(
+    "beforeend",
+    makePage(page2, 2) +
+    makePage(page3, 3) +
+    makePage(page4, 4)
+  );
+
+  host.dataset.centreListAdded = "yes";
+
+  /* ======================================================
+     更新舊版介面文字
+     保留原本元素及換行，不改動醫療表格內容
+     ====================================================== */
+
+  const replacements = [
+    [
+      "DA01 只包含第 1 頁。",
+      "DA01 已包含第 1–4 頁及中心列表。"
+    ],
+    [
+      "H01／B04 中心資料按所提供圖片轉錄；正式使用前請核對。",
+      "DA01／H01／B04 中心資料按所提供圖片轉錄；正式使用前請核對。"
+    ]
+  ];
+
+  function replaceTextNodes(root) {
+    if (!root) return;
+
+    const walker = document.createTreeWalker(
+      root,
+      NodeFilter.SHOW_TEXT
+    );
+
+    let node;
+
+    while ((node = walker.nextNode())) {
+      let value = node.nodeValue;
+
+      replacements.forEach(([from, to]) => {
+        value = value.split(from).join(to);
+      });
+
+      node.nodeValue = value;
+    }
+  }
+
+  document.querySelectorAll(".sidebar .notice, .sidebar .help")
+    .forEach(replaceTextNodes);
+
+  const daPanel = document.querySelector(
+    '.plan-panel[data-plan="da"]'
+  );
+
+  if (daPanel) {
+    const help = document.createElement("p");
+    help.className = "help";
+    help.textContent =
+      "中心列表已加入第 2–4 頁，共 " +
+      centreCount +
+      " 個條目。可直接在右邊中心名稱前剔選。" +
+      "剔選只作標記，不會刪走其他中心或省略列表頁。";
+
+    daPanel.appendChild(help);
+  }
+
+  /* ======================================================
+     接駁原本頁數提示
+     原 app 的 input / tab / reset / afterprint 均會沿用
+     ====================================================== */
+
+  const originalUpdateCaption = updateCaption;
+
+  updateCaption = function () {
+    originalUpdateCaption();
+
+    if (active === "da") {
+      document.getElementById("pageCaption").textContent =
+        "DA01 · 4 頁（轉介表 ＋ 3 頁中心列表）";
+    }
+  };
+
+  const originalSetActive = setActive;
+
+  setActive = function (plan) {
+    originalSetActive(plan);
+
+    if (plan === "da") {
+      setStatus(
+        "DA01 已包含第 1–4 頁：" +
+        "第 1 頁轉介表，第 2–4 頁中心列表。" +
+        "中心名稱旁可剔選；列印 DA01 時會包含全部 4 頁。"
+      );
+    }
+  };
+
+  /*
+   * 原本的列印函數會搜尋 group-da 內所有 .page，
+   * 所以不用另改 printPlans：
+   *
+   * 「列印目前表格」→ DA01 四頁
+   * 「列印已選表格」→ DA01 四頁 + 其他已選表格
+   *
+   * 原本 clearAll 會清除所有 [data-centre]，
+   * 新增中心的剔選亦會一併清除。
+   */
+
+  setActive(active);
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,5619 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clinic Documents · Integrated MVP</title>
+
+<style>
+/* =========================================================
+   01. 基本元件
+   ========================================================= */
+:root {
+  --bg:#eef0f2;
+  --panel:#fff;
+  --ink:#172126;
+  --muted:#737e85;
+  --line:#dde2e5;
+  --accent:#255e55;
+  --soft:#edf5f2;
+  --danger:#a53d3d;
+  font-family:Arial,"Microsoft JhengHei","PingFang TC",sans-serif;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-size:14px;
+}
+button,input,select,textarea { font:inherit; }
+button {
+  cursor:pointer;
+  border:1px solid var(--line);
+  background:white;
+  padding:9px 12px;
+  border-radius:7px;
+  color:var(--ink);
+}
+button:hover { background:#f4f7f6; }
+button.primary {
+  background:var(--accent);
+  border-color:var(--accent);
+  color:white;
+}
+button.danger { color:var(--danger); }
+button:disabled { opacity:.45; cursor:not-allowed; }
+input,select,textarea {
+  width:100%;
+  border:1px solid #d5dcdf;
+  border-radius:6px;
+  padding:9px 10px;
+  background:white;
+  color:var(--ink);
+}
+input:focus,textarea:focus,select:focus {
+  outline:2px solid #aecac2;
+  outline-offset:1px;
+}
+textarea {
+  resize:vertical;
+  min-height:86px;
+  line-height:1.55;
+}
+label {
+  display:block;
+  font-size:12px;
+  color:#59666d;
+  margin-bottom:5px;
+}
+fieldset { border:0; padding:0; margin:0; min-width:0; }
+fieldset:disabled { opacity:.75; }
+details summary { cursor:pointer; font-weight:700; font-size:13px; }
+details[open] summary { margin-bottom:14px; }
+.hidden { display:none !important; }
+.small { font-size:12px; color:var(--muted); line-height:1.6; }
+.pill {
+  font-size:11px;
+  padding:4px 8px;
+  border-radius:20px;
+  background:var(--soft);
+  color:var(--accent);
+}
+.actions,.top-actions {
+  display:flex;
+  gap:7px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.grid2,.settings-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.field { margin-bottom:12px; }
+.field:last-child { margin-bottom:0; }
+.check {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  margin:10px 0;
+}
+.check input { width:auto; }
+
+/* =========================================================
+   02. 應用程式版面
+   ========================================================= */
+header.appbar {
+  min-height:64px;
+  background:#fff;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 22px;
+  gap:16px;
+}
+.brand { font-size:17px; font-weight:700; letter-spacing:.02em; }
+.brand small {
+  display:block;
+  font-size:11px;
+  color:var(--muted);
+  font-weight:400;
+  margin-top:4px;
+}
+.layout {
+  display:grid;
+  grid-template-columns:410px minmax(0,1fr);
+  height:calc(100vh - 70px);
+}
+.editor {
+  background:#fafbfb;
+  border-right:1px solid var(--line);
+  overflow:auto;
+}
+.editor-inner { padding:18px; }
+.preview { overflow:auto; padding:0 28px 40px; }
+.toolbar {
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:rgba(238,240,242,.97);
+  padding:14px 0;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
+.toolbar-left { display:flex; flex-direction:column; gap:4px; }
+.toolbar strong { font-size:13px; }
+#saveStatus { font-size:11px; color:var(--muted); }
+#globalNotice { margin:0; border-radius:0; }
+.card {
+  background:white;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:16px;
+  margin-bottom:14px;
+}
+.card h3 { font-size:13px; margin:0 0 14px; }
+.card-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+.card-head h3 { margin:0; }
+.tabs { display:flex; gap:4px; margin-bottom:14px; flex-wrap:wrap; }
+.tabs button {
+  flex:1;
+  padding:10px 7px;
+  font-size:12px;
+  white-space:nowrap;
+}
+.tabs button.active {
+  background:var(--ink);
+  color:white;
+  border-color:var(--ink);
+}
+.notice {
+  background:#fff8e8;
+  border:1px solid #e8d6ac;
+  color:#755820;
+  padding:10px 12px;
+  border-radius:7px;
+  font-size:12px;
+  margin-bottom:12px;
+  line-height:1.6;
+}
+.item-card {
+  border:1px solid var(--line);
+  padding:11px;
+  border-radius:7px;
+  margin-bottom:9px;
+  background:#fcfdfd;
+}
+.item-top {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+}
+.item-top button { padding:3px 8px; font-size:12px; }
+.item-top span { font-size:12px; color:var(--muted); }
+.item-card .grid2 { gap:8px; }
+.item-card input { font-size:12px; }
+#documentFields textarea[data-path^="soap."] { min-height:130px; }
+.summary-block {
+  border-top:1px solid var(--line);
+  padding:12px 0;
+  line-height:1.6;
+}
+.summary-block:first-child { border-top:0; }
+.summary-block pre {
+  margin:6px 0;
+  font:inherit;
+  font-size:12px;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+#workflowPanel { margin-bottom:14px; }
+
+/* =========================================================
+   03. 對話框
+   ========================================================= */
+dialog {
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:22px;
+  width:min(850px,94vw);
+  max-height:85vh;
+  color:var(--ink);
+}
+dialog::backdrop { background:#17212670; }
+.dialog-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
+}
+.dialog-head h2 { font-size:18px; margin:0; }
+.history-row {
+  border:1px solid var(--line);
+  padding:13px;
+  margin-top:9px;
+  border-radius:8px;
+}
+.history-row > strong { display:block; margin-bottom:5px; }
+.history-row .actions { margin-top:8px; }
+.history-row button { font-size:12px; padding:6px 9px; }
+.version-list {
+  margin-top:10px;
+  padding-top:8px;
+  border-top:1px solid var(--line);
+}
+.version-entry { padding:8px 0; border-top:1px dashed var(--line); }
+.settings-grid { gap:14px; }
+#settingsDialog textarea { min-height:130px; font-size:12px; }
+#signatureThumb { max-width:150px; max-height:70px; object-fit:contain; }
+
+/* =========================================================
+   04. 文件共用規格：沿用原本尺寸及字型
+   ========================================================= */
+.paper {
+  width:210mm;
+  min-height:297mm;
+  padding:17mm 18mm 18mm;
+  margin:0 auto;
+  background:#fff;
+  color:#000 !important;
+  box-shadow:0 8px 35px #17212615;
+  overflow-wrap:anywhere;
+  font-family:Arial,"DFKai-SB","BiauKai","標楷體",serif !important;
+  font-size:11pt !important;
+  line-height:1;
+}
+.paper *,
+.paper *::before,
+.paper *::after {
+  font-family:inherit !important;
+  font-size:11pt !important;
+  color:#000 !important;
+  border-color:#000 !important;
+}
+.paper .doctor-brand .cn,
+.paper .doctor-brand .en,
+.paper .doc-title h1,
+.paper .doc-title .title-cn {
+  font-size:14pt !important;
+  font-weight:700;
+  line-height:1;
+  letter-spacing:normal;
+}
+.paper .letterhead {
+  display:grid;
+  grid-template-columns:1fr 1.15fr 1.25fr;
+  gap:2.5mm;
+  align-items:start;
+}
+.paper .doctor-brand .en { margin-top:2mm; }
+.paper .credentials { line-height:1.1; white-space:pre-line; }
+.paper .contact {
+  margin-top:6mm;
+  padding-bottom:4mm;
+  border-bottom:1px solid #000;
+  line-height:1;
+}
+.paper .contact div + div { margin-top:1mm; }
+.paper .doc-title {
+  display:block;
+  margin:3mm 0;
+  text-align:center;
+  break-inside:avoid;
+  break-after:avoid;
+}
+.paper .doc-title h1 { margin:0; }
+.paper .doc-title .title-cn { margin:1mm 0 0; }
+.paper .patient-box {
+  padding:4mm 0;
+  margin-bottom:6mm;
+  border-top:1px solid #000;
+  border-bottom:1px solid #000;
+  break-inside:avoid;
+}
+.paper .aligned-patient-grid {
+  display:grid;
+  grid-template-columns:
+    30mm 3mm minmax(0,1.2fr)
+    18mm 3mm minmax(0,1fr);
+  column-gap:1mm;
+  row-gap:2mm;
+  align-items:baseline;
+  line-height:1.35;
+}
+/* 處方藥物敏感欄：列印保持黑白，避免依賴顏色辨識。 */
+.paper .drug-allergy {
+  border:2px solid #000;
+  padding:3mm;
+  margin:0 0 5mm;
+  line-height:1.5;
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
+
+.paper .drug-allergy > strong {
+  display:block;
+  margin-bottom:1mm;
+}
+
+.paper .drug-allergy > div {
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+
+.paper .patient-label { font-weight:700; white-space:nowrap; }
+.paper .patient-colon { text-align:center; }
+.paper .patient-value { min-width:0; overflow-wrap:anywhere; }
+.paper .patient-full-value { grid-column:3 / -1; }
+.paper .diagnosis { margin:6mm 0; }
+.paper .letter-body,
+.paper .recipient,
+.paper .certificate-section .cn,
+.paper .certificate-section .en { line-height:1.5; }
+.paper .letter-body p { margin:0 0 4mm; orphans:3; widows:3; }
+.paper .recipient { white-space:pre-wrap; margin-bottom:6mm; }
+.paper .certificate-section { margin:6mm 0; break-inside:avoid; }
+.paper .certificate-section .cn { margin-bottom:2mm; }
+.paper .leave-summary {
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:6mm;
+  padding:5mm 0;
+  margin:7mm 0;
+  border-top:1px solid #000;
+  border-bottom:1px solid #000;
+  break-inside:avoid;
+}
+.paper .leave-summary small {
+  display:block;
+  margin-bottom:2mm;
+  font-weight:700;
+}
+.paper .leave-summary strong { font-weight:400; }
+.paper .leave-date-cn,.paper .leave-date-en {
+  display:block;
+  line-height:1.4;
+}
+.paper .leave-date-en { margin-top:1mm; }
+.paper table.document-table {
+  width:100%;
+  margin:0;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+.paper .document-table thead { display:table-header-group; }
+.paper .document-table th {
+  padding:3mm 2mm;
+  border-top:1px solid #000;
+  border-bottom:1px solid #000;
+  text-align:left;
+  vertical-align:top;
+  font-weight:700;
+}
+.paper .document-table td {
+  padding:4mm 2mm;
+  border-bottom:1px solid #000;
+  text-align:left;
+  vertical-align:top;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.paper .document-table th:first-child,
+.paper .document-table td:first-child { padding-left:0; }
+.paper .document-table th:last-child,
+.paper .document-table td:last-child { padding-right:0; }
+.paper .document-table .num { text-align:right; }
+.paper .document-table tr { break-inside:avoid; page-break-inside:avoid; }
+.paper .total {
+  display:flex;
+  justify-content:flex-end;
+  gap:20mm;
+  padding-top:3mm;
+  margin:4mm 0;
+  border-top:1px solid #000;
+  font-weight:700;
+  break-inside:avoid;
+}
+.paper .remarks { margin-top:6mm; }
+.paper .remarks strong { display:block; margin-bottom:2mm; }
+.paper .remarks p {
+  margin:0;
+  white-space:pre-wrap;
+  line-height:1.5;
+  orphans:3;
+  widows:3;
+}
+.paper .end-marker {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4mm;
+  margin:8mm 0 0;
+  break-inside:avoid;
+}
+.paper .end-marker::before,.paper .end-marker::after {
+  content:"";
+  width:18mm;
+  height:1px;
+  background:#000;
+}
+.paper .signature {
+  width:78mm;
+  margin-top:14mm;
+  margin-left:auto;
+  margin-right:0;
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
+.paper .signature-space {
+  height:18mm;
+  display:flex;
+  align-items:flex-end;
+  padding-bottom:2mm;
+}
+.paper .signature-space img {
+  max-height:16mm;
+  max-width:48mm;
+  object-fit:contain;
+}
+.paper .signature-line {
+  width:100%;
+  padding-top:3mm;
+  border-top:1px solid #000;
+}
+.paper .signature-name { font-weight:700; }
+.paper .signature-name + .signature-name,
+.paper .signature-reg { margin-top:1mm; }
+.paper .document-footer {
+  margin-top:10mm;
+  padding-top:3mm;
+  border-top:1px solid #000;
+  break-inside:avoid;
+  line-height:1.4;
+}
+
+/* Progress Note 專用；不改五類文件正文規格 */
+.paper .note-section { margin:6mm 0; line-height:1.5; }
+.paper .note-section h2 {
+  margin:0 0 2mm;
+  font-weight:700;
+  break-after:avoid;
+}
+.paper .note-text { white-space:pre-wrap; orphans:3; widows:3; }
+.paper .note-meta,.paper .document-state {
+  padding:3mm 0;
+  margin-bottom:4mm;
+  border-bottom:1px solid #000;
+  line-height:1.5;
+}
+.paper .summary-section {
+  border-top:1px solid #000;
+  padding-top:3mm;
+  margin-top:5mm;
+  line-height:1.5;
+}
+.paper .summary-section h3 {
+  margin:0 0 2mm;
+  break-after:avoid;
+}
+.paper .summary-section p { margin:2mm 0; white-space:pre-wrap; }
+
+/* =========================================================
+   05. 響應式及列印
+   ========================================================= */
+@media(max-width:1150px) {
+  .layout { grid-template-columns:360px minmax(0,1fr); }
+  .preview { padding-left:15px; padding-right:15px; }
+}
+@media(max-width:800px) {
+  header.appbar { padding:12px; align-items:flex-start; flex-wrap:wrap; }
+  .layout { display:block; height:auto; }
+  .preview { overflow:auto; }
+  .toolbar { position:relative; flex-wrap:wrap; }
+  .settings-grid { grid-template-columns:1fr; }
+}
+@page { size:A4; margin:17mm 18mm 18mm; }
+@media print {
+  body { background:white; }
+  header.appbar,.editor,.toolbar,dialog,.notice,#workflowPanel {
+    display:none !important;
+  }
+  .layout,.preview {
+    display:block;
+    height:auto;
+    overflow:visible;
+    padding:0;
+    margin:0;
+  }
+  .paper {
+    width:auto;
+    min-height:0;
+    padding:0;
+    margin:0;
+    box-shadow:none;
+    overflow:visible;
+  }
+  .paper .letterhead,.paper .contact,.paper .patient-box {
+    break-inside:avoid;
+  }
+  .paper .doc-title,.paper .diagnosis,.paper .patient-box {
+    break-after:avoid;
+  }
+  * {
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+}
+</style>
+</head>
+
+<body>
+<header class="appbar">
+  <div class="brand">
+    梁子恒醫生醫務所 Dr Ray Leung
+    <small>本機診症系統 Local Clinic System</small>
+  </div>
+  <div class="top-actions">
+    <button id="newBtn">＋ 新病人／診症</button>
+    <button id="historyBtn">病人及歷史</button>
+    <button id="settingsBtn">設定／備份</button>
+  </div>
+</header>
+
+<div id="globalNotice" class="notice hidden" role="alert"></div>
+
+<div class="layout">
+  <aside class="editor">
+    <div class="editor-inner">
+      <div id="readOnlyNotice" class="notice hidden"></div>
+      <div class="tabs" id="tabs"></div>
+
+      <fieldset id="formFields">
+        <div class="card">
+          <details>
+            <summary>快速輸入病人資料</summary>
+            <textarea id="quickLine"
+              placeholder="貼上姓名、HKID；解析後請逐項核對"></textarea>
+            <div class="actions" style="margin-top:8px">
+              <button id="parseBtn" type="button">解析病人資料</button>
+            </div>
+          </details>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>病人資料</h3>
+            <span id="encounterStatus" class="pill"></span>
+          </div>
+          <div class="grid2">
+            <div class="field">
+              <label>英文姓氏</label>
+              <input data-path="patient.surname">
+            </div>
+            <div class="field">
+              <label>英文名字</label>
+              <input data-path="patient.given">
+            </div>
+            <div class="field">
+              <label>中文姓名</label>
+              <input data-path="patient.cn">
+            </div>
+            <div class="field">
+              <label>HKID／其他證件</label>
+              <input data-path="patient.hkid">
+            </div>
+            <div class="field">
+              <label>出生日期</label>
+              <input type="date" data-path="patient.dob">
+            </div>
+            <div class="field">
+              <label>性別</label>
+              <select data-path="patient.sex">
+                <option value="">未填寫</option>
+                <option>Female</option>
+                <option>Male</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+<hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+
+          <h3>聯絡資料</h3>
+
+          <div class="grid2">
+            <div class="field">
+              <label>病人個人電話</label>
+              <input
+                type="tel"
+                data-path="patient.phone"
+              >
+            </div>
+
+            <div class="field">
+              <label>病人電郵</label>
+              <input
+                type="email"
+                data-path="patient.email"
+              >
+            </div>
+          </div>
+
+          <div class="field">
+            <label>病人地址</label>
+            <textarea data-path="patient.address"></textarea>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label>聯絡人 1 姓名</label>
+              <input data-path="patient.contact1Name">
+            </div>
+
+            <div class="field">
+              <label>聯絡人 1 電話</label>
+              <input
+                type="tel"
+                data-path="patient.contact1Phone"
+              >
+            </div>
+
+            <div class="field">
+              <label>聯絡人 2 姓名</label>
+              <input data-path="patient.contact2Name">
+            </div>
+
+            <div class="field">
+              <label>聯絡人 2 電話</label>
+              <input
+                type="tel"
+                data-path="patient.contact2Phone"
+              >
+            </div>
+          </div>
+
+          <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+
+          <h3>藥物敏感</h3>
+
+          <div class="field">
+            <label>敏感狀態</label>
+            <select data-path="patient.allergyStatus">
+              <option value="unknown">未確認／未記錄</option>
+              <option value="none">無已知藥物敏感</option>
+              <option value="known">有藥物敏感</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>敏感藥物及反應詳情</label>
+            <textarea
+              data-path="patient.allergyDetails"
+              placeholder="如有敏感，請選「有藥物敏感」，並記錄藥物名稱、反應及其他相關詳情。"
+            ></textarea>
+          </div>
+
+          <p class="small">
+            未確認唔等於無敏感。以上敏感狀態會顯示於處方。
+          </p>
+
+          <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+          <div class="field">
+            <label>文件／診症日期</label>
+            <input type="date" data-path="date">
+          </div>
+          <div class="field">
+            <label>診斷 Diagnosis</label>
+            <textarea data-path="diagnosis"></textarea>
+          </div>
+        </div>
+
+        <div class="card" id="documentFields"></div>
+
+        <div class="card" id="documentOptions">
+          <h3>顯示選項</h3>
+          <div class="grid2">
+            <div class="field">
+              <label>本頁 HKID 顯示</label>
+              <select id="maskSelect">
+                <option value="full">完整顯示</option>
+                <option value="partial">部分遮蔽</option>
+              </select>
+            </div>
+            <div class="field" id="signatureOption">
+              <label>簽署方式（五類文件共用）</label>
+              <select id="signatureSelect">
+                <option value="manual">留空手簽</option>
+                <option value="image">圖片簽名</option>
+              </select>
+            </div>
+          </div>
+          <label class="check">
+            <input type="checkbox" id="timestampCheck">
+            對外文件顯示版本儲存時間
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="small">
+      </div>
+    </div>
+  </aside>
+
+  <main class="preview">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <strong id="previewTitle"></strong>
+        <span id="saveStatus" role="status">準備就緒</span>
+      </div>
+      <div class="actions">
+        <button id="returnBtn" class="hidden">返回目前診症</button>
+        <button id="saveBtn">儲存</button>
+        <button id="completeBtn">完成診症</button>
+        <button id="issueBtn">儲存出具版本</button>
+        <button class="primary" id="printBtn">列印／PDF</button>
+      </div>
+    </div>
+    <div id="workflowPanel" class="notice"></div>
+    <article id="paper" class="paper"></article>
+  </main>
+</div>
+
+<dialog id="historyDialog">
+  <div class="dialog-head">
+    <h2>病人及診症紀錄</h2>
+    <button data-close>關閉</button>
+  </div>
+  <input id="historySearch"
+    placeholder="搜尋姓名、HKID、診斷、SOAP 或日期">
+  <p class="small">
+    同病人新診症只帶入身份資料。每類文件只有一個目前有效版本。<br>
+    已取代／作廢／舊版待確認文件仍保留，不會自動恢復為有效版本。
+  </p>
+  <div id="historyList"></div>
+</dialog>
+
+<dialog id="settingsDialog">
+  <div class="dialog-head">
+    <h2>信頭及儲存設定</h2>
+    <button data-close>關閉</button>
+  </div>
+
+  <div class="notice">
+    修改信頭只影響目前草稿及之後的新版本，不會改寫已儲存版本。
+    本機版沒有醫生帳戶驗證。
+  </div>
+
+  <div class="settings-grid">
+    <div class="field">
+      <label>醫生中文姓名</label><input data-setting="nameCn">
+    </div>
+    <div class="field">
+      <label>醫生英文姓名</label><input data-setting="nameEn">
+    </div>
+    <div class="field">
+      <label>全部中文資歷</label><textarea data-setting="qualCn"></textarea>
+    </div>
+    <div class="field">
+      <label>全部英文資歷</label><textarea data-setting="qualEn"></textarea>
+    </div>
+  </div>
+  <div class="field">
+    <label>地址</label><input data-setting="address">
+  </div>
+  <div class="settings-grid">
+    <div class="field"><label>電話</label><input data-setting="phone"></div>
+    <div class="field"><label>Email</label><input data-setting="email"></div>
+    <div class="field"><label>醫生註冊編號</label><input data-setting="reg"></div>
+    <div class="field">
+      <label>圖片簽名 PNG／JPEG（最多 1 MB）</label>
+      <input type="file" id="signatureFile" accept="image/png,image/jpeg">
+      <img id="signatureThumb" alt="">
+      <button id="removeSignature">移除圖片簽名</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>各頁 HKID 預設</label>
+    <div id="defaultMasks" class="grid2"></div>
+  </div>
+  <label class="check">
+    <input type="checkbox" id="defaultTimestamp">
+    新診症預設顯示文件版本儲存時間
+  </label>
+  <button id="saveSettingsBtn" class="primary">儲存設定</button>
+
+  <hr style="border:0;border-top:1px solid #ddd;margin:20px 0">
+  <h3>備份及還原</h3>
+  <div class="actions">
+    <button id="exportBtn">匯出新版 JSON</button>
+    <button id="exportOldBtn">匯出舊版原始資料</button>
+    <button id="exportRawBtn">匯出目前儲存原文</button>
+    <button id="importBtn">匯入 JSON（取代）</button>
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+
+/* =========================================================
+   病人聯絡資料及藥物敏感
+   直接整合於本 HTML，無需外置 JS。
+   ========================================================= */
+
+const PATIENT_IDENTITY_FIELDS = [
+  "surname", "given", "cn", "hkid", "dob", "sex"
+];
+
+const PATIENT_CONTACT_FIELDS = [
+  "phone",
+  "email",
+  "address",
+  "contact1Name",
+  "contact1Phone",
+  "contact2Name",
+  "contact2Phone"
+];
+
+const ALLERGY_STATUSES = {
+  unknown: "未確認／未記錄",
+  none: "無已知藥物敏感",
+  known: "有藥物敏感"
+};
+
+function emptyPatient() {
+  return {
+    surname: "",
+    given: "",
+    cn: "",
+    hkid: "",
+    dob: "",
+    sex: "",
+
+    phone: "",
+    email: "",
+    address: "",
+
+    contact1Name: "",
+    contact1Phone: "",
+    contact2Name: "",
+    contact2Phone: "",
+
+    allergyStatus: "unknown",
+    allergyDetails: ""
+  };
+}
+
+/* 舊資料缺少新增欄位時補預設值，不會當成「無敏感」。 */
+function normalizePatient(raw) {
+  checkStrings(raw, PATIENT_IDENTITY_FIELDS, "病人");
+
+  const patient = emptyPatient();
+
+  for (const key of PATIENT_IDENTITY_FIELDS) {
+    patient[key] = raw[key];
+  }
+
+  for (const key of [
+    ...PATIENT_CONTACT_FIELDS,
+    "allergyDetails"
+  ]) {
+    if (raw[key] !== undefined) {
+      assert(
+        typeof raw[key] === "string",
+        "病人." + key + " 須為文字"
+      );
+
+      patient[key] = raw[key];
+    }
+  }
+
+  if (raw.allergyStatus !== undefined) {
+    assert(
+      typeof raw.allergyStatus === "string" &&
+      Object.hasOwn(ALLERGY_STATUSES, raw.allergyStatus),
+      "藥物敏感狀態格式錯誤"
+    );
+
+    patient.allergyStatus = raw.allergyStatus;
+  }
+
+  return patient;
+}
+
+/*
+ * 對外文件只保存基本身份資料。
+ * 處方另外保存當時的藥物敏感。
+ * 不包含私人聯絡資料及聯絡人。
+ */
+function patientForDocument(patient, type) {
+  const result = Object.fromEntries(
+    PATIENT_IDENTITY_FIELDS.map(key => [
+      key,
+      patient[key] ?? ""
+    ])
+  );
+
+  if (type === "rx") {
+    result.allergyStatus =
+      patient.allergyStatus ?? "unknown";
+
+    result.allergyDetails =
+      patient.allergyDetails ?? "";
+  }
+
+  return result;
+}
+
+function drugAllergyText(patient) {
+  const state = patient.allergyStatus ?? "unknown";
+
+  if (state === "none") {
+    return "無已知藥物敏感 / No known drug allergies";
+  }
+
+  if (state === "known") {
+    return (
+      "有藥物敏感 / Known drug allergies\n" +
+      (
+        trim(patient.allergyDetails) ||
+        "詳情未填寫 / Details not recorded"
+      )
+    );
+  }
+
+  return "未確認／未記錄 / Not confirmed or not recorded";
+}
+
+function renderDrugAllergy(patient) {
+  return `
+    <section class="drug-allergy">
+      <strong>Drug Allergies / 藥物敏感</strong>
+      <div>${esc(drugAllergyText(patient))}</div>
+    </section>
+  `;
+}
+
+/* 只檢查資料一致性，不作藥物敏感配對。 */
+function patientAllergyWarnings(patient) {
+  const warnings = [];
+  const state = patient.allergyStatus ?? "unknown";
+  const details = trim(patient.allergyDetails);
+
+  if (!Object.hasOwn(ALLERGY_STATUSES, state)) {
+    warnings.push("藥物敏感狀態無效");
+    return warnings;
+  }
+
+  if (state === "known" && !details) {
+    warnings.push(
+      "已選「有藥物敏感」，請填寫藥物及反應詳情"
+    );
+  }
+
+  if (state !== "known" && details) {
+    warnings.push(
+      "已有藥物敏感詳情，請確認敏感狀態；" +
+      "如確有敏感，請選「有藥物敏感」"
+    );
+  }
+
+  return warnings;
+}
+
+/* =========================================================
+   01. 固定設定
+   新版用獨立 key；舊版只讀，不寫。
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const OLD_KEY = "clinic_documents_mvp_1";
+const KEY = "clinic_documents_mvp_3";
+const SCHEMA = 3;
+
+const TYPES = {
+  note:["診症","PROGRESS NOTE","診症紀錄"],
+  referral:["轉介","REFERRAL LETTER","轉介信"],
+  sick:["病假","SICK LEAVE CERTIFICATE","病假證明書"],
+  attendance:["到診","ATTENDANCE CERTIFICATE","到診證明書"],
+  receipt:["收據","RECEIPT","收據"],
+  rx:["處方","PRESCRIPTION","處方"]
+};
+const DOC_TYPES = ["referral","sick","attendance","receipt","rx"];
+const SETTING_STRINGS = [
+  "nameCn","nameEn","qualCn","qualEn","address",
+  "phone","email","reg","signature"
+];
+const VERSION_STATES = {
+  issued:"目前有效",
+  superseded:"已取代",
+  void:"已作廢",
+  legacy:"舊版待確認"
+};
+const PAYMENT_STATES = {
+  unknown:"未記錄收款狀態",
+  unpaid:"未收款",
+  paid:"已收款"
+};
+
+const DEFAULT_SETTINGS = {
+  nameCn:"梁子恒醫生",
+  nameEn:"Dr. LEUNG Tsz Hang",
+  qualCn:
+    "急症科專科醫生\n"+
+    "香港中文大學內外全科醫學士\n"+
+    "香港急症科醫學院院士\n"+
+    "香港醫學專科學院院士（急症科）\n"+
+    "香港中文大學醫學院意外及急救醫學教研部名譽臨床助理教授",
+  qualEn:
+    "Specialist in Emergency Medicine\n"+
+    "MBChB (CUHK)\nFHKCEM\nFHKAM (Emergency Medicine)\n"+
+    "Clinical Assistant Professor (Honorary)\nA&E Academic Unit, CUHK",
+  address:
+    "Unit 1603, 16/F, The L. Plaza, 367–375 Queen's Road Central, "+
+    "Sheung Wan, Hong Kong",
+  phone:"2632 9288 / 9867 7100",
+  email:"drraytleung@gmail.com",
+  reg:"",
+  signature:"",
+  masks:{
+    note:"full",referral:"full",sick:"partial",
+    attendance:"partial",receipt:"partial",rx:"full"
+  },
+  timestamp:false
+};
+
+/* =========================================================
+   02. 共用工具
+   ========================================================= */
+const clone = value => JSON.parse(JSON.stringify(value));
+const now = () => new Date().toISOString();
+const uid = () => (
+  globalThis.crypto?.randomUUID
+    ? crypto.randomUUID()
+    : Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)
+);
+const esc = value => String(value ?? "").replace(
+  /[&<>"']/g,
+  c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])
+);
+const obj = value => (
+  value !== null && typeof value === "object" && !Array.isArray(value)
+);
+const text = value => String(value ?? "");
+const trim = value => text(value).trim();
+
+function assert(condition,message) {
+  if (!condition) throw new Error(message);
+}
+function get(target,path) {
+  return path.split(".").reduce((value,key) => value?.[key],target);
+}
+function set(target,path,value) {
+  const keys = path.split(".");
+  if (keys.some(k => ["__proto__","prototype","constructor"].includes(k))) {
+    throw new Error("無效欄位");
+  }
+  const last = keys.pop();
+  keys.reduce((value,key) => value[key],target)[last] = value;
+}
+function safeImage(src) {
+  return /^data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/=\r\n]+$/
+    .test(src || "") ? src : "";
+}
+function stable(value) {
+  if (Array.isArray(value)) return value.map(stable);
+  if (obj(value)) {
+    return Object.fromEntries(
+      Object.keys(value).sort().map(k => [k,stable(value[k])])
+    );
+  }
+  return value;
+}
+const same = (a,b) => JSON.stringify(stable(a)) === JSON.stringify(stable(b));
+
+function today() {
+  const d = new Date();
+  return d.getFullYear()+"-"+
+    String(d.getMonth()+1).padStart(2,"0")+"-"+
+    String(d.getDate()).padStart(2,"0");
+}
+function validDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return false;
+  const d = new Date(value+"T12:00:00");
+  return !isNaN(d) &&
+    d.getFullYear() === Number(value.slice(0,4)) &&
+    d.getMonth()+1 === Number(value.slice(5,7)) &&
+    d.getDate() === Number(value.slice(8,10));
+}
+function fmt(value) {
+  if (!validDate(value)) return "—";
+  return new Date(value+"T12:00:00").toLocaleDateString("en-GB",{
+    day:"numeric",month:"long",year:"numeric"
+  });
+}
+function fmtChineseDate(value) {
+  if (!validDate(value)) return "—";
+  return Number(value.slice(0,4))+"年"+
+    Number(value.slice(5,7))+"月"+Number(value.slice(8,10))+"日";
+}
+function stamp(value) {
+  const d = new Date(value);
+  return isNaN(d) ? "—" : d.toLocaleString("en-GB",{hour12:false});
+}
+const chinesePeriod = p => ({AM:"上午",PM:"下午"}[p] || "");
+const sickDate = (d,p) => fmt(d)+" · "+p;
+
+function age(dob,onDate) {
+  if (!validDate(dob) || !validDate(onDate) || dob > onDate) return "";
+  const b = new Date(dob+"T12:00:00");
+  const d = new Date(onDate+"T12:00:00");
+  let a = d.getFullYear()-b.getFullYear();
+  if (d.getMonth()<b.getMonth() ||
+      (d.getMonth()===b.getMonth() && d.getDate()<b.getDate())) a--;
+  return a;
+}
+function patientName(p) {
+  return [trim(p.surname).toUpperCase(),trim(p.given)].filter(Boolean).join(" ");
+}
+function patientLabel(p) {
+  return [patientName(p),trim(p.cn)].filter(Boolean).join(" ");
+}
+function normalizedID(value) {
+  const s = text(value).replace(/\s/g,"").toUpperCase();
+  const m = s.match(/^([A-Z]{1,2}\d{6})([0-9A])$/);
+  return m ? m[1]+"("+m[2]+")" : s;
+}
+function maskedID(value,mode) {
+  const s = normalizedID(value);
+  if (!s) return "—";
+  if (mode === "full") return s;
+  const m = s.match(/^([A-Z]{1,2})(\d{6})(?:\([0-9A]\))?$/);
+  if (m) return m[1]+m[2].slice(0,3)+"***";
+  return s.length <= 3 ? "***" : s.slice(0,3)+"*".repeat(Math.min(s.length-3,12));
+}
+function money(value) {
+  return Number(value || 0).toLocaleString("en-HK",{
+    minimumFractionDigits:2,maximumFractionDigits:2
+  });
+}
+function usedReceiptItems(e) {
+  return e.receipt.items.filter(i => trim(i.desc) || trim(i.amount));
+}
+function usedRxItems(e) {
+  return e.rx.items.filter(i => Object.values(i).some(v => trim(v)));
+}
+function totalCents(e) {
+  return usedReceiptItems(e).reduce(
+    (sum,i) => sum + Math.round((Number(i.amount)||0)*100),0
+  );
+}
+function download(content,filename) {
+  const blob = new Blob([content],{type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url;
+  a.download=filename;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url),1500);
+}
+function status(message,error=false) {
+  $("saveStatus").textContent=message;
+  $("saveStatus").style.color=error ? "#a53d3d" : "";
+}
+function globalNotice(message) {
+  $("globalNotice").textContent=message;
+  $("globalNotice").classList.toggle("hidden",!message);
+}
+function run(fn) {
+  return async (...args) => {
+    try { await fn(...args); }
+    catch(error) {
+      console.error(error);
+      status(error.message,true);
+      alert(error.message);
+    }
+  };
+}
+
+/* =========================================================
+   03. 資料模型
+   ========================================================= */
+function emptyData(date=today(),settings=DEFAULT_SETTINGS) {
+  return {
+    id:uid(),created:now(),updated:now(),status:"draft",
+    date,diagnosis:"",
+    patient:emptyPatient(),
+    soap:{s:"",o:"",a:"",p:""},
+    masks:clone(settings.masks),
+    signature:"manual",
+    timestamp:settings.timestamp,
+    used:Object.fromEntries(DOC_TYPES.map(t => [t,false])),
+    referral:{target:"",institution:"",to:"",salutation:"Dear Doctor,",body:""},
+    sick:{
+      from:date,fromPeriod:"AM",to:date,toPeriod:"PM",
+      days:1,remarks:"",showDiagnosis:true
+    },
+    attendance:{
+      date,period:new Date().getHours()<12 ? "AM" : "PM",
+      remarks:"",showDiagnosis:true
+    },
+    receipt:{
+      no:"",payment:"Cash 現金",paymentStatus:"unknown",
+      items:[{desc:"",amount:""}],remarks:""
+    },
+    rx:{
+      items:[{name:"",dose:"",frequency:"",route:"",duration:""}],
+      remarks:"",showDiagnosis:true
+    }
+  };
+}
+function blankDatabase() {
+  return {
+    schema:SCHEMA,settings:clone(DEFAULT_SETTINGS),
+    encounters:[],currentId:"",counter:0
+  };
+}
+let db=blankDatabase();
+let current=null;
+let active="note";
+/* view 只存 ID，避免交易回復後仍指向舊物件 */
+let view=null;
+let lastRaw=null;
+let loadFailed=false;
+let conflict=false;
+let dirty=false;
+let busy=false;
+let pendingSignature="";
+let signatureLoading=false;
+let signatureToken=0;
+
+function editable() {
+  return !!current && !view && current.status==="draft" &&
+    !loadFailed && !conflict && !busy;
+}
+function latestRevision(e=current) {
+  return e.revisions[e.revisions.length-1] || null;
+}
+function source() {
+  if (view?.kind==="document") {
+    const v=current.versions.find(v => v.id===view.id);
+    if (v) return {kind:"document",entry:v,data:v.data,settings:v.settings,
+      savedAt:v.savedAt};
+  }
+  if (view?.kind==="revision") {
+    const r=current.revisions.find(r => r.id===view.id);
+    if (r) return {kind:"revision",entry:r,data:r.data,settings:r.settings,
+      savedAt:r.savedAt};
+  }
+  if (active==="note" && current.status==="completed" && latestRevision()) {
+    const r=latestRevision();
+    return {kind:"revision",entry:r,data:r.data,settings:r.settings,
+      savedAt:r.savedAt};
+  }
+  return {kind:"live",entry:null,data:current,settings:db.settings,
+    savedAt:current.updated};
+}
+function data() { return source().data; }
+function doctor() { return source().settings; }
+
+function encounterCore(e) {
+  const keys=Object.keys(emptyData());
+  return Object.fromEntries(keys.map(k => [k,clone(e[k])]));
+}
+/* 對外文件快照不包含 SOAP、其他文件正文或診症歷史。 */
+function documentData(e, type) {
+  return {
+    id: e.id,
+    created: e.created,
+    updated: e.updated,
+    status: e.status,
+
+    date: e.date,
+    diagnosis: e.diagnosis,
+
+    patient: patientForDocument(e.patient, type),
+
+    masks: clone(e.masks),
+    signature: e.signature,
+    timestamp: e.timestamp,
+
+    [type]: clone(e[type])
+  };
+}
+function settingsSnapshot(settings,withSignature=false) {
+  const s=clone(settings);
+  if (!withSignature) s.signature="";
+  return s;
+}
+function fingerprint(e, type, settings) {
+  return {
+    patient: patientForDocument(e.patient, type),
+    date: e.date,
+    diagnosis: e.diagnosis,
+
+    content: e[type],
+    mask: e.masks[type],
+    signature: e.signature,
+    timestamp: e.timestamp,
+
+    settings: settingsSnapshot(
+      settings,
+      e.signature === "image"
+    )
+  };
+}
+function effectiveVersion(e,type) {
+  return e.versions.find(v => v.type===type && v.state==="issued") || null;
+}
+function isDifferent(e,type,settings=db.settings) {
+  const v=effectiveVersion(e,type);
+  return !!v && !same(
+    fingerprint(e,type,settings),
+    fingerprint(v.data,type,v.settings)
+  );
+}
+function addAudit(e,action,reason="",versionId="") {
+  e.audit.push({at:now(),action,reason,versionId});
+}
+
+/* =========================================================
+   04. 格式驗證與舊版轉換
+   只處理資料，不執行備份中的 HTML 或 JavaScript。
+   ========================================================= */
+function parseJSON(raw) {
+  return JSON.parse(raw,(key,value) => {
+    if (["__proto__","prototype","constructor"].includes(key)) {
+      throw new Error("備份含不允許的欄位名稱");
+    }
+    return value;
+  });
+}
+function checkStrings(value,keys,label) {
+  assert(obj(value),label+"格式錯誤");
+  for (const k of keys) assert(typeof value[k]==="string",label+"."+k+"須為文字");
+}
+function normalizeSettings(raw) {
+  checkStrings(raw,SETTING_STRINGS,"設定");
+  assert(!raw.signature || safeImage(raw.signature),"圖片簽名格式錯誤");
+  assert(obj(raw.masks),"缺少 HKID 預設");
+  const s=clone(DEFAULT_SETTINGS);
+  for (const k of SETTING_STRINGS) s[k]=raw[k];
+  for (const t of Object.keys(TYPES)) {
+    const value=raw.masks[t] ?? s.masks[t];
+    assert(["full","partial"].includes(value),"HKID 預設格式錯誤");
+    s.masks[t]=value;
+  }
+  if (raw.timestamp !== undefined) {
+    assert(typeof raw.timestamp==="boolean","時間設定格式錯誤");
+    s.timestamp=raw.timestamp;
+  }
+  return s;
+}
+
+/* 文件快照可只包含自己類別；診症則必須有五類資料。 */
+function normalizeData(raw,legacy=false,onlyType=null) {
+  assert(obj(raw),"診症資料格式錯誤");
+  checkStrings(raw,[
+    "id","created","updated","date","diagnosis","signature"
+  ],"診症");
+  assert(raw.id.length>0,"診症 ID 不可空白");
+  assert(["draft","completed"].includes(raw.status),"診症狀態錯誤");
+  assert(["manual","image"].includes(raw.signature),"簽署方式錯誤");
+  checkStrings(raw.patient,["surname","given","cn","hkid","dob","sex"],"病人");
+  assert(obj(raw.masks),"缺少 HKID 顯示設定");
+
+  const e=emptyData(raw.date);
+  for (const k of ["id","created","updated","date","diagnosis","signature","status"]) {
+    e[k]=raw[k];
+  }
+e.patient = normalizePatient(raw.patient);
+  for (const t of Object.keys(TYPES)) {
+    const value=raw.masks[t] ?? (t==="note" ? "full" : undefined);
+    assert(["full","partial"].includes(value),"診症 HKID 顯示格式錯誤");
+    e.masks[t]=value;
+  }
+  if (raw.timestamp!==undefined) {
+    assert(typeof raw.timestamp==="boolean","診症時間設定錯誤");
+    e.timestamp=raw.timestamp;
+  }
+
+  if (!onlyType) {
+    if (!legacy) {
+      checkStrings(raw.soap,["s","o","a","p"],"SOAP");
+      assert(obj(raw.used),"缺少草稿使用狀態");
+      e.soap=clone(raw.soap);
+      for (const t of DOC_TYPES) {
+        assert(typeof raw.used[t]==="boolean","草稿使用狀態錯誤");
+        e.used[t]=raw.used[t];
+      }
+    }
+  }
+
+  for (const t of onlyType ? [onlyType] : DOC_TYPES) {
+    const r=raw[t];
+    assert(obj(r),"缺少 "+t+" 資料");
+    if (t==="referral") {
+      checkStrings(r,["to","salutation","body"],"轉介");
+      e.referral={
+        target:r.target ?? "",institution:r.institution ?? "",
+        to:r.to,salutation:r.salutation,body:r.body
+      };
+      checkStrings(e.referral,["target","institution"],"轉介");
+    }
+    if (t==="sick") {
+      checkStrings(r,["from","fromPeriod","to","toPeriod","remarks"],"病假");
+      assert(["string","number"].includes(typeof r.days),"病假日數格式錯誤");
+      assert(["AM","PM"].includes(r.fromPeriod) &&
+        ["AM","PM"].includes(r.toPeriod),"病假時段格式錯誤");
+      assert(typeof r.showDiagnosis==="boolean","病假診斷選項錯誤");
+      e.sick={
+        from:r.from,fromPeriod:r.fromPeriod,to:r.to,toPeriod:r.toPeriod,
+        days:r.days,remarks:r.remarks,showDiagnosis:r.showDiagnosis
+      };
+    }
+    if (t==="attendance") {
+      checkStrings(r,["date","period","remarks"],"到診");
+      assert(["AM","PM"].includes(r.period),"到診時段格式錯誤");
+      assert(typeof r.showDiagnosis==="boolean","到診診斷選項錯誤");
+      e.attendance={
+        date:r.date,period:r.period,remarks:r.remarks,
+        showDiagnosis:r.showDiagnosis
+      };
+    }
+    if (t==="receipt") {
+      checkStrings(r,["no","payment","remarks"],"收據");
+      assert(Array.isArray(r.items),"收費項目格式錯誤");
+      const items=r.items.map(i => {
+        checkStrings(i,["desc"],"收費項目");
+        assert(["string","number"].includes(typeof i.amount),"金額格式錯誤");
+        return {desc:i.desc,amount:i.amount};
+      });
+      const paymentStatus=r.paymentStatus ?? "unknown";
+      assert(Object.hasOwn(PAYMENT_STATES,paymentStatus),"收款狀態錯誤");
+      e.receipt={
+        no:r.no,payment:r.payment,paymentStatus,items,remarks:r.remarks
+      };
+    }
+    if (t==="rx") {
+      checkStrings(r,["remarks"],"處方");
+      assert(typeof r.showDiagnosis==="boolean","處方診斷選項錯誤");
+      assert(Array.isArray(r.items),"藥物列表格式錯誤");
+      e.rx={
+        items:r.items.map(i => {
+          const keys=["name","dose","frequency","route","duration"];
+          checkStrings(i,keys,"藥物");
+          return Object.fromEntries(keys.map(k => [k,i[k]]));
+        }),
+        remarks:r.remarks,showDiagnosis:r.showDiagnosis
+      };
+    }
+  }
+
+  if (legacy && !onlyType) {
+    /* 只把有明確內容的舊資料視為草稿；不推斷預設病假及到診已使用。 */
+    e.used.referral=!!trim(e.referral.to+e.referral.body);
+    e.used.rx=usedRxItems(e).length>0;
+    e.used.receipt=usedReceiptItems(e).length>0;
+    e.used.sick=!!trim(e.sick.remarks);
+    e.used.attendance=!!trim(e.attendance.remarks);
+    if (e.receipt.payment==="Cash") e.receipt.payment="Cash 現金";
+  }
+  return onlyType ? documentData(e,onlyType) : e;
+}
+function normalizeSummary(raw) {
+  assert(Array.isArray(raw) && raw.length===DOC_TYPES.length,"摘要格式錯誤");
+  const found=new Set();
+  return raw.map(item => {
+    assert(obj(item) && DOC_TYPES.includes(item.type),"摘要類別錯誤");
+    assert(!found.has(item.type),"摘要類別重複");
+    found.add(item.type);
+    assert(Number.isInteger(item.legacyCount) && item.legacyCount>=0,
+      "舊版文件數量錯誤");
+    assert(typeof item.hadVoid==="boolean","作廢摘要格式錯誤");
+    let issued=null,draft=null;
+    if (item.issued!==null) {
+      checkStrings(item.issued,["id","savedAt","text"],"有效文件摘要");
+      issued={
+        id:item.issued.id,savedAt:item.issued.savedAt,text:item.issued.text
+      };
+    }
+    if (item.draft!==null) {
+      checkStrings(item.draft,["text"],"草稿摘要");
+      draft={text:item.draft.text};
+    }
+    return {
+      type:item.type,issued,draft,
+      legacyCount:item.legacyCount,hadVoid:item.hadVoid
+    };
+  });
+}
+function decodeDatabase(value) {
+  assert(obj(value) && [1,SCHEMA].includes(value.schema),"不支援此備份版本");
+  assert(Array.isArray(value.encounters),"缺少診症列表");
+  assert(Number.isInteger(value.counter) && value.counter>=0,"收據計數器錯誤");
+  const legacy=value.schema===1;
+  const result=blankDatabase();
+  result.settings=normalizeSettings(value.settings);
+  result.counter=value.counter;
+  result.currentId=typeof value.currentId==="string" ? value.currentId : "";
+  const ids=new Set();
+
+  result.encounters=value.encounters.map(raw => {
+    const e=normalizeData(raw,legacy);
+    assert(!ids.has(e.id),"重複診症 ID");
+    ids.add(e.id);
+    assert(Array.isArray(raw.versions),"缺少文件版本列表");
+    const versionIds=new Set();
+
+    e.versions=raw.versions.map(v => {
+      checkStrings(v,["id","type","savedAt"],"文件版本");
+      assert(v.id && !versionIds.has(v.id),"文件版本 ID 重複或空白");
+      versionIds.add(v.id);
+      assert(DOC_TYPES.includes(v.type),"文件類別錯誤");
+      const state=legacy ? "legacy" : v.state;
+      assert(Object.hasOwn(VERSION_STATES,state),"文件狀態錯誤");
+      const normalized={
+        id:v.id,type:v.type,savedAt:v.savedAt,state,
+        origin:legacy ? "legacy" : (v.origin==="legacy" ? "legacy" : "native"),
+        data:normalizeData(v.data,legacy,v.type),
+        settings:normalizeSettings(v.settings),
+        replacedBy:text(v.replacedBy),
+        voidAt:text(v.voidAt),
+        voidReason:text(v.voidReason),
+        confirmedAt:text(v.confirmedAt)
+      };
+      assert(normalized.data.id===e.id,"文件不屬於此診症");
+      return normalized;
+    });
+    for (const t of DOC_TYPES) {
+      assert(e.versions.filter(v => v.type===t && v.state==="issued").length<=1,
+        "同類文件有多於一個有效版本");
+    }
+
+    e.revisions=[];
+    e.audit=[];
+    if (!legacy) {
+      assert(Array.isArray(raw.revisions) && Array.isArray(raw.audit),
+        "缺少完成快照或操作紀錄");
+      const revisionIds=new Set();
+      e.revisions=raw.revisions.map(r => {
+        checkStrings(r,["id","savedAt"],"完成快照");
+        assert(r.id && !revisionIds.has(r.id),"完成快照 ID 重複");
+        revisionIds.add(r.id);
+        const d=normalizeData(r.data,false);
+        assert(d.id===e.id && d.status==="completed","完成快照診症不符");
+        const summary=normalizeSummary(r.summary);
+        for (const item of summary) {
+          if (item.issued) {
+            assert(e.versions.some(v =>
+              v.id===item.issued.id && v.type===item.type),
+              "完成快照引用的文件不存在");
+          }
+        }
+        return {
+          id:r.id,savedAt:r.savedAt,data:d,
+          settings:normalizeSettings(r.settings),summary
+        };
+      });
+      e.audit=raw.audit.map(a => {
+        checkStrings(a,["at","action","reason","versionId"],"操作紀錄");
+        return {
+          at:a.at,action:a.action,reason:a.reason,versionId:a.versionId
+        };
+      });
+    } else {
+      addAudit(e,"由舊版匯入",
+        "未推斷舊文件的出具／作廢狀態；SOAP 留空。");
+    }
+    return e;
+  });
+  return result;
+}
+
+/* =========================================================
+   05. 本機儲存與交易
+   結構操作失敗會回復；文字輸入失敗保留於記憶體供匯出。
+   ========================================================= */
+function persist() {
+  if (loadFailed || conflict) {
+    dirty=true;
+    status("禁止寫入：請匯出備份並處理讀取／分頁衝突",true);
+    return false;
+  }
+  try {
+    const existing=localStorage.getItem(KEY);
+    if (existing!==lastRaw) {
+      conflict=true;
+      dirty=true;
+      globalNotice(
+        "偵測到其他分頁或程式改動本機資料。已停止寫入，避免覆蓋。"+
+        "請先匯出本頁記憶體備份，再關閉其他分頁並重新載入。"
+      );
+      status("資料衝突：未儲存",true);
+      return false;
+    }
+    db.currentId=current?.id || db.currentId;
+    const raw=JSON.stringify(db);
+    localStorage.setItem(KEY,raw);
+    lastRaw=raw;
+    dirty=false;
+    status("已儲存至本機 · "+new Date().toLocaleTimeString());
+    return true;
+  } catch(error) {
+    dirty=true;
+    status("儲存失敗：請立即匯出 JSON；勿關閉此頁。",true);
+    return false;
+  }
+}
+function transaction(mutator) {
+  if (loadFailed || conflict) {
+    alert("目前不可寫入。請先匯出備份及處理儲存問題。");
+    return false;
+  }
+  const before=clone(db);
+  const currentId=current.id;
+  const oldView=clone(view);
+  const oldDirty=dirty;
+  try {
+    mutator();
+    if (persist()) return true;
+  } catch(error) {
+    db=before;
+    current=db.encounters.find(e => e.id===currentId);
+    view=oldView;
+    dirty=oldDirty;
+    throw error;
+  }
+  db=before;
+  current=db.encounters.find(e => e.id===currentId);
+  view=oldView;
+  dirty=oldDirty;
+  status("操作未儲存，已回復操作前狀態；請匯出備份。",true);
+  alert("儲存失敗，這次操作未完成。原有草稿仍保留，請匯出 JSON。");
+  return false;
+}
+function newEncounter(patient) {
+  db.counter++;
+  const e=emptyData(today(),db.settings);
+  if (patient) e.patient=clone(patient);
+  e.receipt.no="R-"+e.date.replaceAll("-","")+"-"+
+    String(db.counter).padStart(4,"0");
+  e.versions=[];
+  e.revisions=[];
+  e.audit=[];
+  db.encounters.unshift(e);
+  return e;
+}
+function loadDatabase() {
+  try {
+    lastRaw=localStorage.getItem(KEY);
+    const oldRaw=lastRaw===null ? localStorage.getItem(OLD_KEY) : null;
+    if (lastRaw!==null) db=decodeDatabase(parseJSON(lastRaw));
+    else if (oldRaw!==null) {
+      db=decodeDatabase(parseJSON(oldRaw));
+      globalNotice(
+        "已讀取舊版資料並轉換到新版；舊版原始 key 保持不變。"+
+        "舊文件列為「舊版待確認」，SOAP 不會自動補寫。"
+      );
+    }
+  } catch(error) {
+    loadFailed=true;
+    db=blankDatabase();
+    globalNotice(
+      "無法讀取資料，已停用編輯及自動寫入："+error.message+
+      "。請到設定匯出儲存原文，或匯入有效備份；不要清除瀏覽器資料。"
+    );
+  }
+  current=db.encounters.find(e => e.id===db.currentId) ||
+    db.encounters[0] || newEncounter();
+}
+function changed() {
+  current.updated=now();
+  dirty=true;
+  persist();
+  refreshPreview();
+}
+function startNew(patient) {
+  if (busy || loadFailed || conflict || !persist()) return;
+  if (!confirm("確定建立新診症？Confirm to start a new episode？")) return;
+  if (transaction(() => {
+    current=newEncounter(patient);
+    view=null;
+  })) {
+    active="note";
+    $("quickLine").value="";
+    $("historyDialog").close();
+    renderUI();
+  }
+}
+
+/* =========================================================
+   06. 摘要：有效版本與草稿分開，不重複加總
+   ========================================================= */
+function summaryText(e,type) {
+  if (type==="sick") {
+    return `${e.sick.days} 日\n`+
+      `${sickDate(e.sick.from,e.sick.fromPeriod)} → `+
+      `${sickDate(e.sick.to,e.sick.toPeriod)}`+
+      (trim(e.sick.remarks) ? "\n備註："+e.sick.remarks : "");
+  }
+  if (type==="attendance") {
+    return fmt(e.attendance.date)+" · "+e.attendance.period+
+      (trim(e.attendance.remarks) ? "\n備註："+e.attendance.remarks : "");
+  }
+  if (type==="referral") {
+    const r=e.referral;
+    return [
+      "對象："+(trim(r.target) || "未另行填寫"),
+      "機構／專科："+(trim(r.institution) || "未另行填寫"),
+      trim(r.to) ? "收件人／地址："+r.to : ""
+    ].filter(Boolean).join("\n");
+  }
+  if (type==="rx") {
+    const items=usedRxItems(e);
+    return (items.length ? items.map((i,n) =>
+      `${n+1}. ${i.name || "（未填藥名）"}\n`+
+      `Dose: ${i.dose || "—"} | Frequency: ${i.frequency || "—"} | `+
+      `Route: ${i.route || "—"} | Duration / Qty: ${i.duration || "—"}`
+    ).join("\n") : "未填藥物")+
+      (trim(e.rx.remarks) ? "\nInstructions / Remarks："+e.rx.remarks : "");
+  }
+  if (type==="receipt") {
+    const items=usedReceiptItems(e);
+    const incomplete=items.some(i =>
+      !trim(i.desc) || !trim(i.amount) || !Number.isFinite(Number(i.amount))
+    );
+    return [
+      "收據編號："+(e.receipt.no || "—"),
+      ...items.map(i => `${i.desc || "（未填項目）"}：HKD ${money(i.amount)}`),
+      (incomplete ? "草稿暫計" : "收費合計")+"：HKD "+money(totalCents(e)/100),
+      "付款方式："+(e.receipt.payment || "未填寫"),
+      "收款狀態："+PAYMENT_STATES[e.receipt.paymentStatus],
+      trim(e.receipt.remarks) ? "備註："+e.receipt.remarks : ""
+    ].filter(Boolean).join("\n");
+  }
+  return "";
+}
+function buildSummary(e=current,settings=db.settings) {
+  return DOC_TYPES.map(type => {
+    const v=effectiveVersion(e,type);
+    const draftExists=v ? isDifferent(e,type,settings) : e.used[type];
+    return {
+      type,
+      issued:v ? {id:v.id,savedAt:v.savedAt,text:summaryText(v.data,type)} : null,
+      draft:draftExists ? {text:summaryText(e,type)} : null,
+      legacyCount:e.versions.filter(x => x.type===type && x.state==="legacy").length,
+      hadVoid:e.versions.some(x => x.type===type && x.state==="void")
+    };
+  });
+}
+function renderSummary(summary) {
+  return summary
+    .filter(item => item.issued !== null)
+    .map(item => `
+      <section class="summary-section">
+        <h3>${esc(TYPES[item.type][0])}</h3>
+
+        <p>
+          <strong>已出具版本</strong>
+          · ${esc(stamp(item.issued.savedAt))}
+        </p>
+
+        <p>${esc(item.issued.text)}</p>
+      </section>
+    `)
+    .join("");
+}
+
+/* =========================================================
+   07. 表單及介面
+   ========================================================= */
+function textField(label,path,type="text") {
+  return `<div class="field"><label>${esc(label)}</label>
+    <input type="${type}" data-path="${path}"></div>`;
+}
+function area(label,path) {
+  return `<div class="field"><label>${esc(label)}</label>
+    <textarea data-path="${path}"></textarea></div>`;
+}
+function selectField(label,path,options) {
+  return `<div class="field"><label>${esc(label)}</label>
+    <select data-path="${path}">
+      ${options.map(([v,t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join("")}
+    </select></div>`;
+}
+function checkField(label,path) {
+  return `<label class="check"><input type="checkbox" data-path="${path}">
+    ${esc(label)}</label>`;
+}
+const periods=[["AM","上午 AM"],["PM","下午 PM"]];
+
+function renderDocumentFields() {
+  const e=data();
+  let html="";
+  if (active==="note") {
+    html=`
+      <h3>診症紀錄</h3>
+      <div class="small" style="margin-bottom:12px">
+      </div>
+      ${area("Chief Complaint & History of Presnt Illness 主訴及病史","soap.s")}
+      ${area("Physical Examination & Investigations 檢查及化驗結果","soap.o")}
+      ${area("Assessment 評估補充","soap.a")}
+      ${area("Plan of Management 治療計劃","soap.p")}
+      <div class="small">
+      </div>`;
+  } else {
+    html=`<h3>${esc(TYPES[active][0])}資料</h3>`;
+    if (!view) {
+      html+=checkField(
+        "本次準備此文件（草稿；不代表已出具）","used."+active
+      );
+    }
+    if (active==="referral") {
+      html+=`
+        ${textField("轉介對象／醫生（摘要用）","referral.target")}
+        ${textField("機構／專科（摘要用）","referral.institution")}
+        ${area("收件人／地址（信上顯示；留空則用上述對象及機構）","referral.to")}
+        ${textField("稱呼","referral.salutation")}
+        <div class="small">診斷會獨立放在正文之前。</div>
+        ${area("轉介正文","referral.body")}`;
+    }
+    if (active==="sick") {
+      html+=`
+        ${textField("病假日數（0.5 日為單位）","sick.days","number")}
+        <div class="grid2">
+          ${textField("開始日期","sick.from","date")}
+          ${selectField("開始時段","sick.fromPeriod",periods)}
+          ${textField("結束日期","sick.to","date")}
+          ${selectField("結束時段","sick.toPeriod",periods)}
+        </div>
+        ${checkField("顯示診斷","sick.showDiagnosis")}
+        ${area("備註","sick.remarks")}`;
+    }
+    if (active==="attendance") {
+      html+=`
+        <div class="grid2">
+          ${textField("到診日期","attendance.date","date")}
+          ${selectField("時段","attendance.period",periods)}
+        </div>
+        ${checkField("顯示診斷","attendance.showDiagnosis")}
+        ${area("備註","attendance.remarks")}`;
+    }
+    if (active==="receipt") {
+      const payments=[
+        "Cash 現金","Visa 信用卡","Mastercard 萬事達",
+        "UnionPay 銀聯","FPS 轉數快","Octopus 八達通","Other 其他"
+      ];
+      if (!payments.includes(e.receipt.payment)) payments.unshift(e.receipt.payment);
+      html+=`
+        ${textField("收據編號","receipt.no")}
+        ${selectField("付款方式","receipt.payment",payments.map(x => [x,x]))}
+        ${selectField("收款狀態（內部摘要）","receipt.paymentStatus",
+          Object.entries(PAYMENT_STATES))}
+        <label>收費項目（HKD）</label>
+        ${e.receipt.items.map((item,i) => `
+          <div class="item-card">
+            <div class="item-top">
+              <span>項目 ${i+1}</span>
+              <button type="button" data-remove="${i}" data-list="receipt">移除</button>
+            </div>
+            <div class="grid2">
+              <input placeholder="項目名稱" data-path="receipt.items.${i}.desc">
+              <input placeholder="金額" type="number" min="0" step=".01"
+                data-path="receipt.items.${i}.amount">
+            </div>
+          </div>`).join("")}
+        <button type="button" data-add="receipt">＋ 加收費項目</button>
+        <div style="margin-top:14px">${area("備註","receipt.remarks")}</div>`;
+    }
+    if (active==="rx") {
+      html+=`
+        ${checkField("顯示診斷","rx.showDiagnosis")}
+        ${e.rx.items.map((item,i) => `
+          <div class="item-card">
+            <div class="item-top">
+              <span>藥物 ${i+1}</span>
+              <button type="button" data-remove="${i}" data-list="rx">移除</button>
+            </div>
+            <div class="field">
+              <input placeholder="Medication name & strength" data-path="rx.items.${i}.name">
+            </div>
+            <div class="grid2">
+              <input placeholder="Dose" data-path="rx.items.${i}.dose">
+              <input placeholder="Frequency" data-path="rx.items.${i}.frequency">
+              <input placeholder="Route" data-path="rx.items.${i}.route">
+              <input placeholder="Duration / Qty" data-path="rx.items.${i}.duration">
+            </div>
+          </div>`).join("")}
+        <button type="button" data-add="rx">＋ 加藥物</button>
+        <div style="margin-top:14px">
+          ${area("Instructions / Remarks","rx.remarks")}
+        </div>`;
+    }
+  }
+  $("documentFields").innerHTML=html;
+  const days=document.querySelector('[data-path="sick.days"]');
+  if (days) { days.min=".5"; days.step=".5"; }
+}
+function fillFields() {
+  const e=data();
+  document.querySelectorAll("#formFields [data-path]").forEach(input => {
+    const value=get(e,input.dataset.path);
+    if (input.type==="checkbox") input.checked=!!value;
+    else input.value=value ?? "";
+  });
+  $("maskSelect").value=e.masks[active];
+  $("signatureSelect").value=e.signature;
+  $("timestampCheck").checked=e.timestamp;
+}
+function renderUI() {
+  const s=source();
+  $("tabs").innerHTML=Object.entries(TYPES).map(([type,value]) => `
+    <button type="button" data-tab="${type}"
+      class="${active===type ? "active" : ""}"
+      ${view || busy ? "disabled" : ""}>${value[0]}</button>
+  `).join("");
+  renderDocumentFields();
+  fillFields();
+  $("formFields").disabled=!editable();
+  $("signatureOption").classList.toggle("hidden",active==="note");
+  $("encounterStatus").textContent=
+    s.kind==="revision" ? "完成快照" :
+    s.kind==="document" ? "文件版本" :
+    current.status==="completed" ? "已完成" : "未完成";
+
+  let notice="";
+  if (view) notice="正在查看歷史快照，內容唯讀。按「返回目前診症」繼續。";
+  else if (current.status==="completed") {
+    notice="此診症已完成；要修改、出具新版本或作廢文件，請先重新開啟診症。";
+    if (!current.revisions.length) {
+      notice+=" 這是舊版完成紀錄，沒有當時的 SOAP 完成快照。";
+    }
+  }
+  if (loadFailed || conflict) notice="資料讀取／分頁衝突：編輯及寫入已停用。";
+  $("readOnlyNotice").textContent=notice;
+  $("readOnlyNotice").classList.toggle("hidden",!notice);
+
+  $("returnBtn").classList.toggle("hidden",!view);
+  $("returnBtn").disabled=busy;
+  $("saveBtn").disabled=busy || loadFailed || conflict;
+  $("completeBtn").disabled=busy || !!view || loadFailed || conflict;
+  $("completeBtn").textContent=
+    current.status==="completed" ? "重新開啟診症" : "完成診症";
+  $("issueBtn").classList.toggle("hidden",active==="note" || !!view);
+  $("issueBtn").disabled=!editable();
+  $("newBtn").disabled=busy || loadFailed || conflict;
+  $("historyBtn").disabled=busy;
+  $("settingsBtn").disabled=busy;
+  $("printBtn").disabled=busy || loadFailed || conflict;
+
+  $("printBtn").textContent=active==="note"
+    ? "列印診症紀錄／PDF"
+    : view ? "重印此版本" :
+      current.status==="completed" ? "重印有效版本" : "儲存出具並列印";
+
+  refreshPreview();
+}
+function refreshPreview() {
+  const s=source();
+  $("previewTitle").textContent=TYPES[active][0]+" · "+
+    (patientLabel(s.data.patient) || "未填病人");
+  if (s.kind==="document") {
+    $("workflowPanel").textContent=
+      VERSION_STATES[s.entry.state]+" · "+stamp(s.savedAt)+
+      "。重印不會建立新版本。"+
+      (s.entry.origin==="legacy" ? " 此文件源自舊版紀錄。" : "");
+  } else if (s.kind==="revision") {
+    $("workflowPanel").textContent=
+      "完成時快照 · "+stamp(s.savedAt)+
+      "。摘要反映當時狀態；後來作廢或修訂不會改寫此快照。";
+  } else if (active==="note") {
+    $("workflowPanel").textContent=
+      "SOAP 為內部紀錄。完成診症會保存當時 SOAP、有效文件及未出具草稿摘要；"+
+      "不會自動將草稿出具。";
+  } else {
+    const v=effectiveVersion(current,active);
+    $("workflowPanel").textContent=v
+      ? "目前有效版本："+stamp(v.savedAt)+
+        (isDifferent(current,active)
+          ? "。目前草稿與有效版本不同，尚未重新出具。"
+          : "。內容與有效版本相同；再次操作會重用該版本。")
+      : "未記錄有效出具版本。填寫／預覽不代表已出具。"+
+        "「儲存出具版本」成功後才會納入有效摘要。";
+  }
+  renderPreview();
+}
+
+/* =========================================================
+   08. 五類文件內容
+   ========================================================= */
+function note(label,value) {
+  if (!trim(value)) return "";
+  return `<div class="remarks"><strong>${esc(label)}</strong>
+    <p>${esc(value)}</p></div>`;
+}
+function paragraphs(value) {
+  return text(value).split(/\n\s*\n/).filter(Boolean).map(
+    p => `<p>${esc(p).replace(/\n/g,"<br>")}</p>`
+  ).join("");
+}
+function diagnosisBlock(e) {
+  if (!trim(e.diagnosis)) return "";
+  return `<div class="diagnosis"><strong>Diagnosis / 診斷：</strong>
+    ${esc(e.diagnosis).replace(/\n/g,"<br>")}</div>`;
+}
+function patientField(label,value,full=false) {
+  return `<span class="patient-label">${esc(label)}</span>
+    <span class="patient-colon">：</span>
+    <span class="patient-value${full ? " patient-full-value" : ""}">${esc(value)}</span>`;
+}
+function renderPatientBox(e) {
+  const a=age(e.patient.dob,e.date);
+  return `<div class="patient-box"><div class="aligned-patient-grid">
+    ${patientField("Patient / 病人",patientLabel(e.patient)||"—",true)}
+    ${patientField("Date of Birth",fmt(e.patient.dob)+(a!=="" ? ` · ${a} years` : ""))}
+    ${patientField("Gender",e.patient.sex||"—")}
+    ${patientField("HKID / ID",maskedID(e.patient.hkid,e.masks[active]))}
+    ${patientField("Date",fmt(e.date))}
+  </div></div>`;
+}
+function bilingualLeaveDate(date,period) {
+  return `<span class="leave-date-cn">${esc(fmtChineseDate(date)+chinesePeriod(period))}</span>
+    <span class="leave-date-en">${esc(sickDate(date,period))}</span>`;
+}
+function renderReferralContent(e) {
+  const recipient=trim(e.referral.to) ||
+    [e.referral.target,e.referral.institution].filter(Boolean).join("\n");
+  return `
+    ${recipient ? `<div class="recipient">${esc(recipient)}</div>` : ""}
+    ${e.referral.salutation ? `<p>${esc(e.referral.salutation)}</p>` : ""}
+    ${diagnosisBlock(e)}
+    <div class="letter-body">${paragraphs(e.referral.body)}</div>`;
+}
+function renderSickContent(e) {
+  const dx=e.sick.showDiagnosis && trim(e.diagnosis);
+  return `
+    <div class="recipient">致有關人士：<br>To Whom It May Concern,</div>
+    <div class="certificate-section">
+
+      <div class="cn">茲證明上述病人經診症後獲建議休假，詳情如下。</div>
+      <div class="en">This is to certify that the above-named patient has been advised to take sick leave as detailed below.</div>
+
+    <div class="cn"><br><strong>診斷 / Diagnosis : </strong>${esc(e.diagnosis)}</div>
+    </div>
+    <div class="leave-summary">
+      <div><small>病假日數 / Days</small><strong>
+        <span class="leave-date-cn">${esc(e.sick.days)} 日</span>
+        <span class="leave-date-en">${esc(e.sick.days)} day(s)</span>
+      </strong></div>
+      <div><small>由 / From</small>
+        <strong>${bilingualLeaveDate(e.sick.from,e.sick.fromPeriod)}</strong></div>
+      <div><small>至 (包括) / To (inclusive)</small>
+        <strong>${bilingualLeaveDate(e.sick.to,e.sick.toPeriod)}</strong></div>
+    </div>
+    ${note("備註 / Remarks",e.sick.remarks)}`;
+}
+function renderAttendanceContent(e) {
+  const dx=e.attendance.showDiagnosis && trim(e.diagnosis);
+  const date=fmtChineseDate(e.attendance.date)+chinesePeriod(e.attendance.period);
+  return `
+    <div class="recipient">致有關人士：<br>To Whom It May Concern,</div>
+    <div class="certificate-section">
+      <div class="cn">茲證明上述病人已於<strong>${esc(date)}</strong>到本處診治。</div>
+      <div class="en">This is to certify that the above-named patient attended this practice on
+        <strong>${esc(fmt(e.attendance.date))} (${esc(e.attendance.period)})</strong>.</div>
+    </div>
+    ${dx ? `<div class="certificate-section">
+      <div class="cn"><strong>診斷 / Diagnosis : </strong>${esc(e.diagnosis)}</div>
+    </div>` : ""}
+    ${note("備註 / Remarks",e.attendance.remarks)}`;
+}
+function renderReceiptContent(e) {
+  const items=usedReceiptItems(e);
+  return `
+    <div>Receipt No. <strong>${esc(e.receipt.no)}</strong></div>
+    ${diagnosisBlock(e)}
+    <table class="document-table">
+      <colgroup><col style="width:72%"><col style="width:28%"></colgroup>
+      <thead><tr>
+        <th>Description<br>收費項目</th>
+        <th class="num">Amount (HKD)<br>金額（港元）</th>
+      </tr></thead>
+      <tbody>${items.map(i => `<tr><td>${esc(i.desc)}</td>
+        <td class="num">$${money(i.amount)}</td></tr>`).join("")}</tbody>
+    </table>
+    <div class="total"><span>Total / 總額 (HKD)</span>
+      <span>$${money(totalCents(e)/100)}</span></div>
+    <p>Payment Method 支付方式 : ${esc(e.receipt.payment)}</p>
+    ${note("Remarks / 備註",e.receipt.remarks)}`;
+}
+function renderRxContent(e) {
+  const items=e.rx.items.filter(i => trim(i.name));
+  return `
+    ${renderDrugAllergy(e.patient)}
+    ${e.rx.showDiagnosis ? diagnosisBlock(e) : ""}
+    <table class="document-table">
+      <colgroup>
+        <col style="width:35%"><col style="width:14%">
+        <col style="width:19%"><col style="width:13%"><col style="width:19%">
+      </colgroup>
+      <thead><tr>
+        <th>Medication<br>藥物</th><th>Dose<br>劑量</th>
+        <th>Frequency<br>頻次</th><th>Route<br>途徑</th>
+        <th>Duration / Qty<br>療程／數量</th>
+      </tr></thead>
+      <tbody>${items.map((i,n) => `<tr>
+        <td><strong>${n+1}. ${esc(i.name)}</strong></td>
+        <td>${esc(i.dose)}</td><td>${esc(i.frequency)}</td>
+        <td>${esc(i.route)}</td><td>${esc(i.duration)}</td>
+      </tr>`).join("")}</tbody>
+    </table>
+    ${note("Instructions / Remarks 注意事項／備註",e.rx.remarks)}
+    <div class="end-marker">End of Prescription 處方完</div>`;
+}
+const DOCUMENT_RENDERERS={
+  referral:renderReferralContent,sick:renderSickContent,
+  attendance:renderAttendanceContent,receipt:renderReceiptContent,
+  rx:renderRxContent
+};
+
+/* =========================================================
+   09. Progress Note 與共用預覽
+   ========================================================= */
+function renderProgressNote(e,s) {
+  const summary=s.kind==="revision" ? s.entry.summary : buildSummary(e,s.settings);
+  const summaryHTML = renderSummary(summary);
+  const sections=[
+    ["Chief Complaint & History of Presnt Illness 主訴及病史",e.soap.s],
+    ["Physical Examination & Investigations 檢查及化驗結果",e.soap.o],
+    ["Diagnosis 診斷",
+      ""+(trim(e.diagnosis)||"未填寫")+
+      "\n\n"+(trim(e.soap.a)||"未填寫")],
+    ["Plan of Management 治療計劃",e.soap.p]
+  ];
+  return `
+
+    ${sections.map(([label,value]) => `
+      <section class="note-section">
+        <h2>${esc(label)}</h2>
+        <div class="note-text">${esc(trim(value) ? value : "未填寫")}</div>
+      </section>`).join("")}
+    <section class="note-section">
+${summaryHTML
+      ? `<section class="note-section">${summaryHTML}</section>`
+      : ""
+    }
+    </section>
+    <div class="document-footer">
+      記錄醫生：${esc(s.settings.nameCn)} / ${esc(s.settings.nameEn)}<br>
+      ${s.kind==="revision" ? "完成時間" :"修改時間"}：
+      ${esc(stamp(s.savedAt))}
+    </div>`;
+}
+function letterhead(settings) {
+  return `
+    <div class="letterhead">
+      <div class="doctor-brand">
+        <div class="cn">${esc(settings.nameCn)}</div>
+        <div class="en">${esc(settings.nameEn)}</div>
+      </div>
+      <div class="credentials">${esc(settings.qualCn)}</div>
+      <div class="credentials">${esc(settings.qualEn)}</div>
+    </div>
+    <div class="contact">
+      <div>${esc(settings.address)}</div>
+      <div>Tel: ${esc(settings.phone)} &nbsp;&nbsp; | &nbsp;&nbsp; Email: ${esc(settings.email)}</div>
+    </div>`;
+}
+function signatureHTML(e,settings) {
+  const signature=e.signature==="image" ? safeImage(settings.signature) : "";
+  return `
+    <div class="signature">
+      <div class="signature-space">${
+        signature ? `<img src="${signature}" alt="Doctor signature">` : ""
+      }</div>
+      <div class="signature-line">
+        <div class="signature-name">${esc(settings.nameCn)}</div>
+        <div class="signature-name">${esc(settings.nameEn)}</div>
+        ${settings.reg ? `<div class="signature-reg">Reg. No. 註冊編號：${esc(settings.reg)}</div>` : ""}
+      </div>
+    </div>`;
+}
+function renderPreview() {
+  const s=source(), e=s.data, settings=s.settings;
+  const titles=TYPES[active];
+  let state="";
+  if (active!=="note") {
+    if (s.kind!=="document") {
+      state="草稿預覽 · 未以此畫面確認出具；請用上方儲存出具／列印按鈕。";
+    } else if (s.entry.state!=="issued") {
+      state="歷史存檔副本 · "+VERSION_STATES[s.entry.state]+" · 非目前有效文件";
+      if (s.entry.voidReason) state+=" · 原因："+s.entry.voidReason;
+    }
+  }
+  $("paper").innerHTML=`
+    ${letterhead(settings)}
+    <div class="doc-title">
+      <h1>${esc(titles[1])}</h1>
+      <div class="title-cn">${esc(titles[2])}</div>
+    </div>
+    ${state ? `<div class="document-state">${esc(state)}</div>` : ""}
+    ${renderPatientBox(e)}
+    ${active==="note"
+      ? renderProgressNote(e,s)
+      : DOCUMENT_RENDERERS[active](e)+signatureHTML(e,settings)+
+        (e.timestamp ? `<div class="document-footer">
+          Document Version 文件版本：${esc(stamp(s.savedAt))}
+        </div>` : "")
+    }`;
+}
+
+/* =========================================================
+   10. 病假計算及驗證
+   ========================================================= */
+function sickHalf(date,period) {
+  if (!validDate(date) || !["AM","PM"].includes(period)) return NaN;
+  return Date.parse(date+"T00:00:00Z")/86400000*2+(period==="PM" ? 1 : 0);
+}
+function calculateSick(path) {
+  const s=current.sick;
+  if (["sick.from","sick.fromPeriod","sick.days"].includes(path)) {
+    const days=Number(s.days), start=sickHalf(s.from,s.fromPeriod);
+    if (!Number.isFinite(start) || !Number.isFinite(days) ||
+        days<.5 || days>3660 || !Number.isInteger(days*2)) return;
+    const end=start+days*2-1;
+    s.to=new Date(Math.floor(end/2)*86400000).toISOString().slice(0,10);
+    s.toPeriod=end%2===0 ? "AM" : "PM";
+  } else if (["sick.to","sick.toPeriod"].includes(path)) {
+    const days=(sickHalf(s.to,s.toPeriod)-sickHalf(s.from,s.fromPeriod)+1)/2;
+    if (Number.isFinite(days) && days>=.5) s.days=days;
+  }
+  for (const path of ["sick.days","sick.to","sick.toPeriod"]) {
+    const input=document.querySelector(`[data-path="${path}"]`);
+    if (input && input!==document.activeElement) input.value=get(current,path);
+  }
+}
+function baseWarnings(e) {
+  const warnings=[];
+
+  warnings.push(...patientAllergyWarnings(e.patient));
+
+  if (!patientLabel(e.patient)) warnings.push("病人姓名未填寫");
+  if (!validDate(e.date)) warnings.push("文件／診症日期無效");
+
+  if (e.patient.dob && !validDate(e.patient.dob)) {
+    warnings.push("出生日期無效");
+  }
+
+  if (e.patient.dob && e.patient.dob>e.date) {
+    warnings.push("出生日期遲於診症日期");
+  }
+
+  return warnings;
+}
+function documentWarnings(e,type,settings) {
+  const w=baseWarnings(e);
+  if (e.signature==="image" && !safeImage(settings.signature)) {
+    w.push("已選圖片簽名，但没有有效簽名圖片");
+  }
+  if (type==="referral") {
+    if (!trim(e.referral.body)) w.push("轉介正文未填寫");
+    if (!trim(e.referral.target+e.referral.institution+e.referral.to)) {
+      w.push("請填寫轉介對象、機構或收件人");
+    }
+  }
+  if (type==="sick") {
+    const count=(sickHalf(e.sick.to,e.sick.toPeriod)-
+      sickHalf(e.sick.from,e.sick.fromPeriod)+1)/2;
+    if (!Number.isFinite(count) || count<.5 || count!==Number(e.sick.days)) {
+      w.push("病假日期、時段及日數不一致");
+    }
+  }
+  if (type==="attendance" && !validDate(e.attendance.date)) {
+    w.push("到診日期無效");
+  }
+  if (type==="rx") {
+    const items=usedRxItems(e);
+    if (!items.length) w.push("沒有藥物");
+    if (items.some(i =>
+      ["name","dose","frequency","route","duration"].some(k => !trim(i[k]))
+    )) w.push("請完整填寫藥名、劑量、頻次、途徑及療程／數量");
+  }
+  if (type==="receipt") {
+    const items=usedReceiptItems(e);
+    if (!trim(e.receipt.no)) w.push("收據編號未填寫");
+    if (!trim(e.receipt.payment)) w.push("付款方式未填寫");
+    if (!items.length) w.push("沒有收費項目");
+    if (items.some(i =>
+      !trim(i.desc) ||
+      !/^\d+(?:\.\d{1,2})?$/.test(trim(i.amount)) ||
+      !Number.isSafeInteger(Math.round(Number(i.amount)*100))
+    )) w.push("收費項目須有名稱，金額須為非負數且最多兩位小數");
+    if (!Number.isSafeInteger(totalCents(e))) w.push("金額超出可處理範圍");
+  }
+  return w;
+}
+function showWarnings(w) {
+  if (!w.length) return false;
+  alert("請先處理：\n\n• "+w.join("\n• "));
+  return true;
+}
+function validatePrint() {
+  if (active==="note") return !showWarnings(baseWarnings(current));
+  if (showWarnings(documentWarnings(current,active,db.settings))) return false;
+  if (active==="rx" && !trim(db.settings.reg)) {
+    return confirm("未填寫醫生註冊編號。仍然製作此測試文件？");
+  }
+  return true;
+}
+
+/* =========================================================
+   11. 出具、完成、修訂及列印
+   ========================================================= */
+function issueDocument() {
+  if (!editable() || active==="note") return null;
+  if (!validatePrint()) return null;
+  const existing=effectiveVersion(current,active);
+  if (existing && !isDifferent(current,active)) {
+    if (!persist()) return null;
+    view={kind:"document",id:existing.id};
+    renderUI();
+    return existing;
+  }
+  const message=existing
+    ? "儲存新版本並取代目前有效版本？\n旧版保留，不會重複計算。"
+    : "儲存此文件為本次診症的有效出具版本？";
+  if (!confirm(message+"\n\n這不代表已列印或交付病人。")) return null;
+
+  const id=uid(), type=active, savedAt=now();
+  const ok=transaction(() => {
+    current.used[type]=true;
+    current.updated=savedAt;
+    const previous=effectiveVersion(current,type);
+    if (previous) {
+      previous.state="superseded";
+      previous.replacedBy=id;
+    }
+    current.versions.push({
+      id,type,savedAt,state:"issued",origin:"native",
+      data:documentData(current,type),
+      settings:settingsSnapshot(db.settings,current.signature==="image"),
+      replacedBy:"",voidAt:"",voidReason:"",confirmedAt:""
+    });
+    addAudit(current,"儲存出具版本",TYPES[type][0],id);
+  });
+  if (!ok) { renderUI(); return null; }
+  view={kind:"document",id};
+  renderUI();
+  return current.versions.find(v => v.id===id);
+}
+function completeEncounter() {
+  if (view || busy || loadFailed || conflict) return;
+  if (current.status==="completed") {
+    const reason=prompt("重新開啟診症的原因（必填；舊快照會保留）：");
+    if (!trim(reason)) return;
+    if (transaction(() => {
+      current.status="draft";
+      current.updated=now();
+      addAudit(current,"重新開啟診症",trim(reason));
+    })) {
+      active="note";
+      renderUI();
+    }
+    return;
+  }
+
+  if (showWarnings(baseWarnings(current))) return;
+  const summary=buildSummary();
+  const missing=[
+    !trim(current.soap.s) && "S",
+    !trim(current.soap.o) && "O",
+    !trim(current.diagnosis+current.soap.a) && "A",
+    !trim(current.soap.p) && "P"
+  ].filter(Boolean);
+  const pending=summary.filter(x => x.draft).map(x => TYPES[x.type][0]);
+  const legacy=summary.reduce((n,x) => n+x.legacyCount,0);
+  const message=[
+    "保存當時 SOAP 及處理摘要，並完成診症？",
+    missing.length ? "未填寫："+missing.join("、")+"；將保留「未填寫」。" : "",
+    pending.length ? "未出具／有變更草稿："+pending.join("、")+"。不會自動出具。" : "",
+    legacy ? `另有 ${legacy} 個舊版文件待確認，不會計入有效摘要。` : ""
+  ].filter(Boolean).join("\n\n");
+  if (!confirm(message)) return;
+
+  if (transaction(() => {
+    current.status="completed";
+    current.updated=now();
+    current.revisions.push({
+      id:uid(),savedAt:current.updated,
+      data:encounterCore(current),
+      settings:settingsSnapshot(db.settings,false),
+      summary:clone(summary)
+    });
+    addAudit(current,"完成診症",
+      "第 "+current.revisions.length+" 個完成快照");
+  })) {
+    active="note";
+    renderUI();
+  }
+}
+async function printDocument() {
+  if (busy || loadFailed || conflict) return;
+  if (active!=="note" && !view) {
+    if (current.status==="completed") {
+      const v=effectiveVersion(current,active);
+      if (!v) {
+        alert("沒有此類有效文件。要出具文件，請先重新開啟診症。");
+        return;
+      }
+      view={kind:"document",id:v.id};
+      renderUI();
+    } else if (!issueDocument()) return;
+  }
+
+  const s=source();
+  if (active==="note" && s.kind==="live") {
+    if (!validatePrint() || !persist()) return;
+    if (!confirm("這是尚未有完成快照的診症紀錄，會標示草稿／舊版狀態。繼續列印？")) return;
+  }
+  if (s.kind==="document" && s.entry.state!=="issued") {
+    if (!confirm("此版本不是目前有效文件，只會列印帶狀態標示的歷史存檔副本。繼續？")) return;
+  }
+
+  busy=true;
+  renderUI();
+  try {
+    if (document.fonts) await document.fonts.ready;
+  await Promise.all(
+      [...$("paper").querySelectorAll("img")].map(async img => {
+        if (typeof img.decode === "function") {
+          await img.decode();
+        } else if (!img.complete) {
+          await new Promise((resolve, reject) => {
+            img.onload = () => resolve();
+
+            img.onerror = () => {
+              reject(new Error("簽名圖片載入失敗"));
+            };
+          });
+        }
+
+        if (!img.naturalWidth) {
+          throw new Error("簽名圖片載入失敗，已停止列印");
+        }
+      })
+    );  
+
+
+
+    await new Promise(resolve =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve))
+    );
+    window.print();
+  } catch(error) {
+    alert("未能開啟列印："+error.message+
+      "\n已儲存的版本仍保留；可修正後重印，不需要重複出具。");
+  } finally {
+    busy=false;
+    renderUI();
+  }
+}
+
+/* =========================================================
+   12. 歷史、作廢及舊版確認
+   ========================================================= */
+function renderHistory() {
+  const query=trim($("historySearch").value).toLowerCase();
+  const list=db.encounters.filter(e => [
+    patientLabel(e.patient),e.patient.hkid,e.date,e.diagnosis,
+    e.soap.s,e.soap.o,e.soap.a,e.soap.p
+  ].join(" ").toLowerCase().includes(query))
+    .slice().sort((a,b) => b.updated.localeCompare(a.updated));
+
+  $("historyList").innerHTML=list.map(e => `
+    <div class="history-row">
+      <strong>${esc(patientLabel(e.patient)||"未命名草稿")}</strong>
+      <div class="small">
+        ${esc(e.date)} · ${esc(maskedID(e.patient.hkid,"partial"))} ·
+        ${e.status==="completed" ? "已完成" : "未完成"} ·
+        ${e.versions.length} 個文件版本 · ${e.revisions.length} 個完成快照
+      </div>
+      <div class="small">${esc(e.diagnosis)}</div>
+      <div class="actions">
+        <button data-open="${esc(e.id)}">開啟診症</button>
+        <button data-new-patient="${esc(e.id)}">同病人新診症</button>
+      </div>
+
+      ${e.revisions.length ? `
+        <details class="version-list">
+          <summary>診症完成快照</summary>
+          ${e.revisions.map((r,i) => `
+            <div class="version-entry">
+              <button data-revision="${esc(r.id)}" data-encounter="${esc(e.id)}">
+                第 ${i+1} 版 · ${esc(stamp(r.savedAt))}
+              </button>
+            </div>`).reverse().join("")}
+        </details>` : ""}
+
+      ${e.versions.length ? `
+        <details class="version-list">
+          <summary>文件版本／作廢／舊版確認</summary>
+          ${e.versions.slice().reverse().map(v => `
+            <div class="version-entry">
+              <div class="small">
+                ${esc(TYPES[v.type][0])} · ${esc(stamp(v.savedAt))} ·
+                ${esc(VERSION_STATES[v.state])}
+                ${v.origin==="legacy" ? " · 來自舊版" : ""}
+              </div>
+              ${v.voidReason ? `<div class="small">作廢原因：${esc(v.voidReason)}</div>` : ""}
+              <div class="actions">
+                <button data-version="${esc(v.id)}" data-encounter="${esc(e.id)}">
+                  查看／重印
+                </button>
+                ${v.state==="issued" ? `
+                  <button class="danger" data-void="${esc(v.id)}"
+                    data-encounter="${esc(e.id)}">作廢</button>` : ""}
+                ${v.state==="legacy" ? `
+                  <button data-adopt="${esc(v.id)}" data-encounter="${esc(e.id)}">
+                    確認納入有效摘要
+                  </button>` : ""}
+              </div>
+            </div>`).join("")}
+        </details>` : ""}
+
+      ${e.audit.length ? `
+        <details class="version-list">
+          <summary>本機操作紀錄（非防竄改審計）</summary>
+          ${e.audit.slice().reverse().map(a => `
+            <div class="small">
+              ${esc(stamp(a.at))} · ${esc(a.action)}
+              ${a.reason ? " · "+esc(a.reason) : ""}
+            </div>`).join("")}
+        </details>` : ""}
+    </div>
+  `).join("") || `<p class="small">沒有符合紀錄。</p>`;
+}
+function changeVersionState(encounterId,versionId,action) {
+  if (loadFailed || conflict || busy) return;
+  const e=db.encounters.find(x => x.id===encounterId);
+  const v=e?.versions.find(x => x.id===versionId);
+  if (!e || !v) return;
+  if (e.status!=="draft") {
+    alert("請先開啟這次診症，再按「重新開啟診症」。完成快照不會被改寫。");
+    return;
+  }
+  if (action==="void") {
+    if (v.state!=="issued") return;
+    const reason=prompt("作廢原因（必填）：\n作廢後不會自動恢復上一個版本。");
+    if (!trim(reason)) return;
+    if (transaction(() => {
+      v.state="void";
+      v.voidAt=now();
+      v.voidReason=trim(reason);
+      e.updated=now();
+      e.used[v.type]=false;
+      addAudit(e,"作廢文件",trim(reason),v.id);
+    })) {
+      renderHistory();
+      renderUI();
+    }
+  } else if (action==="adopt") {
+    if (v.state!=="legacy") return;
+    if (showWarnings(documentWarnings(v.data,v.type,v.settings))) return;
+    if (!confirm(
+      "確認此舊版本應納入本次診症的目前有效摘要？\n\n"+
+      "這是現在作出的確認，不會聲稱知道當時是否已交付。\n"+
+      "如已有同類有效版本，該版本會被取代。"
+    )) return;
+    if (transaction(() => {
+      const previous=effectiveVersion(e,v.type);
+      if (previous) {
+        previous.state="superseded";
+        previous.replacedBy=v.id;
+      }
+      v.state="issued";
+      v.confirmedAt=now();
+      e.updated=now();
+      addAudit(e,"確認舊版有效文件","由使用者確認納入摘要",v.id);
+    })) {
+      renderHistory();
+      renderUI();
+    }
+  }
+}
+
+/* =========================================================
+   13. 設定與備份
+   ========================================================= */
+function openSettings() {
+  const s=db.settings;
+  document.querySelectorAll("[data-setting]").forEach(input => {
+    input.value=s[input.dataset.setting];
+  });
+  signatureToken++;
+  signatureLoading=false;
+  pendingSignature=s.signature;
+  $("signatureThumb").removeAttribute("src");
+  if (safeImage(pendingSignature)) $("signatureThumb").src=pendingSignature;
+  $("defaultTimestamp").checked=s.timestamp;
+  $("defaultMasks").innerHTML=Object.entries(TYPES).map(([t,v]) => `
+    <div><label>${esc(v[0])}</label>
+      <select data-default-mask="${t}">
+        <option value="full">完整顯示</option>
+        <option value="partial">部分遮蔽</option>
+      </select>
+    </div>`).join("");
+  document.querySelectorAll("[data-default-mask]").forEach(input => {
+    input.value=s.masks[input.dataset.defaultMask];
+  });
+  $("saveSettingsBtn").disabled=loadFailed || conflict;
+  $("settingsDialog").showModal();
+}
+function saveSettings() {
+  if (signatureLoading) {
+    alert("圖片仍在載入，請稍候。");
+    return;
+  }
+  if (loadFailed || conflict) return;
+  const settings=clone(db.settings);
+  document.querySelectorAll("[data-setting]").forEach(input => {
+    settings[input.dataset.setting]=input.value;
+  });
+  document.querySelectorAll("[data-default-mask]").forEach(input => {
+    settings.masks[input.dataset.defaultMask]=input.value;
+  });
+  settings.signature=pendingSignature;
+  settings.timestamp=$("defaultTimestamp").checked;
+  if (transaction(() => { db.settings=settings; })) {
+    $("settingsDialog").close();
+    renderUI();
+  }
+}
+function exportBackup() {
+  if (loadFailed) {
+    alert("原有資料未能讀取。請用「匯出目前儲存原文」或「匯出舊版原始資料」，避免匯出空白工作區。");
+    return;
+  }
+  if (!confirm(
+    "備份包含未加密病人資料及簽名。\n"+
+    (dirty || conflict ? "本頁有未儲存／衝突資料，將匯出本頁記憶體內容。\n" : "")+
+    "確定下載？"
+  )) return;
+  download(JSON.stringify(db,null,2),"clinic-v2-backup-"+today()+".json");
+}
+function exportStored(key,label) {
+  const raw=localStorage.getItem(key);
+  if (raw===null) {
+    alert("此瀏覽器位置沒有"+label+"。");
+    return;
+  }
+  if (!confirm("下載"+label+"原文？內容可能包含病人資料及圖片簽名。")) return;
+  download(raw,"clinic-"+label+"-"+today()+".json");
+}
+async function importBackup(file) {
+  if (!file) return;
+  assert(file.size<=50*1024*1024,"備份超過 50 MB；請勿直接在此 MVP 匯入");
+  const imported=decodeDatabase(parseJSON(await file.text()));
+  if (!confirm(
+    "將以此備份取代新版所有資料，不會合併。\n\n"+
+    `備份包含 ${imported.encounters.length} 次診症。\n`+
+    "請確認已匯出現有資料；新版備份不可交給舊 HTML 繼續編輯。\n\n"+
+    "確定取代？"
+  )) return;
+
+  /* 完整驗證成功後才寫入。舊版 key 不作任何修改。 */
+  const raw=JSON.stringify(imported);
+  localStorage.setItem(KEY,raw);
+  lastRaw=raw;
+  dirty=false;
+  conflict=false;
+  loadFailed=false;
+  db=imported;
+  current=db.encounters.find(e => e.id===db.currentId) ||
+    db.encounters[0] || newEncounter();
+  view=null;
+  active="note";
+  globalNotice("已匯入。請核對病人、SOAP、歷史版本及完成快照。");
+  $("settingsDialog").close();
+  $("quickLine").value="";
+  persist();
+  renderUI();
+}
+
+/* =========================================================
+   14. 事件
+   ========================================================= */
+function bindEvents() {
+  document.querySelectorAll("[data-close]").forEach(button => {
+    button.onclick=() => button.closest("dialog").close();
+  });
+
+  $("formFields").addEventListener("input",run(event => {
+    if (!editable()) return;
+    const input=event.target;
+    const path=input.dataset.path;
+    if (!path) return;
+    set(current,path,input.type==="checkbox" ? input.checked : input.value);
+
+    const root=path.split(".")[0];
+    if (DOC_TYPES.includes(root)) {
+      current.used[root]=true;
+      const box=document.querySelector(`[data-path="used.${root}"]`);
+      if (box) box.checked=true;
+    }
+    if (path.startsWith("sick.")) calculateSick(path);
+    changed();
+  }));
+
+  $("tabs").onclick=event => {
+    const button=event.target.closest("[data-tab]");
+    if (!button || view || busy) return;
+    active=button.dataset.tab;
+    renderUI();
+  };
+
+  $("documentFields").onclick=run(event => {
+    if (!editable()) return;
+    const add=event.target.closest("[data-add]");
+    const remove=event.target.closest("[data-remove]");
+    if (!add && !remove) return;
+    const type=add ? add.dataset.add : remove.dataset.list;
+    if (!["rx","receipt"].includes(type)) return;
+    if (add) {
+      current[type].items.push(type==="rx"
+        ? {name:"",dose:"",frequency:"",route:"",duration:""}
+        : {desc:"",amount:""});
+    } else {
+      current[type].items.splice(Number(remove.dataset.remove),1);
+    }
+    current.used[type]=true;
+    changed();
+    renderDocumentFields();
+    fillFields();
+  });
+
+  $("maskSelect").onchange=() => {
+    if (!editable()) return;
+    current.masks[active]=$("maskSelect").value;
+    changed();
+  };
+  $("signatureSelect").onchange=() => {
+    if (!editable()) return;
+    if ($("signatureSelect").value==="image" && !safeImage(db.settings.signature)) {
+      alert("請先到設定上載簽名圖片。");
+      $("signatureSelect").value=current.signature;
+      return;
+    }
+    current.signature=$("signatureSelect").value;
+    changed();
+  };
+  $("timestampCheck").onchange=() => {
+    if (!editable()) return;
+    current.timestamp=$("timestampCheck").checked;
+    changed();
+  };
+
+  $("parseBtn").onclick=() => {
+    if (!editable()) return;
+    const raw=trim($("quickLine").value);
+    if (!raw) return;
+    const p=current.patient;
+    const id=raw.match(/\b[A-Z]{1,2}\d{6}(?:\([0-9A]\)|[0-9A])?/i);
+    const cn=raw.match(/[\u3400-\u9fff]{2,6}/);
+    const gender=raw.match(/\b(M|F)(?=\/|\s|$)/i);
+    if (id) p.hkid=normalizedID(id[0]);
+    if (cn) p.cn=cn[0];
+    if (gender) p.sex=gender[1].toUpperCase()==="M" ? "Male" : "Female";
+    const cleaned=raw.replace(id?.[0]||"\0"," ")
+      .replace(cn?.[0]||"\0"," ")
+      .replace(/\bDOB\b.*$/i,"")
+      .replace(/\b[MF](?:\/\d+)?\b/gi," ").trim();
+    const match=cleaned.match(/([A-Za-z'-]+)\s*,\s*([A-Za-z][A-Za-z' -]*)/) ||
+      cleaned.match(/([A-Za-z'-]+)\s+([A-Za-z][A-Za-z' -]*)/);
+    if (match) {
+      p.surname=match[1].toUpperCase();
+      p.given=match[2].trim();
+    }
+    changed();
+    fillFields();
+    alert("已作基本解析，請核對姓名及證件；出生日期請自行確認。");
+  };
+
+  $("saveBtn").onclick=() => persist();
+  $("newBtn").onclick=() => startNew();
+  $("issueBtn").onclick=run(issueDocument);
+  $("completeBtn").onclick=run(completeEncounter);
+  $("printBtn").onclick=run(printDocument);
+  $("returnBtn").onclick=() => {
+    if (busy) return;
+    view=null;
+    renderUI();
+  };
+
+  $("historyBtn").onclick=() => {
+    renderHistory();
+    $("historyDialog").showModal();
+  };
+  $("historySearch").oninput=renderHistory;
+  $("historyList").onclick=run(event => {
+    const button=event.target.closest("button");
+    if (!button || busy) return;
+
+    if (button.dataset.void || button.dataset.adopt) {
+      changeVersionState(
+        button.dataset.encounter,
+        button.dataset.void || button.dataset.adopt,
+        button.dataset.void ? "void" : "adopt"
+      );
+      return;
+    }
+    if (button.dataset.newPatient) {
+      const e=db.encounters.find(e => e.id===button.dataset.newPatient);
+      if (e) startNew(e.patient);
+      return;
+    }
+    if (dirty && !persist()) {
+      alert("目前有未儲存資料。請先匯出備份，暫不切換診症。");
+      return;
+    }
+    const id=button.dataset.open || button.dataset.encounter;
+    const e=db.encounters.find(e => e.id===id);
+    if (!e) return;
+
+    current=e;
+    if (button.dataset.version) {
+      const v=e.versions.find(v => v.id===button.dataset.version);
+      if (!v) return;
+      view={kind:"document",id:v.id};
+      active=v.type;
+    } else if (button.dataset.revision) {
+      view={kind:"revision",id:button.dataset.revision};
+      active="note";
+    } else {
+      view=null;
+      active="note";
+    }
+    $("quickLine").value="";
+    renderUI();
+    $("historyDialog").close();
+  });
+
+  $("settingsBtn").onclick=openSettings;
+  $("saveSettingsBtn").onclick=run(saveSettings);
+  $("signatureFile").onchange=run(async event => {
+    const file=event.target.files[0];
+    event.target.value="";
+    if (!file) return;
+    assert(["image/png","image/jpeg"].includes(file.type) &&
+      file.size<=1024*1024,"請選擇不超過 1 MB 的 PNG／JPEG 圖片");
+    const token=++signatureToken;
+    signatureLoading=true;
+    try {
+      const src=await new Promise((resolve,reject) => {
+        const reader=new FileReader();
+        reader.onload=() => resolve(reader.result);
+        reader.onerror=() => reject(new Error("讀取圖片失敗"));
+        reader.readAsDataURL(file);
+      });
+      assert(safeImage(src),"圖片格式不符");
+      const img=new Image();
+      await new Promise((resolve,reject) => {
+        img.onload=resolve;
+        img.onerror=() => reject(new Error("無法解碼圖片"));
+        img.src=src;
+      });
+      if (token!==signatureToken) return;
+      pendingSignature=src;
+      $("signatureThumb").src=src;
+    } finally {
+      if (token===signatureToken) signatureLoading=false;
+    }
+  });
+  $("removeSignature").onclick=() => {
+    signatureToken++;
+    signatureLoading=false;
+    pendingSignature="";
+    $("signatureThumb").removeAttribute("src");
+  };
+
+  $("exportBtn").onclick=run(exportBackup);
+  $("exportOldBtn").onclick=run(() => exportStored(OLD_KEY,"舊版原始資料"));
+  $("exportRawBtn").onclick=run(() => exportStored(KEY,"新版儲存原文"));
+  $("importBtn").onclick=() => $("importFile").click();
+  $("importFile").onchange=run(async event => {
+    const file=event.target.files[0];
+    event.target.value="";
+    await importBackup(file);
+  });
+
+  document.addEventListener("keydown",event => {
+    if (!(event.ctrlKey || event.metaKey)) return;
+    const key=event.key.toLowerCase();
+    if (key==="s") {
+      event.preventDefault();
+      if (!busy && !document.querySelector("dialog[open]")) persist();
+    }
+    if (key==="p") {
+      event.preventDefault();
+      if (!busy && !document.querySelector("dialog[open]")) {
+        run(printDocument)();
+      }
+    }
+  });
+
+  window.addEventListener("beforeunload",event => {
+    if (dirty) {
+      event.preventDefault();
+      event.returnValue="";
+    }
+  });
+  window.addEventListener("storage",event => {
+    if ((event.key===KEY || event.key===null) && event.newValue!==lastRaw) {
+      conflict=true;
+      globalNotice(
+        "其他分頁已改動儲存資料。此頁停止寫入；請匯出本頁備份後重新載入。"
+      );
+      status("資料衝突：停止寫入",true);
+      renderUI();
+    }
+  });
+}
+
+/* =========================================================
+   15. 簡化操作介面
+   保留第 01–14 節，集中在此替換工作流程。
+
+   日常操作：
+   自動儲存 → 列印／PDF → 完成診症
+
+   資料格式及儲存 key 不變。
+   ========================================================= */
+
+/* ---------- 15.1 新增介面及列印容器 ---------- */
+
+const simpleStyle = document.createElement("style");
+simpleStyle.textContent = `
+  /* 舊控制項保留在 DOM，避免舊函式引用失效；
+     日常介面不再顯示或使用。 */
+  #saveBtn,
+  #issueBtn {
+    display:none !important;
+  }
+
+  #simplePrintMenu {
+    position:relative;
+  }
+
+  #simplePrintMenu > summary {
+    list-style:none;
+    margin:0;
+    padding:9px 12px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    background:white;
+    font-size:14px;
+    line-height:normal;
+    cursor:pointer;
+  }
+
+  #simplePrintMenu > summary::-webkit-details-marker {
+    display:none;
+  }
+
+  #simplePrintMenu[open] > summary {
+    background:var(--soft);
+  }
+
+  .simple-print-menu-panel {
+    position:absolute;
+    right:0;
+    top:calc(100% + 6px);
+    z-index:20;
+    min-width:190px;
+    padding:7px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:white;
+    box-shadow:0 6px 22px #17212620;
+  }
+
+  .simple-print-menu-panel button {
+    width:100%;
+    text-align:left;
+  }
+
+  #simpleBatchDialog,
+  #simpleCompleteDialog {
+    width:min(560px,94vw);
+  }
+
+  .simple-batch-row {
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:12px 0;
+    margin:0;
+    border-bottom:1px solid var(--line);
+    color:var(--ink);
+    font-size:14px;
+  }
+
+  .simple-batch-row input {
+    width:auto;
+    margin-top:3px;
+  }
+
+  .simple-batch-row strong,
+  .simple-batch-row small {
+    display:block;
+  }
+
+  .simple-batch-row small {
+    margin-top:4px;
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.5;
+  }
+
+  #simpleCompleteMessage {
+    white-space:pre-wrap;
+    line-height:1.7;
+  }
+
+  #simpleSaveError {
+    margin:0;
+    border-radius:0;
+    background:#fff0f0;
+    border-color:#e0b5b5;
+    color:#842d2d;
+  }
+
+  #simplePrintRecovery {
+    margin:0 0 12px;
+  }
+
+  #simplePrintRoot {
+    display:none;
+  }
+
+  @media print {
+    body.simple-printing > :not(#simplePrintRoot) {
+      display:none !important;
+    }
+
+    body.simple-printing > #simplePrintRoot {
+      display:block !important;
+    }
+
+    #simplePrintRoot > .paper {
+      width:auto;
+      min-height:0;
+      margin:0;
+      padding:0;
+      box-shadow:none;
+      overflow:visible;
+    }
+
+    /* 每份文件由新一頁開始；長文件可以自然跨頁。 */
+    #simplePrintRoot > .paper + .paper {
+      break-before:page;
+      page-break-before:always;
+    }
+
+    #simpleSaveError,
+    #simplePrintRecovery,
+    #simplePrintMenu {
+      display:none !important;
+    }
+  }
+`;
+document.head.append(simpleStyle);
+
+$("printBtn").insertAdjacentHTML("afterend", `
+  <details id="simplePrintMenu">
+    <summary aria-label="更多列印選項" title="列印多份文件">▾</summary>
+    <div class="simple-print-menu-panel">
+      <button type="button" id="simpleBatchOpen">
+        列印多份文件…
+      </button>
+    </div>
+  </details>
+`);
+
+$("globalNotice").insertAdjacentHTML("afterend", `
+  <div id="simpleSaveError" class="notice hidden" role="alert">
+    <strong>目前資料未能儲存。請勿關閉此頁。</strong>
+    <div>請先匯出 JSON 備份；有分頁衝突時，請勿繼續修改。</div>
+    <div class="actions" style="margin-top:8px">
+      <button type="button" id="simpleRetrySave">重試儲存</button>
+      <button type="button" id="simpleEmergencyExport">匯出 JSON</button>
+    </div>
+  </div>
+`);
+
+$("workflowPanel").insertAdjacentHTML("afterend", `
+  <div id="simplePrintRecovery" class="notice hidden">
+    列印視窗開啟期間，編輯會暫時鎖定。
+    <button type="button" id="simplePrintReturn">
+      已關閉列印視窗？返回編輯
+    </button>
+  </div>
+`);
+
+document.body.insertAdjacentHTML("beforeend", `
+  <dialog id="simpleBatchDialog">
+    <div class="dialog-head">
+      <h2>一次過列印</h2>
+      <button type="button" data-close>取消</button>
+    </div>
+
+    <p id="simpleBatchPatient"></p>
+
+    <p class="small">
+      只會列印以下勾選的對外文件，不包含 SOAP。
+      每份文件由新一頁開始。
+    </p>
+
+    <div id="simpleBatchList"></div>
+
+    <p class="small">
+      按列印時會保存所選文件的有效版本。
+      取消列印不會撤銷已保存版本，也不代表已交付病人。
+    </p>
+
+    <div class="actions">
+      <button type="button" class="primary" id="simpleBatchPrint">
+        列印所選文件／PDF
+      </button>
+    </div>
+  </dialog>
+
+  <dialog id="simpleCompleteDialog">
+    <div class="dialog-head">
+      <h2>完成診症前提醒</h2>
+      <button type="button" data-close>取消</button>
+    </div>
+
+    <p id="simpleCompleteMessage"></p>
+
+    <div class="actions">
+      <button type="button" id="simpleCompleteBack">
+        返回處理
+      </button>
+      <button type="button" class="primary" id="simpleCompleteConfirm">
+        仍然完成診症
+      </button>
+    </div>
+  </dialog>
+
+  <div id="simplePrintRoot"></div>
+`);
+
+/* ---------- 15.2 自動儲存提示 ---------- */
+
+const simpleOriginalPersist = persist;
+
+function simpleStorageNotice() {
+  const failed = dirty && !loadFailed;
+
+  $("simpleSaveError").classList.toggle("hidden", !failed);
+  $("simpleRetrySave").disabled =
+    busy || loadFailed || conflict;
+
+  $("simpleEmergencyExport").disabled = busy;
+}
+
+persist = function() {
+  const ok = simpleOriginalPersist();
+
+  if (ok) {
+    status(
+      "已自動儲存至本機 · " +
+      new Date().toLocaleTimeString()
+    );
+  }
+
+  simpleStorageNotice();
+  return ok;
+};
+
+/* ---------- 15.3 已完成診症直接顯示有效文件 ---------- */
+
+const simpleOriginalSource = source;
+
+source = function() {
+  if (
+    current &&
+    !view &&
+    current.status === "completed" &&
+    DOC_TYPES.includes(active)
+  ) {
+    const v = effectiveVersion(current, active);
+
+    if (v) {
+      return {
+        kind:"document",
+        entry:v,
+        data:v.data,
+        settings:v.settings,
+        savedAt:v.savedAt
+      };
+    }
+  }
+
+  return simpleOriginalSource();
+};
+
+/* ---------- 15.4 共用文件畫面
+   列印使用獨立內容，不切換目前編輯分頁或 view。
+   ---------- */
+
+function simplePageHTML(type, s) {
+  const e = s.data;
+  const settings = s.settings;
+  const titles = TYPES[type];
+
+  let state = "";
+
+  if (type !== "note") {
+    if (s.kind !== "document") {
+      state = "編輯預覽 · 正式輸出請按上方「列印／PDF」。";
+    } else if (s.entry.state !== "issued") {
+      state =
+        "歷史存檔副本 · " +
+        VERSION_STATES[s.entry.state] +
+        " · 非目前有效文件";
+
+      if (s.entry.voidReason) {
+        state += " · 原因：" + s.entry.voidReason;
+      }
+    }
+  }
+
+  /*
+    原有 renderPatientBox 使用 active 決定 HKID 遮蔽設定。
+    只在同步產生 HTML 時暫時切換，隨即還原。
+  */
+  const previousActive = active;
+  let patientHTML;
+
+  try {
+    active = type;
+    patientHTML = renderPatientBox(e);
+  } finally {
+    active = previousActive;
+  }
+
+  const content = type === "note"
+    ? renderProgressNote(e, s)
+    : DOCUMENT_RENDERERS[type](e) +
+      signatureHTML(e, settings) +
+      (
+        e.timestamp
+          ? `<div class="document-footer">
+              Document Version 文件版本：
+              ${esc(stamp(s.savedAt))}
+            </div>`
+          : ""
+      );
+
+  return `
+    ${letterhead(settings)}
+
+    <div class="doc-title">
+      <h1>${esc(titles[1])}</h1>
+      <div class="title-cn">${esc(titles[2])}</div>
+    </div>
+
+    ${state
+      ? `<div class="document-state">${esc(state)}</div>`
+      : ""
+    }
+
+    ${patientHTML}
+    ${content}
+  `;
+}
+
+renderPreview = function() {
+  $("paper").innerHTML = simplePageHTML(active, source());
+};
+
+refreshPreview = function() {
+  const s = source();
+
+  $("previewTitle").textContent =
+    TYPES[active][0] + " · " +
+    (patientLabel(s.data.patient) || "未填病人");
+
+  let message;
+
+  if (view && s.kind === "document") {
+    message =
+      "歷史文件 · " + VERSION_STATES[s.entry.state] +
+      " · " + stamp(s.savedAt) +
+      "。重印不會新增版本。";
+  } else if (s.kind === "revision") {
+    message =
+      "已完成診症 · " + stamp(s.savedAt) +
+      "。修改前請先重新開啟診症；舊紀錄會保留。";
+  } else if (active === "note") {
+    message =
+      "診症記錄自動儲存，不會放入對外文件。處理好文件後，按「完成診症」。";
+  } else if (current.status === "completed") {
+    message = s.kind === "document"
+      ? "目前顯示已保存的有效版本，可以直接重印。"
+      : "此類文件未有有效版本。需要製作時，請先重新開啟診症。";
+  } else {
+    const v = effectiveVersion(current, active);
+
+    if (!v) {
+      message =
+        "填好後按「列印／PDF」即可。文件版本會自動保存，唔使另按儲存。";
+    } else if (isDifferent(current, active)) {
+      message =
+        "內容有修改；下次按「列印／PDF」會保存新版本，舊版本仍保留。";
+    } else {
+      message =
+        "內容與有效版本相同，可以直接重印；唔會重複新增版本。";
+    }
+  }
+
+  $("workflowPanel").textContent = message;
+  renderPreview();
+};
+
+/* ---------- 15.5 簡化主介面 ---------- */
+
+const simpleOriginalRenderUI = renderUI;
+const simpleOriginalDocumentFields = renderDocumentFields;
+
+renderDocumentFields = function() {
+  simpleOriginalDocumentFields();
+
+  const checkbox = $("documentFields").querySelector(
+    'input[data-path^="used."]'
+  );
+
+  if (checkbox) {
+    const label = checkbox.closest("label");
+
+    for (const node of label.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        node.textContent = " 本次需要此文件";
+      }
+    }
+  }
+};
+
+renderUI = function() {
+  simpleOriginalRenderUI();
+
+  /* 舊按鈕不再提供操作。 */
+  $("saveBtn").disabled = true;
+  $("issueBtn").disabled = true;
+
+  $("printBtn").textContent = view
+    ? "重印／PDF"
+    : "列印／PDF";
+
+  $("printBtn").title = active === "note"
+    ? "列印內部診症紀錄"
+    : "自動保存文件版本，然後開啟列印";
+
+  $("completeBtn").classList.toggle("hidden", !!view);
+
+  $("completeBtn").textContent =
+    current.status === "completed"
+      ? "重新開啟診症"
+      : "完成診症";
+
+  $("simplePrintMenu").classList.toggle(
+    "hidden",
+    !!view || busy || loadFailed || conflict
+  );
+
+  if (busy) {
+    $("simplePrintMenu").removeAttribute("open");
+  }
+
+  if (!view && current.status === "completed") {
+    $("encounterStatus").textContent = "已完成";
+
+    $("readOnlyNotice").textContent =
+      "此診症已完成。可以直接重印文件；需要修改時，按「重新開啟診症」。";
+
+    $("readOnlyNotice").classList.remove("hidden");
+  }
+
+  if (loadFailed || conflict) {
+    $("readOnlyNotice").textContent =
+      "資料讀取或分頁衝突：請先匯出備份，處理問題後再繼續。";
+
+    $("readOnlyNotice").classList.remove("hidden");
+  }
+
+  simpleStorageNotice();
+};
+
+/* ---------- 15.6 批次列印選擇 ---------- */
+
+function simpleOpenBatch() {
+  if (busy || view || loadFailed || conflict) return;
+
+  $("simplePrintMenu").removeAttribute("open");
+
+  $("simpleBatchPatient").textContent =
+    (patientLabel(current.patient) || "未填病人") +
+    " · " + current.date;
+
+  $("simpleBatchList").innerHTML = DOC_TYPES.map(type => {
+    const v = effectiveVersion(current, type);
+    const completed = current.status === "completed";
+    const unavailable = completed && !v;
+
+    const selected = !unavailable && (
+      completed
+        ? !!v
+        : !!current.used[type] || !!v || active === type
+    );
+
+    let description;
+
+    if (completed) {
+      description = v
+        ? "重印已保存的有效版本"
+        : "沒有有效版本；需先重新開啟診症";
+    } else if (!v) {
+      description = "列印時保存文件版本";
+    } else if (isDifferent(current, type)) {
+      description = "有修改；列印時保存新版本";
+    } else {
+      description = "重用有效版本，不重複新增";
+    }
+
+    return `
+      <label class="simple-batch-row">
+        <input
+          type="checkbox"
+          data-simple-print-type="${type}"
+          ${selected ? "checked" : ""}
+          ${unavailable ? "disabled" : ""}
+        >
+        <span>
+          <strong>${esc(TYPES[type][0])}</strong>
+          <small>${esc(description)}</small>
+        </span>
+      </label>
+    `;
+  }).join("");
+
+  $("simpleBatchDialog").showModal();
+}
+
+/* ---------- 15.7 列印前準備版本
+   全部文件先驗證；批次保存以單一交易完成。
+   不會把未勾選的文件一併出具。
+   ---------- */
+
+function simpleVersionSource(v) {
+  return {
+    kind:"document",
+    entry:v,
+    data:v.data,
+    settings:v.settings,
+    savedAt:v.savedAt
+  };
+}
+
+function simpleNewVersion(type) {
+  const savedAt = now();
+
+  const snapshot = documentData(current, type);
+  snapshot.updated = savedAt;
+
+  return {
+    id:uid(),
+    type,
+    savedAt,
+    state:"issued",
+    origin:"native",
+    data:snapshot,
+    settings:settingsSnapshot(
+      db.settings,
+      current.signature === "image"
+    ),
+    replacedBy:"",
+    voidAt:"",
+    voidReason:"",
+    confirmedAt:""
+  };
+}
+
+function simplePreparePrint(types, historicalSource = null) {
+  if (historicalSource) {
+    const s = clone(historicalSource);
+
+    if (
+      s.kind === "document" &&
+      s.entry.state !== "issued"
+    ) {
+      if (!confirm(
+        "這不是目前有效文件。\n\n" +
+        "將列印帶狀態標示的歷史存檔副本，繼續？"
+      )) {
+        return null;
+      }
+    }
+
+    return [{
+      type:types[0],
+      source:s,
+      newVersion:null
+    }];
+  }
+
+  if (types.length === 1 && types[0] === "note") {
+    const s = clone(source());
+
+    if (showWarnings(baseWarnings(s.data))) return null;
+
+    return [{
+      type:"note",
+      source:s,
+      newVersion:null
+    }];
+  }
+
+  const warnings = [];
+
+  for (const type of types) {
+    if (current.status === "completed") {
+      if (!effectiveVersion(current, type)) {
+        warnings.push(
+          TYPES[type][0] +
+          "：沒有有效版本，請先重新開啟診症。"
+        );
+      }
+    } else {
+      for (const warning of documentWarnings(
+        current, type, db.settings
+      )) {
+        warnings.push(TYPES[type][0] + "：" + warning);
+      }
+    }
+  }
+
+  if (showWarnings(warnings)) return null;
+
+  /* 保留原程式對缺少註冊編號的提示。 */
+  if (
+    current.status === "draft" &&
+    types.includes("rx") &&
+    !trim(db.settings.reg)
+  ) {
+    if (!confirm(
+      "未填寫醫生註冊編號。\n仍然製作此測試處方？"
+    )) {
+      return null;
+    }
+  }
+
+  return types.map(type => {
+    const existing = effectiveVersion(current, type);
+
+    const reuse = existing && (
+      current.status === "completed" ||
+      !isDifferent(current, type)
+    );
+
+    if (reuse) {
+      const v = clone(existing);
+
+      return {
+        type,
+        source:simpleVersionSource(v),
+        newVersion:null
+      };
+    }
+
+    const v = simpleNewVersion(type);
+
+    return {
+      type,
+      source:simpleVersionSource(v),
+      newVersion:v
+    };
+  });
+}
+
+/* ---------- 15.8 字型及圖片準備 ---------- */
+
+async function simpleWithTimeout(promise, milliseconds, message) {
+  let timer;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((resolve, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(message)),
+          milliseconds
+        );
+      })
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function simpleWaitForPrintAssets(root) {
+  if (document.fonts) {
+    await simpleWithTimeout(
+      document.fonts.ready,
+      15000,
+      "字型載入逾時，請稍後重試。"
+    );
+  }
+
+  await Promise.all(
+    [...root.querySelectorAll("img")].map(async img => {
+      const load = async () => {
+        if (typeof img.decode === "function") {
+          await img.decode();
+        } else if (!img.complete) {
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = () => {
+              reject(new Error("簽名圖片載入失敗"));
+            };
+          });
+        }
+
+        if (!img.naturalWidth) {
+          throw new Error("簽名圖片無效，已停止列印。");
+        }
+      };
+
+      await simpleWithTimeout(
+        load(),
+        15000,
+        "簽名圖片載入逾時，已停止列印。"
+      );
+    })
+  );
+}
+
+/* ---------- 15.9 列印工作階段
+   列印內容放在獨立容器。
+   不會將編輯器切入歷史版本，亦不需要按「返回」。
+   ---------- */
+
+let simplePrintJob = null;
+
+function simpleFinishPrint(job) {
+  if (!job || simplePrintJob !== job) return;
+
+  simplePrintJob = null;
+
+  document.body.classList.remove("simple-printing");
+  $("simplePrintRoot").replaceChildren();
+  $("simplePrintRecovery").classList.add("hidden");
+
+  busy = false;
+  renderUI();
+
+  if (!dirty && !loadFailed && !conflict) {
+    status("資料已保存 · 可以繼續編輯");
+  }
+}
+
+async function simplePrint(types, historicalSource = null) {
+  if (busy || loadFailed || conflict) return;
+
+  types = [...new Set(types)].filter(type =>
+    Object.hasOwn(TYPES, type)
+  );
+
+  if (!types.length) {
+    alert("請至少選擇一份文件。");
+    return;
+  }
+
+  /* 內部 SOAP 不與對外文件混合列印。 */
+  if (types.includes("note") && types.length > 1) {
+    alert("診症紀錄請獨立列印，不會混入對外文件。");
+    return;
+  }
+
+  const plans = simplePreparePrint(types, historicalSource);
+  if (!plans) return;
+
+  const job = {
+    encounterId:current.id,
+    phase:"preparing",
+    saved:false
+  };
+
+  simplePrintJob = job;
+  busy = true;
+  renderUI();
+
+  try {
+    $("simplePrintRoot").innerHTML = plans.map(plan => `
+      <article class="paper">
+        ${simplePageHTML(plan.type, plan.source)}
+      </article>
+    `).join("");
+
+    /*
+      先確認圖片及字型可用。
+      若此階段失敗，不會新增文件版本。
+    */
+    await simpleWaitForPrintAssets($("simplePrintRoot"));
+
+    assert(
+      simplePrintJob === job &&
+      current.id === job.encounterId,
+      "目前診症已改變，已停止列印。"
+    );
+
+    assert(
+      !loadFailed && !conflict,
+      "資料出現讀取或分頁衝突，已停止列印。"
+    );
+
+    /*
+      所有新版本一次過保存。
+      若儲存失敗，transaction 會回復；
+      不會開啟列印視窗。
+    */
+    const saved = transaction(() => {
+      let added = false;
+
+      for (const plan of plans) {
+        if (!plan.newVersion) continue;
+
+        assert(
+          current.status === "draft",
+          "診症已完成，不能直接新增文件版本。"
+        );
+
+        const v = clone(plan.newVersion);
+        const previous = effectiveVersion(current, plan.type);
+
+        if (previous) {
+          previous.state = "superseded";
+          previous.replacedBy = v.id;
+        }
+
+        current.used[plan.type] = true;
+        current.versions.push(v);
+
+        addAudit(
+          current,
+          "列印前保存文件版本",
+          TYPES[plan.type][0] +
+            "；不代表已列印或交付病人",
+          v.id
+        );
+
+        added = true;
+      }
+
+      if (added) current.updated = now();
+    });
+
+    if (!saved) {
+      simpleFinishPrint(job);
+      return;
+    }
+
+    job.saved = true;
+
+    document.body.classList.add("simple-printing");
+
+    await new Promise(resolve =>
+      requestAnimationFrame(() =>
+        requestAnimationFrame(resolve)
+      )
+    );
+
+    assert(
+      !loadFailed && !conflict &&
+      current.id === job.encounterId,
+      "資料狀態已改變，已停止開啟列印。"
+    );
+
+    job.phase = "printing";
+    status("文件已保存 · 正在開啟列印／PDF");
+
+    window.print();
+
+    /*
+      一般由 afterprint 自動解除鎖定。
+      若瀏覽器沒有送出事件，提供手動返回，
+      不會聲稱已成功印出。
+    */
+    if (simplePrintJob === job) {
+      $("simplePrintRecovery").classList.remove("hidden");
+    }
+  } catch (error) {
+    simpleFinishPrint(job);
+
+    status("列印未完成：" + error.message, true);
+
+    alert(
+      "未能完成列印準備：" + error.message +
+      (
+        job.saved
+          ? "\n\n已保存的版本仍保留。修正後可以直接重印。"
+          : "\n\n這次沒有成功保存新的列印版本。"
+      )
+    );
+  }
+}
+
+printDocument = async function() {
+  if (busy || loadFailed || conflict) return;
+
+  await simplePrint(
+    [active],
+    view ? source() : null
+  );
+};
+
+/* ---------- 15.10 完成診症
+   正常情況直接完成。
+   只有草稿、缺漏 SOAP 或舊版待確認才提示。
+   ---------- */
+
+let simpleCompletionContext = null;
+
+function simpleCommitCompletion() {
+  if (
+    busy ||
+    view ||
+    loadFailed ||
+    conflict ||
+    current.status !== "draft"
+  ) {
+    return false;
+  }
+
+  if (showWarnings(baseWarnings(current))) return false;
+
+  const summary = buildSummary();
+
+  const ok = transaction(() => {
+    current.status = "completed";
+    current.updated = now();
+
+    current.revisions.push({
+      id:uid(),
+      savedAt:current.updated,
+      data:encounterCore(current),
+      settings:settingsSnapshot(db.settings, false),
+      summary:clone(summary)
+    });
+
+    addAudit(
+      current,
+      "完成診症",
+      "第 " + current.revisions.length + " 個完成快照"
+    );
+  });
+
+  if (ok) {
+    active = "note";
+    view = null;
+    renderUI();
+    status("診症已完成並保存");
+  } else {
+    renderUI();
+  }
+
+  return ok;
+}
+
+completeEncounter = function() {
+  if (busy || view || loadFailed || conflict) return;
+
+  if (current.status === "completed") {
+    const reason = prompt(
+      "重新開啟診症的原因：\n舊完成紀錄及文件版本會保留。"
+    );
+
+    if (!trim(reason)) return;
+
+    if (transaction(() => {
+      current.status = "draft";
+      current.updated = now();
+      addAudit(current, "重新開啟診症", trim(reason));
+    })) {
+      active = "note";
+      renderUI();
+    }
+
+    return;
+  }
+
+  if (showWarnings(baseWarnings(current))) return;
+
+  const summary = buildSummary();
+  const pending = summary.filter(item => item.draft);
+
+  const missing = [
+    !trim(current.soap.s) && "S",
+    !trim(current.soap.o) && "O",
+    !trim(current.diagnosis + current.soap.a) && "A",
+    !trim(current.soap.p) && "P"
+  ].filter(Boolean);
+
+  const legacyCount = summary.reduce(
+    (sum, item) => sum + item.legacyCount,
+    0
+  );
+
+  /* 無異常：一按就完成，不再彈例行確認。 */
+  if (!pending.length && !missing.length && !legacyCount) {
+    simpleCommitCompletion();
+    return;
+  }
+
+  simpleCompletionContext = {
+    encounterId:current.id,
+    firstPending:pending[0]?.type || null
+  };
+
+  const messages = [];
+
+  if (pending.length) {
+    messages.push(
+      "以下文件尚未保存有效版本，或修改後未重新輸出：\n" +
+      pending.map(item => "• " + TYPES[item.type][0]).join("\n") +
+      "\n\n可以返回處理；亦可以完成診症，將未處理內容保留為草稿。"
+    );
+  }
+
+  if (missing.length) {
+    messages.push(
+      "SOAP 未填寫：" + missing.join("、") +
+      "。\n完成紀錄會保留「未填寫」，不會自動補寫。"
+    );
+  }
+
+  if (legacyCount) {
+    messages.push(
+      "另有 " + legacyCount +
+      " 個舊版文件待確認，不會自動當成有效文件。"
+    );
+  }
+
+  $("simpleCompleteMessage").textContent =
+    messages.join("\n\n");
+
+  $("simpleCompleteBack").textContent =
+    pending.length ? "返回處理文件" : "返回修改";
+
+  $("simpleCompleteConfirm").textContent =
+    pending.length
+      ? "只完成診症，保留草稿"
+      : "仍然完成診症";
+
+  $("simpleCompleteDialog").showModal();
+};
+
+/* =========================================================
+   16. Investigations
+   LAB / Imaging、收費連動、Request Forms、Progress Note
+
+   必須放在首次 loadDatabase() 呼叫之前。
+   ========================================================= */
+
+const INV_V2_KEY = "clinic_documents_mvp_2";
+const INV_TYPES = ["lab", "imaging"];
+
+const INV_BILLING = {
+  clinic: "診所收費",
+  centre: "檢查中心直接收費"
+};
+
+const INV_STATUS = {
+  ordered: "已申請／待完成",
+  completed: "已完成檢查",
+  results: "已收到報告"
+};
+
+TYPES.lab = [
+  "化驗",
+  "LABORATORY REQUEST FORM",
+  "化驗檢查申請表"
+];
+
+TYPES.imaging = [
+  "放射",
+  "RADIOLOGY IMAGING REQUEST FORM",
+  "放射及影像檢查申請表"
+];
+
+for (const type of INV_TYPES) {
+  if (!DOC_TYPES.includes(type)) DOC_TYPES.push(type);
+  DEFAULT_SETTINGS.masks[type] = "full";
+}
+
+function invBlankRequest() {
+  return {
+    centre: "",
+    indication: "",
+    remarks: "",
+    items: []
+  };
+}
+
+function invValidPrice(value) {
+  const s = trim(value);
+
+  return /^\d+(?:\.\d{1,2})?$/.test(s) &&
+    Number.isSafeInteger(Math.round(Number(s) * 100));
+}
+
+function invPrice(value) {
+  assert(invValidPrice(value), "價錢須為非負數，最多兩位小數");
+  return (Math.round(Number(value) * 100) / 100).toFixed(2);
+}
+
+function invAllOrders(e) {
+  return INV_TYPES.flatMap(type =>
+    (e[type]?.items || []).map(item => ({ type, item }))
+  );
+}
+
+function invOrder(e, type, id) {
+  return e[type]?.items.find(item => item.id === id) || null;
+}
+
+/* ---------- 16.1 資料模型 ---------- */
+
+const invOriginalEmptyData = emptyData;
+
+emptyData = function(date = today(), settings = DEFAULT_SETTINGS) {
+  const e = invOriginalEmptyData(date, settings);
+
+  for (const type of INV_TYPES) {
+    e[type] = invBlankRequest();
+    e.masks[type] = settings.masks[type] || "full";
+    e.used[type] = false;
+  }
+
+  return e;
+};
+
+const invOriginalBlankDatabase = blankDatabase;
+
+blankDatabase = function() {
+  const result = invOriginalBlankDatabase();
+  result.catalogue = [];
+  return result;
+};
+
+/* ---------- 16.2 匯入及舊資料相容 ---------- */
+
+function invNormalizeCatalogue(raw) {
+  assert(Array.isArray(raw), "檢查目錄格式錯誤");
+
+  const ids = new Set();
+
+  return raw.map(row => {
+    checkStrings(
+      row,
+      ["id", "type", "name", "price", "billing"],
+      "檢查目錄"
+    );
+
+    assert(row.id && !ids.has(row.id), "檢查目錄 ID 重複或空白");
+    ids.add(row.id);
+
+    assert(INV_TYPES.includes(row.type), "檢查目錄類別錯誤");
+    assert(trim(row.name), "檢查項目名稱不可空白");
+    assert(Object.hasOwn(INV_BILLING, row.billing), "檢查收費方式錯誤");
+    assert(typeof row.enabled === "boolean", "檢查啟用設定錯誤");
+
+    assert(
+      !trim(row.price) || invValidPrice(row.price),
+      "檢查價錢格式錯誤：" + row.name
+    );
+
+    return {
+      id: row.id,
+      type: row.type,
+      name: trim(row.name),
+      price: trim(row.price) ? invPrice(row.price) : "",
+      billing: row.billing,
+      enabled: row.enabled
+    };
+  });
+}
+
+function invNormalizeRequest(raw) {
+  checkStrings(
+    raw,
+    ["centre", "indication", "remarks"],
+    "檢查申請"
+  );
+
+  assert(Array.isArray(raw.items), "檢查項目列表格式錯誤");
+
+  const ids = new Set();
+  const catalogueIds = new Set();
+
+  const items = raw.items.map(item => {
+    const keys = [
+      "id", "catalogueId", "name", "price", "billing",
+      "details", "status", "result", "performedDate",
+      "resultDate", "statusUpdatedAt"
+    ];
+
+    checkStrings(item, keys, "已選檢查");
+
+    assert(item.id && !ids.has(item.id), "已選檢查 ID 重複或空白");
+    ids.add(item.id);
+
+    assert(
+      item.catalogueId && !catalogueIds.has(item.catalogueId),
+      "同一檢查項目重複"
+    );
+    catalogueIds.add(item.catalogueId);
+
+    assert(trim(item.name), "已選檢查名稱不可空白");
+    assert(Object.hasOwn(INV_BILLING, item.billing), "檢查收費方式錯誤");
+    assert(Object.hasOwn(INV_STATUS, item.status), "檢查完成狀態錯誤");
+
+    assert(
+      !trim(item.price) || invValidPrice(item.price),
+      "已選檢查價錢格式錯誤"
+    );
+
+    assert(
+      item.billing !== "clinic" || invValidPrice(item.price),
+      "診所收費的檢查必須有價錢"
+    );
+
+    for (const key of ["performedDate", "resultDate"]) {
+      assert(
+        !item[key] || validDate(item[key]),
+        "檢查日期格式錯誤"
+      );
+    }
+
+    const result = Object.fromEntries(keys.map(k => [k, item[k]]));
+    result.price = trim(item.price) ? invPrice(item.price) : "";
+
+    return result;
+  });
+
+  return {
+    centre: raw.centre,
+    indication: raw.indication,
+    remarks: raw.remarks,
+    items
+  };
+}
+
+const invOriginalNormalizeData = normalizeData;
+
+normalizeData = function(raw, legacy = false, onlyType = null) {
+  assert(obj(raw), "診症資料格式錯誤");
+
+  const prepared = clone(raw);
+
+  /*
+    舊資料沒有新增欄位，只補空容器及顯示設定；
+    不推斷病人曾接受任何檢查。
+  */
+  if (obj(prepared.masks)) {
+    for (const type of INV_TYPES) {
+      if (prepared.masks[type] === undefined) {
+        prepared.masks[type] = "full";
+      }
+    }
+  }
+
+  if (!onlyType && !legacy && obj(prepared.used)) {
+    for (const type of INV_TYPES) {
+      if (prepared.used[type] === undefined) {
+        prepared.used[type] = false;
+      }
+    }
+  }
+
+  for (const type of INV_TYPES) {
+    if ((!onlyType || onlyType === type) &&
+        prepared[type] === undefined) {
+      prepared[type] = invBlankRequest();
+    }
+  }
+
+  const result = invOriginalNormalizeData(
+    prepared, legacy, onlyType
+  );
+
+  for (const type of INV_TYPES) {
+    if (!onlyType || onlyType === type) {
+      result[type] = invNormalizeRequest(prepared[type]);
+    }
+  }
+
+  /*
+    原本收據 normalization 只保留 desc / amount。
+    額外保留檢查連結，避免重新載入後失去對應。
+  */
+  if (!onlyType || onlyType === "receipt") {
+    result.receipt.items = result.receipt.items.map((item, index) => {
+      const original = prepared.receipt.items[index];
+
+      if (original.investigationId !== undefined ||
+          original.investigationType !== undefined) {
+        checkStrings(
+          original,
+          ["investigationId", "investigationType"],
+          "檢查收費連結"
+        );
+
+        assert(original.investigationId, "檢查收費連結不可空白");
+        assert(
+          INV_TYPES.includes(original.investigationType),
+          "檢查收費類別錯誤"
+        );
+
+        item.investigationId = original.investigationId;
+        item.investigationType = original.investigationType;
+      }
+
+      return item;
+    });
+  }
+
+  if (!onlyType) {
+    const ids = new Set();
+
+    for (const { item } of invAllOrders(result)) {
+      assert(!ids.has(item.id), "檢查訂單 ID 重複");
+      ids.add(item.id);
+    }
+  }
+
+  return result;
+};
+
+const invOriginalNormalizeSummary = normalizeSummary;
+
+normalizeSummary = function(raw) {
+  assert(Array.isArray(raw), "摘要格式錯誤");
+
+  const originalTypes = new Set(raw.map(item => item?.type));
+  const padded = clone(raw);
+
+  /*
+    舊完成快照只有五類摘要。
+    先補空項目通過新版驗證，再移除補入項目，
+    避免改寫舊快照的摘要內容。
+  */
+  for (const type of INV_TYPES) {
+    if (!originalTypes.has(type)) {
+      padded.push({
+        type,
+        issued: null,
+        draft: null,
+        legacyCount: 0,
+        hadVoid: false
+      });
+    }
+  }
+
+  return invOriginalNormalizeSummary(padded)
+    .filter(item => originalTypes.has(item.type));
+};
+
+const invOriginalDecodeDatabase = decodeDatabase;
+
+decodeDatabase = function(value) {
+  assert(
+    obj(value) && [1, 2, 3].includes(value.schema),
+    "不支援此備份版本"
+  );
+
+  const prepared = clone(value);
+
+  /*
+    v2 與 v3 共用原有診症／文件驗證。
+    新增欄位由上方 normalizeData 處理。
+  */
+  if (prepared.schema === 2) prepared.schema = SCHEMA;
+
+  const result = invOriginalDecodeDatabase(prepared);
+
+  result.catalogue = invNormalizeCatalogue(
+    value.catalogue === undefined ? [] : value.catalogue
+  );
+
+  result.schema = SCHEMA;
+
+  return result;
+};
+
+/* ---------- 16.3 v3 獨立儲存及移轉 ---------- */
+
+loadDatabase = function() {
+  db = blankDatabase();
+
+  try {
+    lastRaw = localStorage.getItem(KEY);
+
+    let raw = lastRaw;
+    let migratedFrom = "";
+
+    if (raw === null) {
+      raw = localStorage.getItem(INV_V2_KEY);
+      if (raw !== null) migratedFrom = "v2";
+    }
+
+    if (raw === null) {
+      raw = localStorage.getItem(OLD_KEY);
+      if (raw !== null) migratedFrom = "v1";
+    }
+
+    if (raw !== null) {
+      db = decodeDatabase(parseJSON(raw));
+    }
+
+    if (migratedFrom) {
+      globalNotice(
+        "已由 " + migratedFrom +
+        " 讀取資料，之後會儲存到獨立 v3 位置。" +
+        "原有儲存原文不變；請先核對歷史紀錄並匯出新版備份。"
+      );
+    }
+  } catch (error) {
+    loadFailed = true;
+    db = blankDatabase();
+
+    globalNotice(
+      "無法讀取資料，已停止編輯及寫入：" +
+      error.message +
+      "。請匯出儲存原文或匯入有效備份，勿清除瀏覽器資料。"
+    );
+  }
+
+  current = db.encounters.find(e => e.id === db.currentId) ||
+    db.encounters[0] ||
+    newEncounter();
+};
+
+exportBackup = function() {
+  if (loadFailed) {
+    alert(
+      "原資料未能讀取。請匯出 v3 儲存原文或 v2 原始資料，" +
+      "不要將空白工作區當成備份。"
+    );
+    return;
+  }
+
+  if (!confirm(
+    "備份包含未加密病人資料、檢查紀錄、價目表及簽名。\n" +
+    (dirty || conflict
+      ? "將匯出本頁記憶體內容，包括未成功儲存的變更。\n"
+      : "") +
+    "確定下載？"
+  )) return;
+
+  download(
+    JSON.stringify(db, null, 2),
+    "clinic-v3-backup-" + today() + ".json"
+  );
+};
+
+/* ---------- 16.4 收費連動 ---------- */
+
+function invGeneratedCharges(e) {
+  return invAllOrders(e)
+    .filter(({ item }) => item.billing === "clinic")
+    .map(({ type, item }) => {
+      assert(
+        invValidPrice(item.price),
+        "請先設定檢查價錢：" + item.name
+      );
+
+      return {
+        desc: (type === "lab" ? "LAB: " : "Imaging: ") + item.name,
+        amount: invPrice(item.price),
+        investigationId: item.id,
+        investigationType: type
+      };
+    });
+}
+
+function invBillingLocked(e = current) {
+  return e.receipt.paymentStatus === "paid" ||
+    !!effectiveVersion(e, "receipt");
+}
+
+function invSyncCharges(e) {
+  const before = e.receipt.items
+    .filter(item => item.investigationId);
+
+  const after = invGeneratedCharges(e);
+
+  /*
+    不讓 tick / untick 靜默更改已出具或已收款單据。
+    Request Form 及檢查結果仍可獨立處理。
+  */
+  if (!same(before, after) && invBillingLocked(e)) {
+    throw new Error(
+      "自動收費項目已鎖定：本次收據已出具或已標記收款。\n\n" +
+      "未收款而需修訂的收據，請先到歷史紀錄作廢有效版本。" +
+      "已收款的退款／補收，請另行處理，勿直接改動原單。\n\n" +
+      "若這項檢查由檢查中心收費，可使用「檢查中心直接收費」。"
+    );
+  }
+
+  const manualItems = e.receipt.items
+    .filter(item => !item.investigationId);
+
+  e.receipt.items = [...manualItems, ...after];
+
+  if (!same(before, after)) {
+    e.used.receipt = usedReceiptItems(e).length > 0;
+  }
+}
+
+function invMutate(type, action, reason, mutation) {
+  if (!editable()) return false;
+
+  const ok = transaction(() => {
+    mutation();
+
+    invSyncCharges(current);
+
+    current.used[type] = current[type].items.length > 0;
+    current.updated = now();
+
+    addAudit(current, action, reason);
+  });
+
+  renderUI();
+  return ok;
+}
+
+function invSelect(type, catalogueId, selected) {
+  if (!editable()) return;
+
+  const existing = current[type].items.find(
+    item => item.catalogueId === catalogueId
+  );
+
+  if (!selected) {
+    if (existing) invRemove(type, existing.id);
+    return;
+  }
+
+  if (existing) return;
+
+  const entry = db.catalogue.find(
+    row => row.id === catalogueId &&
+      row.type === type &&
+      row.enabled
+  );
+
+  assert(entry, "檢查目錄項目不存在或已停用");
+
+  if (entry.billing === "clinic") {
+    assert(
+      invValidPrice(entry.price),
+      "「" + entry.name + "」尚未設定價錢。\n" +
+      "請先到檢查目錄填價，或將預設收費改為檢查中心直接收費。"
+    );
+  }
+
+  invMutate(
+    type,
+    "加入檢查",
+    entry.name + "；" + INV_BILLING[entry.billing],
+    () => {
+      current[type].items.push({
+        id: uid(),
+        catalogueId: entry.id,
+        name: entry.name,
+        price: entry.price,
+        billing: entry.billing,
+        details: "",
+        status: "ordered",
+        result: "",
+        performedDate: "",
+        resultDate: "",
+        statusUpdatedAt: now()
+      });
+    }
+  );
+}
+
+function invRemove(type, id) {
+  const item = invOrder(current, type, id);
+  if (!item || !editable()) return;
+
+  if (item.status !== "ordered" || trim(item.result)) {
+    throw new Error(
+      "這項檢查已標記完成／收到報告，或已填寫結果，不能直接取消剔選。\n" +
+      "請保留臨床紀錄；如屬輸入錯誤，先核對並修正狀態及結果。"
+    );
+  }
+
+  if (effectiveVersion(current, type) && !confirm(
+    "移除「" + item.name + "」？\n\n" +
+    "已出具申請表不會自動撤回。" +
+    "請重新列印修訂版；如已移除全部項目，請到歷史作廢舊申請表。"
+  )) {
+    renderUI();
+    return;
+  }
+
+  invMutate(type, "移除待完成檢查", item.name, () => {
+    current[type].items = current[type].items
+      .filter(row => row.id !== id);
+  });
+}
+
+function invChangeBilling(type, id, value) {
+  assert(Object.hasOwn(INV_BILLING, value), "收費方式錯誤");
+
+  const item = invOrder(current, type, id);
+  assert(item, "找不到檢查項目");
+
+  if (value === "clinic") {
+    assert(
+      invValidPrice(item.price),
+      "這項已選檢查沒有保存價錢。\n" +
+      "請先在目錄設定價錢，再取消並重新選取尚未完成的項目。"
+    );
+  }
+
+  invMutate(
+    type,
+    "更改檢查收費方式",
+    item.name + "；" + INV_BILLING[value],
+    () => { item.billing = value; }
+  );
+}
+
+function invChangeStatus(type, id, value) {
+  assert(Object.hasOwn(INV_STATUS, value), "檢查狀態錯誤");
+
+  const item = invOrder(current, type, id);
+  assert(item, "找不到檢查項目");
+
+  if (value === item.status) return;
+
+  if (item.status !== "ordered" && value === "ordered") {
+    if (!confirm(
+      "將「" + item.name + "」改回待完成？\n" +
+      "請確認這是更正狀態；已有結果及日期不會自動刪除。"
+    )) {
+      renderUI();
+      return;
+    }
+  }
+
+  invMutate(
+    type,
+    "更新檢查狀態",
+    item.name + "：" +
+      INV_STATUS[item.status] + " → " + INV_STATUS[value],
+    () => {
+      item.status = value;
+      item.statusUpdatedAt = now();
+
+      /*
+        不自動填實際檢查日／收報告日。
+        修改狀態的時間不等同檢查發生日期。
+      */
+    }
+  );
+}
+
+/* ---------- 16.5 申請表的內容比較 ---------- */
+
+const invOriginalFingerprint = fingerprint;
+
+fingerprint = function(e, type, settings) {
+  const result = invOriginalFingerprint(e, type, settings);
+
+  if (INV_TYPES.includes(type)) {
+    const request = e[type];
+
+    /*
+      結果、完成狀態、收費方式及價錢不印在申請表。
+      更新上述資料不應單獨觸發申請表新版本。
+    */
+    result.content = {
+      centre: request.centre,
+      indication: request.indication,
+      remarks: request.remarks,
+      items: request.items.map(item => ({
+        name: item.name,
+        details: item.details
+      }))
+    };
+  }
+
+  return result;
+};
+
+/* ---------- 16.6 Request Form 及文件驗證 ---------- */
+
+function invRequestHTML(e, type) {
+  const request = e[type];
+  const indication = trim(request.indication) ||
+    trim(e.diagnosis);
+
+  return `
+    <div class="recipient">To / 致：
+${esc(trim(request.centre) || "Investigation Centre / 檢查中心")}</div>
+
+    ${note(
+      "Clinical Indication / 臨床資料",
+      indication
+    )}
+
+    <div style="margin-top:6mm">
+      <table class="document-table">
+        <colgroup>
+          <col style="width:8%">
+          <col style="width:47%">
+          <col style="width:45%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>Requested Investigation<br>申請檢查</th>
+            <th>Details <br>詳情</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${request.items.map((item, index) => `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${esc(item.name)}</td>
+              <td>${esc(item.details)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+
+    ${note(
+      "Additional information / 其他備註",
+      request.remarks
+    )}
+  `;
+}
+
+DOCUMENT_RENDERERS.lab = e => invRequestHTML(e, "lab");
+DOCUMENT_RENDERERS.imaging = e => invRequestHTML(e, "imaging");
+
+const invOriginalDocumentWarnings = documentWarnings;
+
+documentWarnings = function(e, type, settings) {
+  const warnings = invOriginalDocumentWarnings(e, type, settings);
+
+  if (INV_TYPES.includes(type)) {
+    if (!e[type].items.length) {
+      warnings.push("請至少選擇一項檢查");
+    }
+
+    if (e[type].items.some(item => !trim(item.name))) {
+      warnings.push("檢查名稱不可空白");
+    }
+  }
+
+  return warnings;
+};
+
+const invOriginalSummaryText = summaryText;
+
+summaryText = function(e, type) {
+  if (!INV_TYPES.includes(type)) {
+    return invOriginalSummaryText(e, type);
+  }
+
+  const request = e[type];
+
+  return [
+    "檢查中心：" + (trim(request.centre) || "未指定"),
+    ...request.items.map((item, index) =>
+      `${index + 1}. ${item.name}` +
+      (trim(item.details) ? " — " + item.details : "")
+    ),
+    trim(request.indication)
+      ? "Clinical indication：" + request.indication
+      : ""
+  ].filter(Boolean).join("\n");
+};
+
+/* ---------- 16.7 Progress Note 檢查紀錄 ---------- */
+
+function invNoteHTML(e) {
+  const groups = INV_TYPES.filter(type => e[type]?.items.length);
+
+  if (!groups.length) return "";
+
+  return `
+    <section class="note-section">
+      <h2></h2>
+
+      ${groups.map(type => {
+        const request = e[type];
+
+        const content = [
+          trim(request.centre)
+            ? "檢查中心：" + request.centre
+            : "",
+
+          trim(request.indication)
+            ? "Clinical indication：" + request.indication
+            : "",
+
+          ...request.items.map((item, index) => [
+            `${index + 1}. ${item.name}`,
+            "狀態：" + INV_STATUS[item.status],
+            trim(item.details) ? "詳情：" + item.details : "",
+            item.performedDate
+              ? "檢查日期：" + fmt(item.performedDate)
+              : "",
+            item.resultDate
+              ? "報告日期：" + fmt(item.resultDate)
+              : "",
+            trim(item.result)
+              ? "結果摘要：" + item.result
+              : item.status === "results"
+                ? "結果摘要：未填寫"
+                : ""
+          ].filter(Boolean).join("\n")),
+
+          trim(request.remarks)
+            ? "備註：" + request.remarks
+            : ""
+        ].filter(Boolean).join("\n\n");
+
+        return `
+          <div style="margin-top:4mm">
+            <strong>${type === "lab"
+              ? "Laboratory Tests 化驗"
+              : "Radiology Imaging 影像檢查"
+            }</strong>
+            <div class="note-text" style="margin-top:2mm">${esc(content)}</div>
+          </div>
+        `;
+      }).join("")}
+    </section>
+  `;
+}
+
+renderProgressNote = function(e, s) {
+  const summary = s.kind === "revision"
+    ? s.entry.summary
+    : buildSummary(e, s.settings);
+
+  const sections = [
+    [
+      "Chief Complaint & History of Present Illness 主訴及病史",
+      e.soap.s
+    ],
+    [
+      "Physical Examination & Investigations 檢查及化驗結果",
+      e.soap.o
+    ],
+    [
+      "Diagnosis 診斷",
+      (trim(e.diagnosis) || "未填寫") +
+        "\n\nOther Assessment 評估補充：" +
+        (trim(e.soap.a) || "未填寫")
+    ],
+    [
+      "Plan of Management 治療計劃",
+      e.soap.p
+    ]
+  ];
+
+  /*
+    沒有使用的新增申請表類別不佔摘要空間。
+    原有五類摘要維持原本顯示方式。
+  */
+  const visibleSummary = summary.filter(item =>
+    !INV_TYPES.includes(item.type) ||
+    item.issued ||
+    item.draft ||
+    item.legacyCount ||
+    item.hadVoid
+  );
+
+  return `
+    ${sections.map(([label, value]) => `
+      <section class="note-section">
+        <h2>${esc(label)}</h2>
+        <div class="note-text">${esc(
+          trim(value) ? value : "未填寫"
+        )}</div>
+      </section>
+    `).join("")}
+
+    ${invNoteHTML(e)}
+
+    <section class="note-section">
+    <b>Documents issued as follow 已發出以下文件</b>
+      ${renderSummary(visibleSummary)}
+    </section>
+
+    <div class="document-footer">
+      記錄醫生：
+      ${esc(s.settings.nameCn)} / ${esc(s.settings.nameEn)}<br>
+      ${s.kind === "revision" ? "完成時間" : "修改時間"}：
+      ${esc(stamp(s.savedAt))}
+    </div>
+  `;
+};
+
+/* ---------- 16.8 介面及目錄對話框 ---------- */
+
+const invStyle = document.createElement("style");
+
+invStyle.textContent = `
+  .inv-list {
+    max-height:280px;
+    overflow:auto;
+    margin:10px 0 16px;
+    border:1px solid var(--line);
+    border-radius:7px;
+  }
+
+  .inv-choice {
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+    margin:0;
+    padding:10px;
+    color:var(--ink);
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+  }
+
+  .inv-choice:last-child { border-bottom:0; }
+
+  .inv-choice input {
+    width:auto;
+    margin-top:3px;
+  }
+
+  .inv-choice strong,
+  .inv-choice small {
+    display:block;
+  }
+
+  .inv-choice small {
+    margin-top:4px;
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.5;
+  }
+
+  .inv-selected {
+    margin-top:12px;
+  }
+
+  .inv-selected textarea {
+    min-height:64px;
+  }
+
+  .inv-linked-charge {
+    background:var(--soft);
+  }
+
+  #invCatalogueDialog {
+    width:min(900px,96vw);
+  }
+
+  .inv-catalogue-row {
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px;
+    margin-bottom:10px;
+  }
+
+  .inv-catalogue-grid {
+    display:grid;
+    grid-template-columns:1fr 2fr 1fr 1.4fr;
+    gap:10px;
+  }
+
+  @media(max-width:800px) {
+    .inv-catalogue-grid {
+      grid-template-columns:1fr 1fr;
+    }
+  }
+
+  @media print {
+    #invCatalogueDialog {
+      display:none !important;
+    }
+  }
+`;
+
+document.head.append(invStyle);
+
+$("settingsBtn").insertAdjacentHTML("beforebegin", `
+  <button type="button" id="invCatalogueBtn">
+    檢查目錄
+  </button>
+`);
+
+$("exportOldBtn").insertAdjacentHTML("afterend", `
+  <button type="button" id="invExportV2Btn">
+    匯出 v2 原始資料
+  </button>
+`);
+
+$("exportBtn").textContent = "匯出 v3 JSON";
+$("exportOldBtn").textContent = "匯出 v1 原始資料";
+$("exportRawBtn").textContent = "匯出 v3 儲存原文";
+
+const invSignatureLabel = $("signatureOption").querySelector("label");
+if (invSignatureLabel) {
+  invSignatureLabel.textContent = "簽署方式（對外文件共用）";
+}
+
+document.body.insertAdjacentHTML("beforeend", `
+  <dialog id="invCatalogueDialog">
+    <div class="dialog-head">
+      <h2>檢查目錄</h2>
+      <button type="button" data-close>取消</button>
+    </div>
+
+    <div class="notice">
+      價錢以 HKD 計算，由你自行設定。<br>
+      修改目錄只影響之後新選取的項目；
+      已選檢查及已保存文件保留當時名稱和價錢。<br>
+      未定價可先留空，但診所收費項目必須填價後才可選取。
+      如確實免費，請填 0。
+    </div>
+
+    <div id="invCatalogueRows"></div>
+
+    <div class="actions">
+      <button type="button" id="invAddLab">＋ 化驗</button>
+      <button type="button" id="invAddImaging">＋ 影像</button>
+      <button type="button" class="primary" id="invSaveCatalogue">
+        儲存目錄
+      </button>
+    </div>
+  </dialog>
+`);
+
+let invCatalogueWorking = [];
+
+function invRenderCatalogueEditor() {
+  $("invCatalogueRows").innerHTML = invCatalogueWorking.length
+    ? invCatalogueWorking.map(row => `
+      <div class="inv-catalogue-row" data-cat-row="${esc(row.id)}">
+        <div class="inv-catalogue-grid">
+          <div>
+            <label>類別</label>
+            <select data-cat-field="type">
+              <option value="lab" ${row.type === "lab" ? "selected" : ""}>
+                LAB
+              </option>
+              <option value="imaging" ${row.type === "imaging" ? "selected" : ""}>
+                Imaging
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label>檢查名稱</label>
+            <input data-cat-field="name" value="${esc(row.name)}">
+          </div>
+
+          <div>
+            <label>價錢 HKD</label>
+            <input
+              type="number"
+              min="0"
+              step=".01"
+              data-cat-field="price"
+              value="${esc(row.price)}"
+              placeholder="未定價"
+            >
+          </div>
+
+          <div>
+            <label>預設收費方式</label>
+            <select data-cat-field="billing">
+              ${Object.entries(INV_BILLING).map(([value, label]) => `
+                <option value="${value}"
+                  ${row.billing === value ? "selected" : ""}>
+                  ${esc(label)}
+                </option>
+              `).join("")}
+            </select>
+          </div>
+        </div>
+
+        <div class="actions" style="margin-top:8px">
+          <label class="check">
+            <input type="checkbox" data-cat-field="enabled"
+              ${row.enabled ? "checked" : ""}>
+            啟用
+          </label>
+
+          <button type="button" data-cat-remove="${esc(row.id)}">
+            移除目錄項目
+          </button>
+        </div>
+      </div>
+    `).join("")
+    : `<p class="small">尚未有項目。請按下面的 LAB 或 Imaging 新增。</p>`;
+}
+
+function invOpenCatalogue() {
+  if (busy || loadFailed || conflict) return;
+
+  invCatalogueWorking = clone(db.catalogue);
+  invRenderCatalogueEditor();
+
+  $("invCatalogueDialog").showModal();
+}
+
+function invAddCatalogueRow(type) {
+  invCatalogueWorking.push({
+    id: uid(),
+    type,
+    name: "",
+    price: "",
+    billing: "clinic",
+    enabled: true
+  });
+
+  invRenderCatalogueEditor();
+}
+
+function invSaveCatalogue() {
+  if (busy || loadFailed || conflict) return;
+
+  const normalized = invNormalizeCatalogue(invCatalogueWorking);
+
+  if (transaction(() => {
+    db.catalogue = normalized;
+  })) {
+    $("invCatalogueDialog").close();
+    renderUI();
+  }
+}
+
+/* ---------- 16.9 LAB / Imaging 編輯頁 ---------- */
+
+const invOriginalRenderDocumentFields = renderDocumentFields;
+
+renderDocumentFields = function() {
+  if (!INV_TYPES.includes(active)) {
+    invOriginalRenderDocumentFields();
+
+    /*
+      自動產生的收費列不可直接改名、改價或移除。
+      必須回到檢查頁變更，以免失去連動。
+    */
+    if (active === "receipt") {
+      const e = data();
+
+      e.receipt.items.forEach((item, index) => {
+        if (!item.investigationId) return;
+
+        const input = $("documentFields").querySelector(
+          `[data-path="receipt.items.${index}.desc"]`
+        );
+
+        const card = input?.closest(".item-card");
+        if (!card) return;
+
+        card.classList.add("inv-linked-charge");
+
+        card.querySelectorAll("input").forEach(el => {
+          el.readOnly = true;
+        });
+
+        const remove = card.querySelector("[data-remove]");
+        if (remove) remove.disabled = true;
+
+        const label = card.querySelector(".item-top span");
+        if (label) {
+          label.textContent =
+            "檢查自動收費項目 · 請到 LAB／Imaging 修改";
+        }
+      });
+    }
+
+    return;
+  }
+
+  const e = data();
+  const type = active;
+  const request = e[type];
+  const liveEditor = !view && current.status === "draft";
+
+  const catalogue = liveEditor
+    ? db.catalogue.filter(row =>
+      row.type === type &&
+      (
+        row.enabled ||
+        request.items.some(item => item.catalogueId === row.id)
+      )
+    )
+    : [];
+
+  $("documentFields").innerHTML = `
+    <h3>${type === "lab"
+      ? "Laboratory Tests / 化驗"
+      : "Radiology / Imaging / 影像檢查"
+    }</h3>
+
+    <div class="small" style="margin-bottom:12px">
+      剔選代表申請檢查，唔代表病人已完成。<br>
+      已出具申請表不會因為修改選項而自動撤回；
+      需要時重新列印修訂版，或到歷史作廢。
+    </div>
+
+    ${textField(
+      "檢查中心／機構（可留空）",
+      type + ".centre"
+    )}
+
+    ${area(
+      "Clinical indication（留空則使用診斷）",
+      type + ".indication"
+    )}
+
+    ${liveEditor ? `
+      <div class="actions" style="margin-bottom:10px">
+        <button type="button" data-inv-open-catalogue>
+          管理檢查目錄／價目表
+        </button>
+      </div>
+
+      ${invBillingLocked(current) ? `
+        <div class="notice">
+          收據已出具或標記收款，自動收費項目已鎖定。
+          更改檢查狀態及結果不受影響。
+        </div>
+      ` : ""}
+
+      <input
+        id="invSearch"
+        placeholder="搜尋檢查名稱"
+        aria-label="搜尋檢查名稱"
+      >
+
+      <div class="inv-list">
+        ${catalogue.length ? catalogue.map(row => {
+          const selected = request.items.find(
+            item => item.catalogueId === row.id
+          );
+
+          const displayPrice = selected ? selected.price : row.price;
+          const displayBilling = selected ? selected.billing : row.billing;
+
+          return `
+            <label class="inv-choice" data-inv-choice
+              data-inv-name="${esc(row.name.toLowerCase())}">
+              <input
+                type="checkbox"
+                data-inv-select="${esc(row.id)}"
+                data-inv-type="${type}"
+                ${selected ? "checked" : ""}
+              >
+
+              <span>
+                <strong>${esc(selected ? selected.name : row.name)}</strong>
+                <small>
+                  ${trim(displayPrice)
+                    ? "HKD " + money(displayPrice)
+                    : "未定價"
+                  }
+                  · ${esc(INV_BILLING[displayBilling])}
+                  ${selected ? " · 已保留選取時資料" : ""}
+                  ${!row.enabled ? " · 目錄已停用" : ""}
+                </small>
+              </span>
+            </label>
+          `;
+        }).join("") : `
+          <p class="small" style="padding:10px">
+            此類別未有可選項目，請先在檢查目錄新增。
+          </p>
+        `}
+      </div>
+    ` : ""}
+
+    <h3>已選檢查（${request.items.length}）</h3>
+
+    ${request.items.map((item, index) => `
+      <div class="item-card inv-selected">
+        <div class="item-top">
+          <strong>${index + 1}. ${esc(item.name)}</strong>
+
+          ${liveEditor ? `
+            <button
+              type="button"
+              data-inv-remove="${esc(item.id)}"
+              data-inv-type="${type}">
+              取消
+            </button>
+          ` : ""}
+        </div>
+
+        <div class="small" style="margin-bottom:10px">
+          選取時價錢：
+          ${trim(item.price) ? "HKD " + money(item.price) : "未定價"}
+        </div>
+
+        <div class="field">
+          <label>收費方式</label>
+          <select
+            data-inv-billing="${esc(item.id)}"
+            data-inv-type="${type}">
+            ${Object.entries(INV_BILLING).map(([value, label]) => `
+              <option value="${value}"
+                ${item.billing === value ? "selected" : ""}>
+                ${esc(label)}
+              </option>
+            `).join("")}
+          </select>
+        </div>
+
+        ${area(
+          "申請詳情／部位／左右側（會印在申請表）",
+          `${type}.items.${index}.details`
+        )}
+
+        <div class="field">
+          <label>實際檢查狀態（內部紀錄）</label>
+          <select
+            data-inv-status="${esc(item.id)}"
+            data-inv-type="${type}">
+            ${Object.entries(INV_STATUS).map(([value, label]) => `
+              <option value="${value}"
+                ${item.status === value ? "selected" : ""}>
+                ${esc(label)}
+              </option>
+            `).join("")}
+          </select>
+        </div>
+
+        <div class="grid2">
+          ${textField(
+            "實際檢查日期（如已知）",
+            `${type}.items.${index}.performedDate`,
+            "date"
+          )}
+
+          ${textField(
+            "收報告日期（如已知）",
+            `${type}.items.${index}.resultDate`,
+            "date"
+          )}
+        </div>
+
+        ${area(
+          "結果／報告摘要（只入 Progress Note，不印在申請表）",
+          `${type}.items.${index}.result`
+        )}
+      </div>
+    `).join("")}
+
+    ${!request.items.length ? `
+      <p class="small">未選擇檢查。</p>
+    ` : ""}
+
+    ${area(
+      "申請表其他備註",
+      type + ".remarks"
+    )}
+  `;
+};
+
+/* ---------- 16.10 事件 ---------- */
+
+const invOriginalBindEvents = bindEvents;
+
+bindEvents = function() {
+  invOriginalBindEvents();
+
+  $("invCatalogueBtn").onclick = invOpenCatalogue;
+
+  $("invExportV2Btn").onclick = run(() => {
+    exportStored(INV_V2_KEY, "v2原始資料");
+  });
+
+  $("invAddLab").onclick = () => invAddCatalogueRow("lab");
+  $("invAddImaging").onclick = () => invAddCatalogueRow("imaging");
+  $("invSaveCatalogue").onclick = run(invSaveCatalogue);
+
+  $("invCatalogueRows").addEventListener("input", event => {
+    const field = event.target.dataset.catField;
+    const rowElement = event.target.closest("[data-cat-row]");
+
+    if (!field || !rowElement) return;
+
+    const row = invCatalogueWorking.find(
+      item => item.id === rowElement.dataset.catRow
+    );
+
+    if (!row) return;
+
+    row[field] = field === "enabled"
+      ? event.target.checked
+      : event.target.value;
+  });
+
+  $("invCatalogueRows").addEventListener("click", event => {
+    const button = event.target.closest("[data-cat-remove]");
+    if (!button) return;
+
+    invCatalogueWorking = invCatalogueWorking.filter(
+      row => row.id !== button.dataset.catRemove
+    );
+
+    invRenderCatalogueEditor();
+  });
+
+  $("documentFields").addEventListener("input", event => {
+    if (event.target.id !== "invSearch") return;
+
+    const query = trim(event.target.value).toLowerCase();
+
+    $("documentFields").querySelectorAll("[data-inv-choice]")
+      .forEach(row => {
+        row.classList.toggle(
+          "hidden",
+          !row.dataset.invName.includes(query)
+        );
+      });
+  });
+
+  $("documentFields").addEventListener("change", run(event => {
+    const input = event.target;
+    if (!editable()) return;
+
+    const type = input.dataset.invType;
+    if (!INV_TYPES.includes(type)) return;
+
+    /*
+      交易失敗或被收費鎖阻止時，還原 UI，
+      避免 checkbox 看起來已成功變更。
+    */
+    try {
+      if (input.dataset.invSelect) {
+        invSelect(type, input.dataset.invSelect, input.checked);
+      } else if (input.dataset.invBilling) {
+        invChangeBilling(type, input.dataset.invBilling, input.value);
+      } else if (input.dataset.invStatus) {
+        invChangeStatus(type, input.dataset.invStatus, input.value);
+      }
+    } catch (error) {
+      renderUI();
+      throw error;
+    }
+  }));
+
+  $("documentFields").addEventListener("click", run(event => {
+    const manage = event.target.closest("[data-inv-open-catalogue]");
+
+    if (manage) {
+      invOpenCatalogue();
+      return;
+    }
+
+    const remove = event.target.closest("[data-inv-remove]");
+    if (!remove || !editable()) return;
+
+    try {
+      invRemove(
+        remove.dataset.invType,
+        remove.dataset.invRemove
+      );
+    } catch (error) {
+      renderUI();
+      throw error;
+    }
+  }));
+
+  /*
+    自動收費列的第二層保護。
+    不依賴只讀樣式，亦阻止既有移除事件。
+  */
+  $("documentFields").addEventListener("click", event => {
+    const button = event.target.closest(
+      '[data-remove][data-list="receipt"]'
+    );
+
+    if (!button || !editable()) return;
+
+    const item = current.receipt.items[
+      Number(button.dataset.remove)
+    ];
+
+    if (!item?.investigationId) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    alert("這是檢查連動項目，請到 LAB／Imaging 修改。");
+  }, true);
+
+  $("formFields").addEventListener("input", event => {
+    const path = event.target.dataset.path || "";
+    const match = path.match(/^receipt\.items\.(\d+)\./);
+
+    if (!match || !editable()) return;
+
+    const item = current.receipt.items[Number(match[1])];
+    if (!item?.investigationId) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    fillFields();
+  }, true);
+};
+
+/* ---------- 16.11 工具列狀態 ---------- */
+
+const invOriginalRenderUI = renderUI;
+
+renderUI = function() {
+  invOriginalRenderUI();
+
+  $("invCatalogueBtn").disabled =
+    busy || loadFailed || conflict;
+};
+
+/* ================== Investigations 模組完 ================== */
+
+/* ---------- 15.11 初始化與事件 ---------- */
+
+loadDatabase();
+
+/*
+  先替换了 printDocument、completeEncounter 等函式，
+  原有 bindEvents 會綁定到新的流程。
+*/
+bindEvents();
+
+/* 舊按鈕已隱藏，亦移除原有點擊處理。 */
+$("saveBtn").onclick = null;
+$("issueBtn").onclick = null;
+
+$("simpleBatchOpen").onclick = simpleOpenBatch;
+
+$("simpleBatchPrint").onclick = run(async () => {
+  if (busy || view || loadFailed || conflict) return;
+
+  const types = [
+    ...$("simpleBatchList").querySelectorAll(
+      "[data-simple-print-type]:checked:not(:disabled)"
+    )
+  ].map(input => input.dataset.simplePrintType);
+
+  if (!types.length) {
+    alert("請至少勾選一份文件。");
+    return;
+  }
+
+  $("simpleBatchDialog").close();
+  await simplePrint(types);
+});
+
+$("simpleCompleteBack").onclick = () => {
+  $("simpleCompleteDialog").close();
+
+  if (
+    simpleCompletionContext &&
+    current.id === simpleCompletionContext.encounterId
+  ) {
+    active =
+      simpleCompletionContext.firstPending || "note";
+    view = null;
+  }
+
+  simpleCompletionContext = null;
+  renderUI();
+};
+
+$("simpleCompleteConfirm").onclick = run(() => {
+  if (
+    !simpleCompletionContext ||
+    current.id !== simpleCompletionContext.encounterId
+  ) {
+    $("simpleCompleteDialog").close();
+    simpleCompletionContext = null;
+    alert("目前診症已改變，請重新確認。");
+    return;
+  }
+
+  if (simpleCommitCompletion()) {
+    $("simpleCompleteDialog").close();
+    simpleCompletionContext = null;
+  }
+});
+
+$("simpleRetrySave").onclick = () => {
+  if (busy || loadFailed || conflict) return;
+
+  persist();
+  renderUI();
+};
+
+$("simpleEmergencyExport").onclick = run(exportBackup);
+
+$("simplePrintReturn").onclick = () => {
+  const job = simplePrintJob;
+
+  if (!job || job.phase !== "printing") return;
+
+  simpleFinishPrint(job);
+};
+
+/*
+  afterprint 只用來還原介面。
+  不把它當成「已成功列印」或「已交付病人」證據。
+*/
+window.addEventListener("afterprint", () => {
+  const job = simplePrintJob;
+
+  if (!job || job.phase !== "printing") return;
+
+  setTimeout(() => simpleFinishPrint(job), 0);
+});
+
+/* 列印準備期間避免意外離開。 */
+window.addEventListener("beforeunload", event => {
+  if (simplePrintJob) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+});
+
+/* 點選選單外部時收起列印選單。 */
+document.addEventListener("click", event => {
+  const menu = $("simplePrintMenu");
+
+  if (!menu.contains(event.target)) {
+    menu.removeAttribute("open");
+  }
+});
+
+renderUI();
+
+if (!loadFailed) {
+  persist();
+}
+</script>
+</body>
+</html>

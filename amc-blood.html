@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMC - TKP Blood Form</title>
+<style>
+  :root {
+    --ink: #17212d;
+    --blue: #215db0;
+    --border: #d7dee7;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #edf1f6;
+    color: var(--ink);
+    font-family: Arial, "Microsoft JhengHei", sans-serif;
+  }
+
+  button, input { font: inherit; }
+
+  button {
+    cursor: pointer;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 9px 14px;
+    background: white;
+    color: var(--ink);
+  }
+
+  button:hover { background: #edf3fc; }
+  button.primary { background: var(--blue); color: white; border-color: var(--blue); }
+  button.danger { color: #a22222; }
+
+  input[type="text"], input[type="search"], input[type="number"] {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #b9c4d2;
+    border-radius: 6px;
+    background: white;
+    min-width: 0;
+  }
+
+  input:focus {
+    outline: 2px solid #98b8e8;
+    outline-offset: 1px;
+  }
+
+  input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--blue);
+    cursor: pointer;
+  }
+
+  .app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 22px;
+  }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  h1 { font-size: 23px; margin: 0 0 5px; }
+  h2 { font-size: 17px; margin: 0 0 14px; }
+  .muted { color: #5d6c7b; font-size: 13px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .notice {
+    background: #fff8e9;
+    border: 1px solid #dfc98c;
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .fields {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 7px;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 12px;
+  }
+
+  .toolbar input[type="search"] { flex: 1; }
+
+  .check-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  .count {
+    font-weight: bold;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  .catalog-wrap {
+    max-height: 470px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .catalog {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .catalog th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #eaf0f8;
+    text-align: left;
+    padding: 10px;
+  }
+
+  .catalog td {
+    padding: 8px 10px;
+    border-top: 1px solid #e7ecf2;
+  }
+
+  .catalog .section td {
+    background: #f4f6f9;
+    font-weight: bold;
+  }
+
+  .catalog tr.selected td { background: #edf5ff; }
+  .catalog .money { text-align: right; white-space: nowrap; }
+  .catalog code { font-size: 12px; white-space: nowrap; }
+
+  .item-label {
+    display: block;
+    cursor: pointer;
+    line-height: 1.4;
+  }
+
+  .flag {
+    display: inline-block;
+    margin-left: 5px;
+    font-size: 11px;
+    color: #865500;
+    background: #fff3cf;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  .extra-editor-row {
+    display: grid;
+    grid-template-columns: 1fr 130px 65px;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .preview-heading {
+    max-width: 210mm;
+    margin: 25px auto 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .preview-container { overflow-x: auto; padding-bottom: 20px; }
+
+  /* PRINT DOCUMENT */
+
+  .paper {
+    width: 210mm;
+    height: 297mm;
+    padding: 8mm;
+    margin: 0 auto 20px;
+    background: white;
+    color: black;
+    box-shadow: 0 3px 18px #0002;
+    font-family: Arial, "Microsoft JhengHei", sans-serif;
+  }
+
+  .paper-header {
+    height: 18mm;
+    display: grid;
+    grid-template-columns: 56mm 1fr 13mm;
+    gap: 2mm;
+    align-items: start;
+  }
+
+  .brand-main {
+    font-size: 14pt;
+    font-weight: bold;
+    line-height: 1;
+  }
+
+  .brand-sub {
+    margin-top: 1.2mm;
+    font-size: 6.7pt;
+    font-weight: bold;
+    line-height: 1.25;
+  }
+
+  .paper-title {
+    font-size: 14pt;
+    font-weight: bold;
+    text-align: center;
+    padding-top: 2mm;
+    white-space: nowrap;
+  }
+
+  .page-number {
+    font-size: 10pt;
+    font-weight: bold;
+    text-align: right;
+    padding-top: 3mm;
+  }
+
+  .paper-body {
+    height: 257mm;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2.5mm;
+  }
+
+  .lab-table {
+    width: 100%;
+    height: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    color: black;
+    font-size: 6.45pt;
+    line-height: 1.08;
+  }
+
+  .lab-table col.code-col { width: 20%; }
+  .lab-table col.item-col { width: 62%; }
+  .lab-table col.price-col { width: 18%; }
+
+  .lab-table th,
+  .lab-table td {
+    border: 0.18mm solid black;
+    padding: 0.32mm 0.55mm;
+    vertical-align: middle;
+    font-weight: normal;
+  }
+
+  .lab-table thead { height: 6mm; }
+  .lab-table th {
+    text-align: left;
+    font-size: 8pt;
+    font-weight: bold;
+  }
+
+  .lab-table .p-code {
+    font-size: 5.8pt;
+    white-space: nowrap;
+    letter-spacing: -0.05mm;
+  }
+
+  .p-item-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65mm;
+  }
+
+  .p-item-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .tickbox {
+    width: 1.9mm;
+    height: 1.9mm;
+    flex: 0 0 1.9mm;
+    border: 0.2mm solid black;
+    position: relative;
+    display: inline-block;
+    margin-top: 0.12mm;
+  }
+
+  .tickbox.checked::after {
+    content: "";
+    position: absolute;
+    left: 0.35mm;
+    top: -0.08mm;
+    width: 0.75mm;
+    height: 1.3mm;
+    border-right: 0.38mm solid black;
+    border-bottom: 0.38mm solid black;
+    transform: rotate(40deg);
+  }
+
+  .lab-table tr.is-selected .p-item-text { font-weight: bold; }
+
+  .price-inner {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.35mm;
+    white-space: nowrap;
+    font-size: 6.1pt;
+  }
+
+  .pending-mark { font-weight: bold; }
+
+  .right-panel {
+    height: 100%;
+    display: grid;
+    grid-template-rows: 46mm minmax(0, 1fr) 9mm 52mm;
+    gap: 3mm;
+  }
+
+  .total-box {
+    border: 0.25mm solid black;
+    padding: 1mm 2mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: black;
+  }
+
+  .total-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2mm;
+    font-size: 10pt;
+    font-weight: bold;
+    line-height: 1.2;
+  }
+
+  .total-amount {
+    white-space: nowrap;
+    font-size: 12pt;
+  }
+
+  .total-note {
+    margin-top: 0.5mm;
+    font-size: 6pt;
+    line-height: 1.1;
+  }
+
+  .patient-box {
+    border: 0.2mm solid black;
+    padding: 2.8mm;
+    overflow: hidden;
+  }
+
+  .patient-box-title {
+    font-size: 8.5pt;
+    font-weight: bold;
+    margin-bottom: 2.2mm;
+  }
+
+  .patient-line {
+    display: grid;
+    grid-template-columns: 24mm minmax(0, 1fr);
+    gap: 1.5mm;
+    min-height: 7.4mm;
+    align-items: center;
+    font-size: 8pt;
+  }
+
+  .patient-value {
+    min-height: 5.5mm;
+    border-bottom: 0.15mm solid black;
+    padding: 0.6mm 0;
+    font-size: 9pt;
+    font-weight: bold;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .doctor-start {
+    border-top: 0.15mm solid black;
+    margin-top: 1mm;
+    padding-top: 1mm;
+  }
+
+  .extra-print-table {
+    width: 100%;
+    height: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 6.8pt;
+    line-height: 1.1;
+  }
+
+  .extra-print-table td {
+    border: 0.18mm solid black;
+    padding: 0.4mm 0.8mm;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+  }
+
+  .signature-box {
+    border: 0.2mm solid black;
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    font-size: 8pt;
+  }
+
+  .signature-section {
+    padding: 2mm;
+    line-height: 1.35;
+  }
+
+  .signature-section + .signature-section {
+    border-top: 0.18mm solid black;
+  }
+
+  .paper-footer {
+    height: 6mm;
+    padding-top: 1.5mm;
+    display: flex;
+    justify-content: space-between;
+    gap: 2mm;
+    font-size: 6pt;
+    line-height: 1.1;
+  }
+
+  .paper-footer strong { font-weight: bold; }
+
+  @media screen and (max-width: 800px) {
+    .app { padding: 12px; }
+    .topbar { align-items: flex-start; flex-direction: column; }
+    .fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .toolbar { flex-wrap: wrap; }
+    .toolbar input[type="search"] { flex-basis: 100%; }
+    .catalog { font-size: 12px; }
+    .catalog td, .catalog th { padding: 7px; }
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  @media print {
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white !important;
+      color: black !important;
+    }
+
+    .no-print { display: none !important; }
+
+    .app {
+      margin: 0 !important;
+      padding: 0 !important;
+      max-width: none !important;
+    }
+
+    .preview-container {
+      overflow: visible !important;
+      padding: 0 !important;
+    }
+
+    .paper {
+      margin: 0 !important;
+      box-shadow: none !important;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .paper + .paper {
+      break-before: page;
+      page-break-before: always;
+    }
+
+    .lab-table tr,
+    .extra-print-table tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+
+  <section class="no-print">
+    <div class="topbar">
+      <div>
+        <h1>AMC Blood Form</h1>
+
+      </div>
+      <div class="actions">
+        <button type="button" id="newPatient" class="danger">下一位病人</button>
+        <button type="button" id="previewButton">查看列印版</button>
+        <button type="button" id="printButton" class="primary">列印兩頁</button>
+      </div>
+    </div>
+
+    <div class="notice">
+      <strong>本頁沒有外部資源、沒有上傳功能；資料亦不會留於瀏覽器內，重新整理或關閉頁面後會清除。</strong>
+    </div>
+
+    <div class="card">
+      <h2>1. 病人及醫生資料</h2>
+      <div class="fields">
+        <label>
+          <span class="field-label">Patient Name／病人姓名</span>
+          <input id="patientName" type="text" maxlength="70"
+                 autocomplete="off" spellcheck="false"
+                 placeholder="輸入病人姓名">
+        </label>
+        <label>
+          <span class="field-label">ID No.</span>
+          <input id="patientId" type="text" maxlength="40"
+                 autocomplete="off" spellcheck="false"
+                 placeholder="輸入 ID No.">
+        </label>
+        <label>
+          <span class="field-label">Doctor Name／醫生英文姓名</span>
+          <input id="doctorName" type="text" maxlength="70"
+                 autocomplete="off" spellcheck="false"
+                 placeholder="輸入醫生姓名">
+        </label>
+        <label>
+          <span class="field-label">Doctor Code／醫生代碼</span>
+          <input id="doctorCode" type="text" maxlength="30"
+                 autocomplete="off" spellcheck="false"
+                 placeholder="輸入醫生代碼">
+        </label>
+      </div>
+      <p class="muted">
+        「下一位病人」會清除病人資料、檢查勾選及額外項目，
+        但保留本次開啟頁面內的醫生姓名及代碼。重新整理或關閉頁面後清除一切。
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>2. 勾選檢查</h2>
+      <div class="toolbar">
+        <input id="search" type="search"
+               placeholder="搜尋 AMC Code 或英文檢查名稱"
+               autocomplete="off">
+        <label class="check-label">
+          <input id="selectedOnly" type="checkbox">只看已選
+        </label>
+        <span class="count" id="selectedCount" aria-live="polite">已選 0 項</span>
+        <button id="clearSelection" type="button">清除勾選</button>
+      </div>
+
+      <div class="catalog-wrap">
+        <table class="catalog">
+          <thead>
+            <tr>
+              <th style="width:42px">選</th>
+              <th style="width:145px">AMC Code</th>
+              <th>Lab Item</th>
+              <th style="width:100px;text-align:right">Price $</th>
+            </tr>
+          </thead>
+          <tbody id="catalogBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3. 額外項目（P-999）</h2>
+      <div id="extraEditor"></div>
+      <button type="button" id="addExtra">＋ 加入額外項目</button>
+      <p class="muted">
+        最多 26 行；未使用的行會保留空白。留空價錢不會當成 $0。
+      </p>
+    </div>
+  </section>
+
+  <div class="preview-heading no-print" id="previewStart">
+    <strong>列印預覽</strong>
+  </div>
+
+  <div class="preview-container" id="printArea">
+    <section class="paper" aria-label="列印第 1 頁">
+      <header class="paper-header">
+        <div>
+          <div class="brand-main">Adventist<br>Health 港安</div>
+          <div class="brand-sub">
+            Adventist Medical Center · Taikoo Place<br>
+            港安醫療中心 · 太古坊
+          </div>
+        </div>
+        <div class="paper-title">AMC Lab Items Charge Slip</div>
+        <div class="page-number">Page.1</div>
+      </header>
+
+      <div class="paper-body">
+        <div id="page1Left"></div>
+        <div id="page1Right"></div>
+      </div>
+
+      <footer class="paper-footer">
+        <strong>2026/10</strong>
+        <span>1 / 2</span>
+      </footer>
+    </section>
+
+    <section class="paper" aria-label="列印第 2 頁">
+      <header class="paper-header">
+        <div>
+          <div class="brand-main">Adventist<br>Health 港安</div>
+          <div class="brand-sub">
+            Adventist Medical Center · Taikoo Place<br>
+            港安醫療中心 · 太古坊
+          </div>
+        </div>
+        <div class="paper-title">AMC Lab Items Charge Slip</div>
+        <div class="page-number">Page.2</div>
+      </header>
+
+      <div class="paper-body">
+        <div id="page2Left"></div>
+
+        <div class="right-panel">
+          <div class="patient-box">
+            <div class="patient-box-title">PATIENT / DOCTOR DETAILS</div>
+
+            <div class="patient-line">
+              <span>Patient Name:</span>
+              <span class="patient-value" id="printPatientName"></span>
+            </div>
+
+            <div class="patient-line">
+              <span>ID No.:</span>
+              <span class="patient-value" id="printPatientId"></span>
+            </div>
+
+            <div class="patient-line doctor-start">
+              <span>Doctor Name:</span>
+              <span class="patient-value" id="printDoctorName"></span>
+            </div>
+
+            <div class="patient-line">
+              <span>Doctor Code:</span>
+              <span class="patient-value" id="printDoctorCode"></span>
+            </div>
+          </div>
+
+          <table class="extra-print-table" aria-label="額外項目">
+            <colgroup>
+              <col style="width:20%">
+              <col style="width:62%">
+              <col style="width:18%">
+            </colgroup>
+            <tbody id="extraPrintBody"></tbody>
+          </table>
+<div class="total-box" aria-live="polite">
+  <div class="total-main">
+    <span>
+      Total Items:
+      <span id="printTotalItems">0</span>
+    </span>
+
+    <span>
+      Total Amount:
+      <span class="total-amount" id="printTotalAmount">$0.00</span>
+    </span>
+  </div>
+
+  <div class="total-note" id="printTotalNote" hidden></div>
+</div>
+          <div class="signature-box">
+            <div class="signature-section">
+              Processed by Nurse / HCA:<br>
+              Stamp &amp; Sign:
+            </div>
+            <div class="signature-section">
+              Cashier:<br>
+              Stamp &amp; Sign:
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="paper-footer">
+        <strong>2026/10</strong>
+        <span>2 / 2</span>
+      </footer>
+    </section>
+  </div>
+</main>
+
+<script>
+"use strict";
+
+/*
+  單檔、本機使用。
+  不使用 fetch、外部字型、分析工具、cookie、
+  localStorage 或 sessionStorage。
+
+  所有項目及價格均為圖片抄錄底稿，未經院方核准。
+  格式：
+  AMC Code | Lab Item | Price | 可選：核對備註
+
+  行 ID 按位置獨立建立，避免重複 AMC Code 被合併。
+*/
+
+const RAW_PAGE1_LEFT = `
+P-BREATH|13C Breath test for helicobacter Pylori|940
+P-ABO|ABO Grouping + Rh(D)|150
+P-ALB|Albumin|120
+P-A/G|Albumin / Globulin (A/G) Ratio|180
+P-ALP|Alkaline Phosphatase|120
+P-THAAG|Alpha Thalassaemia Carrier Genotyping|1520
+P-AFP|Alpha-Fetoprotein (AFP - Liver)|370
+P-ALT|ALT/SGPT|120
+P-OVA|Amoeba Trophozoite & cyst, Stool|170
+P-AMY|Amylase|170
+P-P04|Antenatal Test|830
+P-ANA|Anti-Nuclear Factor (ANF/ANA)|390
+P-AST|AST/SGOT|120
+P-THAAB|Beta Thalassaemia Carrier Genotyping|2500
+P-BHCG|Beta-HCG, Quantitative|370
+P-BICAR|Bicarbonate|140
+P-DBILI|Bilirubin, Direct|120
+P-TBILI|Bilirubin, Total|120
+P-IBILI|Bilirubin, Total, Direct & Indirect|160
+P-BSM|Blood Smear|140
+P-CSTURINE|C & ST, MID STREAM URINE (MSU)|280
+P-CSTSTOOL|C & ST, Stool|330
+P-CSTHVS|C/ST, High Vaginal Swab|330
+P-CSTSPU|C/ST, Sputum|330
+P-CSTURINE|C/ST, Urine|280
+P-C3|C3 Complement|310
+P-C4|C4 Complement|310
+P-CADBL|Cadmium Blood|910
+P-CAL|Calcium|120
+P-CA125|Cancer Antigen (CA 125-Ovary)|530
+P-CA153|Cancer Antigen (CA 15.3-Breast)|530
+P-CA199|Cancer Antigen (CA 19.9-Pancreas)|500
+P-CA724|Cancer Antigen (CA 72.4-Stomach)|500
+P-CEA|Carcinoembryoinc Antigen (CEA-colorectal)|470
+P-CL|Chloride|120
+P-HDL|Cholesterol - HDL|210
+P-LDL|Cholesterol - LDL (Direct)|290
+P-CHOL|Cholesterol - Total|120
+P-CHLADNA|Chlamydia trachomatis (CT) DNA|530
+P-CBC|Complete Blood Count|160
+P-CBP|Complete Blood Picture|170
+P-CU|Copper (Cu)|860
+P-CORTM|Cortisol AM (9-10 a.m)|255
+P-CORTP|Cortisol PM (5-7 p.m)|525
+P-CK|Creatine Phosphokinase (CK/CPK)|170
+P-CREAT|Creatinine, blood|120
+P-UCREAT|Creatinine, Urine|300
+P-CTGCDNA|CT+GC DNA|1350
+P-CMVIGG|Cytomegalovirus (CMV) Antibody IgG|675
+P-CMVGM|Cytomegalovirus (CMV) Antibody IgG & IgM|880
+P-CMVIGM|Cytomegalovirus (CMV) Antibody IgM|900
+P-P27|Diabetes Monitoring|330
+P-ELECT|Electrolytes (Na+, K+, Cl-, Bicarbonate3-)|330
+P-EBVQL|Epstein-Barr Virus DNA, NPC Screening (Qualitative)|500
+P-EBVQN|Epstein-Barr Virus DNA, NPC Screening (Quantitative)|780
+`;
+
+const RAW_PAGE1_RIGHT = `
+P-ESR|Erythrocytes Sedimentation Rate (ESR)|120
+P-E2|Estradiol (E2)|440
+P-E3|Estriol (E3)|490
+P-EST|Estrogens (includes E1 & E2 fractionated)|1170
+P-FEL|Ferritin|440
+P-P07|Fertility Test (6 items)|1980
+P-RFO|Folate (RBC)|600
+P-SFO|Folate (Serum)|440
+P-FSH|Follicle-Stimulating Hormone (FSH)|370
+P-P10|Free Thyroid Test|750
+P-G6PD|G6PD, Qualitative|300
+P-G6PDQ|G6PD, Quantitative|1170
+P-GGT|Gamma Glutamyl Transferase (GGT)|140
+P-GACAG|Giardia, Entamoeba & Cryptosporidium Triple Antigens, Stool|830
+P-GLOB|Globulin|160
+P-OGTT2|Glucose Tolerance Test (OGTT)|400
+P-GLUF|Glucose, Fasting|210
+P-GCS|Gonococcus (G.C.), Smear|140
+P-GH|Growth Hormone|770
+P-HB|Haemoglobin|150
+P-HBP|Haemoglobin Pattern|660
+P-HBPP|Haemoglobin Pattern with Pathologist Report|1760
+P-A1C|HbA1C|270
+P-HBSAGQ|HBsAg, Quantitative|390
+P-P13|HBV Vaccine profile|390
+P-HCVG|HCV Genotyping|2310
+P-HPG|Helicobacter Pylori Antibody IgG|480
+P-HAVG|Hepatitis A Virus Antibody IgG|350
+P-HAVM|Hepatitis A Virus Antibody IgM|550
+P-HBSAB|Hepatitis B Surface Antibody (HbsAb)|350
+P-HBSAG|Hepatitis B Surface Antibody (HbsAg)|170
+P-HBVDNA|Hepatitis B Virus DNA (Quantitative)|1080
+P-HCV|Hepatitis C Virus Antibody (Anti-HCV)|580
+P-HCVRNA|Hepatitis C Virus RNA (Quantitative)|1100
+P-HSV1|Herpes Simplex Virus (HSV) Type 1 IgG|520
+P-HSV2|Herpes Simplex Virus (HSV) Type 2 IgG|500
+P-HIV|HIV 1 & 2 Antibodies & P24 Antigen|470
+P-HPVDNA|HPV DNA Detection & Genotyping|880
+P-IGA|Immunoglobulin IgA|330
+P-IGE|Immunoglobulin IgE|440
+P-IGG|Immunoglobulin IgG|340
+P-IGP|Immunoglobuline Profile (IgA, IgG & IgM)|1050
+P-FLUAB|Influenza Virus A + B Antigen|850
+P-INSU|Insulin|660
+P-FE|Iron|190
+P-FETIBC|Iron & Total Iron Binding Capacity (TIBC)|390
+P-P11|Lipid Profile Test|390
+P-P01|Liver Function Test|420
+P-LH|Luteinizing Hormone (LH)|370
+P-MG|Magnesium|280
+P-MEA|Measles Antibody IgG|500
+P-MEAM|Measles Antibody IgM|800
+P-MA|Microalbumin, Urine|280
+P-MACR|Microalbumin/Creatinine ratio, Urine|500
+P-TBDNA|MTB DNA (Mycobacterium tuberculosis)|990
+P-MUM|Mumps Antibody IgG|500
+P-MUMGM|Mumps Antibody IgG & IgM|990
+`;
+
+const RAW_PAGE2_LEFT = `
+P-MUMM|Mumps Antibody IgM|830
+P-MYURDNA|Mycoplasma & Ureaplasma Species DNA (4 types)|1170
+P-GCDNA|Neisseria gonorrhoeae (GC) DNA|530
+P-NICO|Nicotine (Cotinine), Urine|390
+P-SOB|Occult Blood, Qualitative|200
+P-PHOS|Phosphate, Inorganic|120
+P-PLT|Platelet Count|150
+P-K|Potassium (K+)|120
+P-PGT|Pregnancy Test, Urine|170
+P-PRO|Prolactin|390
+P-PSAP|Prostatic Specific Antigen Ratio (PSA + Free PSA)|820
+P-PSAF|Prostatic Specific Antigen, Free (Free PSA)|550
+P-PSA|Prostatic Specific Antigen, Total (PSA)|530
+P-UPRO-R|Protein Total, Urine|300
+P-TP|Protein, Total|120
+P-UPCR|Protein/Creatinine Ratio, Urine|390
+P-PT|Prothrombin Time + INR (PT)|200
+P-P02|Renal Function Test|280
+P-P03|Renal Function Test (Advanced)|440
+P-RH|Rh Antibodies|310
+P-RF|Rheumatoid Factor, Quantitative|250
+P-VDRL|RPR-VDRL|120
+P-RUB|Rubella Antibody IgG|350
+P-RUBM|Rubella Antibody IgM|640
+P-SE|Semen Analysis|400
+P-P19|Sexually Transmitted Disease Profile 1|760
+P-P20|Sexually Transmitted Disease Profile 2|1100
+P-STB|Smear, AFB|170
+P-NA|Sodium (Na+)|120
+P-STD9P|STD DNA (9 types)|1720
+P-SR|Stool Routine with OVA & Parasites|150
+P-FT3|T3, Free|280
+P-T3|T3, Total|280
+P-FT4|T4, Free|280
+P-T4|T4, Total|200
+P-TBCS|TB Culture & Smear|550
+P-FTESTO|Testosterone, Free|990
+P-TESTO|Testosterone, Total|480
+P-THINHPV|Thin Pap + HPV DNA Genotyping|1060
+P-THINPAP|Thin Prep (Cytology only)|390
+P-TT|Thrombin Time|250
+P-TPO|Thyroid Peroxidase Antibodies (Anti-TPO)|440
+P-TSH|Thyroid Stimulating Hormone (TSH)|400
+P-TIBC|Total Iron Binding Capacity (TIBC)|220
+P-TRIG|Triglyceride|140
+P-UREA|Urea (BUN)|120
+P-UTD9|Urethritis DNA (9 Types)|1720
+P-UA|Uric Acid|120
+P-UR|Urinalysis/Urine Routine|150
+P-UURO|Urobilinogen (Erlich's), Urine|140
+P-VDRL|VDRL (RPR)|120
+P-B12|Vitamin B12|440
+P-VITD|Vitamin D, 25-OH Total|880
+P-VITD2D3|Vitamin D, 25-OH Total, 02, 03|1490
+P-UZN|Zinc, Urine|990
+`;
+
+function parseItems(raw, prefix) {
+  return raw.trim().split(/\r?\n/).map((line, index) => {
+    const [code, name, price, note = ""] =
+      line.split("|").map(part => part.trim());
+
+    return {
+      id: `${prefix}-${index}`,
+      code,
+      name,
+      price: Number(price),
+      note
+    };
+  });
+}
+
+const groups = [
+  {
+    title: "第 1 頁 · 左欄",
+    target: "page1Left",
+    items: parseItems(RAW_PAGE1_LEFT, "p1l")
+  },
+  {
+    title: "第 1 頁 · 右欄",
+    target: "page1Right",
+    items: parseItems(RAW_PAGE1_RIGHT, "p1r")
+  },
+  {
+    title: "第 2 頁 · 左欄",
+    target: "page2Left",
+    items: parseItems(RAW_PAGE2_LEFT, "p2l")
+  }
+];
+
+const allItems = groups.flatMap(group => group.items);
+const selected = new Set();
+const printRows = new Map();
+
+let extras = [];
+let extraSequence = 0;
+const MAX_EXTRAS = 26;
+
+const $ = id => document.getElementById(id);
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[character]);
+}
+
+function money(value) {
+  return Number(value).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function boxHtml(checked) {
+  return `<span class="tickbox${checked ? " checked" : ""}"
+                aria-hidden="true"></span>`;
+}
+
+/* Build fixed two-page print tables. */
+function buildPrintTables() {
+  groups.forEach(group => {
+    const rows = group.items.map(item => {
+      const noteMark = item.note
+        ? ' <span class="pending-mark">†</span>'
+        : "";
+
+      return `
+        <tr id="print-${item.id}">
+          <td class="p-code">${escapeHtml(item.code)}</td>
+          <td>
+            <div class="p-item-inner">
+              ${boxHtml(false)}
+              <span class="p-item-text">
+                ${escapeHtml(item.name)}${noteMark}
+              </span>
+            </div>
+          </td>
+          <td>
+            <div class="price-inner">
+              <span>$</span>
+              <span>${money(item.price)}</span>
+            </div>
+          </td>
+        </tr>`;
+    }).join("");
+
+    $(group.target).innerHTML = `
+      <table class="lab-table" aria-label="${escapeHtml(group.title)}">
+        <colgroup>
+          <col class="code-col">
+          <col class="item-col">
+          <col class="price-col">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>AMC Code</th>
+            <th>Lab Item</th>
+            <th>Price $</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  });
+
+  allItems.forEach(item => {
+    printRows.set(item.id, $(`print-${item.id}`));
+  });
+}
+
+function updatePrintSelection(id) {
+  const row = printRows.get(id);
+  if (!row) return;
+
+  const checked = selected.has(id);
+  row.classList.toggle("is-selected", checked);
+  row.querySelector(".tickbox").classList.toggle("checked", checked);
+}
+
+function updateTotal() {
+
+// 已剔選的檢查 + 已填名稱的 P-999 額外項目。
+  const totalItems =
+    selected.size +
+    extras.filter(item => item.name.trim()).length;
+
+  $("printTotalItems").textContent = totalItems;
+
+  // 用「仙」作整數加總，避免小數運算誤差。
+  let totalCents = 0;
+  let missingExtraPrices = 0;
+
+  // 已剔選的檢查。
+  allItems.forEach(item => {
+    if (selected.has(item.id)) {
+      totalCents += Math.round(item.price * 100);
+    }
+  });
+
+  // P-999：有名稱及有效價錢才加入總額。
+  extras.forEach(item => {
+    if (!item.name.trim()) return;
+
+    const priceText = String(item.price).trim();
+    const amount = Number(priceText);
+
+    if (
+      priceText === "" ||
+      !Number.isFinite(amount) ||
+      amount < 0 ||
+      amount > 999999.99
+    ) {
+      missingExtraPrices++;
+      return;
+    }
+
+    totalCents += Math.round(amount * 100);
+  });
+
+  $("printTotalAmount").textContent =
+    "$" + money(totalCents / 100);
+
+  // 留空價錢不當成 $0，顯示提示避免誤會已全部計算。
+  const note = $("printTotalNote");
+  note.hidden = missingExtraPrices === 0;
+  note.textContent = missingExtraPrices
+    ? `未包括 ${missingExtraPrices} 個未填有效價錢的額外項目`
+    : "";
+}
+
+function updateCount() {
+  const extraCount = extras.filter(item => item.name.trim()).length;
+
+  $("selectedCount").textContent =
+    `已選 ${selected.size} 項` +
+    (extraCount ? ` ＋ 額外 ${extraCount} 項` : "");
+
+  // 每次勾選、取消或修改額外項目，同步更新總額。
+  updateTotal();
+}
+
+/* Searchable on-screen item list. */
+function renderCatalog() {
+  const query = $("search").value.trim().toLowerCase();
+  const selectedOnly = $("selectedOnly").checked;
+  let html = "";
+  let visibleCount = 0;
+
+  groups.forEach(group => {
+    const visibleItems = group.items.filter(item => {
+      const matchesQuery =
+        `${item.code} ${item.name}`.toLowerCase().includes(query);
+
+      return matchesQuery &&
+        (!selectedOnly || selected.has(item.id));
+    });
+
+    if (!visibleItems.length) return;
+    visibleCount += visibleItems.length;
+
+    html += `
+      <tr class="section">
+        <td colspan="4">${escapeHtml(group.title)}</td>
+      </tr>`;
+
+    visibleItems.forEach(item => {
+      const checked = selected.has(item.id);
+      const flag = item.note
+        ? `<span class="flag" title="${escapeHtml(item.note)}">† 待核對</span>`
+        : "";
+
+      html += `
+        <tr class="${checked ? "selected" : ""}">
+          <td>
+            <input type="checkbox"
+                   id="select-${item.id}"
+                   data-item-id="${item.id}"
+                   aria-label="${escapeHtml(item.name)}"
+                   ${checked ? "checked" : ""}>
+          </td>
+          <td><code>${escapeHtml(item.code)}</code></td>
+          <td>
+            <label class="item-label" for="select-${item.id}">
+              ${escapeHtml(item.name)}${flag}
+            </label>
+          </td>
+          <td class="money">${money(item.price)}</td>
+        </tr>`;
+    });
+  });
+
+  if (!visibleCount) {
+    html = '<tr><td colspan="4">沒有符合條件的項目。</td></tr>';
+  }
+
+  $("catalogBody").innerHTML = html;
+  updateCount();
+}
+
+$("catalogBody").addEventListener("change", event => {
+  const checkbox = event.target.closest("input[data-item-id]");
+  if (!checkbox) return;
+
+  const id = checkbox.dataset.itemId;
+  if (checkbox.checked) selected.add(id);
+  else selected.delete(id);
+
+  updatePrintSelection(id);
+
+  if ($("selectedOnly").checked) {
+    renderCatalog();
+  } else {
+    checkbox.closest("tr").classList.toggle(
+      "selected", checkbox.checked
+    );
+    updateCount();
+  }
+});
+
+$("search").addEventListener("input", renderCatalog);
+$("selectedOnly").addEventListener("change", renderCatalog);
+
+$("clearSelection").addEventListener("click", () => {
+  if (!selected.size) return;
+  if (!confirm("清除所有檢查勾選？病人及醫生資料會保留。")) return;
+
+  selected.clear();
+  allItems.forEach(item => updatePrintSelection(item.id));
+  renderCatalog();
+});
+
+/* Patient and doctor values are inserted as text, not HTML. */
+const fieldPairs = [
+  ["patientName", "printPatientName"],
+  ["patientId", "printPatientId"],
+  ["doctorName", "printDoctorName"],
+  ["doctorCode", "printDoctorCode"]
+];
+
+function syncPatientFields() {
+  fieldPairs.forEach(([inputId, outputId]) => {
+    $(outputId).textContent = $(inputId).value.trim();
+  });
+}
+
+fieldPairs.forEach(([inputId]) => {
+  $(inputId).addEventListener("input", syncPatientFields);
+});
+
+/* Extra P-999 items. */
+function renderExtraEditor() {
+  $("extraEditor").innerHTML = extras.map(item => `
+    <div class="extra-editor-row" data-extra-id="${item.id}">
+      <input type="text"
+             data-extra-field="name"
+             maxlength="85"
+             autocomplete="off"
+             aria-label="額外檢查名稱"
+             placeholder="額外檢查名稱"
+             value="${escapeHtml(item.name)}">
+      <input type="number"
+             data-extra-field="price"
+             min="0"
+             max="999999.99"
+             step="0.01"
+             aria-label="額外檢查價錢"
+             placeholder="價錢"
+             value="${escapeHtml(item.price)}">
+      <button type="button"
+              data-delete-extra="${item.id}"
+              aria-label="刪除此額外項目">刪除</button>
+    </div>
+  `).join("");
+
+  $("addExtra").disabled = extras.length >= MAX_EXTRAS;
+}
+
+function renderExtraPrint() {
+  const activeExtras = extras.filter(item => item.name.trim());
+  let html = "";
+
+  for (let index = 0; index < MAX_EXTRAS; index++) {
+    const item = activeExtras[index];
+    let displayedPrice = "";
+
+    if (item && item.price !== "") {
+      const value = Number(item.price);
+      if (Number.isFinite(value) && value >= 0) {
+        displayedPrice = money(value);
+      }
+    }
+
+    html += `
+      <tr>
+        <td>P-999</td>
+        <td>
+          <div class="p-item-inner">
+            ${boxHtml(Boolean(item))}
+            <span class="p-item-text">
+              ${item ? escapeHtml(item.name.trim()) : ""}
+            </span>
+          </div>
+        </td>
+        <td>
+          <div class="price-inner">
+            <span>$</span>
+            <span>${displayedPrice}</span>
+          </div>
+        </td>
+      </tr>`;
+  }
+
+  $("extraPrintBody").innerHTML = html;
+  updateCount();
+}
+
+$("addExtra").addEventListener("click", () => {
+  if (extras.length >= MAX_EXTRAS) return;
+
+  const id = ++extraSequence;
+  extras.push({ id, name: "", price: "" });
+  renderExtraEditor();
+  renderExtraPrint();
+
+  const row = $("extraEditor").querySelector(
+    `[data-extra-id="${id}"]`
+  );
+  row.querySelector('[data-extra-field="name"]').focus();
+});
+
+$("extraEditor").addEventListener("input", event => {
+  const field = event.target.dataset.extraField;
+  if (!field) return;
+
+  const row = event.target.closest("[data-extra-id]");
+  const item = extras.find(
+    extra => extra.id === Number(row.dataset.extraId)
+  );
+
+  if (!item) return;
+  item[field] = event.target.value;
+  renderExtraPrint();
+});
+
+$("extraEditor").addEventListener("click", event => {
+  const button = event.target.closest("[data-delete-extra]");
+  if (!button) return;
+
+  const id = Number(button.dataset.deleteExtra);
+  extras = extras.filter(item => item.id !== id);
+  renderExtraEditor();
+  renderExtraPrint();
+});
+
+/* Start a new patient while retaining doctor information. */
+$("newPatient").addEventListener("click", () => {
+  const hasPatientWork =
+    $("patientName").value.trim() ||
+    $("patientId").value.trim() ||
+    selected.size ||
+    extras.some(item => item.name.trim() || item.price !== "");
+
+  if (hasPatientWork && !confirm(
+    "開始下一位病人？\n\n" +
+    "會清除病人姓名、ID、所有勾選及額外項目。\n" +
+    "醫生姓名及代碼會保留。"
+  )) return;
+
+  $("patientName").value = "";
+  $("patientId").value = "";
+  $("search").value = "";
+  $("selectedOnly").checked = false;
+
+  selected.clear();
+  extras = [];
+
+  allItems.forEach(item => updatePrintSelection(item.id));
+  syncPatientFields();
+  renderCatalog();
+  renderExtraEditor();
+  renderExtraPrint();
+
+  $("patientName").focus();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+$("previewButton").addEventListener("click", () => {
+  syncPatientFields();
+  renderExtraPrint();
+  $("previewStart").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+});
+
+/* Warn about obvious layout overflow before app-triggered printing. */
+function layoutHasOverflow() {
+  const papers = [...document.querySelectorAll(".paper")];
+
+  const paperOverflow = papers.some(paper =>
+    paper.scrollHeight > paper.clientHeight + 2 ||
+    paper.scrollWidth > paper.clientWidth + 2
+  );
+
+  const bodyOverflow = [...document.querySelectorAll(".paper-body")]
+    .some(body => body.scrollHeight > body.clientHeight + 2);
+
+  const patientBox = document.querySelector(".patient-box");
+  const patientOverflow =
+    patientBox.scrollHeight > patientBox.clientHeight + 2;
+
+  return paperOverflow || bodyOverflow || patientOverflow;
+}
+
+$("printButton").addEventListener("click", () => {
+  syncPatientFields();
+  renderExtraPrint();
+
+  const invalidExtra = extras.some(item => {
+    if (!item.name.trim() || item.price === "") return false;
+    const amount = Number(item.price);
+    return !Number.isFinite(amount) ||
+      amount < 0 ||
+      amount > 999999.99;
+  });
+
+  if (invalidExtra) {
+    alert("額外項目的價錢格式不正確，請先修正。");
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    if (layoutHasOverflow()) {
+      alert(
+        "部分內容可能超出版面。\n" +
+        "請檢查病人／醫生姓名長度、額外項目及預覽，" +
+        "調整後再列印。"
+      );
+      return;
+    }
+
+    window.print();
+  });
+});
+
+/* Keep preview current even when printing with Ctrl/Cmd+P. */
+window.addEventListener("beforeprint", () => {
+  syncPatientFields();
+  renderExtraPrint();
+});
+
+/* Initial render. */
+buildPrintTables();
+renderCatalog();
+renderExtraEditor();
+renderExtraPrint();
+syncPatientFields();
+</script>
+</body>
+</html>
