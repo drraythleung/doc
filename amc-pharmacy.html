@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AMC 聯合藥物清單及點存</title>
+<title>AMC 聯合藥物清單</title>
 <style>
 :root{--bg:#f3f6fa;--ink:#172b42;--muted:#52657a;--line:#d9e2ec;--blue:#175dcc;--green:#147650;--orange:#9a5600}
 *{box-sizing:border-box}
@@ -77,14 +77,6 @@ tr{break-inside:avoid}
 <main>
 <div id="storageWarning" role="alert"></div>
 
-<section class="panel notice">
-<strong>Formulary 收錄 ≠ 即時存貨；未點存 ≠ 零存貨。</strong>
-<div class="small">
-來源為使用者提供的兩份 PDF 文字。BNF-style 分類屬待覆核整理標籤，不是處方指引。
-不同代碼／劑型分開點存；包裝資料不會自動換算為散裝數量。
-此版本不是批號、到期日或出入庫流水帳管理系統。
-</div>
-</section>
 
 <section class="panel noprint">
 <div class="bar">
@@ -102,7 +94,7 @@ tr{break-inside:avoid}
 <option value="cross">有跨代碼的兩店對照</option>
 </select>
 </label>
-<label>BNF-style 章節<select id="chapter"><option value="">全部章節</option></select></label>
+<label>BNF 章節<select id="chapter"><option value="">全部章節</option></select></label>
 <label>細分類<select id="subclass"><option value="">全部細分類</option></select></label>
 <label>劑型<select id="form"><option value="">全部劑型</option></select></label>
 </div>
@@ -1109,386 +1101,1067 @@ const SOURCE_NOTES={
 "I:LEU3.DON":"GnRH 類似物有多種用途；章節歸類需按本地用途覆核。"
 };
 
-const $=id=>document.getElementById(id);
-const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const catalog=new Map(), issues=[];
-const sourceCounts={1:0,2:0}, pages={1:{},2:{}};
-function countSource(site,page){
-sourceCounts[site]++;
-pages[site][page]=(pages[site][page]||0)+1;
-}
-function loadRows(text,site){
-let page=0;
-for(const raw of text.trim().split(/\r?\n/)){
-const line=raw.trim();if(!line)continue;
-if(line.startsWith("@")){page=Number(line.slice(1));continue;}
-const fields=line.split("|");
-if(fields.length!==5){issues.push("欄位數錯誤："+line);continue;}
-const [type,key,name,cls,pack]=fields,id=type+":"+key;
-if(!FORMS[type]||!CLASSES[cls]){issues.push("分類／劑型未定義："+id);continue;}
-if(catalog.has(id)){issues.push("重複新增 ID："+id);continue;}
-catalog.set(id,{id,type,key,name,cls,sites:{[site]:{pack,page}},cross:null});
-countSource(site,page);
-}
-}
-loadRows(AMC1,1);
-let page2=0;
-for(const line of AMC2_SHARED.trim().split(/\r?\n/)){
-const s=line.trim();if(!s)continue;
-if(s.startsWith("@")){page2=Number(s.slice(1));continue;}
-for(const token of s.split(/\s+/)){
-const eq=token.indexOf("="), ref=eq<0?token:token.slice(0,eq);
-const pack=eq<0?null:token.slice(eq+1);
-const id=ref.includes(":")?ref:"T:"+ref,r=catalog.get(id);
-if(!r){issues.push("AMC2 對照不存在："+id);continue;}
-if(r.sites[2]){issues.push("AMC2 重複："+id);continue;}
-r.sites[2]={pack:pack??r.sites[1].pack,page:page2};
-countSource(2,page2);
-}
-}
-loadRows(AMC2_EXTRA,2);
-for(const [label,...ids] of CROSS_GROUPS){
-const members=ids.map(id=>catalog.get(id));
-if(members.some(r=>!r)){issues.push("跨代碼對照缺資料："+label);continue;}
-const cross={label,ids,has1:members.some(r=>r.sites[1]),has2:members.some(r=>r.sites[2])};
-members.forEach(r=>r.cross=cross);
-}
-const DATA=[...catalog.values()];
-const STORE="AMC-INVENTORY-20260805-v1";
-const SCHEMA=1;
-const DATASET="AMC-2026-08-05";
-const UNITS=["片","粒","瓶","支","袋","盒","套","管","包","枚","mL","g","其他"];
-let storageOK=true;
-let state={schema:SCHEMA,dataset:DATASET,doctors:[],counts:{}};
-let activeDoctor="",currentRows=[],editing=null,crossFilter=null;
-const countKey=(id,site)=>site+"|"+id;
-const validCountKeys=new Set(DATA.flatMap(r=>Object.keys(r.sites).map(s=>countKey(r.id,s))));
+/* =========================================================
+   AMC Simple Formulary
+   保留此前的：
+   CHAPTERS / CLASSES / FORMS
+   AMC1 / AMC2_SHARED / AMC2_EXTRA
+   CROSS_GROUPS / SOURCE_NOTES
 
-function validateState(x){
-if(!x||x.schema!==SCHEMA||x.dataset!==DATASET)throw Error("備份版本或 formulary 日期不符。");
-if(!Array.isArray(x.doctors)||x.doctors.length>1000)throw Error("醫生清單格式不正確。");
-if(!x.counts||typeof x.counts!=="object"||Array.isArray(x.counts))throw Error("點存格式不正確。");
-const out={schema:SCHEMA,dataset:DATASET,doctors:[],counts:{}},seen=new Set();
-const cleanString=(s,max)=>{
-if(typeof s!=="string"||s.length>max)throw Error("文字欄位格式或長度不正確。");
-return s;
-};
-for(const d of x.doctors){
-if(!d||typeof d.id!=="string"||!/^[a-zA-Z0-9_-]{1,100}$/.test(d.id)||seen.has(d.id))
-throw Error("醫生 ID 無效或重複。");
-seen.add(d.id);
-const name=cleanString(d.name,80).trim();if(!name)throw Error("醫生名稱不可空白。");
-if(!Array.isArray(d.favorites)||d.favorites.length>DATA.length)throw Error("常用藥格式不正確。");
-if(d.favorites.some(id=>typeof id!=="string"||!catalog.has(id)))throw Error("常用藥含不存在的代碼。");
-out.doctors.push({id:d.id,name,favorites:[...new Set(d.favorites)]});
-}
-for(const [k,v] of Object.entries(x.counts)){
-if(!validCountKeys.has(k)||!v||typeof v!=="object")throw Error("點存含不存在的項目。");
-if(typeof v.qty!=="number"||!Number.isFinite(v.qty)||v.qty<0)throw Error("數量無效。");
-if(!UNITS.includes(v.unit))throw Error("點存單位無效。");
-if(v.minimum!==null&&(typeof v.minimum!=="number"||!Number.isFinite(v.minimum)||v.minimum<0))
-throw Error("最低存量無效。");
-const updated=cleanString(v.updated,40);
-if(!Number.isFinite(Date.parse(updated)))throw Error("點存時間无效。");
-out.counts[k]={
-qty:v.qty,unit:v.unit,minimum:v.minimum,
-shelf:cleanString(v.shelf,100),counter:cleanString(v.counter,80),
-note:cleanString(v.note,1000),updated
-};
-}
-return out;
-}
-function storageWarning(message){
-storageOK=false;
-$("storageWarning").style.display="block";
-$("storageWarning").textContent=message;
-$("saveStatus").textContent="⚠ 未能保證本機儲存，請立即匯出 JSON";
-}
-try{
-const saved=localStorage.getItem(STORE);
-if(saved)state=validateState(JSON.parse(saved));
-}catch(e){
-storageWarning("無法讀取本機資料："+e.message+"。目前載入空白點存；請先保留原有備份，不要假設舊資料已還原。");
-}
-function save(){
-try{
-localStorage.setItem(STORE,JSON.stringify(state));
-storageOK=true;$("storageWarning").style.display="none";
-$("saveStatus").textContent="已存於本瀏覽器 · "+new Date().toLocaleTimeString("zh-HK");
-}catch(e){
-storageWarning("儲存失敗，今次修改只留在記憶體。請立即下載 JSON 備份。");
-}
-}
-function toast(message){
-$("toast").textContent=message;$("toast").style.display="block";
-clearTimeout(toast.timer);toast.timer=setTimeout(()=>$("toast").style.display="none",3000);
-}
-function selectedDoctor(){return state.doctors.find(d=>d.id===activeDoctor);}
-function fillDoctors(){
-$("doctor").innerHTML='<option value="">未選醫生</option>'+
-state.doctors.map(d=>`<option value="${esc(d.id)}">${esc(d.name)}（${d.favorites.length}）</option>`).join("");
-$("doctor").value=activeDoctor;
-}
-function options(){
-for(const [id,name] of Object.entries(CHAPTERS).sort((a,b)=>a[0].localeCompare(b[0])))
-$("chapter").insertAdjacentHTML("beforeend",`<option value="${id}">${id} ${esc(name)}</option>`);
-for(const [id,name] of Object.entries(FORMS))
-$("form").insertAdjacentHTML("beforeend",`<option value="${id}">${id} · ${esc(name)}</option>`);
-fillClasses();
-}
-function fillClasses(){
-const previous=$("subclass").value,ch=$("chapter").value;
-$("subclass").innerHTML='<option value="">全部細分類</option>'+
-Object.entries(CLASSES).filter(([k,v])=>(!ch||v[0]===ch)&&DATA.some(r=>r.cls===k))
-.sort((a,b)=>(a[1][0]+a[1][1]).localeCompare(b[1][0]+b[1][1],"zh-Hant"))
-.map(([k,v])=>`<option value="${k}">${v[0]} · ${esc(v[1])}</option>`).join("");
-if([...$("subclass").options].some(o=>o.value===previous))$("subclass").value=previous;
-}
-function availabilityLabel(r){
-return r.sites[1]&&r.sites[2]?"兩邊都有":r.sites[1]?"只有 AMC1":"只有 AMC2";
-}
-function getRows(){
-const query=$("search").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
-const av=$("availability").value,ch=$("chapter").value,cl=$("subclass").value,form=$("form").value;
-const site=$("stockSite").value,sf=$("stockFilter").value;
-const doc=selectedDoctor(),favs=new Set(doc?.favorites||[]);
-return DATA.filter(r=>{
-if(crossFilter&&!crossFilter.includes(r.id))return false;
-const searchable=[r.name,r.key,r.id,FORMS[r.type],...CLASSES[r.cls],CHAPTERS[CLASSES[r.cls][0]],r.cross?.label||""].join(" ").toLowerCase();
-if(query.some(q=>!searchable.includes(q)))return false;
-if(ch&&CLASSES[r.cls][0]!==ch)return false;
-if(cl&&r.cls!==cl)return false;
-if(form&&r.type!==form)return false;
-if(av==="1"&&!r.sites[1]||av==="2"&&!r.sites[2])return false;
-if(av==="both"&&!(r.sites[1]&&r.sites[2]))return false;
-if(av==="only1"&&!(r.sites[1]&&!r.sites[2]))return false;
-if(av==="only2"&&!(r.sites[2]&&!r.sites[1]))return false;
-if(av==="cross"&&!(r.cross?.has1&&r.cross?.has2))return false;
-if($("favoritesOnly").checked&&!favs.has(r.id))return false;
-if(sf){
-if(!r.sites[site])return false;
-const c=state.counts[countKey(r.id,site)];
-if(sf==="uncounted"&&c)return false;
-if(sf==="counted"&&!c)return false;
-if(sf==="zero"&&(!c||c.qty!==0))return false;
-if(sf==="low"&&(!c||c.minimum===null||c.qty>=c.minimum))return false;
-}
-return true;
-}).sort((a,b)=>{
-const mode=$("sort").value;
-if(mode==="code")return a.id.localeCompare(b.id);
-if(mode==="name")return a.name.localeCompare(b.name);
-const ca=CLASSES[a.cls],cb=CLASSES[b.cls];
-return ca[0].localeCompare(cb[0])||ca[1].localeCompare(cb[1],"zh-Hant")||a.name.localeCompare(b.name);
-});
-}
-function dateDisplay(s){return new Date(s).toLocaleString("zh-HK",{hour12:false});}
-function siteCell(r,site){
-const source=r.sites[site];
-if(!source)return '<td class="site faint">未列於此店 formulary</td>';
-const c=state.counts[countKey(r.id,site)],low=c&&c.minimum!==null&&c.qty<c.minimum;
-return `<td class="site"><div class="stack">
-<span class="badge one">有收錄 · p.${source.page}</span>
-<span class="small">原 pack_uom：<b>${esc(source.pack)}</b></span>
-${c?`<strong class="${low?"low":""}">${c.qty} ${esc(c.unit)}${low?" · 低存量":""}</strong>
-<span class="small">最低：${c.minimum===null?"未設定":c.minimum+" "+esc(c.unit)}${c.shelf?" · "+esc(c.shelf):""}</span>
-<span class="small">${esc(c.counter)} · ${esc(dateDisplay(c.updated))}</span>
-${c.note?`<span class="small">${esc(c.note)}</span>`:""}`
-:'<span class="small">未點存（不是 0）</span>'}
-<button class="editstock" data-action="stock" data-id="${esc(r.id)}" data-site="${site}">${c?"修改點存":"開始點存"}</button>
-</div></td>`;
-}
-function render(){
-currentRows=getRows();
-const doc=selectedDoctor(),favs=new Set(doc?.favorites||[]);
-let lastGroup="";
-$("rows").innerHTML=currentRows.length?currentRows.map(r=>{
-const [chapter,sub]=CLASSES[r.cls],group=chapter+" "+CHAPTERS[chapter];
-let heading="";
-if($("sort").value==="class"&&lastGroup!==group){
-heading=`<tr class="group"><td colspan="6">${esc(group)}</td></tr>`;lastGroup=group;
-}
-const both=r.sites[1]&&r.sites[2];
-return heading+`<tr>
-<td class="noprint"><button class="star" data-action="star" data-id="${esc(r.id)}" aria-label="加入或移除常用藥" title="${doc?"切換常用藥":"請先選醫生"}">${favs.has(r.id)?"★":"☆"}</button></td>
-<td class="classcol"><strong>${chapter} ${esc(CHAPTERS[chapter])}</strong><div class="small">${esc(sub)}</div></td>
-<td class="name"><strong>${esc(r.name)}</strong><div class="small">${esc(FORMS[r.type])} · ${esc(r.type)}</div>
-${SOURCE_NOTES[r.id]?`<div class="small"><span class="badge warn">覆核</span> ${esc(SOURCE_NOTES[r.id])}</div>`:""}
-${r.cross?`<div class="small" style="margin-top:5px">${esc(r.cross.label)}<br>
-<button class="noprint" data-action="cross" data-id="${esc(r.id)}">查看 ${r.cross.ids.length} 個代碼對照</button></div>`:""}
-</td>
-<td><div class="code">${esc(r.id)}</div><span class="badge ${both?"both":"one"}">${availabilityLabel(r)}</span>
-${r.cross?.has1&&r.cross?.has2&&!both?'<div class="small">另有跨代碼兩店對照；不是同一 SKU。</div>':""}
-</td>
-${siteCell(r,1)}${siteCell(r,2)}
-</tr>`;
-}).join(""):'<tr><td colspan="6">沒有符合条件的項目。</td></tr>';
-const bothTotal=DATA.filter(r=>r.sites[1]&&r.sites[2]).length;
-$("stats").innerHTML=[
-["聯合庫存項目",DATA.length],["AMC1 收錄",sourceCounts[1]],["AMC2 收錄",sourceCounts[2]],
-["同代碼兩邊有",bothTotal],["目前顯示",currentRows.length]
-].map(([t,n])=>`<span class="stat">${esc(t)} <b>${n}</b></span>`).join("");
-$("viewInfo").textContent=
-`來源日期 2026-08-05；計數按 drug_type + drug_key，不是成分數。`+
-(doc?` 醫生：${doc.name}，preset ${doc.favorites.length} 項。`:"")+
-(crossFilter?" 現正顯示指定跨代碼對照；按「清除篩選」返回。":"")+
-($("stockFilter").value?` 點存篩選：AMC${$("stockSite").value}。`:"");
-}
-function resetFilters(renderNow=true){
-["search","availability","chapter","subclass","form","stockFilter"].forEach(id=>$(id).value="");
-$("favoritesOnly").checked=false;crossFilter=null;fillClasses();if(renderNow)render();
-}
-$("chapter").addEventListener("change",()=>{fillClasses();render();});
-["availability","subclass","form","stockSite","stockFilter","sort","favoritesOnly"].forEach(id=>$(id).addEventListener("change",render));
-$("search").addEventListener("input",render);
-$("resetFilters").onclick=()=>resetFilters();
-$("doctor").onchange=()=>{activeDoctor=$("doctor").value;render();};
-$("addDoctor").onclick=()=>{
-const name=prompt("醫生名稱：")?.trim();if(!name)return;
-if(name.length>80)return alert("名稱最多 80 字。");
-if(state.doctors.some(d=>d.name.toLowerCase()===name.toLowerCase()))return alert("已有同名醫生。");
-const id="d_"+(globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2));
-state.doctors.push({id,name,favorites:[]});activeDoctor=id;save();fillDoctors();render();
-};
-$("renameDoctor").onclick=()=>{
-const d=selectedDoctor();if(!d)return alert("請先選醫生。");
-const name=prompt("新名稱：",d.name)?.trim();if(!name)return;
-if(name.length>80)return alert("名稱最多 80 字。");
-if(state.doctors.some(x=>x.id!==d.id&&x.name.toLowerCase()===name.toLowerCase()))return alert("已有同名醫生。");
-d.name=name;save();fillDoctors();render();
-};
-$("deleteDoctor").onclick=()=>{
-const d=selectedDoctor();if(!d)return alert("請先選醫生。");
-if(!confirm(`刪除 ${d.name} 及其常用藥 preset？不會刪除點存。`))return;
-state.doctors=state.doctors.filter(x=>x.id!==d.id);activeDoctor="";save();fillDoctors();render();
-};
-$("favoriteVisible").onclick=()=>{
-const d=selectedDoctor();if(!d)return alert("請先選醫生。");
-if(!currentRows.length)return;
-if(!confirm(`把目前 ${currentRows.length} 個庫存項目加入 ${d.name} 的 preset？`))return;
-d.favorites=[...new Set([...d.favorites,...currentRows.map(r=>r.id)])];
-save();fillDoctors();render();
-};
-$("rows").addEventListener("click",event=>{
-const b=event.target.closest("button[data-action]");if(!b)return;
-const r=catalog.get(b.dataset.id);if(!r)return;
-if(b.dataset.action==="star"){
-const d=selectedDoctor();if(!d)return alert("請先新增或選擇一位醫生。");
-d.favorites=d.favorites.includes(r.id)?d.favorites.filter(x=>x!==r.id):[...d.favorites,r.id];
-save();fillDoctors();render();
-}else if(b.dataset.action==="stock"){
-openStock(r,b.dataset.site);
-}else if(b.dataset.action==="cross"){
-resetFilters(false);crossFilter=r.cross.ids;render();
-}
-});
-function openStock(r,site){
-editing={id:r.id,site};
-const c=state.counts[countKey(r.id,site)];
-$("stockTitle").textContent=`AMC${site} · ${site==="1"?"CWB":"TKP"} 點存`;
-$("stockSubtitle").textContent=`${r.name} ｜ ${r.id} ｜ 原 pack_uom：${r.sites[site].pack}`;
-$("qty").value=c?.qty??"";
-$("unit").value=c?.unit??"";
-$("minimum").value=c?.minimum??"";
-$("shelf").value=c?.shelf??"";
-$("counter").value=c?.counter??"";
-$("stockNote").value=c?.note??"";
-$("clearStock").disabled=!c;
-$("stockDialog").showModal();
-}
-$("closeStock").onclick=()=>$("stockDialog").close();
-$("stockForm").onsubmit=event=>{
-event.preventDefault();if(!editing)return;
-const qty=Number($("qty").value),minimum=$("minimum").value===""?null:Number($("minimum").value);
-const unit=$("unit").value,counter=$("counter").value.trim();
-if(!Number.isFinite(qty)||qty<0||minimum!==null&&(!Number.isFinite(minimum)||minimum<0))
-return alert("數量必須是非負數。");
-if(!UNITS.includes(unit)||!counter)return alert("請確認點存單位及填寫點存人。");
-const key=countKey(editing.id,editing.site),old=state.counts[key];
-if(old&&old.unit!==unit&&!confirm(`點存單位由「${old.unit}」改為「${unit}」。請確認數量及最低存量已自行換算。`))return;
-state.counts[key]={
-qty,unit,minimum,shelf:$("shelf").value.trim(),counter,
-note:$("stockNote").value.trim(),updated:new Date().toISOString()
-};
-save();$("stockDialog").close();render();toast(storageOK?"點存已儲存":"點存暫存於記憶體，請備份");
-};
-$("clearStock").onclick=()=>{
-if(!editing||!confirm("清除此項点存？將回復「未點存」，不是 0。"))return;
-delete state.counts[countKey(editing.id,editing.site)];
-save();$("stockDialog").close();render();
-};
-function download(filename,text,mime){
-const blob=new Blob([text],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement("a");
-a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();
-setTimeout(()=>URL.revokeObjectURL(url),5000);
-}
-function localDate(){
-const d=new Date(),p=n=>String(n).padStart(2,"0");
-return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
-}
-function csvCell(value){
-let s=String(value??"");
-/* Protect spreadsheets against formula injection from free-text fields. */
-if(/^[\s]*[=+\-@]/.test(s))s="'"+s;
-return '"'+s.replace(/"/g,'""')+'"';
-}
-$("exportCSV").onclick=()=>{
-const doc=selectedDoctor(),favorites=new Set(doc?.favorites||[]);
-const lines=[[
-"Formulary date","BNF-style chapter","Local drug class","Drug type","Drug key",
-"Drug display name","SKU availability","Clinic","Source page","Source pack_uom",
-"Counted","Quantity","Count unit","Minimum","Shelf","Counter","Count timestamp",
-"Note","Selected doctor","Doctor favorite","Cross-code comparison","Review note"
-]];
-for(const r of currentRows){
-for(const site of ["1","2"]){
-if(!r.sites[site])continue;
-const c=state.counts[countKey(r.id,site)],[ch,cl]=CLASSES[r.cls];
-lines.push([
-"2026-08-05",ch+" "+CHAPTERS[ch],cl,r.type,r.key,r.name,availabilityLabel(r),
-"AMC"+site+" "+(site==="1"?"CWB":"TKP"),r.sites[site].page,r.sites[site].pack,
-c?"Yes":"No",c?.qty??"",c?.unit??"",c?.minimum??"",c?.shelf??"",c?.counter??"",
-c?.updated??"",c?.note??"",doc?.name??"",doc?(favorites.has(r.id)?"Yes":"No"):"",
-r.cross?.label??"",SOURCE_NOTES[r.id]??""
-]);
-}
-}
-download("AMC-inventory-"+localDate()+".csv","\uFEFF"+lines.map(row=>row.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8");
-toast("CSV 按目前顯示的 SKU 匯出；每個有收錄診所一行。");
-};
-$("backup").onclick=()=>{
-download("AMC-backup-"+localDate()+".json",JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2),"application/json;charset=utf-8");
-toast("已產生全部點存及醫生 preset 備份。");
-};
-$("restore").onclick=()=>$("restoreFile").click();
-$("restoreFile").onchange=async event=>{
-const file=event.target.files[0];if(!file)return;
-try{
-if(file.size>10*1024*1024)throw Error("檔案過大；上限 10MB。");
-const incoming=validateState(JSON.parse(await file.text()));
-if(!confirm(`還原將完全覆蓋本機 ${state.doctors.length} 位醫生及 ${Object.keys(state.counts).length} 筆點存。\n備份包含 ${incoming.doctors.length} 位醫生及 ${Object.keys(incoming.counts).length} 筆點存。\n已自行備份現有資料，並確定繼續？`))return;
-state=incoming;activeDoctor="";save();fillDoctors();render();toast("已還原。");
-}catch(e){alert("還原失敗，現有資料未被取代："+e.message);}
-finally{event.target.value="";}
-};
-$("print").onclick=()=>window.print();
+   本版本不使用 localStorage，不載入外部資源。
+   ========================================================= */
 
-options();fillDoctors();render();
-$("validation").textContent=issues.length
-?"⚠ 內部資料結構檢查發現："+issues.join("；")
-:"內部資料結構檢查：未發現重複 ID、未定義類別或失效交叉引用。此檢查不是與 PDF 逐字核對，也不是臨床驗證。"+
-" AMC1 每頁列數："+Object.entries(pages[1]).map(([p,n])=>p+":"+n).join("，")+
-"；AMC2 每頁列數："+Object.entries(pages[2]).map(([p,n])=>p+":"+n).join("，")+"。";
-if(issues.length){
-$("validation").classList.add("low");
-alert("資料載入有內部錯誤，請查看頁尾覆核事項，暫勿作正式點存。");
+const $ = id => document.getElementById(id);
+
+const esc = value => String(value ?? "").replace(
+  /[&<>"']/g,
+  c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[c])
+);
+
+document.title = "AMC 聯合藥物清單";
+
+/* 換掉舊版醫生、點存及備份介面。 */
+document.body.innerHTML = `
+<header>
+  <h1>AMC 聯合藥物清單</h1>
+  <p>AMC1 · CWB ／ AMC2 · TKP　｜　Formulary：2026-08-05</p>
+</header>
+
+<main>
+  <section class="panel noprint">
+    <div class="bar">
+      <label class="grow">
+        搜尋藥名、成分、代碼或備註
+        <input id="simpleSearch" type="search"
+          placeholder="例如：metformin、Nexium、AMO1SAN">
+      </label>
+
+      <label>
+        BNF-style 章節
+        <select id="simpleChapter">
+          <option value="">全部章節</option>
+        </select>
+      </label>
+
+      <label>
+        診所收錄情況
+        <select id="simpleAvailability">
+          <option value="">全部</option>
+          <option value="1">AMC1 CWB 有收錄</option>
+          <option value="2">AMC2 TKP 有收錄</option>
+          <option value="both">同一代碼／劑型：兩邊有</option>
+          <option value="only1">同一代碼／劑型：只列於 CWB</option>
+          <option value="only2">同一代碼／劑型：只列於 TKP</option>
+        </select>
+      </label>
+
+      <label class="check-label">
+        <input id="simpleRemarksOnly" type="checkbox">
+        只看有備註
+      </label>
+
+      <button id="simpleReset">清除篩選</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="bar noprint">
+      <button id="simpleCSV" class="primary">
+        匯出目前清單 CSV
+      </button>
+      <button id="simplePrint">列印目前清單</button>
+    </div>
+
+    <div id="simpleStats" class="stats"></div>
+    <div id="simpleSummary" class="small summary"></div>
+    <div id="simpleError" role="alert" hidden></div>
+
+    <div class="tablewrap">
+      <table id="simpleTable">
+        <thead>
+          <tr>
+            <th>BNF 分類</th>
+            <th>藥物／劑型</th>
+            <th>Drug code</th>
+            <th>AMC1 · CWB</th>
+            <th>AMC2 · TKP</th>
+            <th>備註</th>
+          </tr>
+        </thead>
+        <tbody id="simpleRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <details class="panel noprint">
+    <summary>資料說明</summary>
+    <ul>
+      <li>
+        來源為兩份日期 2026年8月5日的 AMC formulary，
+        使用上一版 HTML 已整理的藥物資料。
+      </li>
+      <li>
+        按 drug_type + drug_key 對齊兩店清單。
+      </li>
+      <li>
+        「未列出」只代表此代碼／劑型未列於該店來源清單。
+        該店可能有其他代碼、品牌或規格。
+      </li>
+      <li>
+        同一 drug_key 對應不同劑型、兩店包裝不同，
+        會自動加上 Remarks。
+      </li>
+      <li>
+        Remarks 並非完整藥物審核。
+      </li>
+    </ul>
+    <div id="simpleValidation" class="small"></div>
+  </details>
+</main>
+`;
+
+/* 沿用原本色系，調整成六欄簡單清單。 */
+const simpleStyle = document.createElement("style");
+simpleStyle.textContent = `
+  body {
+    background: #f3f6fa;
+  }
+
+  main {
+    max-width: 1900px;
+  }
+
+  .check-label {
+    flex-direction: row;
+    align-items: center;
+    align-self: end;
+    padding: 9px 0;
+    gap: 7px;
+  }
+
+  .summary {
+    margin-bottom: 12px;
+  }
+
+  #simpleTable {
+    min-width: 1220px;
+  }
+
+  #simpleTable th {
+    font-size: 14px;
+  }
+
+  #simpleTable td {
+    padding: 13px 12px;
+    line-height: 1.6;
+  }
+
+  #simpleTable .bnf-cell {
+    width: 15%;
+    min-width: 165px;
+  }
+
+  #simpleTable .drug-cell {
+    width: 27%;
+    min-width: 290px;
+  }
+
+  #simpleTable .code-cell {
+    width: 11%;
+    min-width: 125px;
+  }
+
+  #simpleTable .availability-cell {
+    width: 11%;
+    min-width: 130px;
+  }
+
+  #simpleTable .remarks-cell {
+    width: 25%;
+    min-width: 290px;
+    font-size: 12px;
+  }
+
+  .drug-name {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .drug-form {
+    margin-top: 5px;
+    color: #52657a;
+    font-size: 12px;
+  }
+
+  .code-text {
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .site-detail {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #52657a;
+  }
+
+  .listed {
+    display: inline-block;
+    background: #e0f1e7;
+    color: #17633f;
+    padding: 2px 9px;
+    border-radius: 5px;
+    font-weight: 650;
+    white-space: nowrap;
+  }
+
+  .not-listed {
+    color: #7a8796;
+  }
+
+  .remark-list {
+    padding-left: 17px;
+    margin: 0;
+    color: #654b20;
+  }
+
+  .remark-list li + li {
+    margin-top: 7px;
+  }
+
+  .no-remark {
+    color: #9aa5b1;
+  }
+
+  .chapter-row td {
+    background: #dfe9f7;
+    font-size: 16px;
+    font-weight: 750;
+    padding: 9px 12px !important;
+  }
+
+  #simpleError {
+    background: #ffe7e4;
+    color: #92291f;
+    padding: 12px;
+    margin-bottom: 12px;
+    white-space: pre-wrap;
+  }
+
+  @media print {
+    @page {
+      size: A4 landscape;
+      margin: 10mm;
+    }
+
+    header h1 {
+      font-size: 20px;
+    }
+
+    .notice {
+      margin: 8px 0;
+    }
+
+    .tablewrap {
+      overflow: visible;
+      max-height: none;
+    }
+
+    #simpleTable {
+      min-width: 0;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    #simpleTable thead {
+      display: table-header-group;
+    }
+
+    #simpleTable th {
+      position: static;
+      font-size: 9px;
+    }
+
+    #simpleTable td {
+      min-width: 0 !important;
+      padding: 5px !important;
+      font-size: 9px;
+      overflow-wrap: anywhere;
+    }
+
+    #simpleTable .drug-name {
+      font-size: 10px;
+    }
+
+    #simpleTable .small,
+    #simpleTable .drug-form,
+    #simpleTable .site-detail,
+    #simpleTable .code-text,
+    #simpleTable .remarks-cell {
+      font-size: 8px;
+    }
+
+    .chapter-row td {
+      font-size: 11px !important;
+    }
+
+    .listed {
+      padding: 0;
+      background: none;
+    }
+
+    .stats {
+      font-size: 10px;
+      margin: 7px 0;
+    }
+
+    .stat {
+      background: none;
+      padding: 0 12px 0 0;
+    }
+
+    .remark-list {
+      padding-left: 12px;
+    }
+  }
+`;
+document.head.appendChild(simpleStyle);
+
+/* ---------- 載入現有資料 ---------- */
+
+const catalog = new Map();
+const issues = [];
+const sourceCounts = { 1: 0, 2: 0 };
+const pageCounts = { 1: {}, 2: {} };
+
+function recordSource(site, page) {
+  sourceCounts[site]++;
+  pageCounts[site][page] =
+    (pageCounts[site][page] || 0) + 1;
 }
-if(storageOK)$("saveStatus").textContent="本機模式 · 請定期 JSON 備份";
-window.addEventListener("storage",event=>{
-if(event.key===STORE){
-storageWarning("另一個分頁可能更新了同一份資料。請先備份本頁未同步內容，再重新載入，避免互相覆蓋。");
+
+function addRows(text, site) {
+  let page = 0;
+
+  for (const raw of text.trim().split(/\r?\n/)) {
+    const line = raw.trim();
+
+    if (!line) continue;
+
+    if (line.startsWith("@")) {
+      page = Number(line.slice(1));
+      continue;
+    }
+
+    const fields = line.split("|");
+
+    if (fields.length !== 5) {
+      issues.push("欄位數不正確：" + line);
+      continue;
+    }
+
+    const [type, key, name, cls, pack] = fields;
+    const id = type + ":" + key;
+
+    if (!FORMS[type] || !CLASSES[cls]) {
+      issues.push("未定義劑型／分類：" + id);
+      continue;
+    }
+
+    if (!Number.isInteger(page) || page < 1) {
+      issues.push("來源頁碼不正確：" + id);
+      continue;
+    }
+
+    if (catalog.has(id)) {
+      issues.push("重複新增項目：" + id);
+      continue;
+    }
+
+    catalog.set(id, {
+      id,
+      type,
+      key,
+      name,
+      cls,
+      sites: {
+        [site]: { pack, page }
+      },
+      remarks: []
+    });
+
+    recordSource(site, page);
+  }
 }
+
+addRows(AMC1, 1);
+
+let sharedPage = 0;
+
+for (const raw of AMC2_SHARED.trim().split(/\r?\n/)) {
+  const line = raw.trim();
+
+  if (!line) continue;
+
+  if (line.startsWith("@")) {
+    sharedPage = Number(line.slice(1));
+    continue;
+  }
+
+  for (const token of line.split(/\s+/)) {
+    const equals = token.indexOf("=");
+    const reference =
+      equals < 0 ? token : token.slice(0, equals);
+    const override =
+      equals < 0 ? null : token.slice(equals + 1);
+
+    const id = reference.includes(":")
+      ? reference
+      : "T:" + reference;
+
+    const row = catalog.get(id);
+
+    if (!row) {
+      issues.push("AMC2 找不到對照項目：" + id);
+      continue;
+    }
+
+    if (row.sites[2]) {
+      issues.push("AMC2 重複項目：" + id);
+      continue;
+    }
+
+    if (!Number.isInteger(sharedPage) || sharedPage < 1) {
+      issues.push("AMC2 來源頁碼不正確：" + id);
+      continue;
+    }
+
+    row.sites[2] = {
+      pack: override ?? row.sites[1].pack,
+      page: sharedPage
+    };
+
+    recordSource(2, sharedPage);
+  }
+}
+
+addRows(AMC2_EXTRA, 2);
+
+const DATA = [...catalog.values()];
+
+function addRemark(id, text) {
+  const row = catalog.get(id);
+  if (row && !row.remarks.includes(text)) {
+    row.remarks.push(text);
+  }
+}
+
+/* ---------- 自動產生 Remarks ---------- */
+
+/* 1. 相同 drug_key，不同 drug_type。 */
+const byKey = new Map();
+
+for (const row of DATA) {
+  if (!byKey.has(row.key)) byKey.set(row.key, []);
+  byKey.get(row.key).push(row);
+}
+
+for (const members of byKey.values()) {
+  if (members.length < 2) continue;
+
+  for (const row of members) {
+    const otherItems = members
+      .filter(other => other.id !== row.id)
+      .map(other => `${other.id}（${other.name}）`)
+      .join("；");
+
+    addRemark(
+      row.id,
+      "同一 drug_key 另用於：" + otherItems +
+      ""
+    );
+  }
+}
+
+/* 2. 相同代碼／劑型，兩店 pack_uom 不同。 */
+for (const row of DATA) {
+  const cwb = row.sites[1];
+  const tkp = row.sites[2];
+
+  if (cwb && tkp && cwb.pack !== tkp.pack) {
+    addRemark(
+      row.id,
+      `兩店原 pack_uom 不同：CWB＝${cwb.pack}；` +
+      `TKP＝${tkp.pack}。` +
+      ""
+    );
+  }
+}
+
+/* 3. 沿用有限的人工跨代碼對照，不合併行。 */
+const relatedCodes = new Map();
+
+function registerComparison(ids) {
+  const present = ids.filter(id => catalog.has(id));
+
+  for (const id of present) {
+    if (!relatedCodes.has(id)) {
+      relatedCodes.set(id, new Set());
+    }
+
+    for (const other of present) {
+      if (other !== id) relatedCodes.get(id).add(other);
+    }
+  }
+}
+
+for (const [label, ...ids] of CROSS_GROUPS) {
+  for (const id of ids) {
+    if (!catalog.has(id)) {
+      issues.push("跨代碼對照缺項：" + id);
+    }
+  }
+  registerComparison(ids);
+}
+
+/* 補充清单中部分明顯值得並列核對的代碼。
+   僅標示關係，並非確認產品等同。 */
+[
+  ["T:ABI2", "T:ARI2PMS"],
+  ["T:ATE50APR", "T:TEN50"],
+  ["T:ESC10ACT", "T:LEX10P"],
+  ["T:CON18", "T:MET18BAL"],
+  ["T:CON27", "T:MET27BAL"],
+  ["T:CON36", "T:MET36BAL"],
+  ["E:XAL", "E:LAT0.BAU"],
+  ["C:MICHCXSP", "C:DAK"],
+  ["I:ENA3.D", "I:LEU3.DON"],
+  ["I:BUS20", "I:HYO20TPD"]
+].forEach(registerComparison);
+
+function siteNames(row) {
+  return [
+    row.sites[1] ? "CWB" : "",
+    row.sites[2] ? "TKP" : ""
+  ].filter(Boolean).join("／");
+}
+
+for (const [id, otherIds] of relatedCodes) {
+  const related = [...otherIds].map(otherId => {
+    const other = catalog.get(otherId);
+    return `${otherId}（${siteNames(other)}）`;
+  });
+
+  addRemark(
+    id,
+    "相關代碼待核對：" + related.join("、") +
+    "" +
+    ""
+  );
+}
+
+/* ---------- 人工核對事項 ----------
+   以下為來源文字問題提示，不直接修改原 code 或 pack。
+*/
+
+const REVIEW_NOTES = {
+  "E:SIM10/2": [
+    "CWB 原文缺 drug_type；上一版整理資料暫設 E，" +
+    "因此本表暫與 TKP 的 E:SIM10/2 並列。" +
+    "請核對原主檔，未確認前不視為已驗證的代碼對齊。"
+  ],
+
+  "I:MOU5": [
+    "兩份來源的 name_cmn 欄空白；請藥房補核通用名及完整規格。"
+  ],
+
+  "T:NESM": [
+    "CWB 原文 drug_type＝T，但名稱寫 Capsule、pack＝30C；" +
+    "請核對劑型。"
+  ],
+
+  "CA:AMO50APR": [
+    "CWB 名稱及 drug_type 指膠囊，但 pack＝500T；" +
+    "請確認 T 是否通用計數單位，或應使用膠囊單位。"
+  ],
+
+  "CA:AMP50MDR": [
+    "CWB 名稱及 drug_type 指膠囊，但 pack＝100T；請核對包裝單位。",
+    "複方各成分分量在整理資料中未分列；跨代碼對照需另核對。"
+  ],
+
+  "CA:AMP50APR": [
+    "複方各成分分量在整理資料中未分列；跨代碼對照需另核對。"
+  ],
+
+  "CA:FLU15APO": [
+    "兩份來源名稱及 drug_type 指膠囊，但 pack＝TAB；" +
+    "請核對是否內部通用計數單位。"
+  ],
+
+  "E:ATR0.05WFL": [
+    "CWB 名稱寫 eye drop 5ml，但 pack＝TUBE；" +
+    "請查實物或原系統，不預設改為 BOT。"
+  ],
+
+  "I:PRE20": [
+    "名稱寫 PFS；CWB pack＝VIAL、TKP＝SET。" +
+    "請核對實物容器及採購／點存單位。"
+  ],
+
+  "I:IMODT": [
+    "名稱寫 PFS；CWB pack＝AMP、TKP＝SET。" +
+    "請核對包裝單位定義。"
+  ],
+
+  "T:ENT0.SYC": [
+    "TKP 的 UNIT 定義未明；請確認係一片、一盒或其他單位。"
+  ],
+
+  "T:PRA2APR": [
+    "TKP 的 UNIT 定義未明；請確認每包片數及基本單位。"
+  ],
+
+  "H:SYM": [
+    "請補核每支吸入器劑數，確認兩店是否同一包裝規格。"
+  ],
+
+  "I:VER5": [
+    "與 TKP 的 I:VER5HOS 名稱規格相近；" +
+    "請確認 code 關係，以及 VIAL 與 25V 的包裝定義。"
+  ],
+
+  "I:VER5HOS": [
+    "與 CWB 的 I:VER5 名稱規格相近；" +
+    "請確認 25V 的包裝定義及基本單位。"
+  ],
+
+  "T:TOL15SNM": [
+    "CWB 原文寫「see TOL15ULG-T」；" +
+    "TKP 有 T:TOL15ULG。請確認新舊碼及舊碼是否仍需保留。"
+  ],
+
+  "M:CO-PN": [
+    "CWB 原文寫「see code NOZ-M」，" +
+    "兩份提供清單未見對應目標項目；請提供現行有效代碼。"
+  ],
+
+  "W:PIC16P": [
+    "兩份原文 name_cmn 截斷為「Picolax (Na picosulfate/MgO/Citric」。" +
+    "現展示文字曾作整理，並非原文完整欄位；請核對完整成分文字。"
+  ],
+
+  "T:APR30": [
+    "兩份來源 name_cmn 寫「Talbet」；展示文字已整理，" +
+    "請另確認原主檔是否需改為 Tablet。"
+  ],
+
+  "CA:TRA25": [
+    "兩份來源 name_cmn 寫「Capusle」；展示文字已整理，" +
+    "請另確認原主檔是否需改為 Capsule。"
+  ],
+
+  "I:EYL40": [
+    "TKP 原文 name_cmn 寫「Inravitreal」；" +
+    "展示文字已整理為 Intravitreal，請核對原主檔。"
+  ],
+
+  "CA:LOR5PPTF": [
+    "CWB 原文濃度寫「5//120mg」；上一版展示文字整理為 5/120mg，" +
+    "請按實物／主檔核對。"
+  ],
+
+  "T:DES5VCK": [
+    "CWB 原文寫 Desloratidine；疑似拼字問題，" +
+    "請核對是否應為 Desloratadine。"
+  ],
+
+  "E:DEX5EIP": [
+    "兩份原文寫 Polymycin B；請核對成分拼法是否應為 Polymyxin B。" +
+    "TKP 提供的該行未列 5ml，現展示容量沿用 CWB，請另核對 TKP 規格。"
+  ],
+
+  "M:SEB25": [
+    "TKP 原文寫 salicyclic acid；展示文字已整理為 salicylic acid，" +
+    "請核對原主檔。"
+  ],
+
+  "T:CYT20": [
+    "多適應症產品，現暫列腸胃章節；主要整理類別待本地藥房覆核。"
+  ],
+
+  "T:ACE25SYC": [
+    "現暫列眼科／眼壓類別；多適應症產品的主要整理類別待覆核。"
+  ],
+
+  "T:ACE25APO": [
+    "現暫列眼科／眼壓類別；多適應症產品的主要整理類別待覆核。"
+  ],
+
+  "I:ENA3.D": [
+    "現暫列第08章；請按本地用途覆核主要整理類別。"
+  ],
+
+  "I:LEU3.DON": [
+    "現暫列第08章；請按本地用途覆核主要整理類別。"
+  ],
+
+  "T:LET2.TCE": [
+    "現暫列第08章；請按本地用途覆核主要整理類別。"
+  ],
+
+  "L:NYS10PMS": [
+    "沿用上一版 AF 分類；「全身抗真菌」細分類名稱是否適合此製劑，" +
+    "請藥房覆核，勿把分類名稱當成給藥或吸收性質說明。"
+  ],
+
+  "I:LIG2PFI": [
+    "來源名稱列 IV／LA；現按局部麻醉作單一分類，" +
+    "請覆核多用途產品的整理方式。"
+  ]
+};
+
+for (const [id, notes] of Object.entries(REVIEW_NOTES)) {
+  if (!catalog.has(id)) {
+    issues.push("人工核對事項找不到項目：" + id);
+    continue;
+  }
+  notes.forEach(note => addRemark(id, note));
+}
+
+/* 預先建立搜尋文字；Remarks 同樣可搜尋。 */
+for (const row of DATA) {
+  const [chapter, subclass] = CLASSES[row.cls];
+
+  row.searchText = [
+    row.name,
+    row.id,
+    row.key,
+    FORMS[row.type],
+    chapter,
+    CHAPTERS[chapter],
+    subclass,
+    row.sites[1]?.pack || "",
+    row.sites[2]?.pack || "",
+    ...row.remarks
+  ].join(" ").toLowerCase();
+}
+
+/* ---------- 篩選與顯示 ---------- */
+
+const chapterSelect = $("simpleChapter");
+
+for (const [chapter, name] of Object.entries(CHAPTERS)
+  .sort((a, b) => a[0].localeCompare(b[0]))) {
+
+  if (!DATA.some(row => CLASSES[row.cls][0] === chapter)) {
+    continue;
+  }
+
+  const option = document.createElement("option");
+  option.value = chapter;
+  option.textContent = chapter + " " + name;
+  chapterSelect.appendChild(option);
+}
+
+let visibleRows = [];
+
+function getFilteredRows() {
+  const terms = $("simpleSearch").value
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const chapter = $("simpleChapter").value;
+  const availability = $("simpleAvailability").value;
+  const remarksOnly = $("simpleRemarksOnly").checked;
+
+  return DATA.filter(row => {
+    const has1 = Boolean(row.sites[1]);
+    const has2 = Boolean(row.sites[2]);
+
+    if (terms.some(term => !row.searchText.includes(term))) {
+      return false;
+    }
+
+    if (chapter && CLASSES[row.cls][0] !== chapter) {
+      return false;
+    }
+
+    if (availability === "1" && !has1) return false;
+    if (availability === "2" && !has2) return false;
+    if (availability === "both" && !(has1 && has2)) return false;
+    if (availability === "only1" && !(has1 && !has2)) return false;
+    if (availability === "only2" && !(has2 && !has1)) return false;
+
+    if (remarksOnly && !row.remarks.length) return false;
+
+    return true;
+  }).sort((a, b) => {
+    const ca = CLASSES[a.cls];
+    const cb = CLASSES[b.cls];
+
+    return ca[0].localeCompare(cb[0]) ||
+      ca[1].localeCompare(cb[1], "zh-Hant") ||
+      a.name.localeCompare(b.name) ||
+      a.id.localeCompare(b.id);
+  });
+}
+
+function availabilityCell(row, site) {
+  const source = row.sites[site];
+
+  if (!source) {
+    return `
+      <td class="availability-cell">
+        <span class="not-listed">未列出</span>
+      </td>
+    `;
+  }
+
+  return `
+    <td class="availability-cell">
+      <span class="listed">有收錄</span>
+      <div class="site-detail">
+        包裝：<strong>${esc(source.pack)}</strong><br>
+        來源：p.${source.page}
+      </div>
+    </td>
+  `;
+}
+
+function remarksCell(row) {
+  if (!row.remarks.length) {
+    return `
+      <td class="remarks-cell">
+        <span class="no-remark">—</span>
+      </td>
+    `;
+  }
+
+  return `
+    <td class="remarks-cell">
+      <ul class="remark-list">
+        ${row.remarks.map(note => `<li>${esc(note)}</li>`).join("")}
+      </ul>
+    </td>
+  `;
+}
+
+function render() {
+  visibleRows = getFilteredRows();
+
+  let previousChapter = "";
+
+  $("simpleRows").innerHTML = visibleRows.length
+    ? visibleRows.map(row => {
+        const [chapter, subclass] = CLASSES[row.cls];
+        let heading = "";
+
+        if (chapter !== previousChapter) {
+          heading = `
+            <tr class="chapter-row">
+              <td colspan="6">
+                ${chapter} ${esc(CHAPTERS[chapter])}
+              </td>
+            </tr>
+          `;
+          previousChapter = chapter;
+        }
+
+        return heading + `
+          <tr>
+            <td class="bnf-cell">
+              <strong>
+                ${chapter} ${esc(CHAPTERS[chapter])}
+              </strong>
+              <div class="small">${esc(subclass)}</div>
+            </td>
+
+            <td class="drug-cell">
+              <div class="drug-name">${esc(row.name)}</div>
+              <div class="drug-form">
+                ${esc(FORMS[row.type])} · ${esc(row.type)}
+              </div>
+            </td>
+
+            <td class="code-cell">
+              <div class="code-text">${esc(row.key)}</div>
+              <div class="small">
+                drug_type：${esc(row.type)}
+              </div>
+            </td>
+
+            ${availabilityCell(row, 1)}
+            ${availabilityCell(row, 2)}
+            ${remarksCell(row)}
+          </tr>
+        `;
+      }).join("")
+    : `<tr><td colspan="6">沒有符合條件的項目。</td></tr>`;
+
+  const stats = [
+    ["聯合項目", DATA.length],
+    ["CWB 收錄", sourceCounts[1]],
+    ["TKP 收錄", sourceCounts[2]],
+    ["目前顯示", visibleRows.length],
+    ["目前有 Remarks", visibleRows.filter(r => r.remarks.length).length]
+  ];
+
+  $("simpleStats").innerHTML = stats.map(([label, count]) =>
+    `<span class="stat">${esc(label)} <b>${count}</b></span>`
+  ).join("");
+
+  const chapterLabel =
+    $("simpleChapter").selectedOptions[0].textContent;
+  const availabilityLabel =
+    $("simpleAvailability").selectedOptions[0].textContent;
+  const search = $("simpleSearch").value.trim();
+
+  $("simpleSummary").textContent =
+    ` ${chapterLabel} ｜ ${availabilityLabel}` +
+    (search ? ` ｜ 搜尋：${search}` : "") +
+    ($("simpleRemarksOnly").checked ? " ｜ 只看有 Remarks" : "") +
+    "。";
+}
+
+$("simpleSearch").addEventListener("input", render);
+
+[
+  "simpleChapter",
+  "simpleAvailability",
+  "simpleRemarksOnly"
+].forEach(id => {
+  $(id).addEventListener("change", render);
 });
+
+$("simpleReset").addEventListener("click", () => {
+  $("simpleSearch").value = "";
+  $("simpleChapter").value = "";
+  $("simpleAvailability").value = "";
+  $("simpleRemarksOnly").checked = false;
+  render();
+});
+
+$("simplePrint").addEventListener("click", () => {
+  window.print();
+});
+
+/* ---------- CSV 匯出 ----------
+   每個代碼／劑型一行，兩店並排。
+   尾三欄留空，供藥房在 Excel 填覆。
+*/
+
+function csvCell(value) {
+  let text = String(value ?? "");
+
+  if (/^\s*[=+\-@]/.test(text)) {
+    text = "'" + text;
+  }
+
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+
+function downloadText(filename, text, mime) {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+$("simpleCSV").addEventListener("click", () => {
+  const lines = [[
+    "Formulary日期",
+    "BNF-style章節",
+    "整理細分類",
+    "Drug type",
+    "Drug key",
+    "展示藥名",
+    "AMC1 CWB availability",
+    "AMC1 CWB pack_uom",
+    "AMC1 CWB頁碼",
+    "AMC2 TKP availability",
+    "AMC2 TKP pack_uom",
+    "AMC2 TKP頁碼",
+    "Remarks／待核對事項",
+    "藥房確認結果",
+    "確認人",
+    "確認日期"
+  ]];
+
+  for (const row of visibleRows) {
+    const [chapter, subclass] = CLASSES[row.cls];
+
+    lines.push([
+      "2026-08-05",
+      chapter + " " + CHAPTERS[chapter],
+      subclass,
+      row.type,
+      row.key,
+      row.name,
+      row.sites[1] ? "有收錄" : "未列出",
+      row.sites[1]?.pack || "",
+      row.sites[1]?.page || "",
+      row.sites[2] ? "有收錄" : "未列出",
+      row.sites[2]?.pack || "",
+      row.sites[2]?.page || "",
+      row.remarks.join("\n"),
+      "",
+      "",
+      ""
+    ]);
+  }
+
+  downloadText(
+    "AMC-Formulary-2026-08-05-review.csv",
+    "\uFEFF" + lines
+      .map(line => line.map(csvCell).join(","))
+      .join("\r\n"),
+    "text/csv;charset=utf-8"
+  );
+});
+
+/* ---------- 結構檢查 ---------- */
+
+render();
+
+if (issues.length) {
+  $("simpleError").hidden = false;
+  $("simpleError").textContent =
+    "資料載入有結構問題，請先修正，勿當成完整清單使用：\n" +
+    issues.join("\n");
+
+  $("simpleCSV").disabled = true;
+  $("simplePrint").disabled = true;
+
+  $("simpleValidation").textContent =
+    "結構檢查未通過；已停用 CSV 及列印按鈕。";
+} else {
+  const pageSummary = site =>
+    Object.entries(pageCounts[site])
+      .map(([page, count]) => `p.${page}：${count}`)
+      .join("；");
+
+  $("simpleValidation").textContent =
+    "" +
+    "" +
+    " CWB 每頁載入列數：" + pageSummary(1) +
+    "。TKP 每頁載入列數：" + pageSummary(2) + "。";
+}
 </script>
 </body>
 </html>
