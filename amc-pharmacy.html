@@ -1102,989 +1102,1133 @@ const SOURCE_NOTES={
 };
 
 /* =========================================================
-   AMC Simple Formulary
-   保留此前的：
-   CHAPTERS / CLASSES / FORMS
-   AMC1 / AMC2_SHARED / AMC2_EXTRA
-   CROSS_GROUPS / SOURCE_NOTES
+   AMC 聯合藥物清單
+   保留現有 UI、資料、篩選、Remarks、CSV 及列印行為。
 
-   本版本不使用 localStorage，不載入外部資源。
+   依賴上方既有資料：
+   CHAPTERS / CLASSES / FORMS
+   AMC1 / AMC2_SHARED / AMC2_EXTRA / CROSS_GROUPS
    ========================================================= */
 
-const $ = id => document.getElementById(id);
+(() => {
+  "use strict";
 
-const esc = value => String(value ?? "").replace(
-  /[&<>"']/g,
-  c => ({
+  /* =======================================================
+     01. 設定
+     ======================================================= */
+
+  const CONFIG = Object.freeze({
+    title: "AMC 聯合藥物清單",
+    formularyDate: "2026-08-05",
+    formularyDateLabel: "2026年8月5日",
+    downloadUrlLifetime: 5000
+  });
+
+  /* =======================================================
+     02. 補充對照及人工備註
+     ======================================================= */
+
+  const ADDITIONAL_COMPARISONS = [
+    ["T:ABI2", "T:ARI2PMS"],
+    ["T:ATE50APR", "T:TEN50"],
+    ["T:ESC10ACT", "T:LEX10P"],
+    ["T:CON18", "T:MET18BAL"],
+    ["T:CON27", "T:MET27BAL"],
+    ["T:CON36", "T:MET36BAL"],
+    ["E:XAL", "E:LAT0.BAU"],
+    ["C:MICHCXSP", "C:DAK"],
+    ["I:ENA3.D", "I:LEU3.DON"],
+    ["I:BUS20", "I:HYO20TPD"]
+  ];
+
+  const REVIEW_NOTES = {
+    "E:SIM10/2": [
+      "CWB 原文缺 drug_type；上一版整理資料暫設 E，因此本表暫與 TKP 的 E:SIM10/2 並列。請核對原主檔，未確認前不視為已驗證的代碼對齊。"
+    ],
+
+    "I:MOU5": [
+      "兩份來源的 name_cmn 欄空白；請藥房補核通用名及完整規格。"
+    ],
+
+    "T:NESM": [
+      "CWB 原文 drug_type＝T，但名稱寫 Capsule、pack＝30C；請核對劑型。"
+    ],
+
+    "CA:AMO50APR": [
+      "CWB 名稱及 drug_type 指膠囊，但 pack＝500T；請確認 T 是否通用計數單位，或應使用膠囊單位。"
+    ],
+
+    "CA:AMP50MDR": [
+      "CWB 名稱及 drug_type 指膠囊，但 pack＝100T；請核對包裝單位。",
+      "複方各成分分量在整理資料中未分列；跨代碼對照需另核對。"
+    ],
+
+    "CA:AMP50APR": [
+      "複方各成分分量在整理資料中未分列；跨代碼對照需另核對。"
+    ],
+
+    "CA:FLU15APO": [
+      "兩份來源名稱及 drug_type 指膠囊，但 pack＝TAB；請核對是否內部通用計數單位。"
+    ],
+
+    "E:ATR0.05WFL": [
+      "CWB 名稱寫 eye drop 5ml，但 pack＝TUBE；請查實物或原系統，不預設改為 BOT。"
+    ],
+
+    "I:PRE20": [
+      "名稱寫 PFS；CWB pack＝VIAL、TKP＝SET。請核對實物容器及採購／點存單位。"
+    ],
+
+    "I:IMODT": [
+      "名稱寫 PFS；CWB pack＝AMP、TKP＝SET。請核對包裝單位定義。"
+    ],
+
+    "T:ENT0.SYC": [
+      "TKP 的 UNIT 定義未明；請確認係一片、一盒或其他單位。"
+    ],
+
+    "T:PRA2APR": [
+      "TKP 的 UNIT 定義未明；請確認每包片數及基本單位。"
+    ],
+
+    "H:SYM": [
+      "請補核每支吸入器劑數，確認兩店是否同一包裝規格。"
+    ],
+
+    "I:VER5": [
+      "與 TKP 的 I:VER5HOS 名稱規格相近；請確認 code 關係，以及 VIAL 與 25V 的包裝定義。"
+    ],
+
+    "I:VER5HOS": [
+      "與 CWB 的 I:VER5 名稱規格相近；請確認 25V 的包裝定義及基本單位。"
+    ],
+
+    "T:TOL15SNM": [
+      "CWB 原文寫「see TOL15ULG-T」；TKP 有 T:TOL15ULG。請確認新舊碼及舊碼是否仍需保留。"
+    ],
+
+    "M:CO-PN": [
+      "CWB 原文寫「see code NOZ-M」，兩份提供清單未見對應目標項目；請提供現行有效代碼。"
+    ],
+
+    "W:PIC16P": [
+      "兩份原文 name_cmn 截斷為「Picolax (Na picosulfate/MgO/Citric」。現展示文字曾作整理，並非原文完整欄位；請核對完整成分文字。"
+    ],
+
+    "T:APR30": [
+      "兩份來源 name_cmn 寫「Talbet」；展示文字已整理，請另確認原主檔是否需改為 Tablet。"
+    ],
+
+    "CA:TRA25": [
+      "兩份來源 name_cmn 寫「Capusle」；展示文字已整理，請另確認原主檔是否需改為 Capsule。"
+    ],
+
+    "I:EYL40": [
+      "TKP 原文 name_cmn 寫「Inravitreal」；展示文字已整理為 Intravitreal，請核對原主檔。"
+    ],
+
+    "CA:LOR5PPTF": [
+      "CWB 原文濃度寫「5//120mg」；上一版展示文字整理為 5/120mg，請按實物／主檔核對。"
+    ],
+
+    "T:DES5VCK": [
+      "CWB 原文寫 Desloratidine；疑似拼字問題，請核對是否應為 Desloratadine。"
+    ],
+
+    "E:DEX5EIP": [
+      "兩份原文寫 Polymycin B；請核對成分拼法是否應為 Polymyxin B。TKP 提供的該行未列 5ml，現展示容量沿用 CWB，請另核對 TKP 規格。"
+    ],
+
+    "M:SEB25": [
+      "TKP 原文寫 salicyclic acid；展示文字已整理為 salicylic acid，請核對原主檔。"
+    ],
+
+    "T:CYT20": [
+      "多適應症產品，現暫列腸胃章節；主要整理類別待本地藥房覆核。"
+    ],
+
+    "T:ACE25SYC": [
+      "現暫列眼科／眼壓類別；多適應症產品的主要整理類別待覆核。"
+    ],
+
+    "T:ACE25APO": [
+      "現暫列眼科／眼壓類別；多適應症產品的主要整理類別待覆核。"
+    ],
+
+    "I:ENA3.D": [
+      "現暫列第08章；請按本地用途覆核主要整理類別。"
+    ],
+
+    "I:LEU3.DON": [
+      "現暫列第08章；請按本地用途覆核主要整理類別。"
+    ],
+
+    "T:LET2.TCE": [
+      "現暫列第08章；請按本地用途覆核主要整理類別。"
+    ],
+
+    "L:NYS10PMS": [
+      "沿用上一版 AF 分類；「全身抗真菌」細分類名稱是否適合此製劑，請藥房覆核，勿把分類名稱當成給藥或吸收性質說明。"
+    ],
+
+    "I:LIG2PFI": [
+      "來源名稱列 IV／LA；現按局部麻醉作單一分類，請覆核多用途產品的整理方式。"
+    ]
+  };
+
+  /* =======================================================
+     03. 現行介面
+     ======================================================= */
+
+  const PAGE_HTML = `
+    <header>
+      <h1>${CONFIG.title}</h1>
+      <p>版本：${CONFIG.formularyDate}</p>
+    </header>
+
+    <main>
+      <section class="panel noprint">
+        <div class="bar">
+          <label class="grow">
+            搜尋藥名、成分、代碼或備註
+            <input
+              id="simpleSearch"
+              type="search"
+              placeholder="例如：metformin、Nexium、AMO1SAN"
+            >
+          </label>
+
+          <label>
+            BNF 章節
+            <select id="simpleChapter">
+              <option value="">全部章節</option>
+            </select>
+          </label>
+
+          <label>
+            診所收錄情況
+            <select id="simpleAvailability">
+              <option value="">全部</option>
+              <option value="1">AMC1 CWB 有收錄</option>
+              <option value="2">AMC2 TKP 有收錄</option>
+              <option value="both">同一代碼／劑型：兩邊有</option>
+              <option value="only1">同一代碼／劑型：只列於 CWB</option>
+              <option value="only2">同一代碼／劑型：只列於 TKP</option>
+            </select>
+          </label>
+
+          <label class="check-label">
+            <input id="simpleRemarksOnly" type="checkbox">
+            只看有備註
+          </label>
+
+          <button id="simpleReset">清除篩選</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="bar noprint">
+          <button id="simpleCSV" class="primary">
+            匯出目前清單 CSV (Excel 開啟)
+          </button>
+          <button id="simplePrint">列印目前清單</button>
+        </div>
+
+        <div id="simpleStats" class="stats"></div>
+        <div id="simpleSummary" class="small summary"></div>
+        <div id="simpleError" role="alert" hidden></div>
+
+        <div class="tablewrap">
+          <table id="simpleTable">
+            <thead>
+              <tr>
+                <th>BNF 分類</th>
+                <th>藥物／劑型</th>
+                <th>Drug code</th>
+                <th>AMC1 · CWB</th>
+                <th>AMC2 · TKP</th>
+                <th>備註</th>
+              </tr>
+            </thead>
+            <tbody id="simpleRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <details class="panel noprint">
+        <summary>資料說明</summary>
+        <ul>
+          <li>
+            來源為兩份日期 ${CONFIG.formularyDateLabel}的 AMC formulary。
+          </li>
+          <li>
+            按 drug_type + drug_key 對齊兩店清單。
+          </li>
+          <li>
+            「未列出」只代表此代碼／劑型未列於該店來源清單。
+            該店可能有其他代碼、品牌或規格。
+          </li>
+          <li>
+            同一 drug_key 對應不同劑型、兩店包裝不同，
+            會自動加上 Remarks。
+          </li>
+          <li>
+            Remarks 並非完整藥物審核。
+          </li>
+        </ul>
+        <div id="simpleValidation" class="small"></div>
+      </details>
+    </main>
+  `;
+
+  /* =======================================================
+     04. 現行介面樣式
+     保持覆蓋原有 CSS 的順序及數值。
+     ======================================================= */
+
+  const PAGE_CSS = `
+    body {
+      background: #f3f6fa;
+    }
+
+    main {
+      max-width: 1900px;
+    }
+
+    .check-label {
+      flex-direction: row;
+      align-items: center;
+      align-self: end;
+      padding: 9px 0;
+      gap: 7px;
+    }
+
+    .summary {
+      margin-bottom: 12px;
+    }
+
+    #simpleTable {
+      min-width: 1220px;
+    }
+
+    #simpleTable th {
+      font-size: 14px;
+    }
+
+    #simpleTable td {
+      padding: 13px 12px;
+      line-height: 1.6;
+    }
+
+    #simpleTable .bnf-cell {
+      width: 15%;
+      min-width: 165px;
+    }
+
+    #simpleTable .drug-cell {
+      width: 27%;
+      min-width: 290px;
+    }
+
+    #simpleTable .code-cell {
+      width: 11%;
+      min-width: 125px;
+    }
+
+    #simpleTable .availability-cell {
+      width: 11%;
+      min-width: 130px;
+    }
+
+    #simpleTable .remarks-cell {
+      width: 25%;
+      min-width: 290px;
+      font-size: 12px;
+    }
+
+    .drug-name {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .drug-form {
+      margin-top: 5px;
+      color: #52657a;
+      font-size: 12px;
+    }
+
+    .code-text {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .site-detail {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #52657a;
+    }
+
+    .listed {
+      display: inline-block;
+      background: #e0f1e7;
+      color: #17633f;
+      padding: 2px 9px;
+      border-radius: 5px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .not-listed {
+      color: #7a8796;
+    }
+
+    .remark-list {
+      padding-left: 17px;
+      margin: 0;
+      color: #654b20;
+    }
+
+    .remark-list li + li {
+      margin-top: 7px;
+    }
+
+    .no-remark {
+      color: #9aa5b1;
+    }
+
+    .chapter-row td {
+      background: #dfe9f7;
+      font-size: 16px;
+      font-weight: 750;
+      padding: 9px 12px !important;
+    }
+
+    #simpleError {
+      background: #ffe7e4;
+      color: #92291f;
+      padding: 12px;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 10mm;
+      }
+
+      header h1 {
+        font-size: 20px;
+      }
+
+      .notice {
+        margin: 8px 0;
+      }
+
+      .tablewrap {
+        overflow: visible;
+        max-height: none;
+      }
+
+      #simpleTable {
+        min-width: 0;
+        width: 100%;
+        table-layout: fixed;
+      }
+
+      #simpleTable thead {
+        display: table-header-group;
+      }
+
+      #simpleTable th {
+        position: static;
+        font-size: 9px;
+      }
+
+      #simpleTable td {
+        min-width: 0 !important;
+        padding: 5px !important;
+        font-size: 9px;
+        overflow-wrap: anywhere;
+      }
+
+      #simpleTable .drug-name {
+        font-size: 10px;
+      }
+
+      #simpleTable .small,
+      #simpleTable .drug-form,
+      #simpleTable .site-detail,
+      #simpleTable .code-text,
+      #simpleTable .remarks-cell {
+        font-size: 8px;
+      }
+
+      .chapter-row td {
+        font-size: 11px !important;
+      }
+
+      .listed {
+        padding: 0;
+        background: none;
+      }
+
+      .stats {
+        font-size: 10px;
+        margin: 7px 0;
+      }
+
+      .stat {
+        background: none;
+        padding: 0 12px 0 0;
+      }
+
+      .remark-list {
+        padding-left: 12px;
+      }
+    }
+  `;
+
+  /* =======================================================
+     05. 共用工具
+     ======================================================= */
+
+  const HTML_ENTITIES = {
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
     "'": "&#39;"
-  }[c])
-);
+  };
 
-document.title = "AMC 聯合藥物清單";
-
-/* 換掉舊版醫生、點存及備份介面。 */
-document.body.innerHTML = `
-<header>
-  <h1>AMC 聯合藥物清單</h1>
-  <p>版本：2026-08-05</p>
-</header>
-
-<main>
-  <section class="panel noprint">
-    <div class="bar">
-      <label class="grow">
-        搜尋藥名、成分、代碼或備註
-        <input id="simpleSearch" type="search"
-          placeholder="例如：metformin、Nexium、AMO1SAN">
-      </label>
-
-      <label>
-        BNF 章節
-        <select id="simpleChapter">
-          <option value="">全部章節</option>
-        </select>
-      </label>
-
-      <label>
-        診所收錄情況
-        <select id="simpleAvailability">
-          <option value="">全部</option>
-          <option value="1">AMC1 CWB 有收錄</option>
-          <option value="2">AMC2 TKP 有收錄</option>
-          <option value="both">同一代碼／劑型：兩邊有</option>
-          <option value="only1">同一代碼／劑型：只列於 CWB</option>
-          <option value="only2">同一代碼／劑型：只列於 TKP</option>
-        </select>
-      </label>
-
-      <label class="check-label">
-        <input id="simpleRemarksOnly" type="checkbox">
-        只看有備註
-      </label>
-
-      <button id="simpleReset">清除篩選</button>
-    </div>
-  </section>
-
-  <section class="panel">
-    <div class="bar noprint">
-      <button id="simpleCSV" class="primary">
-        匯出目前清單 CSV (Excel 開啟)
-      </button>
-      <button id="simplePrint">列印目前清單</button>
-    </div>
-
-    <div id="simpleStats" class="stats"></div>
-    <div id="simpleSummary" class="small summary"></div>
-    <div id="simpleError" role="alert" hidden></div>
-
-    <div class="tablewrap">
-      <table id="simpleTable">
-        <thead>
-          <tr>
-            <th>BNF 分類</th>
-            <th>藥物／劑型</th>
-            <th>Drug code</th>
-            <th>AMC1 · CWB</th>
-            <th>AMC2 · TKP</th>
-            <th>備註</th>
-          </tr>
-        </thead>
-        <tbody id="simpleRows"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <details class="panel noprint">
-    <summary>資料說明</summary>
-    <ul>
-      <li>
-        來源為兩份日期 2026年8月5日的 AMC formulary，
-        使用上一版 HTML 已整理的藥物資料。
-      </li>
-      <li>
-        按 drug_type + drug_key 對齊兩店清單。
-      </li>
-      <li>
-        「未列出」只代表此代碼／劑型未列於該店來源清單。
-        該店可能有其他代碼、品牌或規格。
-      </li>
-      <li>
-        同一 drug_key 對應不同劑型、兩店包裝不同，
-        會自動加上 Remarks。
-      </li>
-      <li>
-        Remarks 並非完整藥物審核。
-      </li>
-    </ul>
-    <div id="simpleValidation" class="small"></div>
-  </details>
-</main>
-`;
-
-/* 沿用原本色系，調整成六欄簡單清單。 */
-const simpleStyle = document.createElement("style");
-simpleStyle.textContent = `
-  body {
-    background: #f3f6fa;
+  function escapeHtml(value) {
+    return String(value ?? "").replace(
+      /[&<>"']/g,
+      character => HTML_ENTITIES[character]
+    );
   }
 
-  main {
-    max-width: 1900px;
+  function getLines(text) {
+    return text
+      .trim()
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean);
   }
 
-  .check-label {
-    flex-direction: row;
-    align-items: center;
-    align-self: end;
-    padding: 9px 0;
-    gap: 7px;
+  function isValidPage(page) {
+    return Number.isInteger(page) && page >= 1;
   }
 
-  .summary {
-    margin-bottom: 12px;
+  function getSiteNames(row) {
+    return [
+      row.sites[1] ? "CWB" : "",
+      row.sites[2] ? "TKP" : ""
+    ].filter(Boolean).join("／");
   }
 
-  #simpleTable {
-    min-width: 1220px;
-  }
+  /* =======================================================
+     06. 資料載入
+     ======================================================= */
 
-  #simpleTable th {
-    font-size: 14px;
-  }
-
-  #simpleTable td {
-    padding: 13px 12px;
-    line-height: 1.6;
-  }
-
-  #simpleTable .bnf-cell {
-    width: 15%;
-    min-width: 165px;
-  }
-
-  #simpleTable .drug-cell {
-    width: 27%;
-    min-width: 290px;
-  }
-
-  #simpleTable .code-cell {
-    width: 11%;
-    min-width: 125px;
-  }
-
-  #simpleTable .availability-cell {
-    width: 11%;
-    min-width: 130px;
-  }
-
-  #simpleTable .remarks-cell {
-    width: 25%;
-    min-width: 290px;
-    font-size: 12px;
-  }
-
-  .drug-name {
-    font-size: 15px;
-    font-weight: 700;
-  }
-
-  .drug-form {
-    margin-top: 5px;
-    color: #52657a;
-    font-size: 12px;
-  }
-
-  .code-text {
-    font-family: ui-monospace, SFMono-Regular, monospace;
-    font-size: 12px;
-    overflow-wrap: anywhere;
-  }
-
-  .site-detail {
-    margin-top: 6px;
-    font-size: 12px;
-    color: #52657a;
-  }
-
-  .listed {
-    display: inline-block;
-    background: #e0f1e7;
-    color: #17633f;
-    padding: 2px 9px;
-    border-radius: 5px;
-    font-weight: 650;
-    white-space: nowrap;
-  }
-
-  .not-listed {
-    color: #7a8796;
-  }
-
-  .remark-list {
-    padding-left: 17px;
-    margin: 0;
-    color: #654b20;
-  }
-
-  .remark-list li + li {
-    margin-top: 7px;
-  }
-
-  .no-remark {
-    color: #9aa5b1;
-  }
-
-  .chapter-row td {
-    background: #dfe9f7;
-    font-size: 16px;
-    font-weight: 750;
-    padding: 9px 12px !important;
-  }
-
-  #simpleError {
-    background: #ffe7e4;
-    color: #92291f;
-    padding: 12px;
-    margin-bottom: 12px;
-    white-space: pre-wrap;
-  }
-
-  @media print {
-    @page {
-      size: A4 landscape;
-      margin: 10mm;
-    }
-
-    header h1 {
-      font-size: 20px;
-    }
-
-    .notice {
-      margin: 8px 0;
-    }
-
-    .tablewrap {
-      overflow: visible;
-      max-height: none;
-    }
-
-    #simpleTable {
-      min-width: 0;
-      width: 100%;
-      table-layout: fixed;
-    }
-
-    #simpleTable thead {
-      display: table-header-group;
-    }
-
-    #simpleTable th {
-      position: static;
-      font-size: 9px;
-    }
-
-    #simpleTable td {
-      min-width: 0 !important;
-      padding: 5px !important;
-      font-size: 9px;
-      overflow-wrap: anywhere;
-    }
-
-    #simpleTable .drug-name {
-      font-size: 10px;
-    }
-
-    #simpleTable .small,
-    #simpleTable .drug-form,
-    #simpleTable .site-detail,
-    #simpleTable .code-text,
-    #simpleTable .remarks-cell {
-      font-size: 8px;
-    }
-
-    .chapter-row td {
-      font-size: 11px !important;
-    }
-
-    .listed {
-      padding: 0;
-      background: none;
-    }
-
-    .stats {
-      font-size: 10px;
-      margin: 7px 0;
-    }
-
-    .stat {
-      background: none;
-      padding: 0 12px 0 0;
-    }
-
-    .remark-list {
-      padding-left: 12px;
-    }
-  }
-`;
-document.head.appendChild(simpleStyle);
-
-/* ---------- 載入現有資料 ---------- */
-
-const catalog = new Map();
-const issues = [];
-const sourceCounts = { 1: 0, 2: 0 };
-const pageCounts = { 1: {}, 2: {} };
-
-function recordSource(site, page) {
-  sourceCounts[site]++;
-  pageCounts[site][page] =
-    (pageCounts[site][page] || 0) + 1;
-}
-
-function addRows(text, site) {
-  let page = 0;
-
-  for (const raw of text.trim().split(/\r?\n/)) {
-    const line = raw.trim();
-
-    if (!line) continue;
-
-    if (line.startsWith("@")) {
-      page = Number(line.slice(1));
-      continue;
-    }
-
-    const fields = line.split("|");
-
-    if (fields.length !== 5) {
-      issues.push("欄位數不正確：" + line);
-      continue;
-    }
-
-    const [type, key, name, cls, pack] = fields;
-    const id = type + ":" + key;
-
-    if (!FORMS[type] || !CLASSES[cls]) {
-      issues.push("未定義劑型／分類：" + id);
-      continue;
-    }
-
-    if (!Number.isInteger(page) || page < 1) {
-      issues.push("來源頁碼不正確：" + id);
-      continue;
-    }
-
-    if (catalog.has(id)) {
-      issues.push("重複新增項目：" + id);
-      continue;
-    }
-
-    catalog.set(id, {
-      id,
-      type,
-      key,
-      name,
-      cls,
-      sites: {
-        [site]: { pack, page }
-      },
-      remarks: []
-    });
-
-    recordSource(site, page);
-  }
-}
-
-addRows(AMC1, 1);
-
-let sharedPage = 0;
-
-for (const raw of AMC2_SHARED.trim().split(/\r?\n/)) {
-  const line = raw.trim();
-
-  if (!line) continue;
-
-  if (line.startsWith("@")) {
-    sharedPage = Number(line.slice(1));
-    continue;
-  }
-
-  for (const token of line.split(/\s+/)) {
-    const equals = token.indexOf("=");
-    const reference =
-      equals < 0 ? token : token.slice(0, equals);
-    const override =
-      equals < 0 ? null : token.slice(equals + 1);
-
-    const id = reference.includes(":")
-      ? reference
-      : "T:" + reference;
-
-    const row = catalog.get(id);
-
-    if (!row) {
-      issues.push("AMC2 找不到對照項目：" + id);
-      continue;
-    }
-
-    if (row.sites[2]) {
-      issues.push("AMC2 重複項目：" + id);
-      continue;
-    }
-
-    if (!Number.isInteger(sharedPage) || sharedPage < 1) {
-      issues.push("AMC2 來源頁碼不正確：" + id);
-      continue;
-    }
-
-    row.sites[2] = {
-      pack: override ?? row.sites[1].pack,
-      page: sharedPage
+  function createModel() {
+    return {
+      catalog: new Map(),
+      rows: [],
+      issues: [],
+      sourceCounts: { 1: 0, 2: 0 },
+      pageCounts: { 1: {}, 2: {} }
     };
-
-    recordSource(2, sharedPage);
   }
-}
 
-addRows(AMC2_EXTRA, 2);
+  function recordSource(model, site, page) {
+    model.sourceCounts[site]++;
 
-const DATA = [...catalog.values()];
-
-function addRemark(id, text) {
-  const row = catalog.get(id);
-  if (row && !row.remarks.includes(text)) {
-    row.remarks.push(text);
+    const counts = model.pageCounts[site];
+    counts[page] = (counts[page] || 0) + 1;
   }
-}
 
-/* ---------- 自動產生 Remarks ---------- */
+  function addSourceRows(model, text, site) {
+    let page = 0;
 
-/* 1. 相同 drug_key，不同 drug_type。 */
-const byKey = new Map();
+    for (const line of getLines(text)) {
+      if (line.startsWith("@")) {
+        page = Number(line.slice(1));
+        continue;
+      }
 
-for (const row of DATA) {
-  if (!byKey.has(row.key)) byKey.set(row.key, []);
-  byKey.get(row.key).push(row);
-}
+      const fields = line.split("|");
 
-for (const members of byKey.values()) {
-  if (members.length < 2) continue;
+      if (fields.length !== 5) {
+        model.issues.push("欄位數不正確：" + line);
+        continue;
+      }
 
-  for (const row of members) {
-    const otherItems = members
-      .filter(other => other.id !== row.id)
-      .map(other => `${other.id}（${other.name}）`)
-      .join("；");
+      const [type, key, name, cls, pack] = fields;
+      const id = type + ":" + key;
 
-    addRemark(
-      row.id,
-      "同一 drug_key 另用於：" + otherItems +
-      ""
-    );
-  }
-}
+      if (!FORMS[type] || !CLASSES[cls]) {
+        model.issues.push("未定義劑型／分類：" + id);
+        continue;
+      }
 
-/* 2. 相同代碼／劑型，兩店 pack_uom 不同。 */
-for (const row of DATA) {
-  const cwb = row.sites[1];
-  const tkp = row.sites[2];
+      if (!isValidPage(page)) {
+        model.issues.push("來源頁碼不正確：" + id);
+        continue;
+      }
 
-  if (cwb && tkp && cwb.pack !== tkp.pack) {
-    addRemark(
-      row.id,
-      `兩店原 pack_uom 不同：CWB＝${cwb.pack}；` +
-      `TKP＝${tkp.pack}。` +
-      ""
-    );
-  }
-}
+      if (model.catalog.has(id)) {
+        model.issues.push("重複新增項目：" + id);
+        continue;
+      }
 
-/* 3. 沿用有限的人工跨代碼對照，不合併行。 */
-const relatedCodes = new Map();
+      model.catalog.set(id, {
+        id,
+        type,
+        key,
+        name,
+        cls,
+        sites: {
+          [site]: { pack, page }
+        },
+        remarks: []
+      });
 
-function registerComparison(ids) {
-  const present = ids.filter(id => catalog.has(id));
-
-  for (const id of present) {
-    if (!relatedCodes.has(id)) {
-      relatedCodes.set(id, new Set());
-    }
-
-    for (const other of present) {
-      if (other !== id) relatedCodes.get(id).add(other);
+      recordSource(model, site, page);
     }
   }
-}
 
-for (const [label, ...ids] of CROSS_GROUPS) {
-  for (const id of ids) {
-    if (!catalog.has(id)) {
-      issues.push("跨代碼對照缺項：" + id);
+  function parseSharedToken(token) {
+    const equalsIndex = token.indexOf("=");
+
+    const reference = equalsIndex < 0
+      ? token
+      : token.slice(0, equalsIndex);
+
+    const packOverride = equalsIndex < 0
+      ? null
+      : token.slice(equalsIndex + 1);
+
+    return {
+      id: reference.includes(":")
+        ? reference
+        : "T:" + reference,
+      packOverride
+    };
+  }
+
+  function addSharedRows(model, text) {
+    let page = 0;
+
+    for (const line of getLines(text)) {
+      if (line.startsWith("@")) {
+        page = Number(line.slice(1));
+        continue;
+      }
+
+      for (const token of line.split(/\s+/)) {
+        const { id, packOverride } = parseSharedToken(token);
+        const row = model.catalog.get(id);
+
+        if (!row) {
+          model.issues.push("AMC2 找不到對照項目：" + id);
+          continue;
+        }
+
+        if (row.sites[2]) {
+          model.issues.push("AMC2 重複項目：" + id);
+          continue;
+        }
+
+        if (!isValidPage(page)) {
+          model.issues.push("AMC2 來源頁碼不正確：" + id);
+          continue;
+        }
+
+        row.sites[2] = {
+          pack: packOverride ?? row.sites[1].pack,
+          page
+        };
+
+        recordSource(model, 2, page);
+      }
     }
   }
-  registerComparison(ids);
-}
 
-/* 補充清单中部分明顯值得並列核對的代碼。
-   僅標示關係，並非確認產品等同。 */
-[
-  ["T:ABI2", "T:ARI2PMS"],
-  ["T:ATE50APR", "T:TEN50"],
-  ["T:ESC10ACT", "T:LEX10P"],
-  ["T:CON18", "T:MET18BAL"],
-  ["T:CON27", "T:MET27BAL"],
-  ["T:CON36", "T:MET36BAL"],
-  ["E:XAL", "E:LAT0.BAU"],
-  ["C:MICHCXSP", "C:DAK"],
-  ["I:ENA3.D", "I:LEU3.DON"],
-  ["I:BUS20", "I:HYO20TPD"]
-].forEach(registerComparison);
+  function buildCatalog() {
+    const model = createModel();
 
-function siteNames(row) {
-  return [
-    row.sites[1] ? "CWB" : "",
-    row.sites[2] ? "TKP" : ""
-  ].filter(Boolean).join("／");
-}
+    addSourceRows(model, AMC1, 1);
+    addSharedRows(model, AMC2_SHARED);
+    addSourceRows(model, AMC2_EXTRA, 2);
 
-for (const [id, otherIds] of relatedCodes) {
-  const related = [...otherIds].map(otherId => {
-    const other = catalog.get(otherId);
-    return `${otherId}（${siteNames(other)}）`;
-  });
+    model.rows = [...model.catalog.values()];
 
-  addRemark(
-    id,
-    "相關代碼待核對：" + related.join("、") +
-    "" +
-    ""
-  );
-}
-
-/* ---------- 人工核對事項 ----------
-   以下為來源文字問題提示，不直接修改原 code 或 pack。
-*/
-
-const REVIEW_NOTES = {
-  "E:SIM10/2": [
-    "CWB 原文缺 drug_type；上一版整理資料暫設 E，" +
-    "因此本表暫與 TKP 的 E:SIM10/2 並列。" +
-    "請核對原主檔，未確認前不視為已驗證的代碼對齊。"
-  ],
-
-  "I:MOU5": [
-    "兩份來源的 name_cmn 欄空白；請藥房補核通用名及完整規格。"
-  ],
-
-  "T:NESM": [
-    "CWB 原文 drug_type＝T，但名稱寫 Capsule、pack＝30C；" +
-    "請核對劑型。"
-  ],
-
-  "CA:AMO50APR": [
-    "CWB 名稱及 drug_type 指膠囊，但 pack＝500T；" +
-    "請確認 T 是否通用計數單位，或應使用膠囊單位。"
-  ],
-
-  "CA:AMP50MDR": [
-    "CWB 名稱及 drug_type 指膠囊，但 pack＝100T；請核對包裝單位。",
-    "複方各成分分量在整理資料中未分列；跨代碼對照需另核對。"
-  ],
-
-  "CA:AMP50APR": [
-    "複方各成分分量在整理資料中未分列；跨代碼對照需另核對。"
-  ],
-
-  "CA:FLU15APO": [
-    "兩份來源名稱及 drug_type 指膠囊，但 pack＝TAB；" +
-    "請核對是否內部通用計數單位。"
-  ],
-
-  "E:ATR0.05WFL": [
-    "CWB 名稱寫 eye drop 5ml，但 pack＝TUBE；" +
-    "請查實物或原系統，不預設改為 BOT。"
-  ],
-
-  "I:PRE20": [
-    "名稱寫 PFS；CWB pack＝VIAL、TKP＝SET。" +
-    "請核對實物容器及採購／點存單位。"
-  ],
-
-  "I:IMODT": [
-    "名稱寫 PFS；CWB pack＝AMP、TKP＝SET。" +
-    "請核對包裝單位定義。"
-  ],
-
-  "T:ENT0.SYC": [
-    "TKP 的 UNIT 定義未明；請確認係一片、一盒或其他單位。"
-  ],
-
-  "T:PRA2APR": [
-    "TKP 的 UNIT 定義未明；請確認每包片數及基本單位。"
-  ],
-
-  "H:SYM": [
-    "請補核每支吸入器劑數，確認兩店是否同一包裝規格。"
-  ],
-
-  "I:VER5": [
-    "與 TKP 的 I:VER5HOS 名稱規格相近；" +
-    "請確認 code 關係，以及 VIAL 與 25V 的包裝定義。"
-  ],
-
-  "I:VER5HOS": [
-    "與 CWB 的 I:VER5 名稱規格相近；" +
-    "請確認 25V 的包裝定義及基本單位。"
-  ],
-
-  "T:TOL15SNM": [
-    "CWB 原文寫「see TOL15ULG-T」；" +
-    "TKP 有 T:TOL15ULG。請確認新舊碼及舊碼是否仍需保留。"
-  ],
-
-  "M:CO-PN": [
-    "CWB 原文寫「see code NOZ-M」，" +
-    "兩份提供清單未見對應目標項目；請提供現行有效代碼。"
-  ],
-
-  "W:PIC16P": [
-    "兩份原文 name_cmn 截斷為「Picolax (Na picosulfate/MgO/Citric」。" +
-    "現展示文字曾作整理，並非原文完整欄位；請核對完整成分文字。"
-  ],
-
-  "T:APR30": [
-    "兩份來源 name_cmn 寫「Talbet」；展示文字已整理，" +
-    "請另確認原主檔是否需改為 Tablet。"
-  ],
-
-  "CA:TRA25": [
-    "兩份來源 name_cmn 寫「Capusle」；展示文字已整理，" +
-    "請另確認原主檔是否需改為 Capsule。"
-  ],
-
-  "I:EYL40": [
-    "TKP 原文 name_cmn 寫「Inravitreal」；" +
-    "展示文字已整理為 Intravitreal，請核對原主檔。"
-  ],
-
-  "CA:LOR5PPTF": [
-    "CWB 原文濃度寫「5//120mg」；上一版展示文字整理為 5/120mg，" +
-    "請按實物／主檔核對。"
-  ],
-
-  "T:DES5VCK": [
-    "CWB 原文寫 Desloratidine；疑似拼字問題，" +
-    "請核對是否應為 Desloratadine。"
-  ],
-
-  "E:DEX5EIP": [
-    "兩份原文寫 Polymycin B；請核對成分拼法是否應為 Polymyxin B。" +
-    "TKP 提供的該行未列 5ml，現展示容量沿用 CWB，請另核對 TKP 規格。"
-  ],
-
-  "M:SEB25": [
-    "TKP 原文寫 salicyclic acid；展示文字已整理為 salicylic acid，" +
-    "請核對原主檔。"
-  ],
-
-  "T:CYT20": [
-    "多適應症產品，現暫列腸胃章節；主要整理類別待本地藥房覆核。"
-  ],
-
-  "T:ACE25SYC": [
-    "現暫列眼科／眼壓類別；多適應症產品的主要整理類別待覆核。"
-  ],
-
-  "T:ACE25APO": [
-    "現暫列眼科／眼壓類別；多適應症產品的主要整理類別待覆核。"
-  ],
-
-  "I:ENA3.D": [
-    "現暫列第08章；請按本地用途覆核主要整理類別。"
-  ],
-
-  "I:LEU3.DON": [
-    "現暫列第08章；請按本地用途覆核主要整理類別。"
-  ],
-
-  "T:LET2.TCE": [
-    "現暫列第08章；請按本地用途覆核主要整理類別。"
-  ],
-
-  "L:NYS10PMS": [
-    "沿用上一版 AF 分類；「全身抗真菌」細分類名稱是否適合此製劑，" +
-    "請藥房覆核，勿把分類名稱當成給藥或吸收性質說明。"
-  ],
-
-  "I:LIG2PFI": [
-    "來源名稱列 IV／LA；現按局部麻醉作單一分類，" +
-    "請覆核多用途產品的整理方式。"
-  ]
-};
-
-for (const [id, notes] of Object.entries(REVIEW_NOTES)) {
-  if (!catalog.has(id)) {
-    issues.push("人工核對事項找不到項目：" + id);
-    continue;
-  }
-  notes.forEach(note => addRemark(id, note));
-}
-
-/* 預先建立搜尋文字；Remarks 同樣可搜尋。 */
-for (const row of DATA) {
-  const [chapter, subclass] = CLASSES[row.cls];
-
-  row.searchText = [
-    row.name,
-    row.id,
-    row.key,
-    FORMS[row.type],
-    chapter,
-    CHAPTERS[chapter],
-    subclass,
-    row.sites[1]?.pack || "",
-    row.sites[2]?.pack || "",
-    ...row.remarks
-  ].join(" ").toLowerCase();
-}
-
-/* ---------- 篩選與顯示 ---------- */
-
-const chapterSelect = $("simpleChapter");
-
-for (const [chapter, name] of Object.entries(CHAPTERS)
-  .sort((a, b) => a[0].localeCompare(b[0]))) {
-
-  if (!DATA.some(row => CLASSES[row.cls][0] === chapter)) {
-    continue;
+    return model;
   }
 
-  const option = document.createElement("option");
-  option.value = chapter;
-  option.textContent = chapter + " " + name;
-  chapterSelect.appendChild(option);
-}
+  /* =======================================================
+     07. 備註產生
+     順序固定：同 key → 包裝 → 跨代碼 → 人工備註。
+     ======================================================= */
 
-let visibleRows = [];
+  function addRemark(model, id, text) {
+    const row = model.catalog.get(id);
 
-function getFilteredRows() {
-  const terms = $("simpleSearch").value
-    .trim()
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean);
+    if (row && !row.remarks.includes(text)) {
+      row.remarks.push(text);
+    }
+  }
 
-  const chapter = $("simpleChapter").value;
-  const availability = $("simpleAvailability").value;
-  const remarksOnly = $("simpleRemarksOnly").checked;
+  function addSameKeyRemarks(model) {
+    const byKey = new Map();
 
-  return DATA.filter(row => {
+    for (const row of model.rows) {
+      if (!byKey.has(row.key)) {
+        byKey.set(row.key, []);
+      }
+
+      byKey.get(row.key).push(row);
+    }
+
+    for (const members of byKey.values()) {
+      if (members.length < 2) continue;
+
+      for (const row of members) {
+        const otherItems = members
+          .filter(other => other.id !== row.id)
+          .map(other => `${other.id}（${other.name}）`)
+          .join("；");
+
+        addRemark(
+          model,
+          row.id,
+          "同一 drug_key 另用於：" + otherItems
+        );
+      }
+    }
+  }
+
+  function addPackDifferenceRemarks(model) {
+    for (const row of model.rows) {
+      const cwb = row.sites[1];
+      const tkp = row.sites[2];
+
+      if (!cwb || !tkp || cwb.pack === tkp.pack) continue;
+
+      addRemark(
+        model,
+        row.id,
+        `兩店原 pack_uom 不同：CWB＝${cwb.pack}；TKP＝${tkp.pack}。`
+      );
+    }
+  }
+
+  function registerComparison(model, relatedCodes, ids) {
+    const presentIds = ids.filter(id => model.catalog.has(id));
+
+    for (const id of presentIds) {
+      if (!relatedCodes.has(id)) {
+        relatedCodes.set(id, new Set());
+      }
+
+      const related = relatedCodes.get(id);
+
+      for (const otherId of presentIds) {
+        if (otherId !== id) {
+          related.add(otherId);
+        }
+      }
+    }
+  }
+
+  function addComparisonRemarks(model) {
+    const relatedCodes = new Map();
+
+    for (const [, ...ids] of CROSS_GROUPS) {
+      for (const id of ids) {
+        if (!model.catalog.has(id)) {
+          model.issues.push("跨代碼對照缺項：" + id);
+        }
+      }
+
+      registerComparison(model, relatedCodes, ids);
+    }
+
+    // 保留原版行為：補充對照只使用已存在的項目。
+    for (const ids of ADDITIONAL_COMPARISONS) {
+      registerComparison(model, relatedCodes, ids);
+    }
+
+    for (const [id, otherIds] of relatedCodes) {
+      const related = [...otherIds].map(otherId => {
+        const other = model.catalog.get(otherId);
+        return `${otherId}（${getSiteNames(other)}）`;
+      });
+
+      addRemark(
+        model,
+        id,
+        "相關代碼待核對：" + related.join("、")
+      );
+    }
+  }
+
+  function addReviewRemarks(model) {
+    for (const [id, notes] of Object.entries(REVIEW_NOTES)) {
+      if (!model.catalog.has(id)) {
+        model.issues.push("人工核對事項找不到項目：" + id);
+        continue;
+      }
+
+      for (const note of notes) {
+        addRemark(model, id, note);
+      }
+    }
+  }
+
+  function applyRemarks(model) {
+    addSameKeyRemarks(model);
+    addPackDifferenceRemarks(model);
+    addComparisonRemarks(model);
+    addReviewRemarks(model);
+  }
+
+  /* =======================================================
+     08. 搜尋索引、篩選及排序
+     ======================================================= */
+
+  function buildSearchIndex(rows) {
+    for (const row of rows) {
+      const [chapter, subclass] = CLASSES[row.cls];
+
+      row.searchText = [
+        row.name,
+        row.id,
+        row.key,
+        FORMS[row.type],
+        chapter,
+        CHAPTERS[chapter],
+        subclass,
+        row.sites[1]?.pack || "",
+        row.sites[2]?.pack || "",
+        ...row.remarks
+      ].join(" ").toLowerCase();
+    }
+  }
+
+  function readFilters(elements) {
+    const search = elements.search.value.trim();
+
+    return {
+      search,
+      terms: search
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean),
+      chapter: elements.chapter.value,
+      availability: elements.availability.value,
+      remarksOnly: elements.remarksOnly.checked
+    };
+  }
+
+  function matchesAvailability(row, availability) {
     const has1 = Boolean(row.sites[1]);
     const has2 = Boolean(row.sites[2]);
 
-    if (terms.some(term => !row.searchText.includes(term))) {
-      return false;
+    switch (availability) {
+      case "1":
+        return has1;
+
+      case "2":
+        return has2;
+
+      case "both":
+        return has1 && has2;
+
+      case "only1":
+        return has1 && !has2;
+
+      case "only2":
+        return has2 && !has1;
+
+      default:
+        return true;
     }
+  }
 
-    if (chapter && CLASSES[row.cls][0] !== chapter) {
-      return false;
-    }
+  function filterRows(rows, filters) {
+    return rows.filter(row => {
+      if (
+        filters.terms.some(term => !row.searchText.includes(term))
+      ) {
+        return false;
+      }
 
-    if (availability === "1" && !has1) return false;
-    if (availability === "2" && !has2) return false;
-    if (availability === "both" && !(has1 && has2)) return false;
-    if (availability === "only1" && !(has1 && !has2)) return false;
-    if (availability === "only2" && !(has2 && !has1)) return false;
+      if (
+        filters.chapter &&
+        CLASSES[row.cls][0] !== filters.chapter
+      ) {
+        return false;
+      }
 
-    if (remarksOnly && !row.remarks.length) return false;
+      if (!matchesAvailability(row, filters.availability)) {
+        return false;
+      }
 
-    return true;
-  }).sort((a, b) => {
-    const ca = CLASSES[a.cls];
-    const cb = CLASSES[b.cls];
+      if (filters.remarksOnly && !row.remarks.length) {
+        return false;
+      }
 
-    return ca[0].localeCompare(cb[0]) ||
-      ca[1].localeCompare(cb[1], "zh-Hant") ||
+      return true;
+    });
+  }
+
+  function compareRows(a, b) {
+    const classA = CLASSES[a.cls];
+    const classB = CLASSES[b.cls];
+
+    return (
+      classA[0].localeCompare(classB[0]) ||
+      classA[1].localeCompare(classB[1], "zh-Hant") ||
       a.name.localeCompare(b.name) ||
-      a.id.localeCompare(b.id);
-  });
-}
+      a.id.localeCompare(b.id)
+    );
+  }
 
-function availabilityCell(row, site) {
-  const source = row.sites[site];
+  /* =======================================================
+     09. 介面初始化
+     ======================================================= */
 
-  if (!source) {
+  function mountPage() {
+    document.title = CONFIG.title;
+    document.body.innerHTML = PAGE_HTML;
+
+    const style = document.createElement("style");
+    style.textContent = PAGE_CSS;
+    document.head.appendChild(style);
+  }
+
+  function getElements() {
+    const byId = id => document.getElementById(id);
+
+    return {
+      search: byId("simpleSearch"),
+      chapter: byId("simpleChapter"),
+      availability: byId("simpleAvailability"),
+      remarksOnly: byId("simpleRemarksOnly"),
+      reset: byId("simpleReset"),
+      csv: byId("simpleCSV"),
+      print: byId("simplePrint"),
+      stats: byId("simpleStats"),
+      summary: byId("simpleSummary"),
+      error: byId("simpleError"),
+      rows: byId("simpleRows"),
+      validation: byId("simpleValidation")
+    };
+  }
+
+  function populateChapterOptions(select, rows) {
+    const usedChapters = new Set(
+      rows.map(row => CLASSES[row.cls][0])
+    );
+
+    const chapters = Object.entries(CHAPTERS)
+      .sort((a, b) => a[0].localeCompare(b[0]));
+
+    for (const [chapter, name] of chapters) {
+      if (!usedChapters.has(chapter)) continue;
+
+      const option = document.createElement("option");
+
+      option.value = chapter;
+      option.textContent = chapter + " " + name;
+
+      select.appendChild(option);
+    }
+  }
+
+  /* =======================================================
+     10. 表格 HTML
+     ======================================================= */
+
+  function chapterRowHtml(chapter) {
+    return `
+      <tr class="chapter-row">
+        <td colspan="6">
+          ${chapter} ${escapeHtml(CHAPTERS[chapter])}
+        </td>
+      </tr>
+    `;
+  }
+
+  function availabilityCellHtml(row, site) {
+    const source = row.sites[site];
+
+    if (!source) {
+      return `
+        <td class="availability-cell">
+          <span class="not-listed">未列出</span>
+        </td>
+      `;
+    }
+
     return `
       <td class="availability-cell">
-        <span class="not-listed">未列出</span>
+        <span class="listed">有收錄</span>
+        <div class="site-detail">
+          包裝：<strong>${escapeHtml(source.pack)}</strong><br>
+          來源：p.${source.page}
+        </div>
       </td>
     `;
   }
 
-  return `
-    <td class="availability-cell">
-      <span class="listed">有收錄</span>
-      <div class="site-detail">
-        包裝：<strong>${esc(source.pack)}</strong><br>
-        來源：p.${source.page}
-      </div>
-    </td>
-  `;
-}
+  function remarksCellHtml(row) {
+    if (!row.remarks.length) {
+      return `
+        <td class="remarks-cell">
+          <span class="no-remark">—</span>
+        </td>
+      `;
+    }
 
-function remarksCell(row) {
-  if (!row.remarks.length) {
+    const items = row.remarks
+      .map(note => `<li>${escapeHtml(note)}</li>`)
+      .join("");
+
     return `
       <td class="remarks-cell">
-        <span class="no-remark">—</span>
+        <ul class="remark-list">${items}</ul>
       </td>
     `;
   }
 
-  return `
-    <td class="remarks-cell">
-      <ul class="remark-list">
-        ${row.remarks.map(note => `<li>${esc(note)}</li>`).join("")}
-      </ul>
-    </td>
-  `;
-}
+  function drugRowHtml(row) {
+    const [chapter, subclass] = CLASSES[row.cls];
 
-function render() {
-  visibleRows = getFilteredRows();
+    return `
+      <tr>
+        <td class="bnf-cell">
+          <strong>
+            ${chapter} ${escapeHtml(CHAPTERS[chapter])}
+          </strong>
+          <div class="small">${escapeHtml(subclass)}</div>
+        </td>
 
-  let previousChapter = "";
+        <td class="drug-cell">
+          <div class="drug-name">${escapeHtml(row.name)}</div>
+          <div class="drug-form">
+            ${escapeHtml(FORMS[row.type])} · ${escapeHtml(row.type)}
+          </div>
+        </td>
 
-  $("simpleRows").innerHTML = visibleRows.length
-    ? visibleRows.map(row => {
-        const [chapter, subclass] = CLASSES[row.cls];
-        let heading = "";
+        <td class="code-cell">
+          <div class="code-text">${escapeHtml(row.key)}</div>
+          <div class="small">
+            drug_type：${escapeHtml(row.type)}
+          </div>
+        </td>
 
-        if (chapter !== previousChapter) {
-          heading = `
-            <tr class="chapter-row">
-              <td colspan="6">
-                ${chapter} ${esc(CHAPTERS[chapter])}
-              </td>
-            </tr>
-          `;
-          previousChapter = chapter;
-        }
-
-        return heading + `
-          <tr>
-            <td class="bnf-cell">
-              <strong>
-                ${chapter} ${esc(CHAPTERS[chapter])}
-              </strong>
-              <div class="small">${esc(subclass)}</div>
-            </td>
-
-            <td class="drug-cell">
-              <div class="drug-name">${esc(row.name)}</div>
-              <div class="drug-form">
-                ${esc(FORMS[row.type])} · ${esc(row.type)}
-              </div>
-            </td>
-
-            <td class="code-cell">
-              <div class="code-text">${esc(row.key)}</div>
-              <div class="small">
-                drug_type：${esc(row.type)}
-              </div>
-            </td>
-
-            ${availabilityCell(row, 1)}
-            ${availabilityCell(row, 2)}
-            ${remarksCell(row)}
-          </tr>
-        `;
-      }).join("")
-    : `<tr><td colspan="6">沒有符合條件的項目。</td></tr>`;
-
-  const stats = [
-    ["聯合項目", DATA.length],
-    ["CWB 收錄", sourceCounts[1]],
-    ["TKP 收錄", sourceCounts[2]],
-    ["目前顯示", visibleRows.length],
-    ["目前有 Remarks", visibleRows.filter(r => r.remarks.length).length]
-  ];
-
-  $("simpleStats").innerHTML = stats.map(([label, count]) =>
-    `<span class="stat">${esc(label)} <b>${count}</b></span>`
-  ).join("");
-
-  const chapterLabel =
-    $("simpleChapter").selectedOptions[0].textContent;
-  const availabilityLabel =
-    $("simpleAvailability").selectedOptions[0].textContent;
-  const search = $("simpleSearch").value.trim();
-
-  $("simpleSummary").textContent =
-    ` ${chapterLabel} ｜ ${availabilityLabel}` +
-    (search ? ` ｜ 搜尋：${search}` : "") +
-    ($("simpleRemarksOnly").checked ? " ｜ 只看有 Remarks" : "") +
-    "。";
-}
-
-$("simpleSearch").addEventListener("input", render);
-
-[
-  "simpleChapter",
-  "simpleAvailability",
-  "simpleRemarksOnly"
-].forEach(id => {
-  $(id).addEventListener("change", render);
-});
-
-$("simpleReset").addEventListener("click", () => {
-  $("simpleSearch").value = "";
-  $("simpleChapter").value = "";
-  $("simpleAvailability").value = "";
-  $("simpleRemarksOnly").checked = false;
-  render();
-});
-
-$("simplePrint").addEventListener("click", () => {
-  window.print();
-});
-
-/* ---------- CSV 匯出 ----------
-   每個代碼／劑型一行，兩店並排。
-   尾三欄留空，供藥房在 Excel 填覆。
-*/
-
-function csvCell(value) {
-  let text = String(value ?? "");
-
-  if (/^\s*[=+\-@]/.test(text)) {
-    text = "'" + text;
+        ${availabilityCellHtml(row, 1)}
+        ${availabilityCellHtml(row, 2)}
+        ${remarksCellHtml(row)}
+      </tr>
+    `;
   }
 
-  return '"' + text.replace(/"/g, '""') + '"';
-}
+  /* =======================================================
+     11. 畫面更新
+     ======================================================= */
 
-function downloadText(filename, text, mime) {
-  const blob = new Blob([text], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  function renderTable(container, rows) {
+    if (!rows.length) {
+      container.innerHTML =
+        '<tr><td colspan="6">沒有符合條件的項目。</td></tr>';
+      return;
+    }
 
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+    let previousChapter = "";
+    const html = [];
 
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-}
+    for (const row of rows) {
+      const chapter = CLASSES[row.cls][0];
 
-$("simpleCSV").addEventListener("click", () => {
-  const lines = [[
+      if (chapter !== previousChapter) {
+        html.push(chapterRowHtml(chapter));
+        previousChapter = chapter;
+      }
+
+      html.push(drugRowHtml(row));
+    }
+
+    container.innerHTML = html.join("");
+  }
+
+  function renderStats(container, model, rows) {
+    const stats = [
+      ["聯合項目", model.rows.length],
+      ["CWB 收錄", model.sourceCounts[1]],
+      ["TKP 收錄", model.sourceCounts[2]],
+      ["目前顯示", rows.length],
+      ["目前有 Remarks", rows.filter(row => row.remarks.length).length]
+    ];
+
+    container.innerHTML = stats
+      .map(([label, count]) => `
+        <span class="stat">${escapeHtml(label)} <b>${count}</b></span>
+      `)
+      .join("");
+  }
+
+  function renderSummary(elements, filters) {
+    const chapterLabel =
+      elements.chapter.selectedOptions[0].textContent;
+
+    const availabilityLabel =
+      elements.availability.selectedOptions[0].textContent;
+
+    elements.summary.textContent =
+      ` ${chapterLabel} ｜ ${availabilityLabel}` +
+      (filters.search ? ` ｜ 搜尋：${filters.search}` : "") +
+      (filters.remarksOnly ? " ｜ 只看有 Remarks" : "") +
+      "。";
+  }
+
+  function pageSummary(model, site) {
+    return Object.entries(model.pageCounts[site])
+      .map(([page, count]) => `p.${page}：${count}`)
+      .join("；");
+  }
+
+  function renderValidation(elements, model) {
+    if (model.issues.length) {
+      elements.error.hidden = false;
+
+      elements.error.textContent =
+        "資料載入有結構問題，請先修正，勿當成完整清單使用：\n" +
+        model.issues.join("\n");
+
+      elements.csv.disabled = true;
+      elements.print.disabled = true;
+
+      elements.validation.textContent =
+        "結構檢查未通過；已停用 CSV 及列印按鈕。";
+
+      return;
+    }
+
+    elements.validation.textContent =
+      " CWB 每頁載入列數：" + pageSummary(model, 1) +
+      "。TKP 每頁載入列數：" + pageSummary(model, 2) + "。";
+  }
+
+  /* =======================================================
+     12. CSV 匯出
+     ======================================================= */
+
+  const CSV_HEADERS = [
     "Formulary日期",
     "BNF-style章節",
     "整理細分類",
@@ -2101,13 +2245,23 @@ $("simpleCSV").addEventListener("click", () => {
     "藥房確認結果",
     "確認人",
     "確認日期"
-  ]];
+  ];
 
-  for (const row of visibleRows) {
+  function csvCell(value) {
+    let text = String(value ?? "");
+
+    if (/^\s*[=+\-@]/.test(text)) {
+      text = "'" + text;
+    }
+
+    return '"' + text.replace(/"/g, '""') + '"';
+  }
+
+  function csvRow(row) {
     const [chapter, subclass] = CLASSES[row.cls];
 
-    lines.push([
-      "2026-08-05",
+    return [
+      CONFIG.formularyDate,
       chapter + " " + CHAPTERS[chapter],
       subclass,
       row.type,
@@ -2123,45 +2277,117 @@ $("simpleCSV").addEventListener("click", () => {
       "",
       "",
       ""
-    ]);
+    ];
   }
 
-  downloadText(
-    "AMC-Formulary-2026-08-05-review.csv",
-    "\uFEFF" + lines
+  function buildCSV(rows) {
+    const lines = [
+      CSV_HEADERS,
+      ...rows.map(csvRow)
+    ];
+
+    return "\uFEFF" + lines
       .map(line => line.map(csvCell).join(","))
-      .join("\r\n"),
-    "text/csv;charset=utf-8"
-  );
-});
+      .join("\r\n");
+  }
 
-/* ---------- 結構檢查 ---------- */
+  function downloadText(filename, text, mime) {
+    const blob = new Blob([text], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
 
-render();
+    link.href = url;
+    link.download = filename;
 
-if (issues.length) {
-  $("simpleError").hidden = false;
-  $("simpleError").textContent =
-    "資料載入有結構問題，請先修正，勿當成完整清單使用：\n" +
-    issues.join("\n");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 
-  $("simpleCSV").disabled = true;
-  $("simplePrint").disabled = true;
+    setTimeout(
+      () => URL.revokeObjectURL(url),
+      CONFIG.downloadUrlLifetime
+    );
+  }
 
-  $("simpleValidation").textContent =
-    "結構檢查未通過；已停用 CSV 及列印按鈕。";
-} else {
-  const pageSummary = site =>
-    Object.entries(pageCounts[site])
-      .map(([page, count]) => `p.${page}：${count}`)
-      .join("；");
+  function exportCSV(rows) {
+    downloadText(
+      `AMC-Formulary-${CONFIG.formularyDate}-review.csv`,
+      buildCSV(rows),
+      "text/csv;charset=utf-8"
+    );
+  }
 
-  $("simpleValidation").textContent =
-    "" +
-    "" +
-    " CWB 每頁載入列數：" + pageSummary(1) +
-    "。TKP 每頁載入列數：" + pageSummary(2) + "。";
-}
+  /* =======================================================
+     13. 操作及事件
+     ======================================================= */
+
+  function resetFilters(elements) {
+    elements.search.value = "";
+    elements.chapter.value = "";
+    elements.availability.value = "";
+    elements.remarksOnly.checked = false;
+  }
+
+  function bindEvents(elements, actions) {
+    elements.search.addEventListener("input", actions.render);
+
+    [
+      elements.chapter,
+      elements.availability,
+      elements.remarksOnly
+    ].forEach(element => {
+      element.addEventListener("change", actions.render);
+    });
+
+    elements.reset.addEventListener("click", () => {
+      resetFilters(elements);
+      actions.render();
+    });
+
+    elements.csv.addEventListener("click", actions.exportCSV);
+
+    elements.print.addEventListener("click", () => {
+      window.print();
+    });
+  }
+
+  /* =======================================================
+     14. 啟動
+     ======================================================= */
+
+  function init() {
+    mountPage();
+
+    const elements = getElements();
+    const model = buildCatalog();
+    const state = { visibleRows: [] };
+
+    applyRemarks(model);
+    buildSearchIndex(model.rows);
+    populateChapterOptions(elements.chapter, model.rows);
+
+    function render() {
+      const filters = readFilters(elements);
+
+      state.visibleRows = filterRows(model.rows, filters)
+        .sort(compareRows);
+
+      renderTable(elements.rows, state.visibleRows);
+      renderStats(elements.stats, model, state.visibleRows);
+      renderSummary(elements, filters);
+    }
+
+    bindEvents(elements, {
+      render,
+      exportCSV: () => exportCSV(state.visibleRows)
+    });
+
+    render();
+    renderValidation(elements, model);
+  }
+
+  init();
+})();
 </script>
 </body>
 </html>
