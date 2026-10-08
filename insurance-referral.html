@@ -2447,19 +2447,21 @@ page-break-inside: avoid;
       min-width: 0;
     }
 
-    .ap-page .ap-wordmark {
-      position: absolute;
-      top: 0;
-      left: 0;
-      grid-area: wordmark;
-      margin: 0;
-      color: #d31145;
-      font-family: Arial, sans-serif;
-      font-size: 34pt;
-      font-weight: 700;
-      line-height: 1;
-      letter-spacing: -1.5pt;
-    }
+.ap-page .ap-wordmark {
+  /* 使用頁首 Grid 排位，不再用 absolute 定位 */
+  position: static;
+  grid-area: wordmark;
+  justify-self: start;
+  align-self: start;
+  margin: 0;
+
+  color: #d31145;
+  font-family: Arial, sans-serif;
+  font-size: 34pt;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -1.5pt;
+}
 
     .ap-page .ap-title {
       position: absolute;
@@ -3175,6 +3177,388 @@ page-break-inside: avoid;
         page-break-inside: avoid;
       }
     }
+/* =========================================================
+   13. 統一輸入介面
+   只修改操作介面，不修改任何紙張樣式。
+   ========================================================= */
+
+@media screen {
+  .layout {
+    grid-template-columns: 400px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    padding: 16px;
+    background: #f2f6f9;
+    scrollbar-gutter: stable;
+  }
+}
+
+.sidebar [hidden] {
+  display: none !important;
+}
+
+/* 目前表格 */
+
+.sidebar .editor-heading {
+  margin-bottom: 14px;
+  padding: 15px;
+  border: 1px solid #cbdfe5;
+  border-radius: 12px;
+  background: #eaf5f5;
+}
+
+.sidebar .editor-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: #567681;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+}
+
+.sidebar .editor-current {
+  display: block;
+  color: #125766;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.sidebar .editor-heading p {
+  margin: 7px 0 0;
+  color: #526c78;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* 可摺疊區塊 */
+
+.sidebar .editor-section {
+  margin-bottom: 12px;
+  overflow: hidden;
+  border: 1px solid #d8e2e9;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 6px #19394c05;
+}
+
+.sidebar .editor-section > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.sidebar .editor-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sidebar .editor-section > summary::after {
+  content: "+";
+  margin-left: auto;
+  color: #62818f;
+  font-size: 19px;
+}
+
+.sidebar .editor-section[open] > summary {
+  border-bottom: 1px solid #e5edf2;
+  background: #f8fbfc;
+}
+
+.sidebar .editor-section[open] > summary::after {
+  content: "−";
+}
+
+.sidebar .editor-section > summary:focus-visible {
+  outline: 3px solid #68bfd5;
+  outline-offset: -3px;
+}
+
+.sidebar .editor-step {
+  display: grid;
+  flex: 0 0 28px;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #e7f1f4;
+  color: #236576;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sidebar .editor-section-title {
+  color: #203f50;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sidebar .editor-count {
+  display: block;
+  margin-top: 3px;
+  color: #6f8490;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.sidebar .section-body {
+  padding: 15px;
+}
+
+/* 中英文標籤及輸入框 */
+
+.sidebar .field {
+  margin-bottom: 14px;
+}
+
+.sidebar .field > .editor-label {
+  margin-bottom: 7px;
+  color: #294858;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.sidebar .editor-label small,
+.sidebar .editor-choice legend small {
+  display: block;
+  margin-top: 3px;
+  color: #748894;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.sidebar .field input,
+.sidebar .field select,
+.sidebar .field textarea {
+  min-height: 40px;
+  padding: 10px;
+  border-color: #cbd9e2;
+  border-radius: 8px;
+  background: #fcfdff;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.sidebar .field textarea {
+  min-height: 78px;
+}
+
+.sidebar .field input:hover,
+.sidebar .field select:hover,
+.sidebar .field textarea:hover {
+  border-color: #92afbd;
+}
+
+.sidebar .field input:focus,
+.sidebar .field select:focus,
+.sidebar .field textarea:focus {
+  border-color: #087f8c;
+  background: #fff;
+}
+
+.sidebar .two {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.sidebar .editor-subheading {
+  margin: 17px 0 12px;
+  padding-top: 13px;
+  border-top: 1px solid #e5edf2;
+  color: #416474;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sidebar .editor-hint {
+  margin: 0 0 13px;
+  color: #687f8c;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* 原生 radio，外觀呈現為分段選擇按鈕 */
+
+.sidebar fieldset.editor-choice {
+  min-width: 0;
+  margin: 0 0 15px;
+  padding: 0;
+  border: 0;
+}
+
+.sidebar .editor-choice legend {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 0;
+  color: #294858;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.sidebar .editor-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.sidebar .editor-option {
+  position: relative;
+  display: block;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.sidebar .editor-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.sidebar .editor-option span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 39px;
+  padding: 8px 5px;
+  border: 1px solid #d3dfe7;
+  border-radius: 8px;
+  background: #fff;
+  color: #647a87;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.sidebar .editor-option input:checked + span {
+  border-color: #087f8c;
+  background: #e8f5f4;
+  color: #096774;
+  font-weight: 700;
+}
+
+.sidebar .editor-option input:focus-visible + span {
+  outline: 3px solid #68bfd5;
+  outline-offset: 2px;
+}
+
+/* 條件式補充問題 */
+
+.sidebar .editor-followup {
+  margin: -3px 0 16px;
+  padding: 12px;
+  border-left: 3px solid #9fcbd1;
+  border-radius: 0 8px 8px 0;
+  background: #f2f8fa;
+}
+
+.sidebar .editor-followup .field:last-of-type {
+  margin-bottom: 0;
+}
+
+.sidebar .editor-followup.has-conflict {
+  border-left-color: #d89532;
+  background: #fff8e9;
+}
+
+.sidebar .editor-conflict {
+  margin: 9px 0 0;
+  color: #865519;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 檢查項目：保留現有分類，只改善輸入外觀 */
+
+.sidebar #shared-exams > fieldset {
+  margin-bottom: 14px;
+  padding: 13px;
+  border: 1px solid #dce6ec;
+  border-radius: 10px;
+  background: #fbfdfe;
+}
+
+.sidebar #shared-exams > fieldset > legend {
+  padding: 0 6px;
+  color: #315566;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sidebar .editor-bc-routing {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #c8dde7;
+  border-radius: 8px;
+  background: #edf6fa;
+}
+
+/* 批次列印 */
+
+.sidebar .print-picks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sidebar .print-picks label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 8px;
+  border: 1px solid #dce5eb;
+  border-radius: 8px;
+  background: #fbfdfe;
+  cursor: pointer;
+}
+
+.sidebar .print-picks input {
+  accent-color: #087f8c;
+}
+
+.sidebar .editor-versions {
+  margin-top: 14px;
+  color: #758894;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.sidebar .editor-versions > summary {
+  cursor: pointer;
+}
+
+@media screen and (max-width: 1050px) {
+  .layout {
+    grid-template-columns: 350px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    padding: 12px;
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .layout {
+    display: block;
+  }
+}
+
+@media screen and (max-width: 380px) {
+  .sidebar .two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* AIA HSNM5F01：只調整底部預留空間 */
+.page.aia-page {
+  padding-bottom: 7mm;
+}
   </style>
 </head>
 
@@ -3432,17 +3816,38 @@ page-break-inside: avoid;
          同一 data-key 可出現於不同計劃，資料會同步。
          ===================================================== */
 
+/* =====================================================
+         02. 統一輸入介面
+         -----------------------------------------------------
+         - 每個 data-key 只建立一個輸入位置。
+         - 共用資料保留原有 key，不改右邊表格綁定。
+         - 左欄只在初始化時建立一次。
+         - 切換表格只更新 hidden，不重建輸入及摺疊區塊。
+         ===================================================== */
+
+      function editorLabel(label, english = "") {
+        return `
+          ${escapeHTML(label)}
+          ${english ? `<small>${escapeHTML(english)}</small>` : ""}
+        `;
+      }
+
       function inputField(key, label, options = {}) {
         const {
           type = "text",
+          english = "",
           inputmode = "",
           placeholder = ""
         } = options;
 
         return `
           <label class="field">
-            <span>${escapeHTML(label)}</span>
+            <span class="editor-label">
+              ${editorLabel(label, english)}
+            </span>
+
             <input
+              id="field-${escapeHTML(key)}"
               type="${escapeHTML(type)}"
               data-key="${escapeHTML(key)}"
               autocomplete="off"
@@ -3453,11 +3858,15 @@ page-break-inside: avoid;
         `;
       }
 
-      function textField(key, label, rows = 2) {
+      function textField(key, label, english = "", rows = 2) {
         return `
           <label class="field">
-            <span>${escapeHTML(label)}</span>
+            <span class="editor-label">
+              ${editorLabel(label, english)}
+            </span>
+
             <textarea
+              id="field-${escapeHTML(key)}"
               data-key="${escapeHTML(key)}"
               rows="${rows}"
               autocomplete="off"
@@ -3470,13 +3879,21 @@ page-break-inside: avoid;
         key,
         label,
         options,
+        english = "",
         emptyLabel = "未填寫"
       ) {
         return `
           <label class="field">
-            <span>${escapeHTML(label)}</span>
-            <select data-key="${escapeHTML(key)}">
+            <span class="editor-label">
+              ${editorLabel(label, english)}
+            </span>
+
+            <select
+              id="field-${escapeHTML(key)}"
+              data-key="${escapeHTML(key)}"
+            >
               <option value="">${escapeHTML(emptyLabel)}</option>
+
               ${options.map(([value, caption]) => `
                 <option value="${escapeHTML(value)}">
                   ${escapeHTML(caption)}
@@ -3487,278 +3904,678 @@ page-break-inside: avoid;
         `;
       }
 
-      function yesNoField(key, label, noFirst = false) {
-        const options = noFirst
-          ? [["N", "No"], ["Y", "Yes"]]
-          : [["Y", "Yes"], ["N", "No"]];
+      function yesNoField(key, label, english = "") {
+        const choices = [
+          ["", "未回答"],
+          ["N", "否 No"],
+          ["Y", "是 Yes"]
+        ];
 
-        return selectField(key, label, options, "未回答");
-      }
-
-      function divider(title) {
-        return `<h3 class="ap-input-divider">${escapeHTML(title)}</h3>`;
-      }
-
-      function planPanel(id, content) {
         return `
-          <div class="plan-panel" data-plan="${id}" hidden>
+          <fieldset class="editor-choice">
+            <legend>${editorLabel(label, english)}</legend>
+
+            <div class="editor-options">
+              ${choices.map(([value, caption], index) => `
+                <label class="editor-option">
+                  <input
+                    type="radio"
+                    name="answer-${escapeHTML(key)}"
+                    data-key="${escapeHTML(key)}"
+                    value="${escapeHTML(value)}"
+                    ${index === 0 ? "checked" : ""}
+                  >
+                  <span>${escapeHTML(caption)}</span>
+                </label>
+              `).join("")}
+            </div>
+          </fieldset>
+        `;
+      }
+
+      function forPlans(plans, content) {
+        return `
+          <div data-editor-plans="${escapeHTML(plans)}" hidden>
             ${content}
           </div>
         `;
       }
 
+      function followup(answerKey, detailKey, content) {
+        return `
+          <div
+            class="editor-followup"
+            data-answer-key="${escapeHTML(answerKey)}"
+            data-detail-key="${escapeHTML(detailKey)}"
+            hidden
+          >
+            ${content}
+
+            <p class="editor-conflict" role="status" hidden></p>
+          </div>
+        `;
+      }
+
+      function editorSection(
+        id,
+        step,
+        title,
+        content,
+        { open = true, plans = "" } = {}
+      ) {
+        return `
+          <details
+            id="${id}"
+            class="editor-section"
+            ${open ? "open" : ""}
+            ${plans ? `data-editor-plans="${escapeHTML(plans)}" hidden` : ""}
+          >
+            <summary>
+              <span class="editor-step">${step}</span>
+
+              <span>
+                <span class="editor-section-title">${title}</span>
+                <span class="editor-count" data-editor-count></span>
+              </span>
+            </summary>
+
+            <div class="section-body">${content}</div>
+          </details>
+        `;
+      }
+
       function buildInputPanels() {
-        $("#patient-fields").innerHTML = `
-          ${inputField("date", "轉介日期", { type: "date" })}
-          ${inputField("name", "病人姓名")}
+        const sidebar = $(".sidebar");
+
+        // 保留原本私隱提示及版本文字。
+        const noticeHTML = sidebar.querySelector(".notice").outerHTML;
+        const versionsHTML = $("#print-picks")
+          .parentElement
+          .querySelector(".help")
+          .outerHTML;
+
+        const patientFields = `
+          ${inputField("date", "轉介日期", {
+            type: "date",
+            english: "Referral date"
+          })}
+
+          ${inputField("name", "病人姓名", {
+            english: "Patient name"
+          })}
 
           <div class="two">
-            ${inputField("age", "年齡", { inputmode: "numeric" })}
-            ${selectField("sex", "性別", [
-              ["M", "Male"],
-              ["F", "Female"]
-            ])}
+            ${forPlans("da h b aiaPA", inputField("age", "年齡", {
+              inputmode: "numeric",
+              english: "Age"
+            }))}
+
+            ${forPlans("da h b aia", selectField(
+              "sex",
+              "性別",
+              [["M", "Male"], ["F", "Female"]],
+              "Sex"
+            ))}
           </div>
 
-          ${inputField("contact", "聯絡電話", { type: "tel" })}
-        `;
+          ${inputField("contact", "聯絡電話", {
+            type: "tel",
+            english: "Contact number"
+          })}
 
-        $("#doctor-fields").innerHTML = `
-          ${inputField("doctor", "醫生姓名")}
-          ${inputField("clinicCode", "Clinic Code — H01／B04")}
+          <div class="editor-subheading">目前計劃的會員資料</div>
 
-          <div class="two">
-            ${inputField("clinicTel", "診所電話", { type: "tel" })}
-            ${inputField("clinicFax", "診所傳真", { type: "tel" })}
-          </div>
-        `;
+          ${forPlans("da", `
+            ${inputField("daCompany", "公司名稱", {
+              english: "Company"
+            })}
+            ${inputField("daCard", "DA01 醫療卡號碼", {
+              english: "Medical Card Number"
+            })}
+            ${inputField("daChit", "DA01 Chit 號碼", {
+              english: "Chit Number"
+            })}
+          `)}
 
-        $("#clinical-fields").innerHTML = `
-          ${textField("diagnosis", "Diagnosis／診斷")}
-          ${textField("symptoms", "Signs and Symptoms／症狀")}
-          ${inputField(
-            "onset",
-            "Onset date or duration／發病日期或持續時間",
-            { placeholder: "例如：01/10/2026 或 2 weeks" }
-          )}
-        `;
+          ${forPlans("h", `
+            ${inputField("hCard", "HSBC 醫療卡號碼", {
+              english: "Medical Card No."
+            })}
+            ${inputField("hChit", "HSBC Chit 號碼", {
+              english: "Chit No."
+            })}
+          `)}
 
-        $("#shared-exams").innerHTML = `
+          ${forPlans("b", `
+            ${inputField("bCard", "Bupa 醫療卡號碼", {
+              english: "Medical Card No."
+            })}
+            ${inputField("bChit", "Bupa Chit 號碼", {
+              english: "Chit No."
+            })}
+          `)}
 
-          <fieldset>
-            <legend>1．Laboratory Tests</legend>
-            ${textField("sxLab", "")}
-          </fieldset>
-
-          <fieldset>
-            <legend>2．Intermediate Tests</legend>
-
-            ${textField("sxXrayEcg", "X-ray / ECG")}
-            ${textField(
-              "sxUltrasoundEtc",
-              "Ultrasound / Mammogram / DEXA / Treadmill / 24-hour Holter / Audiology"
-            )}
-
-            <p class="help"></p>
-          </fieldset>
-
-          <fieldset>
-            <legend>3．MRI / CT / PET Scan</legend>
-            ${textField("sxMriCt", "")}
-          </fieldset>
-
-          <fieldset>
-            <legend>4．Others</legend>
-
-            ${textField("sxOther", "")}
-            ${selectField(
-              "sxOtherRow",
-              "上述檢查在 Blue Cross 顯示於",
-              [
-                ["1", "第 1 行：Lab test"],
-                [
-                  "2",
-                  "第 2 行：X-ray / Treadmill / Ultrasound / ECG / Mammogram"
-                ],
-                ["3", "第 3 行：MRI / CT Scan"]
-              ],
-              "— 請選擇 —"
-            )}
-
-            <p class="help">
-              如有填寫，請指定 Blue Cross 顯示行，以控制列印位置。
+          ${forPlans("aia aiaPA", `
+            ${inputField("aiaMemberId", "AIA 會員編號", {
+              english: "Member ID / Health Card"
+            })}
+            <p class="editor-hint">
+              AIA Network 與 AIA Prior Auth 共用此會員編號。
             </p>
-          </fieldset>
+          `)}
 
-          <p id="shared-test-warning" class="sx-warning" role="alert" hidden></p>
+          ${forPlans("aiaPA", inputField("apMemberFax", "會員傳真", {
+            type: "tel",
+            english: "Member fax"
+          }))}
+
+          ${forPlans("bc", inputField("bcPolicyNo", "Blue Cross 保單號碼", {
+            english: "Policy No."
+          }))}
         `;
 
-        $("#plan-fields").innerHTML = [
-          planPanel("da", `
-            ${inputField("daCompany", "Company")}
-            ${inputField("daCard", "Medical Card Number — DA01")}
-            ${inputField("daChit", "Chit Number — DA01")}
-            ${yesNoField("congenital", "是否先天性病況？")}
-            ${yesNoField("pregnancy", "是否與懷孕有關？")}
-            ${yesNoField("preventive", "有否屬預防性質嘅檢查？")}
-            <p class="help"></p>
-          `),
+        const doctorFields = `
+          ${inputField("doctor", "自己醫生姓名", {
+            english: "Name of Referring (own) doctor"
+          })}
 
-          planPanel("h", `
-            ${inputField("hCard", "Medical Card No. — HSBC")}
-            ${inputField("hChit", "Chit No. — HSBC")}
-          `),
+          <div class="two">
+            ${inputField("clinicTel", "自己診所電話", {
+              type: "tel",
+              english: "Own Clinic telephone"
+            })}
 
-          planPanel("b", `
-            ${inputField("bCard", "Medical Card No. — Bupa")}
-            ${inputField("bChit", "Chit No. — Bupa")}
-          `),
+            ${forPlans("da h b aia aiaPA", inputField(
+              "clinicFax",
+              "自己診所傳真",
+              { type: "tel", english: "Own Clinic fax" }
+            ))}
+          </div>
 
-          planPanel("aia", `
-            ${inputField("aiaMemberId", "Member ID — AIA")}
-            ${inputField("aiaProvider", "Refer To／接收醫生或中心名稱")}
-            ${inputField("aiaSpecialty", "Specialty／專科")}
+          ${forPlans("h b", inputField("clinicCode", "自己診所編號", {
+            english: "Own Clinic Code — H01 / B04"
+          }))}
+
+          ${forPlans("aiaPA", inputField(
+            "apProviderId",
+            "自己醫療服務提供者編號",
+            { english: "Own Clinic Provider ID" }
+          ))}
+
+          ${forPlans("bc", textField(
+            "bcDoctorAddress",
+            "自己醫生診所地址",
+            "Referring (own) doctor address"
+          ))}
+
+          ${forPlans("aia", `
+            <div class="editor-subheading">接收醫生／中心</div>
+
+            <p class="editor-hint">
+              以下是接收方（對方）資料，並非上面的轉介（自己）醫生。
+            </p>
+
+            ${inputField("aiaProvider", "對方醫生或中心名稱", {
+              english: "Refer To / Target doctor's Name"
+            })}
+
+            ${inputField("aiaSpecialty", "對方專科", {
+              english: "Target doctor's Specialty"
+            })}
 
             <div class="two">
-              ${inputField("aiaProviderTel", "接收方電話", { type: "tel" })}
-              ${inputField("aiaProviderFax", "接收方傳真", { type: "tel" })}
-            </div>
+              ${inputField("aiaProviderTel", "對方電話", {
+                type: "tel",
+                english: "Target doctor's telephone"
+              })}
 
-            ${textField("aiaDiagnosis2", "Diagnosis (ii)／第二項診斷")}
-            ${inputField("aiaFrequency", "Frequency／症狀頻率")}
-            ${textField("aiaManagement", "Medical Management／醫療處理")}
+              ${inputField("aiaProviderFax", "對方傳真", {
+                type: "tel",
+                english: "Target doctor's fax"
+              })}
+            </div>
+          `)}
+        `;
+
+        const clinicalFields = `
+          ${textField(
+            "diagnosis",
+            "診斷／初步診斷",
+            "Diagnosis / Provisional Diagnosis"
+          )}
+
+          ${forPlans("aia", textField(
+            "aiaDiagnosis2",
+            "第二項診斷",
+            "Diagnosis (ii)"
+          ))}
+
+          ${textField(
+            "symptoms",
+            "症狀及臨床觀察",
+            "Signs and Symptoms / Observations"
+          )}
+
+          ${inputField("onset", "發病日期／持續時間", {
+            english: "Onset date or duration",
+            placeholder: "例如：01/10/2026 或 2 weeks"
+          })}
+
+          ${forPlans("aia", `
+            ${inputField("aiaFrequency", "症狀頻率", {
+              english: "Frequency"
+            })}
+
+            ${textField(
+              "aiaManagement",
+              "醫療處理",
+              "Medical Management"
+            )}
+
             ${textField(
               "aiaProcedure",
-              "Procedure Performed／已完成的臨床或診斷程序"
+              "已完成的臨床／診斷程序",
+              "Procedure Performed — 不是今次要求的檢查"
             )}
+          `)}
+
+          ${forPlans("aiaPA", `
+            <div class="editor-subheading">首次求診及過往檢查</div>
+
+            ${inputField("apFirstConsult", "因本病況首次求診日期", {
+              type: "date",
+              english: "Prior Auth · Question 3"
+            })}
+
+            ${yesNoField(
+              "apReferred",
+              "是否由另一位醫生轉介？",
+              "Prior Auth · Question 4"
+            )}
+
+            ${followup(
+              "apReferred",
+              "apReferringDetails",
+              textField(
+                "apReferringDetails",
+                "轉介給你的醫生姓名及電話",
+                "Name and Telephone of the doctor who send you this patient"
+              )
+            )}
+
+            ${yesNoField(
+              "apHadTests",
+              "是否已做過相關檢查或程序？",
+              "Prior Auth · Question 6"
+            )}
+
+            ${followup(
+              "apHadTests",
+              "apPastTests",
+              textField(
+                "apPastTests",
+                "已完成檢查／程序及結果",
+                "Past tests and findings — 不是今次要求的檢查",
+                3
+              )
+            )}
+          `)}
+
+          ${forPlans("da aiaPA", `
+            <div class="editor-subheading">
+              病況問題 · DA01 / AIA Prior Auth 共用
+            </div>
+
+            ${yesNoField(
+              "congenital",
+              "是否先天性病況？",
+              "Is the condition congenital?"
+            )}
+
+            ${yesNoField(
+              "pregnancy",
+              "是否與懷孕有關？",
+              "Is the condition related to pregnancy?"
+            )}
+          `)}
+
+          ${forPlans("aiaPA", followup(
+            "pregnancy",
+            "apLmp",
+            inputField("apLmp", "最後一次月經日期", {
+              type: "date",
+              english: "LMP — if pregnancy-related"
+            })
+          ))}
+
+          ${forPlans("da", yesNoField(
+            "preventive",
+            "有否屬預防性質的檢查？",
+            "Are any of these tests preventive in nature?"
+          ))}
+        `;
+
+        const examFields = `
+          <p class="editor-hint">
+            以下填寫「今次要求」的檢查；共用內容會按原有方式填入各份表格。
+          </p>
+
+          <div id="shared-exams">
+            <fieldset>
+              <legend>1．化驗</legend>
+              ${textField("sxLab", "化驗項目", "Laboratory Tests")}
+            </fieldset>
+
+            <fieldset>
+              <legend>2．影像及其他檢查</legend>
+
+              ${textField("sxXrayEcg", "X 光／心電圖", "X-ray / ECG")}
+
+              ${textField(
+                "sxUltrasoundEtc",
+                "超聲波及其他檢查",
+                "Ultrasound / Mammogram / DEXA / Treadmill / 24-hour Holter / Audiology"
+              )}
+            </fieldset>
+
+            <fieldset>
+              <legend>3．MRI / CT / PET</legend>
+              ${textField(
+                "sxMriCt",
+                "掃描項目",
+                "MRI / CT / PET Scan"
+              )}
+            </fieldset>
+
+            <fieldset>
+              <legend>4．其他檢查</legend>
+              ${textField("sxOther", "其他上述未有提及之檢查項目", "Other tests not mentioned above")}
+
+              <div
+                id="bc-other-routing"
+                class="editor-bc-routing"
+                hidden
+              >
+                ${selectField(
+                  "sxOtherRow",
+                  "Blue Cross 列印位置",
+                  [
+                    ["1", "第 1 行：Lab test"],
+                    ["2", "第 2 行：X-ray / Treadmill / Ultrasound / ECG / Mammogram"],
+                    ["3", "第 3 行：MRI / CT Scan"]
+                  ],
+                  "只控制 N4 的列印行位，不改變其他表格",
+                  "— 請選擇 —"
+                )}
+
+                <p class="editor-hint">
+                  Blue Cross 保留三行格式，請指定 Other tests 的位置。
+                </p>
+              </div>
+            </fieldset>
+
+            <p
+              id="shared-test-warning"
+              class="sx-warning"
+              role="status"
+              hidden
+            ></p>
+          </div>
+
+          ${forPlans("aia", `
+            <div class="editor-subheading">AIA 額外服務及治療</div>
+
             ${textField(
               "aiaAdditionalServices",
-              "Services and Treatment Required / 額外服務及治療"
+              "額外服務／治療",
+              "Services and Treatment Required"
             )}
-            ${inputField(
-              "aiaTreatmentCount",
-              "Number of Treatments／治療次數（如適用）",
-              { inputmode: "numeric" }
-            )}
-          `),
 
-          planPanel("aiaPA", buildPriorAuthInputs()),
+            ${inputField("aiaTreatmentCount", "治療次數", {
+              inputmode: "numeric",
+              english: "Number of Treatments — when applicable"
+            })}
+          `)}
 
-          planPanel("bc", `
-            ${inputField("bcPolicyNo", "Policy No.／保單號碼 — Blue Cross")}
+          ${forPlans("aiaPA", `
+            <div class="editor-subheading">AIA Prior Auth · 第 11 項</div>
+
             ${textField(
-              "bcDoctorAddress",
-              "Referring Doctor Address／轉介醫生診所地址"
+              "apTreatment",
+              "額外計劃治療／程序",
+              "Additional Planned Treatment / Procedures",
+              3
             )}
-            <p class="help"></p>
-          `)
-        ].join("");
-      }
 
-      function buildPriorAuthInputs() {
-        return `
-          <p class="help">
-            本表共用左邊病人、醫生、診斷、症狀及 Onset 資料。
-            申請類別可直接在右邊表格剔選。
-          </p>
+            <p class="editor-hint">
+              上面的共用檢查會自動加入第 11 項，
+              此處只需補充額外治療或程序。
+            </p>
+          `)}
+        `;
 
-          ${divider("申請人及會員資料")}
+        const planningFields = `
+          ${inputField("apPlace", "服務地點", {
+            english: "9. Place of service"
+          })}
 
-          ${inputField("apProviderId", "Provider ID／醫療服務提供者編號")}
-          ${inputField(
-            "aiaMemberId",
-            "Member ID／Health Card（與 AIA HSNM5F01 共用）"
+          <div class="two">
+            ${inputField("apAdmission", "入院／服務日期", {
+              type: "date",
+              english: "Admission / Service date"
+            })}
+
+            ${inputField("apDischarge", "預計出院日期", {
+              type: "date",
+              english: "10. Estimated discharge"
+            })}
+          </div>
+
+          ${inputField("apFee", "程序合約費用", {
+            english: "Procedure Contract Fee"
+          })}
+
+          ${inputField("apProcedureCode", "程序編號", {
+            english: "Procedure Code"
+          })}
+
+          ${selectField(
+            "apAnaesthesia",
+            "麻醉方式",
+            [
+              ["LA", "LA／局部麻醉"],
+              ["GA", "GA／全身麻醉"]
+            ],
+            "Anaesthesia — if applicable"
           )}
-          ${inputField("apMemberFax", "會員傳真")}
 
-          ${divider("臨床病史")}
-
-          ${inputField(
-            "apFirstConsult",
-            "3．因本病況首次求診日期",
-            { type: "date" }
+          ${selectField(
+            "apRoom",
+            "病房／服務類別",
+            [
+              ["general", "General Ward"],
+              ["semi", "Semi-private"],
+              ["private", "Private"],
+              ["out", "Out-patient"],
+              ["day", "Day Ward"]
+            ],
+            "12. Room Type"
           )}
-          ${yesNoField("apReferred", "4．是否由另一位醫生轉介？", true)}
-          ${textField("apReferringDetails", "如是：轉介醫生姓名及電話")}
 
-          <p class="help">
-            第 5 項發病日期／持續時間，使用「03 臨床資料」的 Onset。
-          </p>
-
-          ${yesNoField("apHadTests", "6．是否已做過相關檢查或程序？", true)}
           ${textField(
-            "apPastTests",
-            "已完成的檢查／程序及結果（不是今次要求的檢查）",
-            3
-          )}
-          ${yesNoField(
-            "congenital",
-            "7．是否先天性病況？（與 DA01 共用）",
-            true
-          )}
-          ${yesNoField(
-            "pregnancy",
-            "8．是否與懷孕有關？（與 DA01 共用）",
-            true
-          )}
-          ${inputField(
-            "apLmp",
-            "如是：LMP／最後一次月經日期",
-            { type: "date" }
+            "apHospitalReason",
+            "需要住院的原因",
+            "13. Please specify if hospitalization is required"
           )}
 
-          ${divider("服務、治療及入院安排")}
-
-          ${inputField("apPlace", "9．Place of service／服務地點")}
-          ${inputField(
-            "apAdmission",
-            "Date of Admission / Service／入院或服務日期",
-            { type: "date" }
-          )}
-          ${inputField(
-            "apDischarge",
-            "10．Estimated Discharge Date／預計出院日期",
-            { type: "date" }
-          )}
-          ${inputField("apFee", "Procedure Contract Fee／程序合約費用")}
-          ${textField(
-            "apTreatment",
-            "11．額外 Planned Treatment / Procedures／計劃治療或程序",
-            3
-          )}
-
-          <p class="help">
-            「04 是次所需檢查」會自動加入第 11 項。
-            上面只需補充額外治療或程序，毋須重複輸入檢查。
-          </p>
-
-          ${inputField("apProcedureCode", "Procedure Code／程序編號")}
-          ${selectField("apAnaesthesia", "麻醉方式（如適用）", [
-            ["LA", "LA／局部麻醉"],
-            ["GA", "GA／全身麻醉"]
-          ])}
-          ${selectField("apRoom", "12．Room Type／病房或服務類別", [
-            ["general", "General Ward"],
-            ["semi", "Semi-private"],
-            ["private", "Private"],
-            ["out", "Out-patient"],
-            ["day", "Day Ward"]
-          ])}
-          ${textField("apHospitalReason", "13．需要住院的原因")}
           ${yesNoField(
             "apNightBefore",
-            "14．是否於手術前一晚入院？",
-            true
+            "是否於手術前一晚入院？",
+            "14. Admission at the night before surgery"
           )}
-          ${inputField("apNightReason", "如是：請註明原因")}
 
-          <p class="help">
-            醫生簽署日期沿用「01 病人資料」的轉介日期。
-            會員簽署、醫生簽署及 Part 3 審批欄留白。
+          ${followup(
+            "apNightBefore",
+            "apNightReason",
+            inputField("apNightReason", "手術前一晚入院原因", {
+              english: "If yes, please state reason"
+            })
+          )}
+
+          <p class="editor-hint">
+            醫生簽署日期沿用轉介日期。
+            會員簽署、醫生簽署及審批欄繼續留白。
           </p>
+        `;
+
+        const printFields = `
+          <p class="editor-hint">
+            批次列印前，請逐份切換表格核對各計劃資料。
+            左欄只顯示目前表格適用欄位；隱藏資料仍會保留。
+          </p>
+
+          <div id="print-picks" class="print-picks"></div>
+
+          <p class="editor-hint">
+            中心、轉介分支及申請類別，繼續在右邊紙張直接剔選。
+          </p>
+
+          <details class="editor-versions">
+            <summary>表格版本資料</summary>
+            ${versionsHTML}
+          </details>
+        `;
+
+        sidebar.innerHTML = `
+          <div class="editor-heading">
+            <span class="editor-eyebrow">目前正在填寫</span>
+            <strong id="editor-current" class="editor-current"></strong>
+            <p>共用資料只需填一次；切換表格不會清空內容。</p>
+          </div>
+
+          ${noticeHTML}
+
+          ${editorSection(
+            "editor-patient",
+            "01",
+            "病人資料",
+            patientFields
+          )}
+
+          ${editorSection(
+            "editor-doctor",
+            "02",
+            "自己醫生／診所",
+            doctorFields
+          )}
+
+          ${editorSection(
+            "editor-clinical",
+            "03",
+            "臨床資料",
+            clinicalFields
+          )}
+
+          ${editorSection(
+            "editor-exams",
+            "04",
+            "今次要求的檢查／治療",
+            examFields
+          )}
+
+          ${editorSection(
+            "editor-planning",
+            "05",
+            "服務及入院安排",
+            planningFields,
+            { plans: "aiaPA" }
+          )}
+
+          ${editorSection(
+            "editor-print",
+            "06",
+            "列印及核對",
+            printFields
+          )}
         `;
       }
 
+      function blueCrossInContext() {
+        return (
+          activeForm === "bc" ||
+          visiblePlans.includes("bc") ||
+          Boolean($('.print-pick[value="bc"]:checked'))
+        );
+      }
+
+      function updateSidebar() {
+        $("#editor-current").textContent =
+          FORM_BY_ID[activeForm].title;
+
+        // 按目前表格顯示適用欄位，不移除資料、不停用輸入。
+        $$(".sidebar [data-editor-plans]").forEach(element => {
+          const plans = element.dataset.editorPlans.split(/\s+/);
+          element.hidden = !plans.includes(activeForm);
+        });
+
+        // 選 Yes 或已有補充內容，就保持補充欄可見。
+        $$(".sidebar [data-answer-key]").forEach(element => {
+          const answer = text(element.dataset.answerKey);
+          const hasDetails = Boolean(text(element.dataset.detailKey));
+          const needsReview = hasDetails && answer !== "Y";
+
+          element.hidden = answer !== "Y" && !hasDetails;
+          element.classList.toggle("has-conflict", needsReview);
+
+          const warning = element.querySelector(".editor-conflict");
+
+          warning.hidden = !needsReview;
+          warning.textContent = !needsReview
+            ? ""
+            : answer === "N"
+              ? "已選「否」，但仍有補充內容。資料未被刪除，請核對；原有列印檢查仍會檢查此矛盾。"
+              : "已有補充內容，但主問題未回答。請核對，內容不會自動刪除。";
+        });
+
+        $("#bc-other-routing").hidden = !(
+          text("sxOther") && blueCrossInContext()
+        );
+
+        // 同一行只有一個適用欄位時，讓該欄佔全寬。
+        $$(".sidebar .two").forEach(row => {
+          const visibleChildren = [...row.children]
+            .filter(child => !child.hidden);
+
+          row.hidden = visibleChildren.length === 0;
+
+          row.style.gridTemplateColumns = visibleChildren.length === 1
+            ? "minmax(0, 1fr)"
+            : "";
+        });
+
+        // 摺疊摘要只顯示已填數量，不當作必填完成率。
+        $$(".sidebar .editor-section").forEach(section => {
+          const summary = section.querySelector("[data-editor-count]");
+
+          if (section.id === "editor-print") {
+            const count = $$(".print-pick:checked").length;
+            summary.textContent = `批次已選 ${count} 份`;
+            return;
+          }
+
+          const keys = new Set(
+            [...section.querySelectorAll("[data-key]")]
+              .filter(control => !control.closest("[hidden]"))
+              .map(control => control.dataset.key)
+          );
+
+          const filled = [...keys].filter(key => text(key)).length;
+
+          summary.textContent = filled
+            ? `目前適用欄位：${filled} 項已填`
+            : "展開填寫／核對";
+        });
+      }
 
       /* =====================================================
          03. 中心資料：HSBC / Bupa
@@ -6004,28 +6821,41 @@ page-break-inside: avoid;
         );
       }
 
-      function updateSharedTestWarning() {
+
+function updateSharedTestWarning() {
         const warning = $("#shared-test-warning");
-        const missing = missingBlueCrossAssignment();
+
+        const missing =
+          blueCrossInContext() &&
+          missingBlueCrossAssignment();
 
         warning.hidden = !missing;
+
         warning.textContent = missing
-          ? "以下檢查尚未指定 Blue Cross 顯示行，暫時不會出現在 N4：" +
-            "Other tests。請選擇後再列印。"
+          ? "Other tests 尚未指定 Blue Cross 顯示行，暫時不會出現在 N4。請在上方選擇位置。"
           : "";
       }
 
       function syncInputs(force = false) {
-        $$("[data-key]").forEach(control => {
-          if (!force && control === document.activeElement) return;
-
+        $$(".sidebar [data-key]").forEach(control => {
           const value = String(state[control.dataset.key] ?? "");
+
+          if (control.type === "radio") {
+            control.checked = control.value === value;
+            return;
+          }
+
+          if (!force && control === document.activeElement) {
+            return;
+          }
 
           if (control.value !== value) {
             control.value = value;
           }
         });
       }
+
+
 
       function renderValues(data) {
         $$("[data-bind]").forEach(element => {
@@ -6056,12 +6886,13 @@ page-break-inside: avoid;
         $("#pageCaption").textContent = caption;
       }
 
-      function refresh() {
+function refresh() {
         const data = getData();
 
         updateAppendix(visiblePlans, data);
         renderValues(data);
         updateCaption(data);
+        updateSidebar();
       }
 
       function showPlans(plans) {
@@ -6076,6 +6907,7 @@ page-break-inside: avoid;
         if (!FORM_BY_ID[plan]) return;
 
         activeForm = plan;
+
         showPlans([plan]);
         clearHighlights();
 
@@ -6086,13 +6918,8 @@ page-break-inside: avoid;
           button.setAttribute("aria-pressed", String(selected));
         });
 
-        $$(".plan-panel").forEach(panel => {
-          panel.hidden = panel.dataset.plan !== plan;
-        });
-
-        $("#planTitle").textContent =
-          `05　${FORM_BY_ID[plan].title} 專用資料`;
-
+        // 左邊欄位由 updateSidebar() 按適用計劃控制。
+        // 不再使用舊 plan-panel 或 planTitle。
         refresh();
         setStatus("");
       }
@@ -6250,7 +7077,22 @@ page-break-inside: avoid;
 
           if (contentBottom > pageRect.bottom - paddingBottom + 2) {
             content.classList.add("over-limit");
-            problems.push(`第 ${pageNumber} 頁：整頁內容超出預留高度`);
+const pxPerMm = pageRect.height / 297;
+
+const excessMm = (
+  (contentBottom - (pageRect.bottom - paddingBottom)) / pxPerMm
+).toFixed(1);
+
+const remainingMm = (
+  (pageRect.bottom - contentBottom) / pxPerMm
+).toFixed(1);
+
+problems.push(
+  `第 ${pageNumber} 頁：整頁內容超出預留高度` +
+  `\n超出預留範圍：${excessMm} mm` +
+  `\n內容底部距離紙張底部：${remainingMm} mm` +
+  `（負數代表已超出紙張）`
+);
           }
         });
 
@@ -6501,18 +7343,41 @@ page-break-inside: avoid;
         state.date = localDate();
       }
 
-      function bindEvents() {
-        // 統一事件代理：不受欄位建立先後次序影響。
-        $(".sidebar").addEventListener("input", event => {
+     function bindEvents() {
+        const sidebar = $(".sidebar");
+
+        function handleFieldChange(event) {
           const control = event.target;
 
           if (!control.matches("[data-key]")) return;
 
-          state[control.dataset.key] = control.value;
+          // Radio 只處理已選中的選項。
+          if (control.type === "radio" && !control.checked) {
+            return;
+          }
+
+          const key = control.dataset.key;
+          const value = control.value;
+
+          // 同時監聽 input / change，避免同一值重複更新。
+          if (state[key] === value) return;
+
+          state[key] = value;
 
           clearHighlights();
           refresh();
           setStatus("");
+        }
+
+        sidebar.addEventListener("input", handleFieldChange);
+        sidebar.addEventListener("change", handleFieldChange);
+
+        sidebar.addEventListener("change", event => {
+          if (!event.target.matches(".print-pick")) return;
+
+          // 批次加入 Blue Cross 時，立即顯示需要的行位設定。
+          updateSharedTestWarning();
+          updateSidebar();
         });
 
         $("#tabs").addEventListener("click", event => {
