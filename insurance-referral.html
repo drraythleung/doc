@@ -3910,10 +3910,7 @@ $("#demo").addEventListener("click",()=>{
       ></textarea>
     </label>
 
-    <p class="help">
-      病人姓名、電話、醫生姓名及診所電話沿用共用資料。
-      Clinical Findings 沿用左側「診斷＋症狀」。
-    </p>
+
 
     <label class="field" style="margin-top:12px">
       <span>N4 — Lab. Tests／化驗</span>
@@ -3941,16 +3938,9 @@ $("#demo").addEventListener("click",()=>{
       ></textarea>
     </label>
 
-    <p class="help">
-      此版按提供圖片重排，原圖所示品牌附註及須知
-      只作來源版本轉錄，不代表已核實現行公司資料或條款。
-      簽署位置留白，須另行簽署。
-    </p>
 
-    <p class="help">
-      圖片頁腳的細小聯絡資料未完整轉錄；
-      本模組沒有加入藍十字中心名單。
-    </p>
+
+
   `;
 
   document
@@ -4023,7 +4013,7 @@ $("#demo").addEventListener("click",()=>{
     versionHelp.appendChild(
 
 document.createTextNode(
-        "Blue Cross：N4（按提供圖片；版本日期未確認）"
+        "Blue Cross：N4（版本日期未確認）"
       )
     );
   }
@@ -4483,50 +4473,38 @@ document.createTextNode(
     </p>
 
     <fieldset>
-      <legend>1．Lab test</legend>
+      <legend>1．Laboratory Tests</legend>
       ${field("sxLab", "")}
     </fieldset>
 
     <fieldset>
       <legend>
-        2．X-ray / Treadmill / Ultrasound / ECG / Mammogram
+        2．Intermediate Tests
       </legend>
 
       ${field("sxXrayEcg", "X-ray / ECG")}
 
       ${field(
         "sxUltrasoundEtc",
-        "Treadmill / Ultrasound / Mammogram"
+        "Ultrasound / Mammogram / DEXA / Treadmill / 24-hour Holter / Audiology"
       )}
 
       <p class="help">
-        呢兩欄會合併顯示於 Blue Cross 第 2 行；
-        其他表格則按原有分類顯示。
       </p>
     </fieldset>
 
     <fieldset>
-      <legend>3．MRI / CT Scan</legend>
+      <legend>3．MRI / CT / PET Scan </legend>
       ${field("sxMriCt", "")}
     </fieldset>
 
     <fieldset>
-      <legend>其他檢查</legend>
+      <legend>4．Others</legend>
 
+      ${extraField("sxOther", "", "sxOtherRow")}
       <p class="help">
-        如有填寫，請指定 Blue Cross 顯示行。
-        此選擇只控制列印位置，不代表保險保障或批核分類。
+        如有填寫，請指定 Blue Cross 顯示行，以控制列印位置。
       </p>
-
-      ${extraField("sxPet", "PET", "sxPetRow")}
-
-      ${extraField(
-        "sxAdditional",
-        "DEXA / 24-hour Holter / Audiology",
-        "sxAdditionalRow"
-      )}
-
-      ${extraField("sxOther", "Other tests", "sxOtherRow")}
     </fieldset>
 
     <p class="sx-warning" role="alert" hidden></p>
@@ -4561,8 +4539,7 @@ document.createTextNode(
   const note = document.createElement("p");
   note.className = "help";
   note.textContent =
-    "Request 檢查內容統一於「04 是次所需檢查」輸入；" +
-    "此處毋須重複填寫。Blue Cross 保留原本三行。";
+    "";
   panel.appendChild(note);
 
   const style = document.createElement("style");
