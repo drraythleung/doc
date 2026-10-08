@@ -1,0 +1,1494 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AMC 聯合藥物清單及點存</title>
+<style>
+:root{--bg:#f3f6fa;--ink:#172b42;--muted:#52657a;--line:#d9e2ec;--blue:#175dcc;--green:#147650;--orange:#9a5600}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:#142d49;color:white;padding:22px 24px}
+h1{margin:0;font-size:25px}h2{font-size:18px}
+header p{margin:6px 0;color:#d8e7fa}
+main{max-width:1800px;margin:auto;padding:18px}
+.panel{background:white;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.notice{background:#fff8e7;border-color:#ead49c}
+.small{font-size:12px;color:var(--muted)}
+.bar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600}
+input,select,textarea,button{font:inherit;border:1px solid #bccbdc;border-radius:7px;padding:8px;background:white;color:var(--ink)}
+input[type=search]{min-width:280px}
+button{cursor:pointer;font-weight:600}
+button:hover{background:#edf4ff}
+button.primary{background:var(--blue);color:white;border-color:var(--blue)}
+button.danger{color:#a32626}
+button:disabled{opacity:.5;cursor:not-allowed}
+.grow{flex:1}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.stat{background:#eaf1fc;border-radius:8px;padding:8px 13px}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;background:#e9eef5}
+.both{background:#dff4e9;color:#126344}
+.one{background:#e5efff;color:#174f9b}
+.warn{background:#fff0d2;color:#895000}
+.low{color:#b02626;font-weight:700}
+.tablewrap{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:9px}
+table{border-collapse:collapse;width:100%;background:white;min-width:1050px}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{position:sticky;top:0;background:#eaf0f8;z-index:2;white-space:nowrap}
+td.name{min-width:290px;max-width:460px}
+td.site{min-width:185px}
+td.classcol{min-width:165px;max-width:220px}
+.star{font-size:22px;padding:0 7px;border:0;background:none;color:#9c6b00}
+.code{font:12px ui-monospace,SFMono-Regular,monospace;overflow-wrap:anywhere}
+.group td{background:#dfeaf8;font-weight:700;padding:7px 12px}
+.stack>*{display:block;margin-bottom:4px}
+.faint{color:#8290a0}
+dialog{border:0;border-radius:14px;max-width:660px;width:95%;padding:22px;box-shadow:0 20px 70px #0004}
+dialog::backdrop{background:#12233888}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid .wide{grid-column:1/-1}
+textarea{min-height:70px;resize:vertical}
+#toast{position:fixed;bottom:22px;right:22px;background:#142d49;color:white;padding:12px 18px;border-radius:9px;display:none;z-index:20}
+#storageWarning{display:none;background:#ffe1df;color:#8b1515;padding:12px;margin-bottom:12px}
+details summary{cursor:pointer;font-weight:650}
+a{color:#175dcc}
+@media(max-width:700px){main{padding:10px}header{padding:16px}.grid{grid-template-columns:1fr}input[type=search]{min-width:220px}.bar label{flex:1}}
+@media print{
+body{background:white;font-size:10px}
+header{background:white;color:black;padding:0}header p{color:black}
+main{padding:0}
+.noprint,.star,.editstock,#toast{display:none!important}
+.panel{border:0;padding:0}
+.tablewrap{max-height:none;overflow:visible;border:0}
+table{min-width:0;font-size:9px}
+th{position:static}
+td,th{padding:4px}
+td.name,td.site,td.classcol{min-width:0;max-width:none}
+tr{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>AMC 聯合藥物清單及點存</h1>
+<p>AMC1 · CWB 銅鑼灣　／　AMC2 · TKP　｜　Formulary：2026-08-05</p>
+</header>
+<main>
+<div id="storageWarning" role="alert"></div>
+
+<section class="panel notice">
+<strong>Formulary 收錄 ≠ 即時存貨；未點存 ≠ 零存貨。</strong>
+<div class="small">
+來源為使用者提供的兩份 PDF 文字。BNF-style 分類屬待覆核整理標籤，不是處方指引。
+不同代碼／劑型分開點存；包裝資料不會自動換算為散裝數量。
+此版本不是批號、到期日或出入庫流水帳管理系統。
+</div>
+</section>
+
+<section class="panel noprint">
+<div class="bar">
+<label class="grow">搜尋藥名、成分、品牌、代碼
+<input id="search" type="search" placeholder="例如：metformin、Lipitor、AMO、眼藥">
+</label>
+<label>診所收錄情況
+<select id="availability">
+<option value="">全部</option>
+<option value="1">AMC1／CWB 有收錄</option>
+<option value="2">AMC2／TKP 有收錄</option>
+<option value="both">同一庫存代碼：兩邊都有</option>
+<option value="only1">同一庫存代碼：只有 AMC1</option>
+<option value="only2">同一庫存代碼：只有 AMC2</option>
+<option value="cross">有跨代碼的兩店對照</option>
+</select>
+</label>
+<label>BNF-style 章節<select id="chapter"><option value="">全部章節</option></select></label>
+<label>細分類<select id="subclass"><option value="">全部細分類</option></select></label>
+<label>劑型<select id="form"><option value="">全部劑型</option></select></label>
+</div>
+<div class="bar" style="margin-top:12px">
+<label>點存篩選診所
+<select id="stockSite"><option value="1">AMC1／CWB</option><option value="2">AMC2／TKP</option></select>
+</label>
+<label>點存狀態
+<select id="stockFilter">
+<option value="">不篩選</option><option value="uncounted">未點存</option>
+<option value="zero">已點存：零存貨</option><option value="low">低於最低存量</option>
+<option value="counted">已點存</option>
+</select>
+</label>
+<label>排列
+<select id="sort"><option value="class">章節 → 類別 → 藥名</option><option value="name">藥名 A–Z</option><option value="code">代碼</option></select>
+</label>
+<button id="resetFilters">清除篩選</button>
+</div>
+</section>
+
+<section class="panel noprint">
+<div class="bar">
+<label>醫生常用藥 preset
+<select id="doctor"><option value="">未選醫生</option></select>
+</label>
+<button id="addDoctor">＋新增醫生</button>
+<button id="renameDoctor">改名</button>
+<button id="deleteDoctor" class="danger">刪除醫生</button>
+<label style="flex-direction:row;align-items:center;padding:8px">
+<input id="favoritesOnly" type="checkbox">只顯示該醫生常用藥
+</label>
+<button id="favoriteVisible">將目前篩選結果加入 preset</button>
+</div>
+<div class="small" style="margin-top:8px">
+星號按庫存項目儲存；選取不同品牌／代碼需分別加星。醫生名稱只供本機分類，並非權限或身份認證。
+</div>
+</section>
+
+<section class="panel">
+<div class="bar noprint">
+<button id="exportCSV" class="primary">匯出目前結果 CSV</button>
+<button id="backup">備份全部資料 JSON</button>
+<button id="restore">還原 JSON</button>
+<input id="restoreFile" type="file" accept=".json,application/json" hidden>
+<button id="print">列印目前結果</button>
+<span id="saveStatus" class="small"></span>
+</div>
+<div id="stats" class="stats"></div>
+<div id="viewInfo" class="small" style="margin-bottom:10px"></div>
+<div class="tablewrap">
+<table>
+<thead><tr>
+<th class="noprint">常用</th><th>BNF-style 分類</th><th>藥物／劑型</th>
+<th>代碼／收錄情況</th><th>AMC1 · CWB</th><th>AMC2 · TKP</th>
+</tr></thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+</section>
+
+<details class="panel">
+<summary>資料處理、對照規則及覆核事項</summary>
+<ul>
+<li>來源：Drug Formulary (AMC1) 5 Aug 2026.pdf；Drug Formulary (AMC2) 5 Aug 2026.pdf。</li>
+<li>藥名以較短的展示文字整理；品牌／成分盡量保留於同一欄。來源頁碼及兩店原始 pack_uom 分開保存。</li>
+<li>唯一識別碼為 drug_type + drug_key；相同 drug_key 但不同劑型不會合併，例如 Ritalin、Tamiflu、Faktu、Tobrex。</li>
+<li>AMC1 的 Simbrinza 一行缺少 drug_type。本表按其 Eye Drop 描述暫設 E，並顯示覆核標記。</li>
+<li>Mounjaro 5mg 行原文缺少通用名；展示文字保留品牌和規格，沒有用空白欄位推斷正式原始資料。</li>
+<li>原文 Tolperisone（AMC1）有「see TOL15ULG-T」；保留獨立代碼並顯示對照。</li>
+<li>UNIT、TAB、100T、500C、10AMP、25V 等包裝標示依提供文字保留，不推斷包裝是否正確。</li>
+<li>跨代碼對照是有限的人工整理，並非完整藥物等效資料庫，更不代表可自行替代。列出的庫存始終獨立。</li>
+<li>同一代碼在兩店的包裝可能不同，例如 Losartan、Entecavir、Phenazopyridine。不可直接把兩店數量相加。</li>
+<li>BNF-style 採用傳統 01–15 章節作導覽；本地產品、器材及未明確對應產品另列 99。細分類並非官方完整 BNF 編碼。</li>
+<li>每項只指定一個主要整理類別；多適應症藥物可能需要本地覆核，例如 leuprorelin、acetazolamide、misoprostol。</li>
+<li>點存是每個 SKU、每間診所的一次最新快照；重存會覆蓋舊快照。沒有批次、有效期、歷史流水或審計追蹤。</li>
+<li>資料只存於本瀏覽器 localStorage。改檔名、換電腦、清除瀏覽器資料或使用私密模式可能令資料無法保留。請定期備份。</li>
+<li>備份含醫生名稱及点存人姓名，請按機構資料管理政策保存；不要輸入病人資料。</li>
+</ul>
+<p class="small">
+分類架構參考：NHS MFT Formulary v9.6（2024）及 NHS Dumfries &amp; Galloway BNF chapter navigation。
+本檔沒有載入外部程式庫，也不會自動連網。
+</p>
+<div id="validation" class="small"></div>
+</details>
+</main>
+
+<dialog id="stockDialog">
+<form id="stockForm">
+<h2 id="stockTitle"></h2>
+<p id="stockSubtitle" class="small"></p>
+<div class="grid">
+<label>實際數量（0 代表已確認無貨）
+<input id="qty" type="number" min="0" step="any" required>
+</label>
+<label>點存單位（必須自行確認）
+<select id="unit" required>
+<option value="">請選擇</option>
+<option>片</option><option>粒</option><option>瓶</option><option>支</option>
+<option>袋</option><option>盒</option><option>套</option><option>管</option>
+<option>包</option><option>枚</option><option>mL</option><option>g</option><option>其他</option>
+</select>
+</label>
+<label>最低存量（與上述相同單位，可留空）
+<input id="minimum" type="number" min="0" step="any">
+</label>
+<label>存放位置<input id="shelf" maxlength="100" placeholder="例如：櫃 A2"></label>
+<label class="wide">點存人<input id="counter" maxlength="80" required></label>
+<label class="wide">備註<textarea id="stockNote" maxlength="1000"></textarea></label>
+</div>
+<p class="small">包裝標示只供參考，不自動換算。此表不是出入庫流水帳。</p>
+<div class="bar">
+<button type="submit" class="primary">儲存點存</button>
+<button type="button" id="clearStock" class="danger">清除此項點存</button>
+<button type="button" id="closeStock">取消</button>
+</div>
+</form>
+</dialog>
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+
+/*
+Data format:
+drug_type | drug_key | display name / aliases | local class | pack_uom
+@N = source page.
+Classification is provisional BNF-style, not an official BNF code.
+Reference framework:
+https://mft.nhs.uk/app/uploads/2024/07/FORMULARY-v9.6-July-2024.pdf
+https://www.rightdecisions.scot.nhs.uk/dgrefhelp-nhs-dumfries-galloway/dg-formulary/
+*/
+
+const CHAPTERS={
+"01":"腸胃系統","02":"心血管系統","03":"呼吸系統",
+"04":"中樞神經系統","05":"感染","06":"內分泌系統",
+"07":"婦產科及泌尿系統","08":"惡性疾病及免疫抑制",
+"09":"營養及血液","10":"肌肉骨骼及關節","11":"眼科",
+"12":"耳鼻口咽","13":"皮膚","14":"疫苗及免疫製品",
+"15":"麻醉","99":"其他／非標準 BNF 對應"
+};
+const CLASSES={
+ANT:["01","制酸劑／藻酸鹽／消脹"],
+PPI:["01","質子泵抑制劑 PPI"],H2:["01","H2 受體拮抗劑"],
+SP:["01","腸胃解痙藥"],DIA:["01","止瀉／腸道吸附劑"],
+LAX:["01","瀉藥／腸道清潔"],HAEM:["01","痔瘡／肛門製劑"],
+IBD:["01","炎症性腸病"],GI:["01","其他腸胃製劑／待核"],
+ACE:["02","ACE 抑制劑"],ARB:["02","ARB／ARB 複方"],
+CCB:["02","鈣通道阻滯劑"],BB:["02","β 受體阻滯劑"],
+DIUR:["02","利尿劑"],ANTIARR:["02","抗心律失常"],
+BP:["02","其他降血壓藥"],LIPID:["02","調血脂藥"],
+PLATE:["02","抗血小板"],COAG:["02","抗凝血"],
+ANG:["02","硝酸鹽／抗心絞痛"],PRESS:["02","血管活性／循環急救"],
+CIRC:["02","其他循環系統用藥"],
+AH:["03","抗組織胺／過敏"],BRONCH:["03","支氣管擴張劑"],
+ICS:["03","吸入皮質類固醇"],ICSLABA:["03","ICS／LABA 複方"],
+LTRA:["03","白三烯受體拮抗劑"],COUGH:["03","止咳／祛痰／黏液溶解"],
+SSRI:["04","SSRI 抗抑鬱藥"],SNRI:["04","SNRI 抗抑鬱藥"],
+TCA:["04","三環類抗抑鬱藥"],ADP:["04","其他抗抑鬱藥"],
+PSY:["04","抗精神病藥"],ADHD:["04","ADHD 用藥"],
+SLEEP:["04","安眠／抗焦慮"],OREX:["04","食慾素受體拮抗劑"],
+PAIN:["04","非鴉片類鎮痛"],OPIOID:["04","鴉片類／複方鎮痛"],
+MIG:["04","偏頭痛用藥"],EPILEP:["04","抗癲癇／神經痛用藥"],
+PARK:["04","柏金遜症"],DEMENT:["04","認知障礙用藥"],
+NAUSEA:["04","止嘔／眩暈"],ANTIDOTE:["04","解毒／鴉片拮抗"],
+PEN:["05","青黴素類"],CEPH:["05","頭孢菌素類"],
+MAC:["05","大環內酯類"],QUIN:["05","喹諾酮類"],
+TETRA:["05","四環素類"],ABX:["05","其他抗菌藥"],
+AV:["05","抗病毒"],AF:["05","全身抗真菌"],
+DM:["06","糖尿病／腸促胰素相關"],STEROID:["06","全身皮質類固醇"],
+THYROID:["06","甲狀腺用藥"],BONE:["06","骨質疏鬆／骨代謝"],
+HRT:["06","性激素／HRT"],
+CONTRA:["07","避孕／緊急避孕／IUD"],GYN:["07","婦科／陰道製劑"],
+FERT:["07","生育／排卵相關"],BPH:["07","前列腺／排尿"],
+OAB:["07","膀胱過動症"],ED:["07","勃起功能障礙"],
+URIN:["07","其他泌尿用藥"],
+HORM:["08","GnRH 類似物／多適應症待核"],
+VIT:["09","維他命／礦物質"],IRON:["09","鐵劑"],
+FLUID:["09","靜脈輸液／補液"],ELECT:["09","電解質／酸鹼平衡"],
+BLOOD:["09","止血／抗纖溶"],
+NSAID:["10","NSAID／COX-2 抑制劑"],GOUT:["10","痛風用藥"],
+MUSCLE:["10","肌肉鬆弛"],JOINT:["10","關節注射／其他关節製劑"],
+EAB:["11","眼用抗感染"],EST:["11","眼用皮質類固醇"],
+ECOMB:["11","眼／耳抗菌＋類固醇"],ELUB:["11","眼部潤滑／角膜保護"],
+EGL:["11","青光眼／眼壓"],EMYD:["11","散瞳／睫狀肌麻痺／阿托品"],
+EALL:["11","眼部抗過敏"],ERET:["11","視網膜／抗 VEGF"],
+EIMM:["11","眼用免疫調節"],ENSAID:["11","眼用 NSAID"],
+EANA:["11","眼用局部麻醉"],EOTHER:["11","其他眼科／清潔"],
+EAR:["12","耳用製劑"],NASAL:["12","鼻用製劑"],MOUTH:["12","口腔／咽喉製劑"],
+SKST:["13","皮膚皮質類固醇"],SKCOMB:["13","皮膚類固醇複方"],
+SKAB:["13","皮膚抗感染"],SKAF:["13","皮膚／指甲抗真菌"],
+ACNE:["13","暗瘡／玫瑰痤瘡"],SKIMM:["13","皮膚免疫調節／抗炎"],
+EMOL:["13","潤膚／屏障／清潔"],ITCH:["13","止癢／舒緩"],
+ANTISEP:["13","皮膚消毒／傷口製劑"],SKOTHER:["13","其他皮膚／角化／疣"],
+VACC:["14","疫苗"],
+LOCAL:["15","局部麻醉"],GENERAL:["15","全身麻醉／程序鎮靜"],
+REVERSE:["15","麻醉／鎮靜逆轉"],
+PROBIO:["99","益生菌／益生元"],DEVICE:["99","器材／耗材"],
+OTHER:["99","其他／需本地覆核"]
+};
+const FORMS={
+T:"口服片劑",CA:"膠囊",I:"注射／輸液",C:"乳膏",U:"軟膏／膏劑",
+O:"眼膏／眼凝膠",E:"眼用滴劑／溶液",L:"口服液體",X:"外用液／噴劑",
+Y:"鼻／咽喉噴劑",N:"滴鼻劑",A:"耳滴劑",H:"吸入劑",
+J:"凝膠",S:"栓劑",V:"陰道製劑",F:"陰道乳膏",W:"袋裝／單位製劑",
+Q:"散裝粉劑",G:"漱口液",R:"外用溶液",D:"貼劑",Z:"含片",M:"其他製劑／器材"
+};
+
+const AMC1=String.raw`
+@1
+T|HYD10EUR|Hydroxyzine 10mg / Atarax (EUR)|AH|1000T
+T|HYD25*EUR|Hydroxyzine 25mg / Atarax (EUR)|AH|1000T
+I|250D5WBAX|Dextrose 5% 250ml (BAX)|FLUID|BAG
+T|ABI2|Abilify / Aripiprazole 2mg|PSY|30T
+T|ACE5|Acertil AR / Perindopril arginine 5mg|ACE|30T
+T|ACE25SYC|Acetazolamide 250mg / Diamox (SYC)|EGL|50T
+I|ACT|Act-HIB 0.5ml IM/Sub-Q / Hib vaccine|VACC|VIAL
+O|ACY3%URS|Acyclovir 3% eye ointment 4.5g / Zovirax (URS)|EAB|TUBE
+C|ACY5STD|Acyclovir 5% cream 5g / Zovirax (STD)|SKAB|TUBE
+T|ACY80STD|Acyclovir 800mg / Zovirax (STD)|AV|35T
+I|ADA0.|Adacel Tdap 0.5ml IM|VACC|VIAL
+I|ADR1:IVDBL|Adrenaline 1:10,000 1mg/10ml IV (DBL)|PRESS|5AMP
+I|ADR1:DBL|Adrenaline 1:1000 1mg/ml IM/Sub-Q (DBL)|PRESS|5AMP
+T|ALUM|Al/Mg/Oxethazaine / Mucaine (EUR)|ANT|1000T
+T|ALU20JMP|Al/Mg/Simethicone (JMP)|ANT|500T
+C|ALD5|Aldara / Imiquimod 5% cream|SKIMM|BOX
+T|ALL10TEV|Allopurinol 100mg / Zyloric (TEV)|GOUT|100T
+T|ALL30TEV|Allopurinol 300mg / Zyloric (TEV)|GOUT|100T
+T|AMB30BLC|Ambroxol HCl 30mg / Mucosolvan (BLC)|COUGH|500T
+T|AMI10ACR|Amitriptyline 10mg / Tryptanol (ACR)|TCA|28T
+T|AMI25ACR|Amitriptyline 25mg / Tryptanol (ACR)|TCA|UNIT
+T|AML10APR|Amlodipine 10mg / Norvasc (APR)|CCB|500T
+T|AML5APR|Amlodipine 5mg / Norvasc (APR)|CCB|500T
+X|AMO5%CHM|Amorolfine 5% nail solution 2.5ml / Loceryl (CHM)|SKAF|BOX
+T|AMO1SAN|Amoxicillin/Clavulanate 1g / Augmentin (SAN)|PEN|10T
+T|AMO37SAN|Amoxicillin/Clavulanate 375mg / Augmentin (SAN)|PEN|20T
+L|AMO45MDR|Amoxicillin/Clavulanate 457mg/5ml suspension 70ml / Augmentin (MDR)|PEN|BOT
+T|AMO62SAN|Amoxicillin/Clavulanate 625mg / Augmentin (SAN)|PEN|12TAB
+CA|AMO50APR|Amoxycillin 500mg / Amoxil (APR)|PEN|500T
+CA|AMP50MDR|Ampi/Cloxacillin 500mg / Ampiclox (MDR)|PEN|100T
+CA|AMP50NAPR|Ampicillin 500mg (APR)|PEN|500C
+U|ANU|Anusol ointment 25g|HAEM|TUBE
+S|ANU|Anusol suppository|HAEM|12U
+T|APR15|Aprovel / Irbesartan 150mg|ARB|28T
+T|APR30|Aprovel / Irbesartan 300mg|ARB|28T
+T|AQU60|Aquipta / Atogepant 60mg|MIG|28T
+T|ARC12|Arcoxia / Etoricoxib 120mg|NSAID|30T
+T|ARC60|Arcoxia / Etoricoxib 60mg|NSAID|30T
+T|ARC90|Arcoxia / Etoricoxib 90mg|NSAID|30T
+I|ARE0.|Arexvy RSV recombinant vaccine 0.5ml IM|VACC|VIAL
+T|ARI2PMS|Aripiprazole 2mg / Abilify (PMS)|PSY|100T
+T|ARI5TEV|Aripiprazole 5mg / Abilify (TEV)|PSY|30T
+E|ART0.|Artelac Advanced UD 30's / Hyaluronic acid 0.2%|ELUB|BOX
+T|ASP10FRM|Aspirin 100mg / Acetylsalicylic acid (FRM)|PLATE|60T
+T|ASP80SYC|Aspirin 80mg orange (SYC)|PLATE|500T
+T|ATE50APR|Atenolol 50mg / Tenormin (APR)|BB|500T
+CA|ATO10EAPO|Atomoxetine 10mg / Strattera (APO)|ADHD|30C
+CA|ATO18EAPO|Atomoxetine 18mg / Strattera (APO)|ADHD|30C
+CA|ATO25EAPO|Atomoxetine 25mg / Strattera (APO)|ADHD|30C
+CA|ATO40EAPO|Atomoxetine 40mg / Strattera (APO)|ADHD|30C
+CA|ATO60EAPO|Atomoxetine 60mg / Strattera (APO)|ADHD|30C
+T|ATO10SAN|Atorvastatin 10mg / Lipitor (SAN)|LIPID|30T
+T|ATO10STE|Atorvastatin 10mg / Lipitor (STE)|LIPID|500T
+T|ATO20SAN|Atorvastatin 20mg / Lipitor (SAN)|LIPID|30T
+@2
+T|ATO20STE|Atorvastatin 20mg / Lipitor (STE)|LIPID|500T
+T|ATO10/10|Atozet / Ezetimibe/Atorvastatin 10/10mg|LIPID|30T
+T|ATO10/20|Atozet / Ezetimibe/Atorvastatin 10/20mg|LIPID|30T
+E|ATR0.05WFL|Atropine 0.05% eye drop 5ml (WFL)|EMYD|TUBE
+E|ATR0.SWFL|Atropine 0.05% SDU 0.5ml × 30 (WFL)|EMYD|BOX
+E|ATR1%COP|Atropine 1% eye drop 10ml (COP)|EMYD|BOT
+I|ATR1PMN|Atropine 1mg/ml IM/IV/Sub-Q (PMN)|ANTIARR|10AMP
+Y|AVA|Avamys / Fluticasone furoate 27.5mcg nasal spray|NASAL|SET
+CA|AVO0.|Avodart / Dutasteride 0.5mg|BPH|30C
+L|AZI20SAN|Azithromycin 200mg/5ml suspension 15ml / Zithromax (SAN)|MAC|15ML
+T|AZI25SAN|Azithromycin 250mg / Zithromax (SAN)|MAC|6TAB
+E|AZO1%|Azopt / Brinzolamide 1% eye drop 5ml|EGL|BOT
+T|AZO20/5|Azoren / Olmesartan/Amlodipine 20/5mg|ARB|30T
+U|BAC3|Bactroban / Mupirocin 2% nasal ointment 3g|NASAL|TUBE
+J|BEN5GAL|Benzoyl peroxide 5% gel 15g / Panoxyl (GAL)|ACNE|TUBE
+C|BET15HOV|Betamethasone valerate 0.1% cream 15g / Betnovate (HOV)|SKST|TUBE
+C|BET15EUR|Betamethasone/Gentamicin/Clotrimazole cream 15g / Triderm (EUR)|SKCOMB|TUBE
+C|BET15HPL|Betamethasone/Gentamicin cream / BeproGENT / Diprogenta (HPL)|SKCOMB|TUBE
+U|BETS15HPL|Betamethasone/Salicylic acid ointment 15g / Beprosalic / Diprosalic (HPL)|SKCOMB|TUBE
+T|BET50A|Betmiga / Mirabegron 50mg prolonged release|OAB|30T
+X|BETS|Betnovate / Betamethasone valerate 0.1% scalp application 30ml|SKST|BOT
+I|BEX0.|Bexsero meningococcal B 0.5ml IM PFS|VACC|AMP
+M|BIOT|Biomed Tailormade Probiotic Kit|PROBIO|BOX
+M|BLE|Blephaclean sterile eye wipes 20's|EOTHER|BOX
+T|BRI10|Brintellix / Vortioxetine 10mg|ADP|28T
+T|BRI5X|Brintellix / Vortioxetine 5mg|ADP|28T
+T|BRO8ACT|Bromhexine 8mg / Bisolvon (ACT)|COUGH|1000T
+I|BUS20|Buscopan / Hyoscine butylbromide 20mg/ml IM/IV/Sub-Q|SP|10AMP
+C|CAL20UPL|Calamine 20% cream 450g (UPL)|ITCH|450G
+X|CALUPL|Calamine lotion 120ml (UPL)|ITCH|BOT
+T|CAL50D|CalciChew D3 / Calcium 500mg + Vitamin D3 400units chewable|VIT|60T
+I|CAL10OME|Calcium chloride 10% 1g/10ml IV (OME)|ELECT|10VIA
+C|CAN|Canesten / Clotrimazole 1% cream 20g|SKAF|TUBE
+T|CAR12APO|Carbidopa/Levodopa 25/100mg / Sinemet (APO)|PARK|100T
+T|CAR25SUP|Carbidopa/Levodopa ER 50/200mg / Sinemet CR (SUP)|PARK|100T
+T|CAR5REM|Carbimazole 5mg / Neo Mercazole (REM)|THYROID|1000T
+T|CAR100|Cardiprin / Aspirin/Glycine 100mg|PLATE|30T
+E|CAT0.|Cationorm UD 0.4ml × 30|ELUB|BOX
+T|CEF25STD|Cefuroxime axetil 250mg / Zinnat (STD)|CEPH|10T
+CA|CEL20|Celebrex / Celecoxib 200mg|NSAID|100C
+C|CET10|Cetaphil cream 100g|EMOL|TUBE
+T|CET10SAN|Cetirizine 10mg / Zyrtec (SAN)|AH|20T
+T|CHA30JLB|Charcoal 300mg (JLB)|DIA|100T
+M|CHL0.05LQU|Chlorhexidine digluconate 0.05% solution 10ml / Hibitane (LQU)|ANTISEP|24U
+I|CHL10ATN|Chlorpheniramine 10mg/ml IM/IV / Piriton (ATN)|AH|50AMP
+L|CHL2EUR|Chlorpheniramine 2mg/5ml syrup / Piriton (EUR)|AH|480ML
+T|CHL4DHA|Chlorpheniramine 4mg / Piriton (DHA)|AH|1000T
+T|CIA20|Cialis / Tadalafil 20mg|ED|4TABS
+T|CIA5|Cialis / Tadalafil 5mg|ED|28T
+T|CIP25|Ciproxin / Ciprofloxacin 250mg|QUIN|100T
+T|CLA25STE|Clarithromycin 250mg / Klacid (STE)|MAC|20T
+T|CLO50RNT|Clomiphene 50mg / Clomid (RNT)|FERT|10T
+X|CLO1%HPL|Clotrimazole 1% lotion 10ml / Lotremin (HPL)|SKAF|BOT
+V|CLO10KOL|Clotrimazole 100mg pessary / Canesten (KOL)|GYN|12U
+@3
+V|CLO50THE|Clotrimazole 500mg vaginal tablet / Canesten One-Day (THE)|GYN|2T
+CA|CLO25VCK|Cloxacillin 250mg / Orbenin (VCK)|PEN|500C
+T|COA15|Co-Aprovel / Irbesartan/HCTZ 150/12.5mg|ARB|28T
+T|COA30|Co-Aprovel / Irbesartan/HCTZ 300/12.5mg|ARB|28T
+T|COD15BNEO|Codeine/Bromhexine 15/8mg (NEO)|COUGH|100T
+T|COL0.SYC|Colchicine 0.5mg (SYC)|GOUT|500T
+T|CON18|Concerta / Methylphenidate 18mg|ADHD|30T
+T|CON27|Concerta / Methylphenidate 27mg|ADHD|30T
+T|CON36|Concerta / Methylphenidate 36mg|ADHD|30T
+T|CON54|Concerta / Methylphenidate extended release 54mg|ADHD|30T
+T|CON2.|Concor / Bisoprolol fumarate 2.5mg|BB|30T
+T|CON5|Concor / Bisoprolol fumarate 5mg|BB|100T
+X|CO-P|Co-Phenylcaine Forte / Lignocaine/Phenylephrine 50+5mg/ml spray 50ml|LOCAL|BOT
+M|CO-PN|Co-Phenylcaine Forte short flexi nozzle / see NOZ-M|DEVICE|50U
+I|COR15|Cordarone / Amiodarone 150mg/3ml IV|ANTIARR|6AMP
+O|COR50|Corneregel / Dexpanthenol 50mg/g eye gel 10g|ELUB|TUBE
+G|COR|Corsodyl / Chlorhexidine digluconate 0.2% mouthwash 300ml|MOUTH|BOT
+E|CRA0.|Cravit / Levofloxacin 0.5% eye drop 5ml|EAB|BOT
+T|CRE10|Crestor / Rosuvastatin 10mg|LIPID|28T
+T|CRE20|Crestor / Rosuvastatin 20mg|LIPID|28T
+T|CRE5|Crestor / Rosuvastatin 5mg|LIPID|28T
+E|CYC10|Cyclogyl / Cyclopentolate 1% eye drop 15ml|EMYD|BOT
+T|CYP4VCK|Cyproheptadine 4mg / Periactin (VCK)|AH|1000T
+T|CYT20|Cytotec / Misoprostol 200mcg|GI|100T
+T|DAF10|Daflon / Diosmin/Hesperidin 1000mg|CIRC|30T
+U|DAIT30|Daivobet / Calcipotriol/Betamethasone ointment 30g|SKCOMB|TUBE
+U|DAI|Daivonex / Calcipotriol 50mcg/g ointment 30g|SKOTHER|TUBE
+X|DALL|Dalacin-T / Clindamycin 1% lotion 60ml|ACNE|BOT
+T|DAY5|Dayvigo / Lemborexant 5mg|OREX|28T
+Z|DEQ0.APR|Dequalinium chloride 0.25mg lozenge / Dequadin (APR)|MOUTH|500T
+J|DER15X|Dermatix Ultra advanced silicone gel 15g|SKOTHER|TUBE
+C|DER25|Dermazin / Silver sulfadiazine 1% cream 25g|SKAB|TUBE
+U|CLO0.HPL|Clobetasol propionate 0.05% ointment / Dermovate (HPL)|SKST|TUBE
+X|DER|Dermovate scalp application|SKST|BOT
+T|DES5VCK|Desloratidine 5mg / Aerius (VCK)|AH|500T
+E|DEX5EIP|Dexamethasone/Neomycin/Polymycin B eye/ear drop 5ml / Dexatrol (EIP)|ECOMB|BOT
+I|DEX4HME|Dexamethasone 4mg/ml IV/IM (HME)|STEROID|10AMP
+T|DEX2KOT|Dexchlorpheniramine 2mg / Polaramine (KOT)|AH|100T
+CA|DEX30|Dexilant DR / Dexlansoprazole DR 30mg|PPI|14C
+T|DEX15BLC|Dextromethorphan DM 15mg (BLC)|COUGH|500T
+L|DEX15XSP|Dextromethorphan DM 15mg/5ml linctus 90ml (XSP)|COUGH|90ML
+I|DEX5%50BAX|Dextrose 5% injection 500ml (BAX)|FLUID|BAG
+T|PRE5LDHA|Dhasolone / Prednisolone 5mg (DHA)|STEROID|1000T
+T|DIA5VCK|Diazepam 5mg / Valium (VCK)|SLEEP|1000T
+I|DIC75MDM|Diclofenac 75mg/3ml IM / Voltaren (MDM)|NSAID|10AMP
+T|DIC10APR|Diclofenac sodium 100mg ER / Voltaren SR (APR)|NSAID|500T
+T|DIC25CDL|Diclofenac sodium 25mg / Voltaren (CDL)|NSAID|1000T
+L|DIC5XSP|Dicyclomine/Simethicone 5+50mg/5ml syrup 90ml / Infacol C / Colimix|SP|BOT
+J|DIF0.|Differin / Adapalene 0.1% gel 30g|ACNE|TUBE
+Z|DIF3M|Difflam 3mg orange lozenge / Benzydamine/Cetylpyridinium 16's|MOUTH|16T
+Y|DIF0.3|Difflam Forte / Benzydamine 3mg/ml throat spray 15ml|MOUTH|BOT
+J|DIF|Difflam / Benzydamine/Cetylpyridinium mouth gel 10g|MOUTH|TUBE
+T|DIO80|Diovan / Valsartan 80mg|ARB|28T
+@4
+L|DIP12.5EUR|Diphenhydramine/NH4Cl syrup / Benadryl Expectorant (EUR)|COUGH|3.6L
+T|DIP2.VCK|Diphenoxylate/Atropine 2.5/0.025mg / Lomotil (VCK)|DIA|1000T
+L|DEX15EUR|DM/Promethazine/Ephedrine syrup (EUR)|COUGH|3.6L
+T|DOM10SYC|Domperidone 10mg / Motilium (SYC)|NAUSEA|500T
+I|DOP20LBS|Dopamine 200mg/5ml IV (LBS)|PRESS|10AMP
+I|DOR5M|Dormicum / Midazolam 5mg/5ml IV/IM/Rectal|GENERAL|10AMP
+CA|DOX10HOV|Doxycycline 100mg / Vibramycin (HOV)|TETRA|100C
+CA|DUO0.|Duodart / Dutasteride/Tamsulosin 0.5/0.4mg|BPH|30C
+L|DUP|Duphalac / Lactulose liquid|LAX|1L
+T|DUP10|Duphaston / Dydrogesterone 10mg|GYN|20T
+O|DUR|Duratears / Lanolin/Mineral oil/White petrolatum eye ointment 3.5g|ELUB|TUBE
+Y|DYM13|Dymista / Azelastine/Fluticasone propionate 137/50mcg nasal 120 doses|NASAL|SET
+T|EBI20|Ebixa / Memantine HCl 20mg|DEMENT|28T
+CA|EFE15|Efexor XR / Venlafaxine XR 150mg|SNRI|28C
+CA|EFE37|Efexor XR / Venlafaxine XR 37.5mg|SNRI|28C
+CA|EFE75|Efexor XR / Venlafaxine XR 75mg|SNRI|28C
+C|ELI1%|Elidel / Pimecrolimus 1% cream 15g|SKIMM|TUBE
+C|ELO15|Elomet / Mometasone furoate cream 15g|SKST|TUBE
+U|ELO15|Elomet / Mometasone furoate ointment 15g|SKST|TUBE
+X|ELO|Elomet scalp lotion 30ml|SKST|BOT
+C|EML5%|Emla / Lidocaine/Prilocaine 5% cream 5g|LOCAL|5TUBE
+U|EMUEUR|Emulsifying ointment (EUR)|EMOL|1JAR
+I|ENA3.D|Enantone 1 Month DPS / Leuprorelin depot 3.75mg Sub-Q PFS|HORM|SET
+I|ENG20B|Engerix B Adult / Hepatitis B 20mcg/ml IM PFS|VACC|AMP
+T|ENT0.SYC|Entecavir 0.5mg / Baraclude (SYC)|AV|500T
+W|ENT2|Enterogermina / Bacillus clausii 2B/5ml oral suspension units 20's|PROBIO|20U
+I|EPH30DBL|Ephedrine 30mg/ml IM/IV/Sub-Q (DBL)|PRESS|5AMP
+J|EPI0.|Epiduo / Adapalene/Benzoyl peroxide 0.1/2.5% gel 15g|ACNE|TUBE
+T|ESC1.|Escapelle / Levonorgestrel 1.5mg|CONTRA|TAB
+T|ESC10ACT|Escitalopram 10mg / Lexapro (ACT)|SSRI|28T
+T|ESO20SAN|Esomeprazole 20mg / Nexium (SAN)|PPI|14T
+T|ESO40BAL|Esomeprazole 40mg gastro-resistant / Nexium (BAL)|PPI|14T
+C|EUR|Eurax / Crotamiton 10% cream 20g|ITCH|TUBE
+T|EXF10/160|Exforge / Amlodipine/Valsartan 10/160mg|ARB|28T
+T|EXF16|Exforge / Valsartan 160mg + Amlodipine 5mg|ARB|28T
+T|EXF5/80|Exforge / Amlodipine/Valsartan 5/80mg|ARB|28T
+T|EZE10INS|Ezetimibe 10mg / Ezetrol (INS)|LIPID|30T
+U|FAK|Faktu ointment 20g|HAEM|TUBE
+S|FAK|Faktu / Cinchocaine HCl/Policresulen suppository|HAEM|10U
+T|FAM20HOV|Famotidine 20mg / Pepcidine (HOV)|H2|100T
+J|FAS2.M|Fastum / Ketoprofen 2.5% gel 30g|NSAID|TUBE
+T|FEB80|Feburic / Febuxostat 80mg|GOUT|28T
+T|FER10|Ferrum / Iron(III) hydroxide polymaltose complex 100mg chewable|IRON|30T
+T|FLE10APO|Flecainide acetate 100mg / Tambocor (APO)|ANTIARR|100T
+CA|FLU15APO|Fluconazole 150mg / Diflucan (APO)|AF|TAB
+W|FLU10|Fluimucil A / Acetylcysteine 100mg sachet|COUGH|30PAC
+W|FLU20|Fluimucil A / Acetylcysteine 200mg sachet|COUGH|30PAC
+T|FLU60|Fluimucil A / Acetylcysteine 600mg effervescent|COUGH|10T
+V|FLU10|Fluomizin / Dequalinium 10mg pessary|GYN|6TAB
+E|FLU01DAW|Fluorometholone 0.1% eye drop 5ml / FML (DAW)|EST|BOT
+CA|FLU10APO|Fluoxetine 10mg / Prozac (APO)|SSRI|100C
+CA|FLU20APR|Fluoxetine 20mg / Prozac (APR)|SSRI|500C
+E|FML|FML / Fluorometholone 0.1% eye drop 5ml|EST|BOT
+T|FOL1JAM|Folic acid 1mg (JAM)|VIT|100T
+T|FOR10|Forxiga / Dapagliflozin 10mg|DM|28T
+@5
+T|FOS70|Fosamax / Alendronate 70mg|BONE|4TABS
+T|FOS70P|Fosamax Plus / Alendronate/Colecalciferol 70mg/2800units|BONE|4TABS
+C|FUC|Fucicort / Fusidic acid/Betamethasone valerate cream 15g|SKCOMB|TUBE
+C|FUCN|Fucidin / Fusidic acid 2% cream 15g|SKAB|TUBE
+U|FUC|Fucidin / Fusidic acid 2% ointment 15g|SKAB|TUBE
+I|GAR9|Gardasil-9 / HPV 9-valent vaccine 0.5ml IM|VACC|AMP
+L|GAV10|Gaviscon Advance / Sodium alginate/Potassium bicarbonate 1000/200mg liquid 150ml|ANT|BOT
+T|GAV50|Gaviscon Extra Strength 500 / Sodium alginate/NaHCO3/CaCO3|ANT|24TAB
+I|GEL50|Gelofusine / Succinylated gelatin infusion 500ml|FLUID|10BOT
+C|GEN0.EUR|Gentamicin 0.3% cream 450g / Garamycin (EUR)|SKAB|450G
+E|GEN5FDC|Gentamicin/Dexamethasone 0.3/0.1% eye/ear drop 5ml (FDC)|ECOMB|BOT
+W|GIK|GI Klean / PEG + electrolytes / Klean Prep powder|LAX|10PAC
+T|GLI80APR|Gliclazide 80mg / Diamicron (APR)|DM|500T
+T|GLU10X|Glucophage XR / Metformin XR 1000mg|DM|60T
+I|GLU5%10BBR|Glucose 5% injection 100ml Non-PVC (BBR)|FLUID|BOT
+T|GLY0.5ACT|Glyceryl trinitrate 0.5mg sublingual / TNG (ACT)|ANG|BOT
+W|G-N2|G-NiiB Immunity Pro 10b CFU sachet 2g / Prebiotics + 3 Bifidobacteria|PROBIO|28U
+W|G-N2M3|G-NiiB M3xtra Pro 12.5b CFU sachet 2g / Pre-probiotics + Streptococci|PROBIO|28U
+L|DIM15XSP|Gravol / Dimenhydrinate 15mg/5ml syrup 60ml (XSP)|NAUSEA|60ML
+T|DIM50DHA|Gravol / Dimenhydrinate 50mg (DHA)|NAUSEA|1000T
+T|HAR04|Harnal OCAS / Tamsulosin OCAS 0.4mg|BPH|30T
+I|HAV14|Havrix 1440 / Hepatitis A adult vaccine 1ml IM|VACC|AMP
+I|HEX0.|Hexaxim / DTP-IPV-Hib-Hep B 6-in-1 vaccine 0.5ml IM|VACC|VIAL
+C|HIRF|Hirudoid Forte / Heparinoid 40000u cream 14g|SKOTHER|TUBE
+I|HYA20|Hyalgan / Hyaluronate 20mg/2ml IA|JOINT|UNIT
+T|HYD25APO|Hydrochlorothiazide HCTZ 25mg / Dichlotride (APO)|DIUR|1000T
+C|HYD1%EUR|Hydrocortisone 1% cream 15g (EUR)|SKST|TUBE
+C|HYD1%NEUR|Hydrocortisone/Neomycin 1%/0.5% cream 15g|SKCOMB|TUBE
+R|HYD3%JSP|Hydrogen peroxide 3% solution 50ml (JSP)|ANTISEP|BOT
+E|HYL10|Hylo Gel / Sodium hyaluronate 2mg/ml lubricating eye drops 10ml|ELUB|BOT
+L|HYO5DHA|Hyoscine butylbromide 5mg/5ml syrup / Buscopan (DHA)|SP|3.8L
+T|HYO10ACT|Hyoscine butylbromide 10mg / Buscopan (ACT)|SP|1000T
+L|IBU10LBM|Ibuprofen 100mg/5ml suspension / Brufen (LBM)|NSAID|100ML
+T|IBU20HKK|Ibuprofen 200mg / Brufen (HKK)|NSAID|100T
+I|IMODT|Imovax D.T. adult diphtheria/tetanus vaccine 0.5ml IM/Sub-Q PFS|VACC|AMP
+E|ISO2%|Isopto-Carpine / Pilocarpine 2% eye drop 15ml|EGL|BOT
+T|JAN50|Janumet / Sitagliptin/Metformin 50/500mg|DM|56T
+T|JAR10|Jardiance / Empagliflozin 10mg|DM|30T
+T|JAR25|Jardiance / Empagliflozin 25mg|DM|30T
+T|KEP25|Keppra / Levetiracetam 250mg|EPILEP|60T
+T|LAB10|Labixten / Bilastine 10mg OD tablet|AH|10T
+T|LAB20|Labixten / Bilastine 20mg|AH|50T
+CA|LAC|Lacteol Fort / Lactobacillus acidophilus|PROBIO|100C
+T|LAS40|Lasix / Frusemide 40mg|DIUR|20T
+T|LAT20|Latuda / Lurasidone 20mg|PSY|30T
+T|LAT40|Latuda / Lurasidone 40mg|PSY|30T
+T|LEV25SAN|Levofloxacin 250mg / Cravit (SAN)|QUIN|100T
+T|LEX10P|Lexapro / Escitalopram 10mg|SSRI|28T
+I|LIG2PFI|Lignocaine 2% IV/LA 5ml / Xylocaine (PFI)|LOCAL|50AMP
+C|LIPB|Lipikar Baume AP+M cream 400ml|EMOL|BOT
+T|LIP10R|Lipitor / Atorvastatin 10mg|LIPID|30T
+T|LIP20|Lipitor / Atorvastatin 20mg|LIPID|30T
+T|LIP40|Lipitor / Atorvastatin 40mg|LIPID|30T
+T|LIS10APR|Lisinopril 10mg / Zestril (APR)|ACE|500T
+T|LOP2ACT|Loperamide 2mg / Imodium (ACT)|DIA|1000T
+@6
+T|LOR10STE|Loratadine 10mg / Clarityne (STE)|AH|500T
+CA|LOR5PPTF|Loratadine/Pseudoephedrine 5/120mg ER / Clarinase|AH|50C
+T|LOR1MDM|Lorazepam 1mg / Ativan (MDM)|SLEEP|1000T
+T|LOS10VCK|Losartan 100mg / Cozaar (VCK)|ARB|500T
+T|LOS50STE|Losartan 50mg / Cozaar (STE)|ARB|30T
+E|LOT0.|Lotemax / Loteprednol 0.5% eye drop 5ml|EST|BOT
+C|LUM15|Lumirix / Ruxolitinib 15mg/g cream 100g|SKIMM|TUBE
+CA|LYR25|Lyrica / Pregabalin 25mg|EPILEP|56C
+CA|LYR75|Lyrica / Pregabalin 75mg|EPILEP|56C
+T|LYS30VCK|Lysozyme 30mg / Neuzym (VCK)|OTHER|1000T
+O|MAX|Maxitrol / Dexamethasone/Neomycin/Polymyxin B eye ointment 3.5g|ECOMB|TUBE
+CA|MEF25EUR|Mefenamic acid 250mg / Ponstan (EUR)|NSAID|1000C
+T|MEL3NTF|Melatonin 3mg (NTF)|SLEEP|90T
+I|MEN0.I|Menquadfi / Meningococcal ACYW conjugate vaccine 0.5ml IM|VACC|VIAL
+C|MEP2%MPL|Mepyramine maleate 2% cream 18g / Anthisan (MPL)|ITCH|TUBE
+T|MER6|Merislon / Betahistine mesylate 6mg|NAUSEA|1000T
+Q|MET28|Metamucil / Psyllium smooth powder 283g|LAX|BOT
+T|MET50HOV|Metformin 500mg / Glucophage (HOV)|DM|100T
+T|MET50EHOV|Metformin ER 500mg / Glucophage XR (HOV)|DM|100T
+T|MET25APR|Methyldopa 250mg / Aldomet (APR)|BP|500T
+T|MET18BAL|Methylphenidate PR 18mg / Concerta (BAL)|ADHD|30T
+T|MET27BAL|Methylphenidate PR 27mg / Concerta (BAL)|ADHD|30T
+T|MET36BAL|Methylphenidate PR 36mg / Concerta (BAL)|ADHD|30T
+T|MET10ACT|Metoclopramide 10mg / Maxolon / Primperan (ACT)|NAUSEA|1000T
+I|METO10ESNF|Metoclopramide 10mg/2ml IM/IV / Maxolon / Primperan (SNF)|NAUSEA|6AMP
+T|MET50APR|Metoprolol tartrate 50mg / Betaloc (APR)|BB|500T
+T|MET20EUR|Metronidazole 200mg / Flagyl (EUR)|ABX|1000T
+C|MICHCXSP|Miconazole/Hydrocortisone 2%/1% cream 15g / Zaricort / Daktacort|SKCOMB|TUBE
+T|MIC30|Microgynon 30 / Ethinylestradiol/Levonorgestrel 0.03/0.15mg 21's|CONTRA|PACK
+M|MIR|Mirena / Levonorgestrel 20mcg/24hr IUD|CONTRA|SET
+J|MIR3.|Mirvaso / Brimonidine 3mg/g gel 30g|ACNE|TUBE
+D|MOH2%|Mohrus / Ketoprofen 2% patch 7's|NSAID|BOX
+M|MON38|Mona Lisa NT Cu380 IUD|CONTRA|SET
+I|MON88|Monovisc / Sodium hyaluronate 88mg/4ml IA|JOINT|AMP
+T|MON10SAN|Montelukast 10mg / Singulair (SAN)|LTRA|28T
+W|MON|Monurol / Fosfomycin 3g sachet|ABX|PACK
+I|MOU2.|Mounjaro / Tirzepatide 2.5mg/0.6ml Sub-Q KwikPen 2.4ml|DM|UNIT
+I|MOU5|Mounjaro 5mg/0.6ml Sub-Q KwikPen 2.4ml|DM|UNIT
+T|MUC60|Mucinex / Guaifenesin 600mg ER|COUGH|20T
+U|MUP2%TGP|Mupirocin 2% ointment 10g / Bactroban (TGP)|SKAB|TUBE
+E|MYD10|Mydrin-P / Tropicamide/Phenylephrine eye drop 10ml|EMYD|BOT
+I|NAL0.HME|Naloxone 0.4mg/ml IV/IM / Narcan (HME)|ANTIDOTE|10AMP
+T|NAP25EAPO|Naproxen 250mg / Naprosyn (APO)|NSAID|100T
+M|NAS3.|NasalCare nasal rinse powder 3.5g / Sea salt/Sodium citrate/Citric acid|NASAL|30PAC
+M|NAS30|NasalCare starter kit 30's|NASAL|UNIT
+Y|NAS|Nasonex / Mometasone 50mcg nasal spray|NASAL|SET
+T|NAT1.|Natrilix SR / Indapamide SR 1.5mg|DIUR|30T
+T|NESM|Nestle MOM Vitamins/Minerals/DHA capsule|VIT|30C
+T|NEUP|Neurobion Protect / Vitamin B1/B6/B12 93mg/46mg/900mcg|VIT|90T
+E|NEV0.|Nevanac / Nepafenac 0.1% eye drop 5ml|ENSAID|BOT
+T|NEX20|Nexium / Esomeprazole 20mg|PPI|14T
+T|NEX40|Nexium / Esomeprazole 40mg|PPI|14T
+T|NIL18|Nilemdo / Bempedoic acid 180mg|LIPID|28T
+U|NIS|Nisita saline nasal ointment 20g|NASAL|TUBE
+@7
+T|NIT10APO|Nitrofurantoin 100mg (APO)|ABX|100T
+M|NIZ2%10|Nizoral / Ketoconazole 2% shampoo 100ml|SKAF|BOT
+T|NOR5EGED|Norethisterone 5mg / Norcolut (GED)|GYN|20T
+T|NOR10|Norvasc / Amlodipine 10mg|CCB|30T
+T|NOR2.|Norvasc / Amlodipine 2.5mg|CCB|30T
+T|NOR5|Norvasc / Amlodipine 5mg|CCB|30T
+T|NUR75|Nurtec / Rimegepant 75mg oral lyophilisate sublingual tablet|MIG|8TAB
+T|NUS|Nustendi / Bempedoic acid/Ezetimibe 180/10mg|LIPID|28T
+L|NYS10PMS|Nystatin 100000units/ml suspension / Mycostatin (PMS)|AF|BOT
+A|OFL0.JMP|Ofloxacin 0.3% otic solution 10ml / Tarivid (JMP)|EAR|BOT
+A|OLIMPL|Olive oil ear drop (MPL)|EAR|BOT
+T|OLM10|Olmetec / Olmesartan 10mg|ARB|30T
+T|OLM20|Olmetec / Olmesartan 20mg|ARB|30T
+CA|OME20XSP|Omeprazole 20mg / Losec (XSP)|PPI|14C
+W|ORA5.DHA|Oral rehydration salts NF 5.3g sachet / GES (DHA)|ELECT|50U
+A|OTOZA|Otozambon / Lidocaine/Neomycin/Polymyxin B ear drop 8ml|EAR|BOT
+Y|OTR|Otrivin Adult / Xylometazoline 0.1% nasal spray 10ml|NASAL|BOT
+N|OTR|Otrivin Paed / Xylometazoline 0.05% nose drop 10ml|NASAL|BOT
+I|OZE0.5|Ozempic / Semaglutide 0.5mg/dose Sub-Q 1.5ml PFP|DM|UNIT
+T|PAN66|Panadol Extend / Paracetamol SR 665mg caplet|PAIN|96TAB
+T|PAN20|Pantoloc / Pantoprazole 20mg|PPI|14T
+T|PAN40|Pantoloc / Pantoprazole 40mg|PPI|14T
+L|PAR25ULP|Paracetamol 250mg/5ml suspension 60ml / Panadol (ULP)|PAIN|BOT
+T|PAR50APR|Paracetamol 500mg / Panadol (APR)|PAIN|500T
+T|PAR20|Pariet / Rabeprazole 20mg|PPI|14T
+E|PAT0.2|Pataday / Olopatadine 0.2% eye drop 2.5ml|EALL|BOT
+E|PEM0.|Pemirox / Pemirolast 0.1% eye drop 5ml|EALL|BOT
+T|PEN40APO|Pentoxifylline SR 400mg / Trental (APO)|CIRC|100T
+T|PHE10ECPL|Phenazopyridine 100mg / Pyridium (CPL)|URIN|500T
+E|PHE2.5|Phenylephrine 2.5% Minims eye drop|EMYD|20U
+I|PHE10OME|Phenylephrine HCl 10mg/ml IV/IM/Sub-Q / Neo-Synephrine (OME)|PRESS|10VIA
+C|PHY50|Physiogel AI cream 50ml|EMOL|TUBE
+M|PHY15|Physiogel cleanser 150ml / Sodium cocoyl isethionate|EMOL|BOT
+C|PHY75|Physiogel cream 75ml|EMOL|TUBE
+W|PIC16P|PicoPrep 16.1g sachet / Sodium picosulfate/MgO/Citric acid|LAX|2U
+M|PIN|Pinetarsol 200ml|ITCH|BOT
+I|PIT20|Pitressin / Vasopressin 20units/ml IV/IM/Sub-Q|PRESS|10AMP
+T|PLA75|Plavix / Clopidogrel bisulfate 75mg|PLATE|28T
+T|PLE5|Plendil / Felodipine 5mg ER|CCB|30T
+I|PNE23X|Pneumovax-23 / PPSV23 vaccine 0.5ml Sub-Q/IM PFS|VACC|AMP
+T|POT60MYL|Potassium chloride SR 600mg/8mEq / Slow K (MYL)|ELECT|90T
+R|POT4UPL|Potassium permanganate 4% solution / KMnO4 (UPL)|ANTISEP|450ML
+I|PRA15|Praluent / Alirocumab 150mg/ml Sub-Q PFP|LIPID|AMP
+T|PRA2APR|Prazosin 2mg / Minipress (APR)|BP|500T
+E|PRE1%|Pred Forte / Prednisolone 1% eye drop 5ml|EST|BOT
+CA|PRE75PMS|Pregabalin 75mg / Lyrica (PMS)|EPILEP|56C
+F|PRE14|Premarin / Conjugated estrogen 0.625mg/g vaginal cream 14g|GYN|TUBE
+I|PRE20|Prevenar-20 / PCV20 vaccine 0.5ml IM PFS|VACC|VIAL
+I|PRI0.|Priorix MMR live vaccine 0.5ml Sub-Q/IM|VACC|VIAL
+T|PRI50|Pristiq / Desvenlafaxine extended release 50mg|SNRI|28T
+T|PRO5TEV|Prochlorperazine 5mg / Stemetil (TEV)|NAUSEA|1000T
+I|PRO60|Prolia / Denosumab 60mg Sub-Q PFS|BONE|AMP
+T|PRO10SYC|Promethazine HCl 10mg / Phenergan (SYC)|AH|1000T
+L|PRO4ICM|Promethazine/Codeine/Ephedrine syrup / Phensedyl (ICM)|COUGH|120ML
+T|PRO1|Propecia / Finasteride 1mg|SKOTHER|28T
+@8
+T|PRO10ACT|Propranolol 10mg / Inderal (ACT)|BB|28T
+T|PRO10APO|Propranolol 10mg / Inderal (APO)|BB|100T
+T|PRO40MDO|Propranolol 40mg / Inderal (MDO)|BB|100T
+L|PRO10|Prospan / Ivy leaf dry extract 35mg/5ml cough syrup 100ml|COUGH|BOT
+U|PRO0.03|Protopic / Tacrolimus 0.03% ointment 30g|SKIMM|TUBE
+U|PRO0.1|Protopic / Tacrolimus 0.1% ointment 30g|SKIMM|TUBE
+T|PRO5|Provera / Medroxyprogesterone 5mg|GYN|100T
+T|QUE10MCD|Quetiapine 100mg / Seroquel (MCD)|PSY|60T
+T|QUE25APO|Quetiapine 25mg / Seroquel (APO)|PSY|30T
+T|QUV25|Quviviq / Daridorexant 25mg|OREX|30T
+T|QUV50|Quviviq / Daridorexant 50mg|OREX|10T
+E|REF|Refresh Plus / Carboxymethylcellulose 0.5% UD eye drop|ELUB|BOX
+E|REF15|Refresh Tears / Carboxymethylcellulose 0.5% eye drop 15ml|ELUB|BOT
+E|RES0.|Restasis / Cyclosporin A 0.05% ophthalmic emulsion 30's|EIMM|BOX
+T|REU10|Reuteri / Lactobacillus reuteri 100 million cells chewable|PROBIO|10T
+T|RIS0.5APO|Risperidone 0.5mg / Risperdal (APO)|PSY|100T
+T|RIS2TEV|Risperidone 2mg / Risperdal (TEV)|PSY|30T
+T|RIT10|Ritalin / Methylphenidate HCl 10mg|ADHD|200T
+CA|RIT10|Ritalin LA / Methylphenidate LA 10mg|ADHD|30C
+CA|RIT20|Ritalin LA / Methylphenidate LA 20mg|ADHD|30C
+CA|RIT30|Ritalin LA / Methylphenidate LA 30mg|ADHD|30C
+I|ROC1M|Rocephin / Ceftriaxone 1g IM|CEPH|VIAL
+T|ROS10HET|Rosuvastatin 10mg / Crestor (HET)|LIPID|30T
+T|ROS10SAN|Rosuvastatin 10mg / Crestor (SAN)|LIPID|30T
+T|ROS20HET|Rosuvastatin 20mg / Crestor (HET)|LIPID|30T
+T|ROS20TEV|Rosuvastatin 20mg / Crestor (TEV)|LIPID|28T
+L|ROT2|Rotateq / Rotavirus oral live vaccine 2ml|VACC|10VIA
+J|ROZ|Rozex / Metronidazole 0.75% gel 15g|ACNE|TUBE
+T|SAL2VCK|Salbutamol 2mg / Ventolin (VCK)|BRONCH|1000T
+X|SAL16LBC|Salicylic/Lactic acid 16.7% solution 14ml / Duofilm (LBC)|SKOTHER|BOT
+T|SEN7.|Senokot / Sennoside B 7.5mg|LAX|60T
+T|SER20|Seroxat / Paroxetine 20mg|SSRI|20T
+T|SER50ACT|Sertraline 50mg / Zoloft (ACT)|SSRI|28T
+I|SHI0.|Shingrix / Herpes zoster vaccine 0.5ml IM|VACC|AMP
+U|SIL3|Silkis / Calcitriol 3mcg/g ointment 30g|SKOTHER|TUBE
+X|SIL75BRA|Silver nitrate 75% applicator 100's (BRA)|SKOTHER|100U
+E|SIM10/2|Simbrinza / Brinzolamide/Brimonidine 10mg/2mg/ml eye drop 5ml|EGL|BOT
+T|SIM40KIS|Simethicone 40mg / Gasteel / Gascon (KIS)|ANT|1000T
+T|SIM10APR|Simvastatin 10mg / Zocor (APR)|LIPID|500T
+T|SIM20SYC|Simvastatin 20mg / Zocor (SYC)|LIPID|500T
+T|SIN4|Singulair / Montelukast 4mg chewable|LTRA|28T
+T|SIN5|Singulair / Montelukast 5mg chewable|LTRA|28T
+CA|SLO|Slo-Theo / Theophylline SR 100mg|BRONCH|1000C
+CA|SLO50|Slo-Theo / Theophylline SR 50mg|BRONCH|1000C
+W|SME|Smecta / Dioctahedral smectite sachet|DIA|30PAC
+I|SOD8100BBR|Sodium bicarbonate 8.4% injection 100ml (BBR)|ELECT|VIAL
+I|SOD0.9%BAX|Sodium chloride 0.9% injection 1000ml (BAX)|FLUID|BAG
+I|SOD0.10BAX|Sodium chloride 0.9% injection 100ml (BAX)|FLUID|BAG
+I|SOD0.9BBR|Sodium chloride 0.9% injection 10ml (BBR)|FLUID|20AMP
+I|SOL10|Solu-Cortef / Hydrocortisone 100mg IV/IM|STEROID|VIAL
+C|SOO1%|Soolantra / Ivermectin 1% cream 30g|ACNE|TUBE
+T|SPA40|Spasmomen / Otilonium bromide 40mg|SP|30T
+U|STA2%S|Staquis / Crisaborole 2% ointment 30g|SKIMM|TUBE
+Y|STE|Sterimar sea water nasal spray 50ml|NASAL|BOT
+T|STI10|Stilnox / Zolpidem 10mg|SLEEP|14T
+@9
+T|SUL40APO|Sulphamethoxazole/Trimethoprim 400/80mg / Septrin / Bactrim (APO)|ABX|100T
+H|SYM|Symbicort / Budesonide/Formoterol 160/4.5mcg Turbuhaler|ICSLABA|UNIT
+I|SYN48|Synvisc One / Hylan G-F 20 48mg/6ml IA|JOINT|VIAL
+T|TAK30D|Takepron OD / Lansoprazole 30mg disintegrating tablet|PPI|14T
+CA|TAM30|Tamiflu / Oseltamivir 30mg|AV|10C
+L|TAM30|Tamiflu / Oseltamivir 30mg/5ml suspension 65ml|AV|BOT
+CA|TAM45|Tamiflu / Oseltamivir 45mg|AV|10C
+CA|TAM75|Tamiflu / Oseltamivir 75mg|AV|10C
+T|TAN|Tanakan / Ginkgo biloba 40mg|OTHER|30T
+T|TEL12|Telfast / Fexofenadine 120mg|AH|20T
+T|TEL180|Telfast / Fexofenadine 180mg|AH|20T
+T|TEL|Telfast-D / Fexofenadine/Pseudoephedrine 60/120mg|AH|20T
+T|TEL80ACT|Telmisartan 80mg / Micardis (ACT)|ARB|30T
+T|TEN50|Tenormin / Atenolol 50mg|BB|28T
+C|TER1%HKK|Terbinafine 1% cream 30g / Lamisil (HKK)|SKAF|TUBE
+T|TER25APR|Terbinafine 250mg / Lamisil (APR)|AF|14T
+CA|TET25MDM|Tetracycline 250mg (MDM)|TETRA|1000C
+CA|TET30|Tetralysal / Lymecycline 300mg|TETRA|28C
+T|THY10ACT|Thyroxine 100mcg / Eltroxin (ACT)|THYROID|28T
+T|THY50ACT|Thyroxine 50mcg / Eltroxin (ACT)|THYROID|28T
+E|TIM0.5|Timoptol eye drop 0.5% 5ml|EGL|BOT
+E|TOBX|Tobradex / Tobramycin/Dexamethasone eye drop 5ml|ECOMB|BOT
+O|TOBX|Tobradex / Tobramycin/Dexamethasone eye ointment 3.5g|ECOMB|TUBE
+E|TOB|Tobrex / Tobramycin 0.3% eye drop 5ml|EAB|BOT
+O|TOB|Tobrex / Tobramycin 0.3% eye ointment 3.5g|EAB|TUBE
+T|TOL15SNM|Tolperisone 150mg (SNM) / see TOL15ULG-T|MUSCLE|100T
+CA|TRASTD|Tramadol 50mg / Tramal (STD)|OPIOID|50C
+CA|TRA25|Transamin / Tranexamic acid 250mg|BLOOD|100C
+T|TRA50|Transamin / Tranexamic acid 500mg|BLOOD|100T
+C|TRAT|Travocort / Isoconazole/Diflucortolone cream 10g|SKCOMB|TUBE
+C|TRA|Travogen / Isoconazole nitrate 1% cream 20g|SKAF|TUBE
+I|TRI10YUN|Triamcinolone 1% 50mg/5ml IA/ID / Kenacort|JOINT|10VIA
+I|TRI40SND|Triamcinolone 4% 40mg/ml IM/IA / Kenacort-A (SND)|JOINT|10VIA
+U|TRI5DON|Triamcinolone acetonide dental paste 5g / Kenalog in Orabase (DON)|MOUTH|TUBE
+T|TRI50EAPO|Triamterene/HCTZ 50/25mg / Dyazide (APO)|DIUR|1000T
+T|TRI2.EDHA|Triprolidine/Pseudoephedrine 2.5/60mg / Actifed (DHA)|AH|1000T
+T|TRI5|Tritace / Ramipril 5mg|ACE|28T
+A|TRO5|Tropex / Phenazone 5% ear drops 10ml|EAR|BOT
+I|TWIA|Twinrix Adult / Hepatitis A+B vaccine 1ml IM|VACC|AMP
+T|TWY40/5|Twynsta / Telmisartan/Amlodipine 40/5mg|ARB|28T
+T|TWY80/5|Twynsta / Telmisartan/Amlodipine 80/5mg|ARB|28T
+I|TYP0.|Typhim Vi / Typhoid vaccine 0.5ml IM/Sub-Q|VACC|AMP
+T|ULT37|Ultracet / Tramadol/Paracetamol 37.5/325mg|OPIOID|30T
+CA|URI4|Urief / Silodosin 4mg|BPH|28C
+CA|UTR10|Utrogestan / Micronized progesterone 100mg|GYN|30C
+T|VAL50SAN|Valaciclovir 500mg / Valtrex (SAN)|AV|30T
+T|VAL80NVR|Valsartan 80mg / Diovan (NVR)|ARB|28T
+H|VAN16|Vannair / Budesonide/Formoterol fumarate 160/4.5mcg inhaler|ICSLABA|BOX
+H|VAN80|Vannair / Budesonide/Formoterol fumarate 80/4.5mcg inhaler|ICSLABA|SET
+I|VAR0.|Varivax / Varicella vaccine 0.5ml Sub-Q|VACC|AMP
+I|VAX0.|Vaxneuvance / Pneumococcal 15-valent vaccine 0.5ml IM PFS|VACC|VIAL
+H|VEN|Ventolin / Salbutamol 100mcg inhaler|BRONCH|SET
+I|VER5|Verapamil 5mg/2ml IV / Isoptin (HOS)|ANTIARR|VIAL
+I|VER|Verorab / Inactivated rabies vaccine IM|VACC|AMP
+T|VIA50|Viagra / Sildenafil 50mg|ED|4TABS
+@10
+CA|VIA25|Viartril-S / Glucosamine sulphate 250mg|JOINT|500C
+E|VIG0.|Vigamox / Moxifloxacin 0.5% eye drop 5ml|EAB|BOT
+T|VIS2|Visanne / Dienogest 2mg|GYN|PACK
+T|VITBJAM|Vitamin B complex (JAM)|VIT|120T
+I|VITB10SIU|Vitamin B12 / Cyanocobalamin 1000mcg/ml IM 10ml (SIU)|VIT|VIAL
+T|VIT50CJAM|Vitamin C / Ascorbic acid 500mg (JAM)|VIT|120T
+T|VIT10JAM|Vitamin D3 / Cholecalciferol 1000units (JAM)|VIT|100T
+CA|VIT40JAM|Vitamin E / Tocopheryl 400units (JAM)|VIT|120C
+J|VOL|Voltaren Emulgel / Diclofenac diethylamine gel 20g|NSAID|TUBE
+I|VYE10|Vyepti / Eptinezumab 100mg/ml IV|MIG|VIAL
+CA|VYV20|Vyvanse / Lisdexamfetamine dimesylate 20mg|ADHD|28C
+CA|VYV30|Vyvanse / Lisdexamfetamine dimesylate 30mg|ADHD|28C
+CA|VYV50|Vyvanse / Lisdexamfetamine dimesylate 50mg|ADHD|28C
+T|WEL15XL|Wellbutrin XL / Bupropion XL 150mg|ADP|30T
+E|XAL2.|Xalacom / Latanoprost/Timolol eye drop 2.5ml|EGL|BOT
+E|XAL|Xalatan / Latanoprost eye drop 2.5ml|EGL|BOT
+T|XAN0.5|Xanax / Alprazolam 0.5mg|SLEEP|100T
+T|XOF40|Xofluza / Baloxavir marboxil 40mg|AV|TAB
+X|XYL10|Xylocaine / Lignocaine 10% spray 50g|LOCAL|BOT
+J|XYL2%|Xylocaine / Lignocaine 2% jelly 30g|LOCAL|10TUB
+T|XYZ5|Xyzal / Levocetirizine 5mg|AH|50T
+T|YAS21|Yasmin / Ethinylestradiol/Drospirenone 0.03/3mg 21's|CONTRA|PACK
+T|YAZ28|Yaz / Ethinylestradiol/Drospirenone 0.02/3mg 24/4's 28's|CONTRA|PACK
+V|ZAL30|Zalain / Sertaconazole 300mg vaginal suppository|GYN|UNIT
+C|ZIN20EUR|Zinc oxide cream 20g (EUR)|EMOL|TUBE
+L|ZIN12|Zinnat / Cefuroxime 125mg/5ml suspension 50ml|CEPH|BOT
+T|ZOL50|Zoloft / Sertraline 50mg|SSRI|30T
+T|ZOL10SAN|Zolpidem 10mg / Stilnox (SAN)|SLEEP|20T
+L|ZYR5|Zyrtec / Cetirizine 5mg/5ml solution 200ml|AH|200ML
+`;
+
+/*
+AMC2 items sharing AMC1's composite ID.
+Bare token = T:drug_key.
+Other dosage forms are explicit, e.g. CA:RIT10.
+An optional "=..." overrides AMC2's pack_uom.
+*/
+const AMC2_SHARED=String.raw`
+@1
+HYD10EUR I:250D5WBAX I:ACT C:ACY5STD I:ADA0.
+I:ADR1:IVDBL I:ADR1:DBL ALL10TEV ALL30TEV AMB30BLC
+AML10APR AML5APR X:AMO5%CHM=UNIT AMO37SAN L:AMO45MDR AMO62SAN
+U:ANU S:ANU APR15 APR30 ARC12 ARC60 ARC90 I:ARE0.=UNIT
+E:ART0. ASP10FRM ASP80SYC
+CA:ATO10EAPO CA:ATO18EAPO CA:ATO25EAPO CA:ATO40EAPO
+ATO10SAN ATO10STE ATO20SAN ATO20STE ATO10/10 ATO10/20
+E:ATR0.SWFL I:ATR1PMN
+@2
+Y:AVA CA:AVO0. AZI25SAN AZO20/5 U:BAC3 J:BEN5GAL
+C:BET15HOV C:BET15EUR C:BET15HPL BET50A X:BETS I:BEX0.
+M:BIOT=UNIT M:BLE BRO8ACT X:CALUPL CAL50D I:CAL10OME C:CAN
+CAR5REM CEF25STD CA:CEL20 C:CET10 CET10SAN CHA30JLB
+M:CHL0.05LQU I:CHL10ATN L:CHL2EUR CHL4DHA CIA5 CIP25 CLA25STE
+CLO50RNT X:CLO1%HPL V:CLO50THE COA15 COA30 COD15BNEO COL0.SYC
+CON18 CON27 CON36 CON2. CON5
+@3
+X:CO-P I:COR15 O:COR50 G:COR E:CRA0. CRE10 CRE5
+E:CYC10 CYP4VCK CYT20 DAF10 X:DALL DAY5 J:DER15X C:DER25
+E:DEX5EIP DEX2KOT CA:DEX30 DEX15BLC L:DEX15XSP PRE5LDHA
+I:DIC75MDM DIC25CDL L:DIC5XSP=90ML J:DIF0. Z:DIF3M Y:DIF0.3 DIO80
+L:DIP12.5EUR L:DEX15EUR DOM10SYC I:DOP20LBS I:DOR5M CA:DOX10HOV
+CA:DUO0. L:DUP DUP10 Y:DYM13 C:ELI1% C:ELO15 U:ELO15
+@4
+X:ELO C:EML5% ENT0.SYC=UNIT W:ENT2 I:EPH30DBL ESC1. ESO40BAL
+EXF10/160 EXF5/80 EZE10INS U:FAK S:FAK FAM20HOV J:FAS2.M FEB80
+FER10 FLE10APO CA:FLU15APO W:FLU10 FLU60 V:FLU10
+CA:FLU10APO CA:FLU20APR E:FML FOR10 FOS70 C:FUC C:FUCN
+I:GAR9 GAV50 E:GEN5FDC W:GIK GLU10X I:GLU5%10BBR GLY0.5ACT W:G-N2 W:G-N2M3
+@5
+L:DIM15XSP DIM50DHA HAR04 I:HAV14 C:HIRF C:HYD1%EUR E:HYL10
+L:HYO5DHA HYO10ACT IBU20HKK I:IMODT=SET E:ISO2% JAR10 JAR25 LAB20
+CA:LAC LAS40 LEV25SAN I:LIG2PFI LOP2ACT LOR10STE LOS50STE=500T
+E:LOT0. CA:LYR75 O:MAX I:MEN0.I=UNIT C:MEP2%MPL MER6 Q:MET28
+MET50HOV MET50EHOV
+@6
+MET25APR MET10ACT I:METO10ESNF MET20EUR MIC30 M:MIR D:MOH2% M:MON38
+I:MON88 MON10SAN W:MON I:MOU2. I:MOU5 MUC60 U:MUP2%TGP E:MYD10
+I:NAL0.HME NAT1. NEUP E:NEV0. NEX20 NEX40 M:NIZ2%10 NOR5EGED
+NOR10 NOR5 NUS L:NYS10PMS A:OFL0.JMP A:OLIMPL CA:OME20XSP
+W:ORA5.DHA A:OTOZA Y:OTR N:OTR PAN66 PAN20 PAN40 L:PAR25ULP=60ML
+E:PAT0.2 E:PEM0. PHE10ECPL=1000T E:PHE2.5
+@7
+I:PHE10OME C:PHY50 M:PHY15 W:PIC16P M:PIN I:PIT20 PLA75 I:PNE23X
+POT60MYL PRA2APR=UNIT E:PRE1% I:PRE20=SET I:PRO60 L:PRO4ICM PRO1
+PRO10ACT L:PRO10 U:PRO0.1 PRO5 E:REF15 E:RES0. REU10 RIS2TEV
+RIT10 CA:RIT10 CA:RIT20 CA:RIT30 I:ROC1M ROS10HET ROS20HET ROS20TEV
+L:ROT2 J:ROZ X:SAL16LBC SEN7. SER20 I:SHI0. E:SIM10/2 SIM40KIS SIN4
+@8
+SIN5 CA:SLO CA:SLO50 W:SME I:SOD8100BBR I:SOD0.10BAX I:SOD0.9BBR
+I:SOL10 SPA40 U:STA2%S=UNIT Y:STE STI10 SUL40APO H:SYM=SET I:SYN48
+TAK30D CA:TAM30 L:TAM30 CA:TAM45 CA:TAM75 TEL12 TEL180 TEL TER25APR
+CA:TET25MDM CA:TET30 THY10ACT THY50ACT E:TIM0.5 E:TOBX O:TOBX E:TOB
+O:TOB CA:TRASTD CA:TRA25 TRA50 C:TRAT C:TRA I:TRI40SND U:TRI5DON
+TRI2.EDHA A:TRO5 I:TWIA I:TYP0. ULT37 CA:URI4 CA:UTR10
+@9
+VAL50SAN H:VAN80 I:VAR0. I:VAX0. H:VEN I:VER E:VIG0. VIS2 VITBJAM
+I:VITB10SIU=UNIT VIT10JAM CA:VIT40JAM J:VOL CA:VYV20 CA:VYV30
+XOF40 X:XYL10 J:XYL2% YAS21 V:ZAL30 C:ZIN20EUR ZOL50 L:ZYR5
+`;
+
+/* AMC2 records whose composite IDs do not occur in AMC1. */
+const AMC2_EXTRA=String.raw`
+@1
+T|HYD25APR|Hydralazine 25mg / Apresoline (APR)|BP|500T
+I|1L.NSNFRE|Sodium chloride 0.9% injection 1L Non-PVC / Freeflex (FRE)|FLUID|BAG
+T|ACE25APO|Acetazolamide 250mg / Diamox (APO)|EGL|100T
+R|ACE5MPL|Acetic acid 5% solution 100ml (MPL)|ANTISEP|BOT
+T|ACT15|Actos / Pioglitazone 15mg|DM|30T
+T|ACY40STD|Acyclovir 400mg / Zovirax (STD)|AV|35T
+T|ALU20XSP|Al/Mg/Simethicone / Maalox Plus / Gastrogel (XSP)|ANT|1000T
+E|ALPP|Alphagan-P / Brimonidine tartrate 0.15% eye drop 5ml|EGL|BOT
+T|AMI20SAN|Amiodarone 200mg / Cordarone (SAN)|ANTIARR|30T
+CA|AMO50HOV|Amoxicillin 500mg / Amoxil (HOV)|PEN|100C
+I|AMO1.SAN|Amoxicillin/Clavulanate 1.2g IV / Augmentin (SAN)|PEN|10VIA
+T|AMO10SAN|Amoxicillin/Clavulanate 1g / Augmentin (SAN)|PEN|10T
+CA|AMP50APR|Ampi/Cloxacillin 500mg / Ampiclox (APR)|PEN|1000C
+I|ANE0.|Anexate / Flumazenil 0.5mg/5ml IV|REVERSE|5AMP
+E|ATR0.AIM|Atropine 0.01% eye drop 0.5ml × 30 (AIM)|EMYD|BOX
+E|ATR0.05AIM|Atropine 0.05% eye drop 0.5ml UD × 30 (AIM)|EMYD|BOX
+@2
+E|AZA10/5|Azarga / Brinzolamide/Timolol 10/5mg/ml eye drop 5ml|EGL|BOT
+H|BEC50|Beclazone / Beclomethasone 50mcg CFC-free inhaler|ICS|SET
+H|BEC25TEV|Beclomethasone 250mcg CFC-free inhaler / Beclofort (TEV)|ICS|SET
+T|BET25|Betaloc ZOK / Metoprolol ZOK 25mg|BB|14T
+T|BET50C|Betaloc ZOK / Metoprolol ZOK 50mg|BB|30T
+T|BIS5STE|Bisoprolol fumarate 5mg / Concor (STE)|BB|30T
+T|BLO8|Blopress / Candesartan 8mg|ARB|28T
+O|CHL1ASP|Chloramphenicol 1% eye ointment 4g / Kemicetine (ASP)|EAB|TUBE
+T|CLA|Clarinase / Loratadine/Pseudoephedrine 5/120mg tablet|AH|14T
+T|CLA50STE|Clarithromycin 500mg / Klacid (STE)|MAC|28T
+T|COM|Combizym tablet|GI|100T
+@3
+T|COZ50|Cozaar / Losartan 50mg|ARB|30T
+E|CRO2%URS|Cromoglicate sodium 2% eye drop 10ml / Opticrom (URS)|EALL|BOT
+C|CRO10EUR|Crotamiton 10% cream 450g / Eurax (EUR)|ITCH|450G
+C|DAK|Daktacort / Miconazole/Hydrocortisone cream 15g|SKCOMB|TUBE
+CA|DAL15|Dalacin-C / Clindamycin 150mg|ABX|100C
+I|DEP40L|Depo-Medrol / Methylprednisolone 40mg + Lidocaine IA|JOINT|VIAL
+Z|DEQ0.SYC|Dequalinium chloride 0.25mg lozenge / Dequadin (SYC)|MOUTH|500T
+U|CLO0.XSP|Clobetasol propionate 0.05% ointment / Dermovate|SKST|TUBE
+T|DES0.RNT|Desogestrel 0.075mg / Cerazette 28's (RNT)|CONTRA|PACK
+T|DEX0.SYC|Dexamethasone 0.5mg / Decadron (SYC)|STEROID|1000T
+I|DEX50BBR|Dextrose 50% IV injection 20ml (BBR)|FLUID|20AMP
+T|DUL5|Dulcolax / Bisacodyl 5mg|LAX|100T
+E|DUO40|Duotrav / Travoprost/Timolol 40mcg+5mg/ml eye drop 2.5ml|EGL|BOT
+CA|DUS20|Duspatalin Retard / Mebeverine retard 200mg|SP|30C
+@4
+T|ENA5TEV|Enalapril maleate 5mg / Renitec (TEV)|ACE|30T
+I|ENG20X|Engerix B Adult / Hepatitis B 20mcg/ml IM PFS|VACC|AMP
+T|ENT0.PMS|Entecavir 0.5mg / Baraclude (PMS)|AV|30T
+T|EST1|Estrofem / Estradiol 1mg 28's|HRT|PACK
+T|EST2|Estrofem / Estradiol 2mg 28's|HRT|PACK
+T|EVI|Evista / Raloxifene 60mg|BONE|28T
+T|EXF5/160|Exforge / Amlodipine/Valsartan 5/160mg|ARB|28T
+I|EYL40|Eylea / Aflibercept 40mg/ml intravitreal PFS 0.09ml|ERET|AMP
+I|EYL8S|Eylea / Aflibercept 8mg/0.07ml intravitreal PFS 0.184ml|ERET|UNIT
+T|FAM40JMP|Famotidine 40mg / Pepcidine (JMP)|H2|500T
+T|FEM2|Femoston 2/10mg / Estradiol/Dydrogesterone 2mg(14's) + 2/10mg(14's)|HRT|PACK
+I|FEN2MEK|Fentanyl 100mcg/2ml IV (MEK)|GENERAL|10AMP
+M|FLE|Fleet enema 133ml / Sodium biphosphate/Sodium phosphate|LAX|TUBE
+T|FOL5SNW|Folic acid 5mg (SNW)|VIT|1000T
+O|GAN0.LBT|Ganciclovir 0.15% eye gel (LBT)|EAB|TUBE
+L|GAS20|Gascon / Dimethylpolysiloxane 20mg/ml drops 300ml|ANT|BOT
+L|GAV|Gaviscon liquid 200ml / Sodium alginate/Sodium bicarbonate/Calcium carbonate|ANT|BOT
+T|GLU50X|Glucophage XR / Metformin XR 500mg|DM|60T
+@5
+V|GYN10R|Gynoflor / Lactobacillus acidophilus/Estriol 100M/0.03mg vaginal tablet|GYN|6TAB
+I|HYO20TPD|Hyoscine butylbromide 20mg/ml IM/IV / Buscopan (TPD)|SP|50AMP
+L|IBUDHA|Ibuprofen 100mg/5ml suspension / Brufen (DHA)|NSAID|1.0 L
+T|IMO7.|Imovane / Zopiclone 7.5mg|SLEEP|14T
+J|INS11|Instillagel / Lidocaine + Chlorhexidine gel 11ml|LOCAL|10TUB
+E|ISO4%|Isopto-Carpine / Pilocarpine 4% eye drop 15ml|EGL|BOT
+T|ISO10EAPO|Isosorbide dinitrate 10mg / Isordil (APO)|ANG|100T
+T|JAN10X|Janumet XR / Sitagliptin/Metformin XR 100/1000mg|DM|28T
+E|LAT0.BAU|Latanoprost 0.005% eye drop 2.5ml / Xalatan|EGL|BOT
+T|LET2.TCE|Letrozole 2.5mg / Femara (TCE)|HORM|30T
+I|LEU3.DON|Leuprorelin depot 3.75mg Sub-Q / Enantone SR (DON)|HORM|SET
+I|LID2TON|Lidocaine 2% + Adrenaline 1:80000 injection 1.7ml / Xylestesin A (TON)|LOCAL|50VIA
+T|LIV2.|Livial / Tibolone 2.5mg|HRT|30T
+T|LIX30|Lixiana / Edoxaban 30mg|COAG|28T
+I|LUC10|Lucentis / Ranibizumab 10mg/ml intravitreal PFS 0.165ml|ERET|AMP
+R|LUGHAH|Lugol's solution / Iodine/Potassium iodide (HAH)|OTHER|BOT
+CA|LYR50|Lyrica / Pregabalin 50mg|EPILEP|56C
+T|LYS30EUR|Lysozyme 30mg / Neuzym (EUR)|OTHER|500T
+T|MAT|Materna tablet|VIT|100T
+CA|MEF25APR|Mefenamic acid 250mg / Ponstan (APR)|NSAID|500C
+T|MEP25|Meptin / Procaterol HCl 25mcg|BRONCH|100T
+L|MEP25|Meptin / Procaterol 25mcg/5ml syrup 60ml|BRONCH|60ML
+T|MER|Mercilon / Desogestrel/Ethinylestradiol 150/20mcg 21's|CONTRA|PACK
+T|MET50L|Methycobal / Mecobalamin 500mcg|VIT|100T
+@6
+E|MIO|Miostat / Carbachol 0.01% intraocular solution|EOTHER|12U
+M|MONPMP|Monsel's solution with applicators 8ml / Ferric subsulfate 20–22% (PMP)|BLOOD|12VIA
+T|MUL40|Multaq / Dronedarone 400mg|ANTIARR|60T
+E|NAP|Naphcon-A / Naphazoline/Pheniramine eye drop 15ml|EALL|BOT
+CA|NEO10|Neotigason / Acitretin 10mg|SKOTHER|30C
+CA|NEO25|Neotigason / Acitretin 25mg|SKOTHER|30C
+T|NIT50SYC|Nitrofurantoin 50mg (SYC)|ABX|1000T
+I|OND4FRE|Ondansetron 4mg/2ml IM/IV / Zofran (FRE)|NAUSEA|5AMP
+S|PAR25MDM|Paracetamol 250mg suppository / Panadol (MDM)|PAIN|10U
+T|PAR50EUR|Paracetamol 500mg / Panadol (EUR)|PAIN|1000T
+U|PAR20UPL|Liquid/White soft paraffin 50:50 ointment 200g (UPL)|EMOL|JAR
+I|PET50MND|Pethidine / Meperidine 50mg/ml IM/IV/Sub-Q (MND)|OPIOID|10AMP
+@7
+I|PLA14BAX|Plasma-Lyte 148 pH7.4 injection 1L (BAX)|FLUID|BAG
+CA|PRE25SAN|Pregabalin 25mg / Lyrica (SAN)|EPILEP|70C
+I|PRO12.5MDM|Prochlorperazine 12.5mg/ml IM / Stemetil (MDM)|NAUSEA|10AMP
+T|PRO10EUR|Promethazine HCl 10mg / Phenergan (EUR)|AH|1000T
+I|PRO1FRE|Propofol 1% MCT/LCT 200mg/20ml IV / Diprivan (FRE)|GENERAL|5AMP
+T|PRO50CPL|Propylthiouracil 50mg (CPL)|THYROID|1000T
+I|PROQ0.|ProQuad MMR + Varicella live vaccine 0.5ml Sub-Q/IM PFS|VACC|AMP
+E|PRO0.URS|Proxymetacaine 0.5% eye drop 10ml / Alcaine (URS)|EANA|BOT
+T|QUE10TEV|Quetiapine 100mg / Seroquel (TEV)|PSY|60T
+T|ROS10ACT|Rosuvastatin 10mg / Crestor (ACT)|LIPID|28T
+T|ROS5SAN|Rosuvastatin 5mg / Crestor (SAN)|LIPID|30T
+W|SAL10|Salofalk / Mesalazine 1000mg prolonged-release Granu-Stix|IBD|50U
+M|SEB25|Sebitar scalp cleansing 250ml / Tar 1%, Coal tar 1%, Salicylic acid 2%|SKOTHER|BOT
+X|SIL95HCL|Silver nitrate 95% caustic pencils (HCL)|SKOTHER|12PCS
+T|SIM20SAN|Simvastatin 20mg / Zocor (SAN)|LIPID|30T
+@8
+W|SPA|Spatone liquid iron + Vitamin C sachet 25ml|IRON|28U
+M|STE1BAX|Sterile water for irrigation 1L (BAX)|DEVICE|BOT
+L|SUL24HOV|Sulfamethoxazole/Trimethoprim 240mg/5ml suspension / Septrin (HOV)|ABX|60ML
+I|SUS25|Sustanon / Testosterone salts 250mg IM|HRT|AMP
+T|TAK15|Takepron OD / Lansoprazole 15mg disintegrating tablet|PPI|28T
+E|TAP0.|Tapcom-S / Tafluprost 0.0015%/Timolol 0.5% eye drop 0.3ml SDU × 30|EGL|BOT
+T|TOL15ULG|Tolperisone 150mg / Mydocalm (ULG)|MUSCLE|100T
+I|VAB6|Vabysmo / Faricimab 6mg/0.05ml intravitreal injection|ERET|UNIT
+@9
+V|VAG10|Vagifem / Estradiol 10mcg vaginal tablet|GYN|18T
+I|VER5HOS|Verapamil 5mg/2ml IV / Isoptin (HOS)|ANTIARR|25V
+T|VIA10|Viagra / Sildenafil 100mg|ED|4TABS
+W|VIA15|Viartril-S / Glucosamine sulphate 1500mg sachet|JOINT|30PAC
+T|VIT50RJAM|Vitamin C / Ascorbic acid 500mg time release (JAM)|VIT|100T
+I|WAT10BBR|Water for injection 10ml (BBR)|FLUID|20AMP
+T|XAN0.|Xanax / Alprazolam 0.25mg|SLEEP|100T
+T|XAR15|Xarelto / Rivaroxaban 15mg|COAG|28T
+T|XAR20|Xarelto / Rivaroxaban 20mg|COAG|28T
+I|XYL1%5|Xylocaine / Lignocaine 1% LA injection 5ml|LOCAL|50AMP
+E|ZAD0.|Zaditen Ophtha / Ketotifen 0.25mg/ml SDU 10's|EALL|BOX
+`;
+
+/* Limit category label so letrozole is not described as a GnRH analogue. */
+CLASSES.HORM=["08","腫瘤相關荷爾蒙藥／多適應症待核"];
+
+/* Limited, manually curated cross-code comparisons: no stock merging. */
+const CROSS_GROUPS=[
+["Acetazolamide 250mg tablets","T:ACE25SYC","T:ACE25APO"],
+["Amoxicillin 500mg capsules","CA:AMO50APR","CA:AMO50HOV"],
+["Amoxicillin/Clavulanate 1g tablets","T:AMO1SAN","T:AMO10SAN"],
+["Ampi/Cloxacillin 500mg capsules：分量需覆核","CA:AMP50MDR","CA:AMP50APR"],
+["Atropine 0.05% 0.5ml 單劑量眼藥","E:ATR0.SWFL","E:ATR0.05AIM"],
+["Amlodipine 5mg tablets","T:AML5APR","T:NOR5"],
+["Amlodipine 10mg tablets","T:AML10APR","T:NOR10"],
+["Atorvastatin 10mg tablets","T:ATO10SAN","T:ATO10STE","T:LIP10R"],
+["Atorvastatin 20mg tablets","T:ATO20SAN","T:ATO20STE","T:LIP20"],
+["Bisoprolol fumarate 5mg tablets","T:CON5","T:BIS5STE"],
+["Clobetasol propionate 0.05% ointment：包裝大小待核","U:CLO0.HPL","U:CLO0.XSP"],
+["Dequalinium chloride 0.25mg lozenges","Z:DEQ0.APR","Z:DEQ0.SYC"],
+["Engerix B adult 20mcg/ml IM PFS","I:ENG20B","I:ENG20X"],
+["Entecavir 0.5mg tablets","T:ENT0.SYC","T:ENT0.PMS"],
+["Esomeprazole 20mg tablets","T:ESO20SAN","T:NEX20"],
+["Esomeprazole 40mg tablets：腸溶規格待核","T:ESO40BAL","T:NEX40"],
+["Exforge Amlodipine/Valsartan 5/160mg","T:EXF16","T:EXF5/160"],
+["Fluorometholone 0.1% eye drops 5ml","E:FLU01DAW","E:FML"],
+["Ibuprofen 100mg/5ml suspension：瓶裝量不同","L:IBU10LBM","L:IBUDHA"],
+["Losartan 50mg tablets","T:LOS50STE","T:COZ50"],
+["Lysozyme 30mg tablets","T:LYS30VCK","T:LYS30EUR"],
+["Mefenamic acid 250mg capsules","CA:MEF25EUR","CA:MEF25APR"],
+["Metformin ER/XR 500mg：釋放規格待核","T:MET50EHOV","T:GLU50X"],
+["Paracetamol 500mg tablets","T:PAR50APR","T:PAR50EUR"],
+["Pregabalin 25mg capsules","CA:LYR25","CA:PRE25SAN"],
+["Pregabalin 75mg capsules","CA:LYR75","CA:PRE75PMS"],
+["Promethazine HCl 10mg tablets","T:PRO10SYC","T:PRO10EUR"],
+["Propranolol 10mg tablets","T:PRO10ACT","T:PRO10APO"],
+["Quetiapine 100mg tablets","T:QUE10MCD","T:QUE10TEV"],
+["Rosuvastatin 5mg tablets","T:CRE5","T:ROS5SAN"],
+["Rosuvastatin 10mg tablets","T:CRE10","T:ROS10HET","T:ROS10SAN","T:ROS10ACT"],
+["Rosuvastatin 20mg tablets","T:CRE20","T:ROS20HET","T:ROS20TEV"],
+["Sertraline 50mg tablets","T:SER50ACT","T:ZOL50"],
+["Simvastatin 20mg tablets","T:SIM20SYC","T:SIM20SAN"],
+["Tolperisone 150mg tablets","T:TOL15SNM","T:TOL15ULG"],
+["Valsartan 80mg tablets","T:DIO80","T:VAL80NVR"],
+["Verapamil 5mg/2ml IV","I:VER5","I:VER5HOS"],
+["Zolpidem 10mg tablets","T:STI10","T:ZOL10SAN"]
+];
+const SOURCE_NOTES={
+"E:SIM10/2":"AMC1 原文缺 drug_type；本表暫設 E，請覆核。",
+"I:MOU5":"兩份原文的通用名欄空白。",
+"T:NESM":"原文 drug_type=T，但名稱寫 Capsule；本表保留 T。",
+"T:TOL15SNM":"AMC1 原文註記 see TOL15ULG-T。",
+"W:PIC16P":"原文 name_cmn 截斷；展示成分名稱作整理，請查原包裝。",
+"T:CYT20":"多適應症產品；本表以腸胃章節整理。",
+"I:ENA3.D":"GnRH 類似物有多種用途；章節歸類需按本地用途覆核。",
+"I:LEU3.DON":"GnRH 類似物有多種用途；章節歸類需按本地用途覆核。"
+};
+
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const catalog=new Map(), issues=[];
+const sourceCounts={1:0,2:0}, pages={1:{},2:{}};
+function countSource(site,page){
+sourceCounts[site]++;
+pages[site][page]=(pages[site][page]||0)+1;
+}
+function loadRows(text,site){
+let page=0;
+for(const raw of text.trim().split(/\r?\n/)){
+const line=raw.trim();if(!line)continue;
+if(line.startsWith("@")){page=Number(line.slice(1));continue;}
+const fields=line.split("|");
+if(fields.length!==5){issues.push("欄位數錯誤："+line);continue;}
+const [type,key,name,cls,pack]=fields,id=type+":"+key;
+if(!FORMS[type]||!CLASSES[cls]){issues.push("分類／劑型未定義："+id);continue;}
+if(catalog.has(id)){issues.push("重複新增 ID："+id);continue;}
+catalog.set(id,{id,type,key,name,cls,sites:{[site]:{pack,page}},cross:null});
+countSource(site,page);
+}
+}
+loadRows(AMC1,1);
+let page2=0;
+for(const line of AMC2_SHARED.trim().split(/\r?\n/)){
+const s=line.trim();if(!s)continue;
+if(s.startsWith("@")){page2=Number(s.slice(1));continue;}
+for(const token of s.split(/\s+/)){
+const eq=token.indexOf("="), ref=eq<0?token:token.slice(0,eq);
+const pack=eq<0?null:token.slice(eq+1);
+const id=ref.includes(":")?ref:"T:"+ref,r=catalog.get(id);
+if(!r){issues.push("AMC2 對照不存在："+id);continue;}
+if(r.sites[2]){issues.push("AMC2 重複："+id);continue;}
+r.sites[2]={pack:pack??r.sites[1].pack,page:page2};
+countSource(2,page2);
+}
+}
+loadRows(AMC2_EXTRA,2);
+for(const [label,...ids] of CROSS_GROUPS){
+const members=ids.map(id=>catalog.get(id));
+if(members.some(r=>!r)){issues.push("跨代碼對照缺資料："+label);continue;}
+const cross={label,ids,has1:members.some(r=>r.sites[1]),has2:members.some(r=>r.sites[2])};
+members.forEach(r=>r.cross=cross);
+}
+const DATA=[...catalog.values()];
+const STORE="AMC-INVENTORY-20260805-v1";
+const SCHEMA=1;
+const DATASET="AMC-2026-08-05";
+const UNITS=["片","粒","瓶","支","袋","盒","套","管","包","枚","mL","g","其他"];
+let storageOK=true;
+let state={schema:SCHEMA,dataset:DATASET,doctors:[],counts:{}};
+let activeDoctor="",currentRows=[],editing=null,crossFilter=null;
+const countKey=(id,site)=>site+"|"+id;
+const validCountKeys=new Set(DATA.flatMap(r=>Object.keys(r.sites).map(s=>countKey(r.id,s))));
+
+function validateState(x){
+if(!x||x.schema!==SCHEMA||x.dataset!==DATASET)throw Error("備份版本或 formulary 日期不符。");
+if(!Array.isArray(x.doctors)||x.doctors.length>1000)throw Error("醫生清單格式不正確。");
+if(!x.counts||typeof x.counts!=="object"||Array.isArray(x.counts))throw Error("點存格式不正確。");
+const out={schema:SCHEMA,dataset:DATASET,doctors:[],counts:{}},seen=new Set();
+const cleanString=(s,max)=>{
+if(typeof s!=="string"||s.length>max)throw Error("文字欄位格式或長度不正確。");
+return s;
+};
+for(const d of x.doctors){
+if(!d||typeof d.id!=="string"||!/^[a-zA-Z0-9_-]{1,100}$/.test(d.id)||seen.has(d.id))
+throw Error("醫生 ID 無效或重複。");
+seen.add(d.id);
+const name=cleanString(d.name,80).trim();if(!name)throw Error("醫生名稱不可空白。");
+if(!Array.isArray(d.favorites)||d.favorites.length>DATA.length)throw Error("常用藥格式不正確。");
+if(d.favorites.some(id=>typeof id!=="string"||!catalog.has(id)))throw Error("常用藥含不存在的代碼。");
+out.doctors.push({id:d.id,name,favorites:[...new Set(d.favorites)]});
+}
+for(const [k,v] of Object.entries(x.counts)){
+if(!validCountKeys.has(k)||!v||typeof v!=="object")throw Error("點存含不存在的項目。");
+if(typeof v.qty!=="number"||!Number.isFinite(v.qty)||v.qty<0)throw Error("數量無效。");
+if(!UNITS.includes(v.unit))throw Error("點存單位無效。");
+if(v.minimum!==null&&(typeof v.minimum!=="number"||!Number.isFinite(v.minimum)||v.minimum<0))
+throw Error("最低存量無效。");
+const updated=cleanString(v.updated,40);
+if(!Number.isFinite(Date.parse(updated)))throw Error("點存時間无效。");
+out.counts[k]={
+qty:v.qty,unit:v.unit,minimum:v.minimum,
+shelf:cleanString(v.shelf,100),counter:cleanString(v.counter,80),
+note:cleanString(v.note,1000),updated
+};
+}
+return out;
+}
+function storageWarning(message){
+storageOK=false;
+$("storageWarning").style.display="block";
+$("storageWarning").textContent=message;
+$("saveStatus").textContent="⚠ 未能保證本機儲存，請立即匯出 JSON";
+}
+try{
+const saved=localStorage.getItem(STORE);
+if(saved)state=validateState(JSON.parse(saved));
+}catch(e){
+storageWarning("無法讀取本機資料："+e.message+"。目前載入空白點存；請先保留原有備份，不要假設舊資料已還原。");
+}
+function save(){
+try{
+localStorage.setItem(STORE,JSON.stringify(state));
+storageOK=true;$("storageWarning").style.display="none";
+$("saveStatus").textContent="已存於本瀏覽器 · "+new Date().toLocaleTimeString("zh-HK");
+}catch(e){
+storageWarning("儲存失敗，今次修改只留在記憶體。請立即下載 JSON 備份。");
+}
+}
+function toast(message){
+$("toast").textContent=message;$("toast").style.display="block";
+clearTimeout(toast.timer);toast.timer=setTimeout(()=>$("toast").style.display="none",3000);
+}
+function selectedDoctor(){return state.doctors.find(d=>d.id===activeDoctor);}
+function fillDoctors(){
+$("doctor").innerHTML='<option value="">未選醫生</option>'+
+state.doctors.map(d=>`<option value="${esc(d.id)}">${esc(d.name)}（${d.favorites.length}）</option>`).join("");
+$("doctor").value=activeDoctor;
+}
+function options(){
+for(const [id,name] of Object.entries(CHAPTERS).sort((a,b)=>a[0].localeCompare(b[0])))
+$("chapter").insertAdjacentHTML("beforeend",`<option value="${id}">${id} ${esc(name)}</option>`);
+for(const [id,name] of Object.entries(FORMS))
+$("form").insertAdjacentHTML("beforeend",`<option value="${id}">${id} · ${esc(name)}</option>`);
+fillClasses();
+}
+function fillClasses(){
+const previous=$("subclass").value,ch=$("chapter").value;
+$("subclass").innerHTML='<option value="">全部細分類</option>'+
+Object.entries(CLASSES).filter(([k,v])=>(!ch||v[0]===ch)&&DATA.some(r=>r.cls===k))
+.sort((a,b)=>(a[1][0]+a[1][1]).localeCompare(b[1][0]+b[1][1],"zh-Hant"))
+.map(([k,v])=>`<option value="${k}">${v[0]} · ${esc(v[1])}</option>`).join("");
+if([...$("subclass").options].some(o=>o.value===previous))$("subclass").value=previous;
+}
+function availabilityLabel(r){
+return r.sites[1]&&r.sites[2]?"兩邊都有":r.sites[1]?"只有 AMC1":"只有 AMC2";
+}
+function getRows(){
+const query=$("search").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+const av=$("availability").value,ch=$("chapter").value,cl=$("subclass").value,form=$("form").value;
+const site=$("stockSite").value,sf=$("stockFilter").value;
+const doc=selectedDoctor(),favs=new Set(doc?.favorites||[]);
+return DATA.filter(r=>{
+if(crossFilter&&!crossFilter.includes(r.id))return false;
+const searchable=[r.name,r.key,r.id,FORMS[r.type],...CLASSES[r.cls],CHAPTERS[CLASSES[r.cls][0]],r.cross?.label||""].join(" ").toLowerCase();
+if(query.some(q=>!searchable.includes(q)))return false;
+if(ch&&CLASSES[r.cls][0]!==ch)return false;
+if(cl&&r.cls!==cl)return false;
+if(form&&r.type!==form)return false;
+if(av==="1"&&!r.sites[1]||av==="2"&&!r.sites[2])return false;
+if(av==="both"&&!(r.sites[1]&&r.sites[2]))return false;
+if(av==="only1"&&!(r.sites[1]&&!r.sites[2]))return false;
+if(av==="only2"&&!(r.sites[2]&&!r.sites[1]))return false;
+if(av==="cross"&&!(r.cross?.has1&&r.cross?.has2))return false;
+if($("favoritesOnly").checked&&!favs.has(r.id))return false;
+if(sf){
+if(!r.sites[site])return false;
+const c=state.counts[countKey(r.id,site)];
+if(sf==="uncounted"&&c)return false;
+if(sf==="counted"&&!c)return false;
+if(sf==="zero"&&(!c||c.qty!==0))return false;
+if(sf==="low"&&(!c||c.minimum===null||c.qty>=c.minimum))return false;
+}
+return true;
+}).sort((a,b)=>{
+const mode=$("sort").value;
+if(mode==="code")return a.id.localeCompare(b.id);
+if(mode==="name")return a.name.localeCompare(b.name);
+const ca=CLASSES[a.cls],cb=CLASSES[b.cls];
+return ca[0].localeCompare(cb[0])||ca[1].localeCompare(cb[1],"zh-Hant")||a.name.localeCompare(b.name);
+});
+}
+function dateDisplay(s){return new Date(s).toLocaleString("zh-HK",{hour12:false});}
+function siteCell(r,site){
+const source=r.sites[site];
+if(!source)return '<td class="site faint">未列於此店 formulary</td>';
+const c=state.counts[countKey(r.id,site)],low=c&&c.minimum!==null&&c.qty<c.minimum;
+return `<td class="site"><div class="stack">
+<span class="badge one">有收錄 · p.${source.page}</span>
+<span class="small">原 pack_uom：<b>${esc(source.pack)}</b></span>
+${c?`<strong class="${low?"low":""}">${c.qty} ${esc(c.unit)}${low?" · 低存量":""}</strong>
+<span class="small">最低：${c.minimum===null?"未設定":c.minimum+" "+esc(c.unit)}${c.shelf?" · "+esc(c.shelf):""}</span>
+<span class="small">${esc(c.counter)} · ${esc(dateDisplay(c.updated))}</span>
+${c.note?`<span class="small">${esc(c.note)}</span>`:""}`
+:'<span class="small">未點存（不是 0）</span>'}
+<button class="editstock" data-action="stock" data-id="${esc(r.id)}" data-site="${site}">${c?"修改點存":"開始點存"}</button>
+</div></td>`;
+}
+function render(){
+currentRows=getRows();
+const doc=selectedDoctor(),favs=new Set(doc?.favorites||[]);
+let lastGroup="";
+$("rows").innerHTML=currentRows.length?currentRows.map(r=>{
+const [chapter,sub]=CLASSES[r.cls],group=chapter+" "+CHAPTERS[chapter];
+let heading="";
+if($("sort").value==="class"&&lastGroup!==group){
+heading=`<tr class="group"><td colspan="6">${esc(group)}</td></tr>`;lastGroup=group;
+}
+const both=r.sites[1]&&r.sites[2];
+return heading+`<tr>
+<td class="noprint"><button class="star" data-action="star" data-id="${esc(r.id)}" aria-label="加入或移除常用藥" title="${doc?"切換常用藥":"請先選醫生"}">${favs.has(r.id)?"★":"☆"}</button></td>
+<td class="classcol"><strong>${chapter} ${esc(CHAPTERS[chapter])}</strong><div class="small">${esc(sub)}</div></td>
+<td class="name"><strong>${esc(r.name)}</strong><div class="small">${esc(FORMS[r.type])} · ${esc(r.type)}</div>
+${SOURCE_NOTES[r.id]?`<div class="small"><span class="badge warn">覆核</span> ${esc(SOURCE_NOTES[r.id])}</div>`:""}
+${r.cross?`<div class="small" style="margin-top:5px">${esc(r.cross.label)}<br>
+<button class="noprint" data-action="cross" data-id="${esc(r.id)}">查看 ${r.cross.ids.length} 個代碼對照</button></div>`:""}
+</td>
+<td><div class="code">${esc(r.id)}</div><span class="badge ${both?"both":"one"}">${availabilityLabel(r)}</span>
+${r.cross?.has1&&r.cross?.has2&&!both?'<div class="small">另有跨代碼兩店對照；不是同一 SKU。</div>':""}
+</td>
+${siteCell(r,1)}${siteCell(r,2)}
+</tr>`;
+}).join(""):'<tr><td colspan="6">沒有符合条件的項目。</td></tr>';
+const bothTotal=DATA.filter(r=>r.sites[1]&&r.sites[2]).length;
+$("stats").innerHTML=[
+["聯合庫存項目",DATA.length],["AMC1 收錄",sourceCounts[1]],["AMC2 收錄",sourceCounts[2]],
+["同代碼兩邊有",bothTotal],["目前顯示",currentRows.length]
+].map(([t,n])=>`<span class="stat">${esc(t)} <b>${n}</b></span>`).join("");
+$("viewInfo").textContent=
+`來源日期 2026-08-05；計數按 drug_type + drug_key，不是成分數。`+
+(doc?` 醫生：${doc.name}，preset ${doc.favorites.length} 項。`:"")+
+(crossFilter?" 現正顯示指定跨代碼對照；按「清除篩選」返回。":"")+
+($("stockFilter").value?` 點存篩選：AMC${$("stockSite").value}。`:"");
+}
+function resetFilters(renderNow=true){
+["search","availability","chapter","subclass","form","stockFilter"].forEach(id=>$(id).value="");
+$("favoritesOnly").checked=false;crossFilter=null;fillClasses();if(renderNow)render();
+}
+$("chapter").addEventListener("change",()=>{fillClasses();render();});
+["availability","subclass","form","stockSite","stockFilter","sort","favoritesOnly"].forEach(id=>$(id).addEventListener("change",render));
+$("search").addEventListener("input",render);
+$("resetFilters").onclick=()=>resetFilters();
+$("doctor").onchange=()=>{activeDoctor=$("doctor").value;render();};
+$("addDoctor").onclick=()=>{
+const name=prompt("醫生名稱：")?.trim();if(!name)return;
+if(name.length>80)return alert("名稱最多 80 字。");
+if(state.doctors.some(d=>d.name.toLowerCase()===name.toLowerCase()))return alert("已有同名醫生。");
+const id="d_"+(globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2));
+state.doctors.push({id,name,favorites:[]});activeDoctor=id;save();fillDoctors();render();
+};
+$("renameDoctor").onclick=()=>{
+const d=selectedDoctor();if(!d)return alert("請先選醫生。");
+const name=prompt("新名稱：",d.name)?.trim();if(!name)return;
+if(name.length>80)return alert("名稱最多 80 字。");
+if(state.doctors.some(x=>x.id!==d.id&&x.name.toLowerCase()===name.toLowerCase()))return alert("已有同名醫生。");
+d.name=name;save();fillDoctors();render();
+};
+$("deleteDoctor").onclick=()=>{
+const d=selectedDoctor();if(!d)return alert("請先選醫生。");
+if(!confirm(`刪除 ${d.name} 及其常用藥 preset？不會刪除點存。`))return;
+state.doctors=state.doctors.filter(x=>x.id!==d.id);activeDoctor="";save();fillDoctors();render();
+};
+$("favoriteVisible").onclick=()=>{
+const d=selectedDoctor();if(!d)return alert("請先選醫生。");
+if(!currentRows.length)return;
+if(!confirm(`把目前 ${currentRows.length} 個庫存項目加入 ${d.name} 的 preset？`))return;
+d.favorites=[...new Set([...d.favorites,...currentRows.map(r=>r.id)])];
+save();fillDoctors();render();
+};
+$("rows").addEventListener("click",event=>{
+const b=event.target.closest("button[data-action]");if(!b)return;
+const r=catalog.get(b.dataset.id);if(!r)return;
+if(b.dataset.action==="star"){
+const d=selectedDoctor();if(!d)return alert("請先新增或選擇一位醫生。");
+d.favorites=d.favorites.includes(r.id)?d.favorites.filter(x=>x!==r.id):[...d.favorites,r.id];
+save();fillDoctors();render();
+}else if(b.dataset.action==="stock"){
+openStock(r,b.dataset.site);
+}else if(b.dataset.action==="cross"){
+resetFilters(false);crossFilter=r.cross.ids;render();
+}
+});
+function openStock(r,site){
+editing={id:r.id,site};
+const c=state.counts[countKey(r.id,site)];
+$("stockTitle").textContent=`AMC${site} · ${site==="1"?"CWB":"TKP"} 點存`;
+$("stockSubtitle").textContent=`${r.name} ｜ ${r.id} ｜ 原 pack_uom：${r.sites[site].pack}`;
+$("qty").value=c?.qty??"";
+$("unit").value=c?.unit??"";
+$("minimum").value=c?.minimum??"";
+$("shelf").value=c?.shelf??"";
+$("counter").value=c?.counter??"";
+$("stockNote").value=c?.note??"";
+$("clearStock").disabled=!c;
+$("stockDialog").showModal();
+}
+$("closeStock").onclick=()=>$("stockDialog").close();
+$("stockForm").onsubmit=event=>{
+event.preventDefault();if(!editing)return;
+const qty=Number($("qty").value),minimum=$("minimum").value===""?null:Number($("minimum").value);
+const unit=$("unit").value,counter=$("counter").value.trim();
+if(!Number.isFinite(qty)||qty<0||minimum!==null&&(!Number.isFinite(minimum)||minimum<0))
+return alert("數量必須是非負數。");
+if(!UNITS.includes(unit)||!counter)return alert("請確認點存單位及填寫點存人。");
+const key=countKey(editing.id,editing.site),old=state.counts[key];
+if(old&&old.unit!==unit&&!confirm(`點存單位由「${old.unit}」改為「${unit}」。請確認數量及最低存量已自行換算。`))return;
+state.counts[key]={
+qty,unit,minimum,shelf:$("shelf").value.trim(),counter,
+note:$("stockNote").value.trim(),updated:new Date().toISOString()
+};
+save();$("stockDialog").close();render();toast(storageOK?"點存已儲存":"點存暫存於記憶體，請備份");
+};
+$("clearStock").onclick=()=>{
+if(!editing||!confirm("清除此項点存？將回復「未點存」，不是 0。"))return;
+delete state.counts[countKey(editing.id,editing.site)];
+save();$("stockDialog").close();render();
+};
+function download(filename,text,mime){
+const blob=new Blob([text],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement("a");
+a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();
+setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+function localDate(){
+const d=new Date(),p=n=>String(n).padStart(2,"0");
+return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+function csvCell(value){
+let s=String(value??"");
+/* Protect spreadsheets against formula injection from free-text fields. */
+if(/^[\s]*[=+\-@]/.test(s))s="'"+s;
+return '"'+s.replace(/"/g,'""')+'"';
+}
+$("exportCSV").onclick=()=>{
+const doc=selectedDoctor(),favorites=new Set(doc?.favorites||[]);
+const lines=[[
+"Formulary date","BNF-style chapter","Local drug class","Drug type","Drug key",
+"Drug display name","SKU availability","Clinic","Source page","Source pack_uom",
+"Counted","Quantity","Count unit","Minimum","Shelf","Counter","Count timestamp",
+"Note","Selected doctor","Doctor favorite","Cross-code comparison","Review note"
+]];
+for(const r of currentRows){
+for(const site of ["1","2"]){
+if(!r.sites[site])continue;
+const c=state.counts[countKey(r.id,site)],[ch,cl]=CLASSES[r.cls];
+lines.push([
+"2026-08-05",ch+" "+CHAPTERS[ch],cl,r.type,r.key,r.name,availabilityLabel(r),
+"AMC"+site+" "+(site==="1"?"CWB":"TKP"),r.sites[site].page,r.sites[site].pack,
+c?"Yes":"No",c?.qty??"",c?.unit??"",c?.minimum??"",c?.shelf??"",c?.counter??"",
+c?.updated??"",c?.note??"",doc?.name??"",doc?(favorites.has(r.id)?"Yes":"No"):"",
+r.cross?.label??"",SOURCE_NOTES[r.id]??""
+]);
+}
+}
+download("AMC-inventory-"+localDate()+".csv","\uFEFF"+lines.map(row=>row.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8");
+toast("CSV 按目前顯示的 SKU 匯出；每個有收錄診所一行。");
+};
+$("backup").onclick=()=>{
+download("AMC-backup-"+localDate()+".json",JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2),"application/json;charset=utf-8");
+toast("已產生全部點存及醫生 preset 備份。");
+};
+$("restore").onclick=()=>$("restoreFile").click();
+$("restoreFile").onchange=async event=>{
+const file=event.target.files[0];if(!file)return;
+try{
+if(file.size>10*1024*1024)throw Error("檔案過大；上限 10MB。");
+const incoming=validateState(JSON.parse(await file.text()));
+if(!confirm(`還原將完全覆蓋本機 ${state.doctors.length} 位醫生及 ${Object.keys(state.counts).length} 筆點存。\n備份包含 ${incoming.doctors.length} 位醫生及 ${Object.keys(incoming.counts).length} 筆點存。\n已自行備份現有資料，並確定繼續？`))return;
+state=incoming;activeDoctor="";save();fillDoctors();render();toast("已還原。");
+}catch(e){alert("還原失敗，現有資料未被取代："+e.message);}
+finally{event.target.value="";}
+};
+$("print").onclick=()=>window.print();
+
+options();fillDoctors();render();
+$("validation").textContent=issues.length
+?"⚠ 內部資料結構檢查發現："+issues.join("；")
+:"內部資料結構檢查：未發現重複 ID、未定義類別或失效交叉引用。此檢查不是與 PDF 逐字核對，也不是臨床驗證。"+
+" AMC1 每頁列數："+Object.entries(pages[1]).map(([p,n])=>p+":"+n).join("，")+
+"；AMC2 每頁列數："+Object.entries(pages[2]).map(([p,n])=>p+":"+n).join("，")+"。";
+if(issues.length){
+$("validation").classList.add("low");
+alert("資料載入有內部錯誤，請查看頁尾覆核事項，暫勿作正式點存。");
+}
+if(storageOK)$("saveStatus").textContent="本機模式 · 請定期 JSON 備份";
+window.addEventListener("storage",event=>{
+if(event.key===STORE){
+storageWarning("另一個分頁可能更新了同一份資料。請先備份本頁未同步內容，再重新載入，避免互相覆蓋。");
+}
+});
+</script>
+</body>
+</html>
