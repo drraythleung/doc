@@ -728,9 +728,10 @@ let active = "da";
 let printing = false;
 
 const titles = {
-  da:"DA01",
-  h:"HSBC H01",
-  b:"Bupa B04"
+  da: "DA01",
+  h: "HSBC H01",
+  b: "Bupa B04",
+  aia: "AIA HSNM5F01"
 };
 
 const logo = () => `
@@ -1446,12 +1447,36 @@ function displayDate(value){
   return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
 }
 
-function derived(){
+function derived() {
+  const text = key => String(state[key] ?? "").trim();
+
+  const aiaSymptoms = [
+    text("symptoms"),
+    text("onset")
+      ? "Onset / Duration: " + text("onset")
+      : "",
+    text("aiaFrequency")
+      ? "Frequency: " + text("aiaFrequency")
+      : ""
+  ].filter(Boolean).join("\n");
+
+  const aiaServices = [
+    ...testDefinitions.map(([key]) => text(key)),
+    text("aiaAdditionalServices")
+  ].filter(Boolean).join("\n");
+
   return {
     ...state,
-    dateDisplay:displayDate(state.date),
-    clinical:[state.diagnosis.trim(),state.symptoms.trim()]
-      .filter(Boolean).join("; ")
+
+    dateDisplay: displayDate(state.date),
+
+    clinical: [
+      text("diagnosis"),
+      text("symptoms")
+    ].filter(Boolean).join("; "),
+
+    aiaSymptoms,
+    aiaServices
   };
 }
 
@@ -1479,38 +1504,60 @@ function setStatus(text,error=false){
   $("#status").classList.toggle("error",error);
 }
 
-function setActive(plan){
-  active=plan;
-  ["da","h","b"].forEach(p=>{
-    $("#group-"+p).hidden = p!==plan;
+/* =========================================================
+   表格切換與頁數提示
+   DA01 頁數直接納入主程式，毋須由附加模組覆寫函數。
+   ========================================================= */
+
+function setActive(plan) {
+  active = plan;
+
+  // 顯示目前表格。
+Object.keys(titles).forEach(key => {
+    $("#group-" + key).hidden = key !== plan;
   });
-  $$("[data-tab]").forEach(el=>{
-    const selected=el.dataset.tab===plan;
-    el.classList.toggle("active",selected);
-    el.setAttribute("aria-pressed",String(selected));
+
+  // 同步分頁按鈕。
+  $$("[data-tab]").forEach(button => {
+    const selected = button.dataset.tab === plan;
+
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-pressed", String(selected));
   });
-  $$(".plan-panel").forEach(el=>{
-    el.hidden=el.dataset.plan!==plan;
+
+  // 同步左側計劃專用欄位。
+  $$(".plan-panel").forEach(panel => {
+    panel.hidden = panel.dataset.plan !== plan;
   });
-  $("#planTitle").textContent="05　"+titles[plan]+" 專用資料";
+
+  $("#planTitle").textContent =
+    "05　" + titles[plan] + " 專用資料";
 
   updateAppendix([plan]);
   renderValues();
   updateCaption();
-  setStatus(
-    plan==="da"
-      ? ""
-      : plan==="h"
-      ? ""
-      : ""
-  );
+
+  // 保留你目前版本的空白狀態列。
+  setStatus("");
 }
 
-function updateCaption(){
-  let text=active==="da"?"DA01 · 第 1 頁":
-           active==="h"?"HSBC H01 · 2 頁":"Bupa B04 · 1 頁";
-  if(active!=="da" && hasTests()) text+=" ＋ 檢查附頁";
-  $("#pageCaption").textContent=text;
+function updateCaption() {
+  const captions = {
+    da: "DA01 · 4 頁",
+    h: "HSBC H01 · 2 頁",
+    b: "Bupa B04 · 1 頁",
+    aia: "AIA HSNM5F01 · 1 頁"
+  };
+
+  let caption = captions[active];
+
+  // 只有 HSBC / Bupa 使用原有檢查附頁。
+  // AIA 本身已有 Services / Treatment Required 欄位。
+  if (["h", "b"].includes(active) && hasTests()) {
+    caption += " ＋ 檢查附頁";
+  }
+
+  $("#pageCaption").textContent = caption;
 }
 
 $$("[data-key]").forEach(el=>{
@@ -1589,8 +1636,8 @@ async function printPlans(plans){
     return;
   }
 
-  ["da","h","b"].forEach(p=>{
-    $("#group-"+p).hidden=!plans.includes(p);
+Object.keys(titles).forEach(plan => {
+    $("#group-" + plan).hidden = !plans.includes(plan);
   });
   updateAppendix(plans);
   renderValues();
@@ -1687,8 +1734,6 @@ $("#demo").addEventListener("click",()=>{
   setActive(active);
 });
 
-syncInputs();
-setActive("da");
 </script>
 <!-- ======================================================
      DA01 第 2–4 頁中心列表
@@ -1868,16 +1913,16 @@ setActive("da");
 
   if (host.dataset.centreListAdded === "yes") return;
 
-  /*
-   * 本模組沿用上一版 app 的：
-   * escapeHTML、logo、active、setActive、
-   * updateCaption、setStatus 及 data-centre 清空機制。
-   *
-   * 中心資料獨立轉錄自 DA01：
-   * Last update: 20260305
-   * 不引用 HSBC / Bupa 的中心地址或電話。
-   */
-
+/*
+ * DA01 中心列表模組
+ *
+ * 使用主程式的 escapeHTML() 及 logo() 建立頁面。
+ * 中心剔選沿用 data-centre，供共用清空功能處理。
+ * 頁數提示及表格切換統一由主程式管理。
+ *
+ * 中心資料版本：20260305
+ * 與 HSBC / Bupa 資料分開保留，不互相覆蓋。
+ */
   const NAMES = {
     alpha: "Alpha Medical Diagnostic Centre",
     central: "Central Medical Diagnostic Centre",
@@ -2089,11 +2134,6 @@ setActive("da");
     )
   ];
 
-  /* ======================================================
-     DA01 — Page 3 of 4
-     九龍續頁 + 新界及離島
-     20 個中心條目
-     ====================================================== */
 
   const page3 = [
     entry(
@@ -2348,15 +2388,6 @@ setActive("da");
     )
   ];
 
-  /*
-   * 原圖第 3 頁共有 19 個中心條目。
-   * 三頁合計：15 + 19 + 7 = 41。
-   * 用下方實際資料數量更新介面，避免硬編碼頁面提示。
-   */
-  const centreCount = [page2, page3, page4]
-    .flat()
-    .filter(row => !row.region)
-    .length;
 
   /*
    * 同一地區合併儲存格，接近原本 centre list 排版。
@@ -2523,48 +2554,12 @@ setActive("da");
     makePage(page4, 4)
   );
 
-  host.dataset.centreListAdded = "yes";
+ host.dataset.centreListAdded = "yes";
 
-  /* ======================================================
-     更新舊版介面文字
-     保留原本元素及換行，不改動醫療表格內容
-     ====================================================== */
-
-  const replacements = [
-    [
-      "",
-      ""
-    ],
-    [
-      "H01／B04 中心資料按所提供圖片轉錄；正式使用前請核對。",
-      "DA01／H01／B04 中心資料按所提供圖片轉錄；正式使用前請核對。"
-    ]
-  ];
-
-  function replaceTextNodes(root) {
-    if (!root) return;
-
-    const walker = document.createTreeWalker(
-      root,
-      NodeFilter.SHOW_TEXT
-    );
-
-    let node;
-
-    while ((node = walker.nextNode())) {
-      let value = node.nodeValue;
-
-      replacements.forEach(([from, to]) => {
-        value = value.split(from).join(to);
-      });
-
-      node.nodeValue = value;
-    }
-  }
-
-  document.querySelectorAll(".sidebar .notice, .sidebar .help")
-    .forEach(replaceTextNodes);
-
+  /*
+   * 保留原版本的空白 help 元素。
+   * 雖然冇文字，但仍可能影響間距，因此今次不移除。
+   */
   const daPanel = document.querySelector(
     '.plan-panel[data-plan="da"]'
   );
@@ -2572,54 +2567,950 @@ setActive("da");
   if (daPanel) {
     const help = document.createElement("p");
     help.className = "help";
-    help.textContent =
-      "";
-
     daPanel.appendChild(help);
   }
-
-  /* ======================================================
-     接駁原本頁數提示
-     原 app 的 input / tab / reset / afterprint 均會沿用
-     ====================================================== */
-
-  const originalUpdateCaption = updateCaption;
-
-  updateCaption = function () {
-    originalUpdateCaption();
-
-    if (active === "da") {
-      document.getElementById("pageCaption").textContent =
-        "DA01 · 4 頁";
-    }
-  };
-
-  const originalSetActive = setActive;
-
-  setActive = function (plan) {
-    originalSetActive(plan);
-
-    if (plan === "da") {
-      setStatus(
-        ""
-      );
-    }
-  };
-
-  /*
-   * 原本的列印函數會搜尋 group-da 內所有 .page，
-   * 所以不用另改 printPlans：
-   *
-   * 「列印目前表格」→ DA01 四頁
-   * 「列印已選表格」→ DA01 四頁 + 其他已選表格
-   *
-   * 原本 clearAll 會清除所有 [data-centre]，
-   * 新增中心的剔選亦會一併清除。
-   */
-
-  setActive(active);
-
 })();
+
 </script>
+
+<!-- ======================================================
+     第四份表格：AIA Network Referral Form
+     依據使用者提供的 HSNM5F01.022021 版本重建。
+     不修改 DA01 / HSBC / Bupa 表格版面及中心資料。
+     ====================================================== -->
+
+<style>
+/* ======================================================
+   AIA 專用樣式
+   所有紙張樣式均限制於 .aia-page，避免影響其他表格。
+   ====================================================== */
+
+.aia-page {
+  padding: 9mm 11mm;
+  font-size: 9pt;
+  line-height: 1.18;
+}
+
+.aia-page .aia-header {
+  position: relative;
+  height: 24mm;
+  border-bottom: .25mm solid #333;
+}
+
+.aia-page .aia-wordmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: #d31145;
+  font-family: Arial, sans-serif;
+  font-size: 34pt;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -1.5pt;
+}
+
+.aia-page .aia-company {
+  position: absolute;
+  top: .5mm;
+  right: 0;
+  text-align: left;
+  font-size: 9pt;
+  line-height: 1.2;
+}
+
+.aia-page .aia-company strong {
+  font-size: 9.5pt;
+}
+
+.aia-page .aia-heading {
+  position: absolute;
+  bottom: 4mm;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: 18pt;
+  line-height: 1.05;
+}
+
+.aia-page .aia-intro {
+  position: absolute;
+  bottom: .7mm;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: 7.3pt;
+  line-height: 1.15;
+}
+
+.aia-page .aia-part-title {
+  margin: 2mm 0 .5mm;
+  font-size: 9pt;
+  line-height: 1.2;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.aia-page .aia-box {
+  border: .22mm solid #333;
+}
+
+.aia-page .aia-provider-row {
+  display: grid;
+  grid-template-columns: 27mm minmax(0, 1fr) minmax(0, 1fr);
+  gap: 3mm;
+  height: 13mm;
+  padding: 1mm 1.5mm;
+}
+
+.aia-page .aia-provider-label {
+  padding-top: .5mm;
+  font-size: 11.5pt;
+  font-weight: 700;
+}
+
+.aia-page .aia-provider-cell {
+  min-width: 0;
+}
+
+.aia-page .aia-provider-cell > small {
+  display: block;
+  margin-top: .5mm;
+  font-size: 8pt;
+}
+
+.aia-page .aia-line-value {
+  display: block;
+  width: 100%;
+  height: 6.7mm;
+  padding: .3mm .4mm;
+  border-bottom: .2mm solid #444;
+  font-size: 9pt;
+  line-height: 1.15;
+  overflow: hidden;
+}
+
+.aia-page .aia-sign-space {
+  height: 6.7mm;
+  border-bottom: .2mm solid #444;
+}
+
+.aia-page .aia-contact-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 5mm;
+  height: 5.5mm;
+  padding: 0 1.5mm .5mm;
+}
+
+.aia-page .aia-contact-row.aia-three {
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+}
+
+.aia-page .aia-inline-field {
+  display: flex;
+  align-items: baseline;
+  gap: 1mm;
+  min-width: 0;
+}
+
+.aia-page .aia-inline-label {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.aia-page .aia-inline-value {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  height: 4.7mm;
+  padding: .3mm .4mm;
+  border-bottom: .2mm solid #444;
+  font-size: 9pt;
+  line-height: 1.15;
+  overflow: hidden;
+}
+
+.aia-page .aia-referral-types {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1mm;
+  min-height: 6mm;
+  padding: .8mm 1.5mm;
+  border-bottom: .22mm solid #333;
+  font-size: 8.4pt;
+}
+
+.aia-page .aia-referral-types > strong {
+  white-space: nowrap;
+}
+
+.aia-page .aia-referral-types label {
+  white-space: nowrap;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.aia-page .aia-referral-types .paper-check {
+  width: 2.3mm;
+  height: 2.3mm;
+  margin-right: .6mm;
+}
+
+.aia-page .aia-patient {
+  padding: 1.2mm 1.5mm;
+}
+
+.aia-page .aia-patient-fields {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.2fr)
+    minmax(0, 1fr)
+    minmax(0, .9fr);
+  gap: 3mm;
+}
+
+.aia-page .aia-sex {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  margin-top: 1.5mm;
+  font-weight: 700;
+}
+
+.aia-page .aia-clinical-row {
+  padding: 1mm 1.5mm;
+  border-bottom: .22mm solid #333;
+}
+
+.aia-page .aia-clinical-row:last-child {
+  border-bottom: 0;
+}
+
+.aia-page .aia-clinical-row h3 {
+  margin: 0 0 .7mm;
+  font-size: 9pt;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.aia-page .aia-diagnosis-row {
+  height: 21mm;
+}
+
+.aia-page .aia-diagnosis-line {
+  display: flex;
+  gap: 2mm;
+  align-items: baseline;
+  margin-top: .5mm;
+}
+
+.aia-page .aia-diagnosis-line > span:first-child {
+  width: 5mm;
+  flex: 0 0 5mm;
+}
+
+.aia-page .aia-diagnosis-line .v {
+  display: block;
+  flex: 1;
+  height: 6.5mm;
+  padding: .2mm .4mm;
+  border-bottom: .2mm solid #555;
+  font-size: 9pt;
+  line-height: 1.15;
+  overflow: hidden;
+}
+
+.aia-page .aia-symptoms-row {
+  height: 17mm;
+}
+
+.aia-page .aia-management-row,
+.aia-page .aia-procedure-row {
+  height: 13mm;
+}
+
+.aia-page .aia-services-row {
+  height: 24mm;
+}
+
+.aia-page .aia-block-value {
+  display: block;
+  width: 100%;
+  font-size: 9pt;
+  line-height: 1.2;
+  overflow: hidden;
+}
+
+.aia-page .aia-symptoms-row .aia-block-value {
+  height: 11mm;
+}
+
+.aia-page .aia-management-row .aia-block-value,
+.aia-page .aia-procedure-row .aia-block-value {
+  height: 7mm;
+}
+
+.aia-page .aia-services-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 16mm;
+  align-items: baseline;
+  gap: 1mm;
+  margin-bottom: .7mm;
+}
+
+.aia-page .aia-services-heading h3 {
+  margin: 0;
+}
+
+.aia-page .aia-services-heading > strong {
+  font-size: 8pt;
+}
+
+.aia-page .aia-treatment-count {
+  display: block;
+  height: 4mm;
+  padding: 0 .4mm;
+  border-bottom: .2mm solid #444;
+  font-size: 9pt;
+  line-height: 1.15;
+  overflow: hidden;
+}
+
+.aia-page .aia-services-row .aia-block-value {
+  height: 17mm;
+}
+
+.aia-page .aia-acknowledgement {
+  padding: 1.5mm;
+}
+
+.aia-page .aia-ack-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 3mm;
+}
+
+.aia-page .aia-ack-columns p {
+  margin: 0;
+  font-size: 8.2pt;
+  line-height: 1.2;
+}
+
+.aia-page .aia-ack-columns .aia-chinese {
+  font-size: 8.7pt;
+  line-height: 1.25;
+}
+
+.aia-page .aia-member-signature {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 2mm;
+  margin-top: 2mm;
+  min-height: 5mm;
+  font-size: 8.5pt;
+}
+
+.aia-page .aia-member-signature .aia-signature-rule {
+  display: block;
+  width: 61mm;
+  height: 5mm;
+  border-bottom: .2mm solid #444;
+}
+
+.aia-page .aia-provider-note {
+  margin: 1.5mm 0 0;
+  font-size: 7.6pt;
+  line-height: 1.2;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.aia-page .aia-notes {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  gap: 3mm;
+  margin-top: 2mm;
+}
+
+.aia-page .aia-notes h3 {
+  margin: 0 0 .6mm;
+  font-size: 8pt;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: underline;
+}
+
+.aia-page .aia-notes ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aia-page .aia-notes li {
+  position: relative;
+  margin: 0 0 .7mm;
+  padding-left: 3mm;
+  font-size: 7.3pt;
+  line-height: 1.2;
+}
+
+.aia-page .aia-notes li::before {
+  content: "◆";
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 6.5pt;
+}
+
+.aia-page .aia-addresses {
+  margin-top: 1mm;
+  font-size: 6.8pt;
+  line-height: 1.2;
+}
+
+.aia-page .aia-addresses p {
+  margin: 0 0 .8mm;
+}
+
+.aia-page .aia-remarks {
+  margin-top: 1mm;
+  font-size: 6.4pt;
+  line-height: 1.2;
+}
+
+.aia-page .aia-version {
+  margin-top: 1mm;
+  font-size: 7pt;
+}
+
+@media print {
+  .aia-page .aia-box,
+  .aia-page .aia-notes,
+  .aia-page .aia-clinical-row {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+</style>
+
+<script>
+(() => {
+  "use strict";
+
+  // 避免不小心重複貼入而新增兩次。
+  if (document.getElementById("group-aia")) return;
+
+  /* ====================================================
+     1. AIA 專用輸入欄位
+     共用資料繼續使用原本的 data-key / state。
+     ==================================================== */
+
+  const panel = document.createElement("div");
+  panel.className = "plan-panel";
+  panel.dataset.plan = "aia";
+  panel.hidden = true;
+
+  panel.innerHTML = `
+    <label class="field">
+      <span>Member ID — AIA</span>
+      <input data-key="aiaMemberId" autocomplete="off">
+    </label>
+
+    <label class="field">
+      <span>Refer To／接收醫生或中心名稱</span>
+      <input data-key="aiaProvider" autocomplete="off">
+    </label>
+
+    <label class="field">
+      <span>Specialty／專科</span>
+      <input data-key="aiaSpecialty" autocomplete="off">
+    </label>
+
+    <div class="two">
+      <label class="field">
+        <span>接收方電話</span>
+        <input
+          data-key="aiaProviderTel"
+          type="tel"
+          autocomplete="off"
+        >
+      </label>
+
+      <label class="field">
+        <span>接收方傳真</span>
+        <input
+          data-key="aiaProviderFax"
+          type="tel"
+          autocomplete="off"
+        >
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Diagnosis (ii)／第二項診斷</span>
+      <textarea data-key="aiaDiagnosis2" rows="2"></textarea>
+    </label>
+
+    <label class="field">
+      <span>Frequency／症狀頻率</span>
+      <input data-key="aiaFrequency" autocomplete="off">
+    </label>
+
+    <label class="field">
+      <span>Medical Management／醫療處理</span>
+      <textarea data-key="aiaManagement" rows="2"></textarea>
+    </label>
+
+    <label class="field">
+      <span>Procedure Performed／已完成的臨床或診斷程序</span>
+      <textarea data-key="aiaProcedure" rows="2"></textarea>
+    </label>
+
+    <label class="field">
+      <span>額外 Services / Treatment Required</span>
+      <textarea
+        data-key="aiaAdditionalServices"
+        rows="2"
+      ></textarea>
+    </label>
+
+    <label class="field">
+      <span>Number of Treatments／治療次數（如適用）</span>
+      <input
+        data-key="aiaTreatmentCount"
+        inputmode="numeric"
+        autocomplete="off"
+      >
+    </label>
+
+    <p class="help">
+      第一項診斷、症狀及發病時間沿用「03 臨床資料」。<br>
+      「04 是次所需檢查」會列入 Services / Treatment Required，
+      再加上以上額外服務／治療內容。<br>
+      轉介類別可於右邊表格直接剔選。<br>
+      醫生簽署、診所蓋章及會員簽署位置保留空白。
+    </p>
+
+    <p class="help">
+      重建依據：你提供的 HSNM5F01.022021。<br>
+      地址、條款及電話保留所提供版本文字，未作現行資料核實。
+      正式使用前請確認版本及重製表格是否獲接受。
+    </p>
+  `;
+
+  const planSection = document
+    .getElementById("planTitle")
+    .closest(".section");
+
+  planSection.querySelector(".section-body").appendChild(panel);
+
+  // 原本 keys 是陣列，可以加入新欄位。
+  // clearAll() 會沿用同一陣列，因此 AIA 資料亦會被清空。
+  panel.querySelectorAll("[data-key]").forEach(input => {
+    const key = input.dataset.key;
+
+    if (!keys.includes(key)) {
+      keys.push(key);
+      state[key] = "";
+    }
+
+    // 原主程式的事件是在新增欄位之前綁定，
+    // 所以只為這些新增欄位補上相同更新流程。
+    input.addEventListener("input", () => {
+      state[key] = input.value;
+
+      updateAppendix([active]);
+      renderValues();
+      updateCaption();
+
+      $$(".over-limit").forEach(element => {
+        element.classList.remove("over-limit");
+      });
+    });
+  });
+
+  /* ====================================================
+     2. 加入第四個分頁及批次列印選項
+     ==================================================== */
+
+  const tab = document.createElement("button");
+  tab.type = "button";
+  tab.dataset.tab = "aia";
+  tab.textContent = "AIA · HSNM5F01";
+  tab.setAttribute("aria-pressed", "false");
+
+  tab.addEventListener("click", () => {
+    setActive("aia");
+  });
+
+  document.querySelector(".tabs").appendChild(tab);
+
+  const printLabel = document.createElement("label");
+  printLabel.innerHTML = `
+    <input type="checkbox" class="print-pick" value="aia">
+    AIA
+  `;
+
+  document.querySelector(".print-picks").appendChild(printLabel);
+
+  const versionHelp = document
+    .querySelector(".print-picks")
+    .parentElement
+    .querySelector(".help");
+
+  if (versionHelp) {
+    versionHelp.appendChild(document.createElement("br"));
+    versionHelp.appendChild(
+      document.createTextNode("AIA：HSNM5F01.022021")
+    );
+  }
+
+  const brand = document.querySelector(".brand");
+
+  if (brand) {
+    brand.textContent =
+      brand.textContent.trim().replace("3-in-ONE", "4-in-ONE");
+  }
+
+  /* ====================================================
+     3. 建立 AIA 紙張
+     放在 Bupa 後、共用附加頁前。
+     ==================================================== */
+
+  const group = document.createElement("div");
+  group.id = "group-aia";
+  group.className = "form-group";
+  group.hidden = true;
+
+  document
+    .getElementById("group-appendix")
+    .before(group);
+
+  // 使用 data-route，沿用原本 clearAll() 的剔選清空機制。
+  function referralType(id, label) {
+    return `
+      <label>
+        <input
+          type="checkbox"
+          class="paper-check"
+          data-route="aia-${id}"
+        >
+        ${escapeHTML(label)}
+      </label>
+    `;
+  }
+
+  group.innerHTML = `
+    <article class="page aia-page" aria-label="AIA Network Referral Form">
+      <div class="paper-content">
+
+        <header class="aia-header">
+          <div
+            class="aia-wordmark"
+            aria-label="AIA 文字標示，非原圖標誌"
+          >AIA</div>
+
+          <div class="aia-company">
+            <strong>AIA International Limited</strong><br>
+            (Incorporated in Bermuda<br>
+            with limited liability)
+          </div>
+
+          <h1 class="aia-heading">Network Referral Form</h1>
+
+          <p class="aia-intro">
+            Please use this form for referral to network doctor,
+            laboratory, imaging center or physiotherapy
+          </p>
+        </header>
+
+        <h2 class="aia-part-title">
+          Part 1 - Details of Provider:
+        </h2>
+
+        <section class="aia-box">
+          <div class="aia-provider-row">
+            <div class="aia-provider-label">Refer To :</div>
+
+            <div class="aia-provider-cell">
+              ${bind("aiaProvider", "aia-line-value")}
+              <small>(Provider’s Name)</small>
+            </div>
+
+            <div class="aia-provider-cell">
+              ${bind("aiaSpecialty", "aia-line-value")}
+              <small>(Specialty)</small>
+            </div>
+          </div>
+
+          <div class="aia-contact-row">
+            <div class="aia-inline-field">
+              <span class="aia-inline-label">Tel No.:</span>
+              ${bind("aiaProviderTel", "aia-inline-value")}
+            </div>
+
+            <div class="aia-inline-field">
+              <span class="aia-inline-label">Fax No.:</span>
+              ${bind("aiaProviderFax", "aia-inline-value")}
+            </div>
+          </div>
+
+          <div class="aia-referral-types">
+            <strong>Type of Referral:</strong>
+            ${referralType("specialist", "Specialist Doctor")}
+            ${referralType("lab", "Lab/Imaging Center")}
+            ${referralType("physio", "Physiotherapist")}
+            ${referralType("other", "Others")}
+          </div>
+
+          <div class="aia-provider-row">
+            <div class="aia-provider-label">Referred By:</div>
+
+            <div class="aia-provider-cell">
+              ${bind("doctor", "aia-line-value")}
+              <small>(Doctor’s Name)</small>
+            </div>
+
+            <div class="aia-provider-cell">
+              <div class="aia-sign-space"></div>
+              <small>(Doctor's Signature &amp; Clinic Stamp)</small>
+            </div>
+          </div>
+
+          <div class="aia-contact-row aia-three">
+            <div class="aia-inline-field">
+              <span class="aia-inline-label">Tel No.:</span>
+              ${bind("clinicTel", "aia-inline-value")}
+            </div>
+
+            <div class="aia-inline-field">
+              <span class="aia-inline-label">Fax No.:</span>
+              ${bind("clinicFax", "aia-inline-value")}
+            </div>
+
+            <div class="aia-inline-field">
+              <span class="aia-inline-label">Date</span>
+              ${bind("dateDisplay", "aia-inline-value")}
+            </div>
+          </div>
+        </section>
+
+        <h2 class="aia-part-title">
+          Part 2 - Patient Information
+          (Please check for validity of HealthCard):
+        </h2>
+
+        <section class="aia-box aia-patient">
+          <div class="aia-patient-fields">
+            <div class="aia-inline-field">
+              <strong class="aia-inline-label">Name</strong>
+              ${bind("name", "aia-inline-value")}
+            </div>
+
+            <div class="aia-inline-field">
+              <strong class="aia-inline-label">Member ID</strong>
+              ${bind("aiaMemberId", "aia-inline-value")}
+            </div>
+
+            <div class="aia-inline-field">
+              <strong class="aia-inline-label">Tel No.</strong>
+              ${bind("contact", "aia-inline-value")}
+            </div>
+          </div>
+
+          <div class="aia-sex">
+            <span>Sex :</span>
+            <span>${mark("sex", "M")} Male</span>
+            <span>${mark("sex", "F")} Female</span>
+          </div>
+        </section>
+
+        <h2 class="aia-part-title">
+          Part 3 - Clinical History &amp; Services / Treatment required:
+        </h2>
+
+        <section class="aia-box">
+          <div class="aia-clinical-row aia-diagnosis-row">
+            <h3>1. Diagnosis / Provisional Diagnosis:</h3>
+
+            <div class="aia-diagnosis-line">
+              <span>(i)</span>
+              ${bind("diagnosis")}
+            </div>
+
+            <div class="aia-diagnosis-line">
+              <span>(ii)</span>
+              ${bind("aiaDiagnosis2")}
+            </div>
+          </div>
+
+          <div class="aia-clinical-row aia-symptoms-row">
+            <h3>
+              2. Signs and Symptoms
+              (Date of onset / Frequency / Duration)
+            </h3>
+
+            ${bind("aiaSymptoms", "aia-block-value")}
+          </div>
+
+          <div class="aia-clinical-row aia-management-row">
+            <h3>3. Medical Management</h3>
+            ${bind("aiaManagement", "aia-block-value")}
+          </div>
+
+          <div class="aia-clinical-row aia-procedure-row">
+            <h3>
+              4. Clinical Procedure / Diagnostic Procedure Performed
+            </h3>
+
+            ${bind("aiaProcedure", "aia-block-value")}
+          </div>
+
+          <div class="aia-clinical-row aia-services-row">
+            <div class="aia-services-heading">
+              <h3>5. Services / Treatment Required:</h3>
+              <strong>Number of Treatments (when applicable)</strong>
+              ${bind("aiaTreatmentCount", "aia-treatment-count")}
+            </div>
+
+            ${bind("aiaServices", "aia-block-value")}
+          </div>
+        </section>
+
+        <h2 class="aia-part-title">
+          Part 4 - Acknowledgement by Member:
+        </h2>
+
+        <section class="aia-box aia-acknowledgement">
+          <div class="aia-ack-columns">
+            <p>
+              I understand that this referral does not guarantee that
+              charges are totally covered by my group insurance policy.
+              I hereby undertake the responsibility to settle any amounts
+              in excess of the coverage, or services that are not covered
+              by my group insurance policy upon receiving notification
+              from AIA Corporate Solutions Department.
+            </p>
+
+            <p class="aia-chinese">
+              本人明白此轉介信並不代表所有費用均能由本人之團體保單負擔。
+              本人因此將會承擔任何非受保項目的費用和超過受保限額的費用，
+              並在收到友邦保險團體業務部通知後，立即繳付該費用。
+            </p>
+          </div>
+
+          <div class="aia-member-signature">
+            <span>Member or Guardian’s Signature:</span>
+            <span class="aia-signature-rule"></span>
+          </div>
+
+          <p class="aia-provider-note">
+            Note : The service provider has the responsibility to explain
+            to the patient clearly on the tests applied and the potential
+            expenses involved.
+          </p>
+        </section>
+
+        <section class="aia-notes">
+          <div>
+            <h3>
+              Member Notes: Member Hotline (852) 2200 6333
+            </h3>
+
+            <ul>
+              <li>
+                Members are advised to make a copy of this referral
+                form for their own references.
+              </li>
+
+              <li>
+                Member should confirm Network status of the Service
+                Provider prior to obtaining Services.
+              </li>
+
+              <li>
+                Please refer to “AIA Connect” mobile app or AIA
+                Employee Benefits Online Service at aia.com.hk for
+                the updated listing of network providers.
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3>Service Provider Notes:</h3>
+
+            <ul>
+              <li>
+                Service Provider should attach this form with the
+                related claim voucher and send to Corporate Solutions
+                Department for reimbursement.
+              </li>
+
+              <li>
+                Referral to Specialist and Physiotherapist is valid
+                for 180 days from the date of issuance, the referral
+                will continue to be valid if the time between current
+                and the last valid specialist / physiotherapist
+                consultation of the same disability by the same
+                provider is not more than 180 days.
+              </li>
+
+              <li>
+                Referral to Laboratory / Imaging service is valid
+                for one time only.
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <div class="aia-addresses">
+          <p>
+            AIA address in HK : AIA International Limited,
+            Corporate Solutions Department, 12/F, AIA Financial Centre,
+            712 Prince Edward Road East, Kowloon, Hong Kong<br>
+            友邦香港辦事處 :
+            香港九龍太子道東712號友邦九龍金融中心12樓友邦保險團體業務部
+          </p>
+
+          <p>
+            AIA address in Macau : AIA International Limited,
+            Corporate Solutions Department, 601, AIA Tower,
+            Nos. 251A-301 Avenida Commercial de Macau, Macau<br>
+            澳門友邦保險辦事處 :
+            澳門商業大馬路251A–301號友邦廣場601室友邦保險團體業務部
+          </p>
+        </div>
+
+        <div class="aia-remarks">
+          Remarks: “AIA” refers to AIA International Limited
+          (incorporated in Bermuda with limited liability).<br>
+          備註：「友邦保險」是指友邦保險(國際)有限公司
+          （於百慕達註冊成立之有限公司）。
+        </div>
+
+        <div class="aia-version">HSNM5F01.022021</div>
+
+      </div>
+    </article>
+  `;
+})();
+
+/* =========================================================
+   統一初始化
+   四份表格及 DA01 中心列表建立完成後，只執行一次。
+   ========================================================= */
+
+syncInputs();
+setActive("da");
+</script>
+</body>
+</html>
 </body>
 </html>
