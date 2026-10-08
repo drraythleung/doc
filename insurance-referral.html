@@ -4261,12 +4261,12 @@ page-break-inside: avoid;
 
           <div id="shared-exams">
             <fieldset>
-              <legend>1．化驗</legend>
-              ${textField("sxLab", "化驗項目", "Laboratory Tests")}
+              <legend>1．化驗項目</legend>
+              ${textField("sxLab", "", "")}
             </fieldset>
 
             <fieldset>
-              <legend>2．影像及其他檢查</legend>
+              <legend>2．中階檢查</legend>
 
               ${textField("sxXrayEcg", "X 光／心電圖", "X-ray / ECG")}
 
@@ -4278,7 +4278,7 @@ page-break-inside: avoid;
             </fieldset>
 
             <fieldset>
-              <legend>3．MRI / CT / PET</legend>
+              <legend>3．進階檢查</legend>
               ${textField(
                 "sxMriCt",
                 "掃描項目",
@@ -4322,11 +4322,11 @@ page-break-inside: avoid;
           </div>
 
           ${forPlans("aia", `
-            <div class="editor-subheading">AIA 額外服務及治療</div>
+            <div class="editor-subheading">AIA HSNM5F01 · 第 5 項</div>
 
             ${textField(
               "aiaAdditionalServices",
-              "額外服務／治療",
+              "額外計劃治療／程序",
               "Services and Treatment Required"
             )}
 
