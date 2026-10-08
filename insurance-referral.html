@@ -1542,22 +1542,16 @@ Object.keys(titles).forEach(key => {
 }
 
 function updateCaption() {
-  const captions = {
-    da: "DA01 · 4 頁",
-    h: "HSBC H01 · 2 頁",
-    b: "Bupa B04 · 1 頁",
-    aia: "AIA HSNM5F01 · 1 頁"
-  };
+  const group = document.getElementById("group-" + active);
+  const count = group ? group.querySelectorAll(".page").length : 0;
 
-  let caption = captions[active];
+  let caption = `${titles[active] || active} · ${count} 頁`;
 
-  // 只有 HSBC / Bupa 使用原有檢查附頁。
-  // AIA 本身已有 Services / Treatment Required 欄位。
   if (["h", "b"].includes(active) && hasTests()) {
     caption += " ＋ 檢查附頁";
   }
 
-  $("#pageCaption").textContent = caption;
+  document.getElementById("pageCaption").textContent = caption;
 }
 
 $$("[data-key]").forEach(el=>{
@@ -1722,10 +1716,17 @@ $("#demo").addEventListener("click",()=>{
     hChit:"H-002",
     bCard:"BUPA-DEMO-003",
     bChit:"B-003",
-    testLab:"SAMPLE LAB REQUEST — NOT FOR CLINICAL USE",
-    testAdvanced:"",
-    testImaging:"SAMPLE IMAGING REQUEST — NOT FOR CLINICAL USE",
-    testOther:"",
+    sxLab:"SAMPLE LAB — TEST ONLY",
+    sxXrayEcg:"SAMPLE X-RAY — TEST ONLY",
+    sxUltrasoundEtc:"SAMPLE ULTRASOUND — TEST ONLY",
+    sxMriCt:"SAMPLE MRI — TEST ONLY",
+
+    sxPet:"",
+    sxPetRow:"",
+    sxAdditional:"",
+    sxAdditionalRow:"",
+    sxOther:"",
+    sxOtherRow:"",
     congenital:"",
     pregnancy:"",
     preventive:""
@@ -3487,16 +3488,1297 @@ $("#demo").addEventListener("click",()=>{
     </article>
   `;
 })();
+</script>
 
+<!-- ======================================================
+     第五份表格：Blue Cross 藍十字 N4
+     按使用者提供的掃描圖片重建，一頁 A4。
+
+     這是圖片版本的 HTML 重排，不是現行條款核實。
+     標誌使用 CSS / 文字近似呈現，不是官方標誌圖檔。
+     不新增或推斷任何藍十字網絡中心名單。
+     ====================================================== -->
+
+<style>
+/* 讓五個分頁按鈕可以換行。 */
+.tabs {
+  flex-wrap: wrap;
+}
+
+/* 全部紙張樣式限於 .bc-page，不影響其他表格。 */
+.bc-page {
+  padding: 10mm 12mm 19mm;
+  color: #111;
+  font-family: Arial, "Microsoft JhengHei", "PingFang TC", sans-serif;
+  font-size: 9pt;
+  line-height: 1.2;
+}
+
+/* ───────── 頁首 ───────── */
+.bc-page .bc-brand {
+  height: 18mm;
+  display: flex;
+  align-items: flex-start;
+  gap: 3mm;
+}
+
+.bc-page .bc-logo-symbol {
+  position: relative;
+  flex: 0 0 13mm;
+  width: 13mm;
+  height: 13mm;
+  margin-top: 1mm;
+}
+
+.bc-page .bc-logo-symbol::before,
+.bc-page .bc-logo-symbol::after {
+  content: "";
+  position: absolute;
+  background: #111;
+}
+
+.bc-page .bc-logo-symbol::before {
+  width: 5mm;
+  height: 13mm;
+  left: 4mm;
+  top: 0;
+}
+
+.bc-page .bc-logo-symbol::after {
+  width: 13mm;
+  height: 5mm;
+  left: 0;
+  top: 4mm;
+}
+
+.bc-page .bc-brand-name {
+  margin-top: 2mm;
+  font-size: 21pt;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.bc-page .bc-brand-subtitle {
+  margin-top: 2mm;
+  font-size: 7pt;
+  font-weight: 700;
+}
+
+.bc-page .bc-title {
+  height: 15mm;
+  padding: 1.5mm 0 1mm;
+  border-top: .8mm solid #111;
+  border-bottom: .8mm solid #111;
+}
+
+.bc-page .bc-title h1 {
+  margin: 0;
+  font-size: 12pt;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.bc-page .bc-title p {
+  margin: 1.5mm 0 0;
+  font-size: 12pt;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.bc-page .bc-date-row {
+  height: 11mm;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.bc-page .bc-date-box {
+  width: 64mm;
+  height: 8.5mm;
+  border: .3mm solid #111;
+  padding: 1.2mm;
+  display: flex;
+  align-items: center;
+  gap: 2mm;
+  font-size: 10pt;
+}
+
+.bc-page .bc-date-value {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  height: 5mm;
+  overflow: hidden;
+  line-height: 1.2;
+}
+
+/* ───────── 會員及醫生資料 ───────── */
+.bc-page .bc-member-grid {
+  height: 43mm;
+  display: grid;
+  grid-template-columns: 48.5% 51.5%;
+  grid-template-rows: 6mm 12mm 13mm minmax(0, 1fr);
+  border: .3mm solid #111;
+}
+
+.bc-page .bc-member-grid > div {
+  min-width: 0;
+  min-height: 0;
+  border-bottom: .25mm solid #111;
+}
+
+.bc-page .bc-member-grid > div:nth-child(odd) {
+  border-right: .25mm solid #111;
+}
+
+.bc-page .bc-member-grid > div:nth-last-child(-n+2) {
+  border-bottom: 0;
+}
+
+.bc-page .bc-grid-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ececec;
+  font-size: 10pt;
+  font-weight: 700;
+}
+
+.bc-page .bc-info-cell {
+  padding: 1.2mm 1mm;
+  display: flex;
+  align-items: center;
+  gap: 2mm;
+}
+
+.bc-page .bc-info-label {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.bc-page .bc-info-value {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  max-height: 9mm;
+  overflow: hidden;
+  font-size: 9pt;
+  line-height: 1.2;
+}
+
+.bc-page .bc-address-value {
+  font-size: 8.5pt;
+}
+
+/* ───────── Clinical Findings ───────── */
+.bc-page .bc-clinical {
+  display: grid;
+  grid-template-columns: 39mm minmax(0, 1fr);
+  height: 21mm;
+  margin-top: 2mm;
+  border: .3mm solid #111;
+}
+
+.bc-page .bc-clinical-label {
+  padding: 1mm;
+  display: flex;
+  align-items: center;
+  border-right: .25mm solid #111;
+}
+
+.bc-page .bc-clinical-body {
+  min-width: 0;
+  min-height: 0;
+  padding: 1.2mm;
+}
+
+.bc-page .bc-clinical-value {
+  display: block;
+  width: 100%;
+  height: 18mm;
+  overflow: hidden;
+  font-size: 9pt;
+  line-height: 1.25;
+}
+
+/* ───────── 檢查項目 ───────── */
+.bc-page .bc-exam-intro {
+  height: 12mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  font-size: 9pt;
+  line-height: 1.2;
+}
+
+.bc-page .bc-exam-intro p {
+  margin: 0;
+}
+
+.bc-page .bc-exam-grid {
+  height: 51mm;
+  display: grid;
+  grid-template-columns: 39mm minmax(0, 1fr);
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  border: .3mm solid #111;
+}
+
+.bc-page .bc-exam-grid > div {
+  min-width: 0;
+  min-height: 0;
+  border-bottom: .25mm solid #111;
+}
+
+.bc-page .bc-exam-grid > div:nth-child(odd) {
+  border-right: .25mm solid #111;
+}
+
+.bc-page .bc-exam-grid > div:nth-last-child(-n+2) {
+  border-bottom: 0;
+}
+
+.bc-page .bc-exam-label {
+  padding: 1mm;
+  font-size: 9pt;
+  line-height: 1.3;
+}
+
+.bc-page .bc-exam-body {
+  padding: 1.2mm;
+}
+
+.bc-page .bc-exam-value {
+  display: block;
+  width: 100%;
+  height: 14mm;
+  overflow: hidden;
+  font-size: 9pt;
+  line-height: 1.25;
+}
+
+/* ───────── 注意事項 ───────── */
+.bc-page .bc-notice {
+  margin-top: 2mm;
+  border: .3mm solid #111;
+}
+
+.bc-page .bc-lab-notice {
+  height: 22mm;
+}
+
+.bc-page .bc-member-notice {
+  height: 23mm;
+}
+
+.bc-page .bc-notice-heading {
+  height: 4.8mm;
+  margin: 0;
+  padding: .45mm 1mm;
+  border-bottom: .25mm solid #111;
+  background: #ececec;
+  text-align: center;
+  font-size: 9pt;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.2;
+}
+
+.bc-page .bc-notice-body {
+  padding: .8mm 1mm;
+  font-size: 8pt;
+  line-height: 1.2;
+}
+
+.bc-page .bc-numbered-line {
+  display: grid;
+  grid-template-columns: 4mm minmax(0, 1fr);
+  gap: 1mm;
+}
+
+.bc-page .bc-numbered-line + .bc-numbered-line {
+  margin-top: 1mm;
+}
+
+.bc-page .bc-numbered-line p {
+  margin: 0;
+}
+
+.bc-page .bc-notice-cn {
+  margin-top: .6mm !important;
+  font-size: 8.3pt;
+}
+
+/* ───────── 簽署 ───────── */
+.bc-page .bc-signatures {
+  height: 19mm;
+  display: grid;
+  grid-template-columns: 57% 29% 14%;
+  border: .3mm solid #111;
+  border-top: 0;
+}
+
+.bc-page .bc-signatures > div {
+  min-width: 0;
+  padding: 1mm;
+  border-right: .25mm solid #111;
+  font-size: 7.7pt;
+  line-height: 1.25;
+}
+
+.bc-page .bc-signatures > div:last-child {
+  border-right: 0;
+}
+
+.bc-page .bc-signatures .bc-sign-cn {
+  margin-top: 1mm;
+  font-size: 8pt;
+}
+
+.bc-page .bc-sign-date {
+  display: block;
+  width: 100%;
+  height: 5mm;
+  margin-top: 2mm;
+  overflow: hidden;
+  font-size: 8pt;
+}
+
+/* ───────── 頁腳 ───────── */
+.bc-page .bc-footer {
+  position: absolute;
+  left: 12mm;
+  right: 12mm;
+  bottom: 5mm;
+  padding-top: 1.5mm;
+  border-top: .7mm solid #111;
+  font-size: 6.5pt;
+  line-height: 1.25;
+}
+
+.bc-page .bc-reference-label {
+  margin-top: .8mm;
+  color: #444;
+  font-size: 6pt;
+}
+
+@media print {
+  .bc-page .bc-member-grid,
+  .bc-page .bc-clinical,
+  .bc-page .bc-exam-grid,
+  .bc-page .bc-notice,
+  .bc-page .bc-signatures {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+</style>
+
+<script>
+(() => {
+  "use strict";
+
+  /* 避免重複加入模組。 */
+  if (document.getElementById("group-bc")) return;
+
+  /*
+   * 原有切換及列印程式使用 Object.keys(titles)。
+   * 加入此項後，第五份表格會納入原有流程。
+   */
+  titles.bc = "Blue Cross N4";
+
+  /* ====================================================
+     1. 建立 N4 專用輸入欄位
+     ==================================================== */
+
+  const panel = document.createElement("div");
+  panel.className = "plan-panel";
+  panel.dataset.plan = "bc";
+  panel.hidden = true;
+
+  panel.innerHTML = `
+    <label class="field">
+      <span>Policy No.／保單號碼 — Blue Cross</span>
+      <input data-key="bcPolicyNo" autocomplete="off">
+    </label>
+
+    <label class="field">
+      <span>Referring Doctor Address／轉介醫生診所地址</span>
+      <textarea
+        data-key="bcDoctorAddress"
+        rows="2"
+        autocomplete="off"
+      ></textarea>
+    </label>
+
+    <p class="help">
+      病人姓名、電話、醫生姓名及診所電話沿用共用資料。
+      Clinical Findings 沿用左側「診斷＋症狀」。
+    </p>
+
+    <label class="field" style="margin-top:12px">
+      <span>N4 — Lab. Tests／化驗</span>
+      <textarea
+        data-key="bcLabTests"
+        rows="3"
+      ></textarea>
+    </label>
+
+    <label class="field">
+      <span>
+        N4 — X-Ray／Treadmill／Ultrasound／ECG／Mammogram
+      </span>
+      <textarea
+        data-key="bcImagingTests"
+        rows="3"
+      ></textarea>
+    </label>
+
+    <label class="field">
+      <span>N4 — MRI／CT Scan</span>
+      <textarea
+        data-key="bcAdvancedTests"
+        rows="3"
+      ></textarea>
+    </label>
+
+    <p class="help">
+      此版按提供圖片重排，原圖所示品牌附註及須知
+      只作來源版本轉錄，不代表已核實現行公司資料或條款。
+      簽署位置留白，須另行簽署。
+    </p>
+
+    <p class="help">
+      圖片頁腳的細小聯絡資料未完整轉錄；
+      本模組沒有加入藍十字中心名單。
+    </p>
+  `;
+
+  document
+    .getElementById("planTitle")
+    .closest(".section")
+    .querySelector(".section-body")
+    .appendChild(panel);
+
+  /*
+   * 新欄位加入 keys 及 state，
+   * 讓原有 clearAll() / syncInputs() 一併處理。
+   */
+  panel.querySelectorAll("[data-key]").forEach(input => {
+    const key = input.dataset.key;
+
+    if (!keys.includes(key)) {
+      keys.push(key);
+      state[key] = "";
+    }
+
+    input.addEventListener("input", () => {
+      state[key] = input.value;
+
+      updateAppendix([active]);
+      renderValues();
+      updateCaption();
+
+      $$(".over-limit").forEach(element => {
+        element.classList.remove("over-limit");
+      });
+    });
+  });
+
+  /* ====================================================
+     2. 第五個分頁及批次列印選項
+     ==================================================== */
+
+  const tab = document.createElement("button");
+  tab.type = "button";
+  tab.dataset.tab = "bc";
+  tab.textContent = "Blue Cross · N4";
+  tab.setAttribute("aria-pressed", "false");
+
+  tab.addEventListener("click", () => {
+    setActive("bc");
+  });
+
+  document.querySelector(".tabs").appendChild(tab);
+
+  const printLabel = document.createElement("label");
+
+  printLabel.innerHTML = `
+    <input
+      type="checkbox"
+      class="print-pick"
+      value="bc"
+    >
+    Blue Cross
+  `;
+
+  document.querySelector(".print-picks").appendChild(printLabel);
+
+  const versionHelp = document
+    .querySelector(".print-picks")
+    .parentElement
+    .querySelector(".help");
+
+  if (versionHelp) {
+    versionHelp.appendChild(document.createElement("br"));
+    versionHelp.appendChild(
+
+document.createTextNode(
+        "Blue Cross：N4（按提供圖片；版本日期未確認）"
+      )
+    );
+  }
+
+  /* ====================================================
+     3. 建立 Blue Cross 紙張
+     必須先完成此步，之後才執行共用檢查補丁。
+     ==================================================== */
+
+
+  const group = document.createElement("div");
+  group.id = "group-bc";
+  group.className = "form-group";
+  group.hidden = true;
+
+  document.getElementById("group-appendix").before(group);
+
+  group.innerHTML = `
+    <article
+      class="page bc-page"
+      aria-label="Blue Cross N4 重排工作稿"
+    >
+      <div class="paper-content">
+
+        <header class="bc-brand">
+          <div
+            class="bc-logo-symbol"
+            aria-hidden="true"
+          ></div>
+
+          <div>
+            <div class="bc-brand-name">Blue Cross 藍十字</div>
+            <div class="bc-brand-subtitle">
+              <I>Member of BEA Group　東亞銀行集團成員</I>
+            </div>
+          </div>
+        </header>
+
+<section class="bc-title">
+          <h1>
+            Lab Test, Xray, Ultrasound, MRI &amp; CT Referral Form (N4)
+          </h1>
+          <p>
+            化驗、X光、超聲波檢查、磁力共振及電腦斷層掃描轉介書
+          </p>
+        </section>
+
+        <div class="bc-date-row">
+          <div class="bc-date-box">
+            <span>Date:</span>
+            ${bind("dateDisplay", "bc-date-value")}
+          </div>
+        </div>
+
+        <section class="bc-member-grid">
+          <div class="bc-grid-heading">
+            Member Information
+          </div>
+
+          <div class="bc-grid-heading">
+            Referring Doctor
+          </div>
+
+          <div class="bc-info-cell">
+            <span class="bc-info-label">Name:</span>
+            ${bind("name", "bc-info-value")}
+          </div>
+
+          <div class="bc-info-cell">
+            <span class="bc-info-label">Name:</span>
+            ${bind("doctor", "bc-info-value")}
+          </div>
+
+          <div class="bc-info-cell">
+            <span class="bc-info-label">Policy No.:</span>
+            ${bind("bcPolicyNo", "bc-info-value")}
+          </div>
+
+          <div class="bc-info-cell">
+            <span class="bc-info-label">Address:</span>
+            ${bind(
+              "bcDoctorAddress",
+              "bc-info-value bc-address-value"
+            )}
+          </div>
+
+          <div class="bc-info-cell">
+            <span class="bc-info-label">Phone no.</span>
+            ${bind("contact", "bc-info-value")}
+          </div>
+
+          <div class="bc-info-cell">
+            <span class="bc-info-label">Phone no.</span>
+            ${bind("clinicTel", "bc-info-value")}
+          </div>
+        </section>
+
+        <section class="bc-clinical">
+          <div class="bc-clinical-label">
+            Clinical Findings:
+          </div>
+
+          <div class="bc-clinical-body">
+            ${bind("clinical", "bc-clinical-value")}
+          </div>
+        </section>
+
+        <div class="bc-exam-intro">
+          <p>
+            <strong>
+              Patient should refer to Blue Cross laboratory list
+              for choice of laboratory centre
+            </strong>
+          </p>
+
+          <p>
+            Examination required: Profiles and tests (please specify)
+          </p>
+        </div>
+
+        <!-- 保留三行，不增加第四行。 -->
+        <section class="bc-exam-grid">
+
+          <div class="bc-exam-label">
+            Lab. Tests
+          </div>
+
+          <div class="bc-exam-body">
+            ${bind("bcLabTests", "bc-exam-value")}
+          </div>
+
+          <div class="bc-exam-label">
+            X-Ray / Treadmill / Ultrasound / ECG / Mammogram
+          </div>
+
+          <div class="bc-exam-body">
+            ${bind("bcImagingTests", "bc-exam-value")}
+          </div>
+
+          <div class="bc-exam-label">
+            MRI / CT Scan
+          </div>
+
+          <div class="bc-exam-body">
+            ${bind("bcAdvancedTests", "bc-exam-value")}
+          </div>
+
+        </section>
+
+        <!--
+          目前提供的 HTML 缺少原表注意事項文字。
+          保留相應區域，但不自行編造保險條款。
+        -->
+    <section class="bc-notice bc-lab-notice">
+          <h2 class="bc-notice-heading">
+            Notice to Laboratory Centre
+          </h2>
+
+          <div class="bc-notice-body">
+            <div class="bc-numbered-line">
+              <span>1.</span>
+              <p>
+                The above member has been referred to you to provide
+                those services specified by his/her referring physician.
+                If any follow up care or further new services including
+                procedures and x-rays are necessary, please contact the
+                patient's referring physician. No additional payment
+                will be made without additional referrals from the
+                referring physicians.
+              </p>
+            </div>
+
+            <div class="bc-numbered-line">
+              <span>2.</span>
+              <p>
+                Before referring this patient to another centres,
+                please contact the referring physicians for authorization.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="bc-notice bc-member-notice">
+          <h2 class="bc-notice-heading">
+            Notice to Member 成員須知
+          </h2>
+
+          <div class="bc-notice-body">
+            <div class="bc-numbered-line">
+              <span>1.</span>
+              <div>
+                <p>
+                  This referral is valid for 3 months from date of issuance.
+                </p>
+                <p class="bc-notice-cn">
+                  此轉介書由發出日起3個月內有效。
+                </p>
+              </div>
+            </div>
+
+            <div class="bc-numbered-line">
+              <span>2.</span>
+              <div>
+                <p>
+                  I am aware any expenses for services rendered related
+                  to "exclusions" and "non-covered benefits"
+                  will be borne by me.
+                </p>
+                <p class="bc-notice-cn">
+                  本人明白若所接受之服務為「不受保項目」或「不在保障範圍內」，
+                  本人須承擔該等費用。
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section
+          class="bc-signatures"
+          aria-label="Member and physician signatures"
+        >
+          <div>
+            <div>
+              Member's Signature
+              (if member is a minor, signature of parent is required)
+            </div>
+            <div class="bc-sign-cn">
+              成員簽署（若成員為幼童，家長必須簽署）
+            </div>
+          </div>
+
+          <div>
+            <div>
+              Referring Physician's Signature
+            </div>
+            <div class="bc-sign-cn">
+              轉介醫生簽署
+            </div>
+          </div>
+
+          <div>
+            <div>Date</div>
+            <div class="bc-sign-cn">日期</div>
+            ${bind("dateDisplay", "bc-sign-date")}
+          </div>
+        </section>
+
+      </div>
+
+      <footer class="bc-footer">
+        <div>
+          <strong>
+            Blue Cross (Asia-Pacific) Insurance Limited
+            藍十字（亞太）保險有限公司
+          </strong>
+        </div>
+
+        <div>
+          29/F., BEA Tower, Millennium City 5,
+          418 Kwun Tong Road, Kowloon, Hong Kong     香港九龍觀塘道418號創紀之城5期東亞銀行中心29樓
+        </div>
+
+        <div>
+          Tel 電話: 36082988 Fax 傳真: 3608 2989 <u>www.bluecross.com.hk</u>
+        </div>
+      </footer>
+    </article>
+  `;
+
+})(); // 結束 Blue Cross 模組；下方才開始共用檢查補丁。
 /* =========================================================
-   統一初始化
-   四份表格及 DA01 中心列表建立完成後，只執行一次。
+   共用檢查輸入 + Blue Cross 原版三行
+
+   原有 testDefinitions 次序：
+   0：Lab / X-ray / ECG
+   1：CT / MRI / PET
+   2：Ultrasound / Mammography / DEXA /
+      Treadmill / Holter / Audiology
+   3：Other tests
+
+   Blue Cross 原有三個輸出：
+   bcLabTests
+   bcImagingTests
+   bcAdvancedTests
+
+   保留原本 .bc-exam-grid，不重建或改動其版面。
    ========================================================= */
 
+(() => {
+  "use strict";
+
+  if (
+    typeof state === "undefined" ||
+    typeof keys === "undefined" ||
+    typeof testDefinitions === "undefined" ||
+    typeof syncInputs !== "function" ||
+    typeof renderValues !== "function" ||
+    typeof checkOverflow !== "function"
+  ) {
+    console.error("共用檢查：缺少原程式所需變數或函式。");
+    return;
+  }
+
+  const panel = document.querySelector(
+    '.plan-panel[data-plan="bc"]'
+  );
+  const group = document.getElementById("group-bc");
+  const examGrid = group?.querySelector(".bc-exam-grid");
+
+  if (!panel || !group || !examGrid) {
+    console.error("共用檢查：找不到 Blue Cross 模組。");
+    return;
+  }
+
+  if (document.getElementById("shared-exams-v2")) return;
+
+  // 必須先移除之前的四行版補丁。
+  if (
+    examGrid.classList.contains("bc-shared-exams") ||
+    group.dataset.sharedTests === "yes"
+  ) {
+    alert(
+      "請先刪除之前的 Blue Cross 四行版整合程式，" +
+      "還原原本三行版，再使用此補丁。"
+    );
+    return;
+  }
+
+  if (!Array.isArray(testDefinitions) ||
+      testDefinitions.length !== 4) {
+    console.error("共用檢查：預期 testDefinitions 有四個分類。");
+    return;
+  }
+
+  const sharedKeys = testDefinitions.map(item => item[0]);
+
+  const bcKeys = [
+    "bcLabTests",
+    "bcImagingTests",
+    "bcAdvancedTests"
+  ];
+
+  const controlsFor = key => [
+    ...document.querySelectorAll(
+      "input[data-key], textarea[data-key], select[data-key]"
+    )
+  ].filter(element => element.dataset.key === key);
+
+  const originalControls = sharedKeys.map(key => {
+    return controlsFor(key)[0];
+  });
+
+  const originalFields = originalControls.map(element => {
+    return element?.closest(".field");
+  });
+
+  // 先驗證結構，避免只改了一半。
+  const validFields = originalFields.every((field, index) => {
+    if (!field || panel.contains(field)) return false;
+
+    return !originalControls.some((control, otherIndex) => {
+      return otherIndex !== index && field.contains(control);
+    });
+  });
+
+  const validBindings = bcKeys.every(key => {
+    return [...examGrid.querySelectorAll("[data-bind]")]
+      .some(element => element.dataset.bind === key);
+  });
+
+  if (!validFields || !validBindings) {
+    console.error(
+      "共用檢查：現有 HTML 結構與補丁預期不同，未作修改。"
+    );
+    return;
+  }
+
+  const value = key => String(state[key] ?? "").trim();
+
+  // 新的單一資料來源。
+  const sourceKeys = [
+    "sxLab",
+    "sxXrayEcg",
+    "sxUltrasoundEtc",
+    "sxMriCt",
+    "sxPet",
+    "sxPetRow",
+    "sxAdditional",
+    "sxAdditionalRow",
+    "sxOther",
+    "sxOtherRow"
+  ];
+
+  const hasNewData = sourceKeys.some(key => value(key));
+
+  const hasOldData = [...sharedKeys, ...bcKeys]
+    .some(key => value(key));
+
+  if (!hasNewData && hasOldData) {
+    alert(
+      "偵測到已有檢查內容。\n\n" +
+      "舊欄位混合了不同檢查，程式不會自行猜測分類。\n" +
+      "請先另存現有內容，清空檢查並儲存，" +
+      "再重新載入本頁啟用三行整合。"
+    );
+    return;
+  }
+
+  [...sourceKeys, ...bcKeys].forEach(key => {
+    if (!keys.includes(key)) keys.push(key);
+    if (state[key] == null) state[key] = "";
+  });
+
+  const root = document.createElement("div");
+  root.id = "shared-exams-v2";
+
+  const field = (key, label) => `
+    <div class="field">
+      <label for="${key}">${label}</label>
+      <textarea
+        id="${key}"
+        data-key="${key}"
+        rows="2"
+      ></textarea>
+    </div>
+  `;
+
+  const extraField = (key, label, rowKey) => `
+    <div class="sx-extra">
+      ${field(key, label)}
+      <div class="field">
+        <label for="${rowKey}">
+          上述檢查在 Blue Cross 顯示於
+        </label>
+        <select id="${rowKey}" data-key="${rowKey}">
+          <option value="">— 請選擇 —</option>
+          <option value="1">第 1 行：Lab test</option>
+          <option value="2">
+            第 2 行：X-ray / Treadmill / Ultrasound /
+            ECG / Mammogram
+          </option>
+          <option value="3">第 3 行：MRI / CT Scan</option>
+        </select>
+      </div>
+    </div>
+  `;
+
+  root.innerHTML = `
+    <p class="help">
+      以下檢查只需輸入一次，五份表格共用。
+      Blue Cross 保留原本三行格式。
+    </p>
+
+    <fieldset>
+      <legend>1．Lab test</legend>
+      ${field("sxLab", "Laboratory tests")}
+    </fieldset>
+
+    <fieldset>
+      <legend>
+        2．X-ray / Treadmill / Ultrasound / ECG / Mammogram
+      </legend>
+
+      ${field("sxXrayEcg", "X-ray / ECG")}
+
+      ${field(
+        "sxUltrasoundEtc",
+        "Treadmill / Ultrasound / Mammogram"
+      )}
+
+      <p class="help">
+        呢兩欄會合併顯示於 Blue Cross 第 2 行；
+        其他表格則按原有分類顯示。
+      </p>
+    </fieldset>
+
+    <fieldset>
+      <legend>3．MRI / CT Scan</legend>
+      ${field("sxMriCt", "MRI / CT Scan")}
+    </fieldset>
+
+    <fieldset>
+      <legend>其他檢查</legend>
+
+      <p class="help">
+        如有填寫，請指定 Blue Cross 顯示行。
+        此選擇只控制列印位置，不代表保險保障或批核分類。
+      </p>
+
+      ${extraField("sxPet", "PET", "sxPetRow")}
+
+      ${extraField(
+        "sxAdditional",
+        "DEXA / 24-hour Holter / Audiology",
+        "sxAdditionalRow"
+      )}
+
+      ${extraField("sxOther", "Other tests", "sxOtherRow")}
+    </fieldset>
+
+    <p class="sx-warning" role="alert" hidden></p>
+  `;
+
+  // 用新共用輸入取代「04」原有四個欄位。
+  originalFields[0].before(root);
+
+  originalFields.forEach(element => element.remove());
+
+  // 移除「05」重複輸入；保留 state key 供原版 N4 輸出使用。
+  bcKeys.forEach(key => {
+    controlsFor(key)
+      .filter(element => panel.contains(element))
+      .forEach(element => {
+        const wrapper = element.closest(".field");
+
+        // 只有獨立欄位才整個移除，避免誤刪其他資料。
+        if (
+          wrapper &&
+          wrapper.querySelectorAll(
+            "input, textarea, select"
+          ).length === 1
+        ) {
+          wrapper.remove();
+        } else {
+          element.remove();
+        }
+      });
+  });
+
+  const note = document.createElement("p");
+  note.className = "help";
+  note.textContent =
+    "Request 檢查內容統一於「04 是次所需檢查」輸入；" +
+    "此處毋須重複填寫。Blue Cross 保留原本三行。";
+  panel.appendChild(note);
+
+  const style = document.createElement("style");
+  style.textContent = `
+    #shared-exams-v2 fieldset {
+      min-width: 0;
+      margin: 0 0 12px;
+      padding: 12px;
+      border: 1px solid #d7dde5;
+      border-radius: 8px;
+    }
+
+    #shared-exams-v2 legend {
+      max-width: 100%;
+      padding: 0 6px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    #shared-exams-v2 .field {
+      margin-bottom: 10px;
+    }
+
+#shared-exams-v2 label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #415c6b;
+    }
+
+    #shared-exams-v2 textarea,
+    #shared-exams-v2 select {
+      width: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+      font-size: 13px;
+    }
+
+    #shared-exams-v2 textarea {
+      resize: vertical;
+    }
+
+    #shared-exams-v2 .sx-extra + .sx-extra {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    #shared-exams-v2 .sx-warning {
+      padding: 10px;
+      color: #991b1b;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+    }
+  `;
+  document.head.appendChild(style);
+
+  const extraDefinitions = [
+    ["sxPet", "sxPetRow", "PET"],
+    [
+      "sxAdditional",
+      "sxAdditionalRow",
+      "DEXA / Holter / Audiology"
+    ],
+    ["sxOther", "sxOtherRow", "Other tests"]
+  ];
+
+  const join = (...items) => items
+    .map(item => String(item ?? "").trim())
+    .filter(Boolean)
+    .join("\n");
+
+  function missingAssignments() {
+    return extraDefinitions
+      .filter(([textKey, rowKey]) => {
+        return value(textKey) &&
+          !["1", "2", "3"].includes(value(rowKey));
+      })
+      .map(([, , label]) => label);
+  }
+
+  function updateDerivedValues() {
+    /*
+     * 原有四份表格繼續使用原有四個 shared key。
+     * 只組合資料，不靠檢查名稱猜測分類。
+     */
+    state[sharedKeys[0]] = join(
+      value("sxLab"),
+      value("sxXrayEcg")
+    );
+
+    state[sharedKeys[1]] = join(
+      value("sxMriCt"),
+      value("sxPet")
+    );
+
+    state[sharedKeys[2]] = join(
+      value("sxUltrasoundEtc"),
+      value("sxAdditional")
+    );
+
+    state[sharedKeys[3]] = value("sxOther");
+
+    // Blue Cross 原版三行。
+    const rows = [
+      value("sxLab"),
+      join(value("sxXrayEcg"), value("sxUltrasoundEtc")),
+      value("sxMriCt")
+    ];
+
+    extraDefinitions.forEach(([textKey, rowKey]) => {
+      const text = value(textKey);
+      const destination = value(rowKey);
+
+      if (text && ["1", "2", "3"].includes(destination)) {
+        const index = Number(destination) - 1;
+        rows[index] = join(rows[index], text);
+      }
+    });
+
+    bcKeys.forEach((key, index) => {
+      state[key] = rows[index];
+    });
+
+    const missing = missingAssignments();
+    const warning = root.querySelector(".sx-warning");
+
+    warning.hidden = missing.length === 0;
+    warning.textContent = missing.length
+      ? "以下檢查尚未指定 Blue Cross 顯示行，" +
+        "暫時不會出現在 N4： " +
+        missing.join("、") +
+        "。請選擇後再列印。"
+      : "";
+  }
+
+  function refreshControls() {
+    root.querySelectorAll("[data-key]").forEach(element => {
+      const nextValue = String(
+        state[element.dataset.key] ?? ""
+      );
+
+      if (element.value !== nextValue) {
+        element.value = nextValue;
+      }
+    });
+  }
+
+  /*
+   * 原有清空、載入及切換表格如呼叫 renderValues()，
+   * 亦會重新建立共用輸出。
+   */
+  const originalRenderValues = renderValues;
+
+  renderValues = function (...args) {
+    updateDerivedValues();
+    const result = originalRenderValues.apply(this, args);
+    refreshControls();
+    return result;
+  };
+
+  // 接駁原有列印前檢查。
+  const originalCheckOverflow = checkOverflow;
+
+  checkOverflow = function (...args) {
+    updateDerivedValues();
+
+    const problems = [
+      ...(originalCheckOverflow.apply(this, args) || [])
+    ];
+
+    if (!group.hidden) {
+      missingAssignments().forEach(label => {
+        problems.push(
+          `Blue Cross：${label} 尚未指定顯示行`
+        );
+      });
+    }
+
+    return [...new Set(problems)];
+  };
+
+// 新欄位自行接駁事件，不依賴原有事件綁定時間。
+  root.querySelectorAll("[data-key]").forEach(element => {
+    const eventName = element.tagName === "SELECT"
+      ? "change"
+      : "input";
+
+    element.addEventListener(eventName, () => {
+      state[element.dataset.key] = element.value;
+
+      updateDerivedValues();
+      updateAppendix([active]);
+      renderValues();
+      updateCaption();
+
+      $$(".over-limit").forEach(node => {
+        node.classList.remove("over-limit");
+      });
+    });
+  });
+
+  // 切換表格、載入示例及列印前，先同步共用檢查。
+  const previousUpdateAppendix = updateAppendix;
+
+  updateAppendix = function (plans) {
+    updateDerivedValues();
+    return previousUpdateAppendix(plans);
+  };
+
+  updateDerivedValues();
+  syncInputs();
+  renderValues();
+})();
+
+// 開啟時直接顯示 Blue Cross。
 syncInputs();
-setActive("da");
+setActive("bc");
+
 </script>
-</body>
-</html>
 </body>
 </html>
