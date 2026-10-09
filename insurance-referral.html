@@ -3559,6 +3559,25 @@ page-break-inside: avoid;
 .page.aia-page {
   padding-bottom: 7mm;
 }
+/* HSBC / Bupa：左右資料欄的橫線對齊 */
+.paper-info > .info-half {
+  display: grid;
+  grid-template-rows: 5mm repeat(5, minmax(0, 1fr));
+  min-height: 0;
+}
+
+/* 取消各行原本不同的固定高度 */
+.paper-info .info-line {
+  height: auto;
+  min-height: 0;
+  align-items: center;
+}
+
+/* 發病日期恢復正常上下留白 */
+.paper-info .info-line.onset-line {
+  padding: .6mm 1mm;
+}
+    
   </style>
 </head>
 
