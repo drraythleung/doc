@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Bowtie — Medical Claim Form</title>
+  <title>Medical Claim Form</title>
 
   <style>
     /* =====================================================
@@ -11938,16 +11938,12 @@ function getFieldCaption(bindingKey) {
       function tidyTags(companies) {
         const list = companies.split(/\s+/).filter(Boolean);
 
-        if (
-          list.length === tidyCompanies.length &&
-          tidyCompanies.every(company => list.includes(company))
-        ) {
-          return `
-            <div class="tidy-tags">
-              <span class="tidy-tag shared"></span>
-            </div>
-          `;
-        }
+if (
+  list.length === tidyCompanies.length &&
+  tidyCompanies.every(company => list.includes(company))
+) {
+  return "";
+}
 
         return `
           <div class="tidy-tags">
