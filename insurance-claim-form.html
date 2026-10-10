@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Medical Claim Form</title>
+  <title>Bowtie — Medical Claim Form</title>
 
   <style>
     /* =====================================================
@@ -12715,10 +12715,6 @@ if (
         $("#sidebar").innerHTML = `
           <div class="editor-heading">
             <strong>醫療索償表格</strong>
-            <p>
-              同一個案填一次，供四間公司共用。
-              右側切換預覽不會清空任何答案。
-            </p>
           </div>
 
           <div class="tidy-view-controls">
@@ -12884,7 +12880,7 @@ if (
           help.textContent = tidyEditorMode === "all"
             ? "目前顯示全部共用問題；切換右側公司不會改變左側問題清單。"
             : `目前只顯示 ${companyName()} 適用問題；` +
-              "切換右側公司時會更新篩選，但所有答案仍然保留。";
+              "";
         }
       }
 
