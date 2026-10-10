@@ -7221,7 +7221,7 @@ function getFieldCaption(bindingKey) {
         }
 
         document.title =
-          `${companyName()} — Medical Claim Form`;
+          `Dr Ray's Insurance Claim Forms`;
       };
 
       switchCompany = function switchAmongThreeCompanies(
@@ -12881,7 +12881,7 @@ if (
         if (help) {
           help.textContent = tidyEditorMode === "all"
             ? "目前顯示全部共用問題；切換右側公司不會改變左側問題清單。"
-            : `目前只顯示 ${companyName()} 適用問題；` +
+            : `目前只顯示 ${companyName()} 適用問題。` +
               "";
         }
       }
@@ -13073,7 +13073,7 @@ if (
         if (help) {
           help.textContent = {
             bowtie:
-              "Bowtie：四頁表格；Part 1 及簽署位置保留手寫。",
+              "Bowtie：四頁表格。",
             axa:
               "AXA：乙部一頁；保留原表「4 of 4」頁碼。",
             aia:
@@ -13251,10 +13251,10 @@ if (
         `;
 
         const buttonLabels = {
-          bowtie: "Bowtie · 住院及手術",
+          bowtie: "Bowtie · 醫療索償",
           axa: "AXA · 住院及手術",
           aia: "AIA · 團體醫療",
-          manulife: "Manulife · 醫療索償"
+          manulife: "Manulife · 住院及手術"
         };
 
         $(".preview-tools").innerHTML = `
