@@ -16460,40 +16460,21 @@ if (
 
         return effective;
       };
+
 /* =====================================================
-         71. 共用入院／求診原因及意外因素聯動
-
-         唯一原因輸入：consultationCause
-
-         accident：
-           AIA 意外入院 = Y
-           Prudential 求診原因 = accident
-           相關因素主問題 = Y
-           意外身體受傷 = true
-
-         illness：
-           AIA 意外入院 = N
-           Prudential 求診原因 = illness
-           撤回自動意外因素，恢復手動因素答案
-
-         未回答：
-           AIA／Prudential 原因留空
-           撤回自動意外因素，恢復手動因素答案
-
-         自動答案只存在於有效資料副本，
-         不覆蓋原始手動因素答案或文字。
+         71. 共用入院／求診原因
+         保留 AIA／Prudential 原因同步及意外詳情。
+         不再自動更改「是次傷病相關因素」。
          ===================================================== */
 
       const cause71BeforeBuildSidebar = buildSidebar;
       const cause71BeforeEffectiveState = tidyEffectiveState;
-      const cause71BeforeUpdateEditor = tidyUpdateEditor;
 
-      /* ---------- 1. 唯一一條原因問題 ---------- */
+      /* ---------- 1. 共用原因 radio ---------- */
 
       function cause71QuestionHTML() {
         const key = "consultationCause";
 
-        // 原本是 select，現在明確改為 radio。
         fieldDefinitions.set(key, {
           key,
           label: "是次入院／求診原因",
@@ -16533,7 +16514,7 @@ if (
         );
       }
 
-      /* ---------- 2. 合併左側輸入 ---------- */
+      /* ---------- 2. 保留合併後的左側輸入 ---------- */
 
       buildSidebar = function buildSidebarCause71() {
         cause71BeforeBuildSidebar();
@@ -16564,115 +16545,24 @@ if (
           );
         }
 
-        /*
-         * 新問題放在第04節「入院背景」。
-         * 移除第02節原本 Prudential 獨立下拉選單。
-         */
+        // 共用原因問題仍放在第04節「入院背景」。
         oldAiaQuestion.outerHTML = cause71QuestionHTML();
         oldCause.remove();
 
-        /*
-         * AIA 原因現在是衍生值，不再是獨立輸入。
-         * 紙張原有 binding 保持不變。
-         */
+        // AIA 意外入院答案繼續由共用原因產生。
         fieldDefinitions.delete("aiaAdmissionAccident");
 
-        /*
-         * 意外時間搬到同一個意外詳情組。
-         * 日期繼續沿用第02節「病徵出現／意外發生日期」，
-         * 不新增第二個日期輸入。
-         */
+        // 意外時間仍放在同一個意外詳情組。
         accidentDetails.prepend(accidentTime);
 
         /*
-         * 保留因素清單的 checkbox 外觀，
-         * 但由共用原因自動控制，不再重複詢問。
+         * 不修改 factorAnswer 或 axaAccident。
+         * 不加入自動帶入說明，亦不鎖定因素選項。
+         * 沿用原有手動輸入及條件顯示。
          */
-        const accidentFactor = prudEditorItem("axaAccident");
-
-        const accidentLabel = accidentFactor?.querySelector(
-          ".check-input > span"
-        );
-
-        if (accidentLabel) {
-          accidentLabel.textContent =
-            "意外身體受傷（由求診原因自動帶入）";
-        }
-
-        const factorQuestion = prudEditorItem("factorAnswer");
-
-        if (!factorQuestion) {
-          throw new Error(
-            "第71節：找不到相關因素主問題。"
-          );
-        }
-
-        factorQuestion.insertAdjacentHTML(
-          "beforeend",
-          `
-            <p
-              id="cause71-factor-note"
-              class="tidy-inline-note"
-              role="status"
-              hidden
-            >
-              已因選擇「意外」自動設為「是」，
-              並勾選「意外身體受傷」，毋須重複回答。
-              其他相關因素仍可自行勾選。
-            </p>
-          `
-        );
-
-        /*
-         * 意外期間若使用者另行勾選其他因素，
-         * 將手動因素主問題記為 Y。
-         *
-         * 之後撤回「意外」時，這些手動因素仍然有效，
-         * 不會因恢復原本的「否／未回答」而被隱藏。
-         *
-         * 只在使用者勾選時處理；
-         * 不因保留的舊資料而強行改回 Y。
-         */
-        if (sidebar.dataset.cause71Events !== "bound") {
-          sidebar.dataset.cause71Events = "bound";
-
-          const rememberManualFactor = event => {
-            const control = event.target;
-
-            if (
-              !(control instanceof HTMLInputElement) ||
-              control.type !== "checkbox" ||
-              control.disabled ||
-              !control.checked
-            ) {
-              return;
-            }
-
-            const key = control.dataset.key;
-
-            if (
-              key !== "axaAccident" &&
-              tidyFactorKeys.includes(key)
-            ) {
-              state.factorAnswer = "Y";
-            }
-          };
-
-          sidebar.addEventListener(
-            "input",
-            rememberManualFactor,
-            true
-          );
-
-          sidebar.addEventListener(
-            "change",
-            rememberManualFactor,
-            true
-          );
-        }
       };
 
-      /* ---------- 3. 先聯動，再套用條件遮罩 ---------- */
+      /* ---------- 3. 只同步入院／求診原因 ---------- */
 
       tidyEffectiveState = function effectiveStateCause71() {
         const cause = ["accident", "illness"].includes(
@@ -16681,36 +16571,24 @@ if (
           ? state.consultationCause
           : "";
 
-        const isAccident = cause === "accident";
-
         const patch = {
           consultationCause: cause,
 
-          // 舊 AIA 輸出流程仍使用 Y／N／空白。
+          // 保留 AIA 原有輸出及意外詳情展開條件。
           aiaAdmissionAccident:
-            isAccident
+            cause === "accident"
               ? "Y"
               : cause === "illness"
                 ? "N"
-                : "",
-
-          // 此因素只有一個來源：共用求診原因。
-          axaAccident: isAccident
+                : ""
         };
 
-        if (isAccident) {
-          patch.factorAnswer = "Y";
-        }
-
         /*
-         * 必須在原有 tidyRules 執行之前帶入答案：
+         * 不再帶入：
+         *   axaAccident
+         *   factorAnswer
          *
-         * - 展開意外詳情／時間
-         * - 展開相關因素
-         * - 保留適用的手動補充輸出
-         * - 第70節據此計算 Manulife N/A
-         *
-         * callback 完成後，原始 state 自動還原。
+         * 兩項均沿用使用者手動答案。
          */
         return aiaV2WithStatePatch(
           patch,
@@ -16718,55 +16596,6 @@ if (
         );
       };
 
-      /* ---------- 4. 畫面顯示有效答案 ---------- */
-
-      tidyUpdateEditor = function updateEditorCause71(effective) {
-        const value = effective || tidyEffectiveState();
-
-        cause71BeforeUpdateEditor(value);
-
-        const isAccident =
-          value.consultationCause === "accident";
-
-        /*
-         * 原有同步函式讀取 raw state；
-         * 這兩項要顯示衍生後的有效答案。
-         *
-         * 包裝 tidyUpdateEditor 而非只包裝 refresh，
-         * 確保切換「目前公司適用問題」時亦保持正確。
-         */
-        document.querySelectorAll(
-          '#sidebar input[type="radio"][data-key="factorAnswer"]'
-        ).forEach(control => {
-          control.checked =
-            control.value === String(value.factorAnswer ?? "");
-
-          // 意外已確定有相關因素，避免再選出矛盾答案。
-          control.disabled = isAccident;
-
-          control.title = isAccident
-            ? "已由「意外」自動帶入；更改求診原因後恢復手動答案。"
-            : "";
-        });
-
-        const accidentControl = $("#field-axaAccident");
-
-        if (accidentControl) {
-          accidentControl.checked =
-            value.axaAccident === true;
-
-          // 永遠由原因控制，不建立第二套獨立答案。
-          accidentControl.disabled = true;
-          accidentControl.title =
-            "由第04節「是次入院／求診原因」自動決定。";
-        }
-
-        const note = $("#cause71-factor-note");
-
-        if (note) {
-          note.hidden = !isAccident;
-        }
-      };
 /* =====================================================
          72. 問題顯示方式改為 radio，搬入頂部粉紅框
          只修改介面，保留原有公司篩選邏輯。
