@@ -1655,6 +1655,89 @@
         grid-template-columns: 400px minmax(0, 1fr);
       }
     }
+/* =====================================================
+   Prudential 第13題：縮減「意外」欄內間距
+   保留原有框高度、字體及溢出檢查。
+   ===================================================== */
+
+#prudential-page-7
+.pr-frame > .pr-row:last-child
+> .pr-cell:nth-child(2)
+.pr-cause-column {
+  gap: .8mm;
+}
+
+/* 日期答案與下方「日／月／年」說明靠近一點 */
+#prudential-page-7
+.pr-frame > .pr-row:last-child
+> .pr-cell:nth-child(2)
+.pr-simple-date {
+  gap: .4mm;
+}
+/* 收起左側公司標籤，避免被第54節動態樣式覆蓋 */
+#sidebar .tidy-tags {
+  display: none !important;
+}
+/* =====================================================
+   Prudential 第7–9頁：針對紅框位置修正
+   不縮細字體、不取消溢出檢查、不隱藏內容
+   ===================================================== */
+
+/* 第7頁：
+   第12題由 32mm 收至 26mm，
+   為公司名稱及頁尾預留多 6mm。
+   !important 用來覆蓋模板的 inline height。
+*/
+#prudential-page-7
+.pr-frame > .pr-row:nth-last-child(2) {
+  height: 26mm !important;
+}
+
+
+/* 第8頁：
+   第14題右側三行，總高度維持 34mm：
+   醫生名稱 12mm／地址 11mm／日期使用餘下空間。
+*/
+#prudential-page-8
+.pr-frame > .pr-row:nth-child(2)
+> .pr-cell:last-child > .pr-nested {
+  grid-template-rows:
+    12mm
+    11mm
+    minmax(0, 1fr) !important;
+}
+
+
+/* 第9頁：
+   第23題右側三行，總高度維持原有 30.5mm：
+   名稱 10mm／地址 10mm／原因使用餘下空間。
+*/
+#prudential-page-9
+.pr-frame > .pr-row:nth-child(2)
+> .pr-cell:last-child > .pr-nested {
+  grid-template-rows:
+    10mm
+    10mm
+    minmax(0, 1fr) !important;
+}
+
+/* 只收緊第23題右側「標籤欄」：
+   不改右邊輸入答案的字體及間距。
+*/
+#prudential-page-9
+.pr-frame > .pr-row:nth-child(2)
+> .pr-cell:last-child > .pr-nested
+> .pr-row > .pr-cell:first-child {
+  padding-top: .2mm;
+  padding-bottom: .2mm;
+}
+
+#prudential-page-9
+.pr-frame > .pr-row:nth-child(2)
+> .pr-cell:last-child > .pr-nested
+> .pr-row > .pr-cell:first-child > .pr-label {
+  line-height: 1.1;
+}
 </style>
 </head>
 
@@ -13350,6 +13433,3483 @@ if (
         }
       };
 
+/* =====================================================
+         63. Prudential：公司、共用欄位及條件規則
+
+         貼在第62節之後，取代原本最後的一行 init();
+
+         不呼叫舊 Sidebar 搬動鏈。
+         沿用第56節直接建立的九節共用問卷。
+         ===================================================== */
+
+      const prudBeforeSidebar = buildSidebar;
+      const prudBeforeGetData = getData;
+      const prudBeforeRefresh = refresh;
+      const prudBeforeValidate = validateData;
+      const prudBeforeOverflow = checkOverflow;
+      const prudBeforeControls = updateCompanyControls;
+      const prudBeforePageCount = companyPageCount;
+      const prudBeforeInit = init;
+
+      if (!tidyCompanies.includes("prudential")) {
+        tidyCompanies.push("prudential");
+      }
+
+      tidyCompanyLabels.prudential = "Prudential";
+
+      const prudLeaveKeys = [
+        "homeLeaveFromDate",
+        "homeLeaveFromTime",
+        "homeLeaveToDate",
+        "homeLeaveToTime",
+        "homeLeaveReason"
+      ];
+
+      const prudExtraFactorOptions = [
+        ["factorHazardousActivity", "危險性運動／活動"],
+        ["factorRehabilitation", "康復／療養"]
+      ];
+
+      const prudExtraHistoryOptions = [
+        ["historyAsthma", "哮喘"],
+        ["historyFamilyCancer", "家族性癌症"],
+        ["historyFamilyHistory", "家族病史"]
+      ];
+
+      function prudPushUnique(array, ...keys) {
+        keys.forEach(key => {
+          if (!array.includes(key)) array.push(key);
+        });
+      }
+
+      // 同一套相關病史補上地址。
+      prudPushUnique(previousDetailKeys, "previousProviderAddress");
+
+      // 共用手術條件控制外科醫生姓名。
+      prudPushUnique(tidySurgeryKeys, "surgeonName");
+
+      // 所有過往病史均受 historyAnswer 控制。
+      prudPushUnique(
+        historyDetailKeys,
+        ...prudExtraHistoryOptions.map(([key]) => key)
+      );
+
+      // Prudential 額外因素仍位於共用因素組。
+      prudPushUnique(
+        tidyFactorKeys,
+        ...prudExtraFactorOptions.map(([key]) => key),
+        "pregnancyWeeks"
+      );
+
+      // 原本離院條件保留，增加新的結構化欄位。
+      prudPushUnique(
+        tidyRuleMap.get("home-leave").keys,
+        ...prudLeaveKeys
+      );
+
+      function prudAddRule(rule) {
+        tidyRules.push(rule);
+        tidyRuleMap.set(rule.id, rule);
+      }
+
+      function prudDiagnosisCount(value = state) {
+        const count = Number(value.prudDiagnosisCount || 1);
+        return Math.max(1, Math.min(3, count || 1));
+      }
+
+      prudAddRule({
+        id: "prud-diagnosis-b",
+        when: value => prudDiagnosisCount(value) >= 2,
+        keys: ["diagnosisB", "icd10B"]
+      });
+
+      prudAddRule({
+        id: "prud-diagnosis-c",
+        when: value => prudDiagnosisCount(value) >= 3,
+        keys: ["diagnosisC", "icd10C"]
+      });
+
+      prudAddRule({
+        id: "prud-accident-time",
+        when: value => value.consultationCause === "accident",
+        keys: ["accidentTime"]
+      });
+
+      prudAddRule({
+        id: "prud-pregnancy-weeks",
+        when: value =>
+          value.factorAnswer === "Y" &&
+          value.factorPregnancy === true,
+        keys: ["pregnancyWeeks"]
+      });
+
+      prudAddRule({
+        id: "prud-referral-out",
+        when: value => value.referredOut === "Y",
+        keys: [
+          "referredOutName",
+          "referredOutAddress",
+          "referredOutReason"
+        ]
+      });
+
+      /*
+       * 新欄位一樣使用原本 inputField / textField /
+       * yesNoField / selectField 及 tidyItem。
+       */
+      function prudInput(
+        key,
+        label,
+        type = "text",
+        companies = "prudential"
+      ) {
+        return tidyItem(
+          key,
+          companies,
+          inputField(key, label, "", type)
+        );
+      }
+
+      function prudText(
+        key,
+        label,
+        rows = 2,
+        companies = "prudential"
+      ) {
+        return tidyItem(
+          key,
+          companies,
+          textField(key, label, "", rows)
+        );
+      }
+
+      function prudRadio(
+        key,
+        label,
+        companies = "prudential"
+      ) {
+        return tidyItem(
+          key,
+          companies,
+          yesNoField(key, label)
+        );
+      }
+
+      function prudSelect(
+        key,
+        label,
+        options,
+        companies = "prudential"
+      ) {
+        return tidyItem(
+          key,
+          companies,
+          selectField(key, label, "", options)
+        );
+      }
+
+      function prudCheckbox(key, label) {
+        return tidyItem(
+          key,
+          "prudential",
+          checkField(key, label)
+        );
+      }
+
+      function prudEditorItem(key) {
+        return document.querySelector(
+          `#sidebar .tidy-item[data-tidy-key="${key}"]`
+        );
+      }
+
+      function prudInsertAfter(key, html) {
+        const anchor = prudEditorItem(key);
+
+        if (!anchor) {
+          throw new Error(
+            `Prudential：找不到共用欄位 ${key}。`
+          );
+        }
+
+        anchor.insertAdjacentHTML("afterend", html);
+      }
+
+      function prudIncludeCompany(key) {
+        const item = prudEditorItem(key);
+        if (!item) return;
+
+        const companies = new Set(
+          (item.dataset.tidyCompanies || "")
+            .split(/\s+/)
+            .filter(Boolean)
+        );
+
+        companies.add("prudential");
+
+        const list = [...companies];
+
+        item.dataset.tidyCompanies = list.join(" ");
+
+        const definition = fieldDefinitions.get(key);
+
+        if (definition) {
+          definition.companies = list;
+        }
+      }
+
+      buildSidebar = function buildSidebarWithPrudential() {
+        prudBeforeSidebar();
+
+        /*
+         * 已存在的欄位只增加 Prudential 適用標記。
+         * 不建立第二套相同資料。
+         */
+        [
+          "patientName",
+          "patientId",
+          "hospitalClinic",
+          "admissionFrom",
+          "admissionTo",
+          "icuStayAnswer",
+          "manulifeICUFrom",
+          "manulifeICUTo",
+
+          "usualDoctor",
+          "usualSince",
+          "symptomDate",
+          "firstConsultation",
+          "chiefComplaints",
+          "finalDiagnosis",
+          "underlyingCause",
+          "axaICD10",
+
+          "hasSurgery",
+          "surgeryName",
+          "surgeryDate",
+          "axaCPT",
+          "treatmentSummary",
+
+          "aiaOutpatientPossible",
+          "aiaOutpatientNoReason",
+
+          "previousTreatmentAnswer",
+          ...previousDetailKeys,
+
+          "historyAnswer",
+          ...historyDetailKeys.filter(key => key !== "habitSince"),
+
+          "factorAnswer",
+          "factorDrugs",
+          "factorPregnancy",
+          "factorBirthControl",
+          "factorCosmetic",
+          "factorVision",
+          "axaMental",
+          "factorHIV",
+          "factorSelfInjury",
+          "factorCongenital",
+          "axaVaccination",
+          "axaCheckup",
+          "factorOther",
+          "factorOtherDetails",
+
+          "aiaHomeLeave",
+
+          "physicianName",
+          "qualification",
+          "physicianAddress",
+          "physicianTelephone",
+          "physicianDate"
+        ].forEach(prudIncludeCompany);
+
+        /* ---------- 01：年齡、性別 ---------- */
+
+        prudInsertAfter(
+          "patientId",
+          `
+            <div class="two">
+              ${prudInput("patientAge", "年齡", "number")}
+
+              ${prudSelect(
+                "patientSex",
+                "性別",
+                [
+                  ["Male 男", "男 Male"],
+                  ["Female 女", "女 Female"]
+                ]
+              )}
+            </div>
+          `
+        );
+
+        const age = $("#field-patientAge");
+
+        if (age) {
+          age.min = "0";
+          age.step = "1";
+        }
+
+        /*
+         * 保單號碼不新增。
+         * 第5題紀錄日期直接使用 usualSince。
+         */
+
+        /* ---------- 02：向外轉介 ---------- */
+
+        const incomingReferral = document.querySelector(
+          '#sidebar [data-tidy-rule="referral"]'
+        );
+
+        if (!incomingReferral) {
+          throw new Error("Prudential：找不到共用轉介資料組。");
+        }
+
+        incomingReferral.insertAdjacentHTML(
+          "afterend",
+          `
+            ${prudRadio(
+              "referredOut",
+              "你有否轉介病人予其他醫生／醫院？"
+            )}
+
+            ${tidyGate("prud-referral-out", `
+              ${prudInput(
+                "referredOutName",
+                "轉介醫生姓名／醫院名稱"
+              )}
+
+              ${prudText(
+                "referredOutAddress",
+                "轉介醫生地址／醫院地址"
+              )}
+
+              ${prudText(
+                "referredOutReason",
+                "轉介原因"
+              )}
+            `)}
+          `
+        );
+
+        /* ---------- 02：求診原因／意外時間 ---------- */
+
+        prudEditorItem("symptomDate").insertAdjacentHTML(
+          "beforebegin",
+          `
+            ${prudSelect(
+              "consultationCause",
+              "求診原因",
+              [
+                ["accident", "意外 Accident"],
+                ["illness", "病症 Illness"]
+              ]
+            )}
+
+            ${tidyGate(
+              "prud-accident-time",
+              prudInput(
+                "accidentTime",
+                "意外發生時間",
+                "time"
+              )
+            )}
+          `
+        );
+
+        /* ---------- 02：診斷 A、B、C ---------- */
+
+        registerField(
+          "prudDiagnosisCount",
+          "Prudential 診斷組數",
+          "number"
+        );
+
+        const diagnosisA = prudEditorItem("finalDiagnosis");
+        const codeA = prudEditorItem("axaICD10");
+
+        // 診斷及其 ICD-10 放在一起。
+        if (diagnosisA && codeA) {
+          diagnosisA.after(codeA);
+        }
+
+        codeA.insertAdjacentHTML(
+          "afterend",
+          `
+            ${tidyGate("prud-diagnosis-b", `
+              ${prudText(
+                "diagnosisB",
+                "最後診斷 B（第17(b)題）",
+                1
+              )}
+
+              ${prudInput(
+                "icd10B",
+                "ICD-10 B（第18(b)題）"
+              )}
+            `)}
+
+            ${tidyGate("prud-diagnosis-c", `
+              ${prudText(
+                "diagnosisC",
+                "最後診斷 C（第17(c)題）",
+                1
+              )}
+
+              ${prudInput(
+                "icd10C",
+                "ICD-10 C（第18(c)題）"
+              )}
+            `)}
+
+            ${tidyItem(null, "prudential", `
+              <div class="prud-diagnosis-actions">
+                <button
+                  id="prudAddDiagnosis"
+                  type="button"
+                >＋ 新增診斷 B</button>
+
+                <button
+                  id="prudRemoveDiagnosis"
+                  type="button"
+                  hidden
+                >− 收起最後一組</button>
+              </div>
+            `)}
+          `
+        );
+
+        $("#prudAddDiagnosis").addEventListener("click", () => {
+          state.prudDiagnosisCount = Math.min(
+            3,
+            prudDiagnosisCount() + 1
+          );
+
+          clearHighlights();
+          refresh();
+          setStatus("已展開下一組診斷及 ICD-10。");
+        });
+
+        $("#prudRemoveDiagnosis").addEventListener("click", () => {
+          state.prudDiagnosisCount = Math.max(
+            1,
+            prudDiagnosisCount() - 1
+          );
+
+          clearHighlights();
+          refresh();
+
+          setStatus(
+            "已收起最後一組診斷；資料保留，但停止輸出。"
+          );
+        });
+
+        /* ---------- 03：檢查、外科醫生 ---------- */
+
+        prudInsertAfter(
+          "axaCPT",
+          prudInput(
+            "surgeonName",
+            "外科醫生姓名（Prudential 第20題）"
+          )
+        );
+
+        prudEditorItem("treatmentSummary").insertAdjacentHTML(
+          "beforebegin",
+          prudText(
+            "recommendedDiagnosticTests",
+            "是次住院建議的診斷性檢查及原因（第15題）",
+            3
+          )
+        );
+
+        /* ---------- 05：相關病史共用地址 ---------- */
+
+        prudInsertAfter(
+          "previousProvider",
+          prudText(
+            "previousProviderAddress",
+            "醫生／醫院地址",
+            2,
+            tidyCompanies.join(" ")
+          )
+        );
+
+        /*
+         * 第27(b)使用原有 historyPhysician：
+         * 只調整左側名稱，不新增地址欄。
+         */
+        const historyPhysicianLabel = prudEditorItem(
+          "historyPhysician"
+        )?.querySelector(".field-label");
+
+        if (historyPhysicianLabel) {
+          historyPhysicianLabel.textContent =
+            "醫生／醫院名稱及地址（如有）";
+        }
+
+        if (fieldDefinitions.has("historyPhysician")) {
+          fieldDefinitions.get("historyPhysician").label =
+            "醫生／醫院名稱及地址";
+        }
+
+        const historyList = document.querySelector(
+          '#sidebar [data-tidy-rule="history"] .tidy-checks'
+        );
+
+        if (!historyList) {
+          throw new Error("Prudential：找不到共用過往病史選項。");
+        }
+
+        historyList.insertAdjacentHTML(
+          "beforeend",
+          prudExtraHistoryOptions.map(([key, label]) =>
+            prudCheckbox(key, label)
+          ).join("")
+        );
+
+        /* ---------- 06：兩個額外因素及週數 ---------- */
+
+        const factorList = document.querySelector(
+          '#sidebar [data-tidy-rule="factors"] > .tidy-checks'
+        );
+
+        if (!factorList) {
+          throw new Error("Prudential：找不到共用傷病因素選項。");
+        }
+
+        factorList.insertAdjacentHTML(
+          "beforeend",
+          prudExtraFactorOptions.map(([key, label]) =>
+            prudCheckbox(key, label)
+          ).join("")
+        );
+
+        const pregnancyItem = prudEditorItem("factorPregnancy");
+
+        /*
+         * 週數放在原本懷孕選項之內。
+         * 原 checkbox 不重建、不複製。
+         */
+        pregnancyItem.insertAdjacentHTML(
+          "beforeend",
+          tidyGate(
+            "prud-pregnancy-weeks",
+            prudInput(
+              "pregnancyWeeks",
+              "妊娠週數",
+              "number"
+            )
+          )
+        );
+
+        const weeks = $("#field-pregnancyWeeks");
+
+        if (weeks) {
+          weeks.min = "0";
+          weeks.step = "1";
+        }
+
+        /* ---------- 07：AIA／Prudential 共用離院 ---------- */
+
+        const oldLeaveItem = prudEditorItem("aiaHomeLeaveDetails");
+
+        if (!oldLeaveItem) {
+          throw new Error("Prudential：找不到原有離院詳情欄。");
+        }
+
+        oldLeaveItem.outerHTML = `
+          <div class="two">
+            ${prudInput(
+              "homeLeaveFromDate",
+              "離院開始日期",
+              "date",
+              "aia prudential"
+            )}
+
+            ${prudInput(
+              "homeLeaveFromTime",
+              "離院開始時間",
+              "time",
+              "aia prudential"
+            )}
+          </div>
+
+          <div class="two">
+            ${prudInput(
+              "homeLeaveToDate",
+              "離院結束日期",
+              "date",
+              "aia prudential"
+            )}
+
+            ${prudInput(
+              "homeLeaveToTime",
+              "離院結束時間",
+              "time",
+              "aia prudential"
+            )}
+          </div>
+
+          ${prudText(
+            "homeLeaveReason",
+            "離院原因",
+            2,
+            "aia prudential"
+          )}
+        `;
+
+        // 舊 key 改為純衍生输出，不再作輸入欄位。
+        fieldDefinitions.delete("aiaHomeLeaveDetails");
+
+        const recordSection = prudEditorItem("aiaHomeLeave")
+          ?.closest(".editor-section");
+
+        mlSetSectionTitle(
+          recordSection,
+          "住院紀錄及預後"
+        );
+
+        recordSection.querySelector(".section-body")
+          .insertAdjacentHTML(
+            "beforeend",
+            `
+              ${tidyGroup("預後", `
+                ${prudSelect(
+                  "conditionPrognosis",
+                  "預計痊癒後的情況（第24題）",
+                  [
+                    ["good", "Good 良好"],
+                    ["fair", "Fair 一般"],
+                    ["poor", "Poor 甚差"]
+                  ]
+                )}
+
+                ${prudRadio(
+                  "relapsePossible",
+                  "有否復發的可能？（第25題）"
+                )}
+              `)}
+            `
+          );
+
+        /*
+         * 修正五公司標籤。
+         * 第56節的 ALL 常數仍為原四公司，
+         * 此處依目前真正適用公司重新生成標籤。
+         */
+        $("#sidebar").querySelectorAll(
+          ".tidy-item"
+        ).forEach(item => {
+          item.querySelectorAll(
+            ":scope > .tidy-tags"
+          ).forEach(element => element.remove());
+
+          const tags = tidyTags(item.dataset.tidyCompanies || "");
+
+          if (tags) {
+            item.insertAdjacentHTML("afterbegin", tags);
+          }
+        });
+      };
+
+      /* =====================================================
+         64. Prudential：有效資料及共用配對
+         ===================================================== */
+
+      function prudFormatDate(value) {
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(
+          String(value || "")
+        );
+
+        return match
+          ? `${match[3]}/${match[2]}/${match[1]}`
+          : "";
+      }
+
+      function prudTimeParts(value) {
+        const match = /^(\d{2}):(\d{2})$/.exec(
+          String(value || "")
+        );
+
+        if (!match) {
+          return { hour: "", minute: "", period: "" };
+        }
+
+        const hour = Number(match[1]);
+        const minute = Number(match[2]);
+
+        if (hour > 23 || minute > 59) {
+          return { hour: "", minute: "", period: "" };
+        }
+
+        return {
+          hour: String(hour % 12 || 12).padStart(2, "0"),
+          minute: match[2],
+          period: hour < 12 ? "AM" : "PM"
+        };
+      }
+
+      const prudDateKeys = [
+        "usualSince",
+        "admissionFrom",
+        "admissionTo",
+        "manulifeICUFrom",
+        "manulifeICUTo",
+        "firstConsultation",
+        "surgeryDate",
+        "previousConsultation",
+        "historyDiagnosis",
+        "physicianDate",
+        "homeLeaveFromDate",
+        "homeLeaveToDate",
+        "prudAccidentDate"
+      ];
+
+      function prudCombinedLeave() {
+        if (text("aiaHomeLeave") !== "Y") return "";
+
+        const from = [
+          prudFormatDate(text("homeLeaveFromDate")),
+          text("homeLeaveFromTime")
+        ].filter(Boolean).join(" ");
+
+        const to = [
+          prudFormatDate(text("homeLeaveToDate")),
+          text("homeLeaveToTime")
+        ].filter(Boolean).join(" ");
+
+        const interval = from && to
+          ? `${from} – ${to}`
+          : from
+            ? `From ${from}`
+            : to
+              ? `To ${to}`
+              : "";
+
+        return [
+          interval,
+          text("homeLeaveReason")
+            ? `原因：${text("homeLeaveReason")}`
+            : ""
+        ].filter(Boolean).join("；");
+      }
+
+      getData = function getDataWithPrudential() {
+        /*
+         * 新增資料亦必須在有效 state 範圍内生成。
+         * 不適用的收起資料不會漏到紙上。
+         */
+        return tidyWithEffectiveState(() => {
+          const data = prudBeforeGetData();
+
+          // AIA 原紙張第11題沿用原 binding。
+          data.aiaHomeLeaveDetails = prudCombinedLeave();
+
+          data.prudAccidentDate =
+            text("consultationCause") === "accident"
+              ? text("symptomDate")
+              : "";
+
+          data.prudSymptomDuration =
+            text("consultationCause") === "illness"
+              ? getSymptomDuration().output
+              : "";
+
+          // 第22題「一般身體檢查／防疫注射」合併勾選。
+          data.prudCheckupVaccination = Boolean(
+            state.axaCheckup || state.axaVaccination
+          );
+
+          /*
+           * Prudential「其他」只用手動其他選項。
+           * 不使用 Bowtie 自動合併的 factorOther 衍生結果，
+           * 避免精神紊亂、疫苗等重複填入 Prudential 其他。
+           */
+          data.prudOtherFactor = Boolean(state.factorOther);
+          data.prudOtherFactorDetails =
+            state.factorOther
+              ? text("factorOtherDetails")
+              : "";
+
+          data.prudHistoryOtherDetails =
+            state.historyOther
+              ? text("historyDetails")
+              : "";
+
+          // 第27(c)：同一格顯示共用診斷日期及病歷詳情。
+          data.prudHistoryDateTreatment = [
+            text("historyDiagnosis")
+              ? prudFormatDate(text("historyDiagnosis"))
+              : "",
+            text("historyDetails")
+          ].filter(Boolean).join("\n");
+
+          // 第27(d)：按指定直接共用現況，不另作醫療推斷。
+          data.prudHistoryCondition = {
+            recovered: "Fully recovered 完全康復",
+            treatment: "On treatment 治療中"
+          }[text("historyCondition")] || "";
+
+          prudDateKeys.forEach(key => {
+            const value = key === "prudAccidentDate"
+              ? data.prudAccidentDate
+              : text(key);
+
+            const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(
+              value || ""
+            );
+
+            data[key + "_prD"] = match ? match[3] : "";
+            data[key + "_prM"] = match ? match[2] : "";
+            data[key + "_prY"] = match ? match[1] : "";
+            data[key + "_prDate"] = prudFormatDate(value);
+          });
+
+          [
+            "accidentTime",
+            "homeLeaveFromTime",
+            "homeLeaveToTime"
+          ].forEach(key => {
+            const parts = prudTimeParts(text(key));
+
+            data[key + "_prPeriod"] = parts.period;
+            data[key + "_prHour"] = parts.hour;
+            data[key + "_prMinute"] = parts.minute;
+          });
+
+          return data;
+        });
+      };
+
+      function prudUpdateDiagnosisButtons() {
+        const count = prudDiagnosisCount();
+        const add = $("#prudAddDiagnosis");
+        const remove = $("#prudRemoveDiagnosis");
+
+        if (add) {
+          add.hidden = count >= 3;
+          add.textContent =
+            count === 1 ? "＋ 新增診斷 B" : "＋ 新增診斷 C";
+        }
+
+        if (remove) {
+          remove.hidden = count <= 1;
+        }
+      }
+
+      refresh = function refreshWithPrudential() {
+        prudBeforeRefresh();
+        prudUpdateDiagnosisButtons();
+      };
+
+      /* =====================================================
+         65. Prudential：A4 樣式及紙張元件
+
+         所有紙張樣式限定在 .prudential-page。
+         原表條碼不以假條碼替代。
+         ===================================================== */
+
+      const prudStyle = document.createElement("style");
+      prudStyle.id = "prudential-form-style";
+
+      prudStyle.textContent = `
+        #sidebar .prud-diagnosis-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        #sidebar
+        .tidy-item[data-tidy-key="factorPregnancy"]
+        > .tidy-condition {
+          margin-top: 10px;
+          margin-bottom: 0;
+        }
+
+        .page.prudential-page {
+          --paper-ink: #111;
+          --paper-muted: #111;
+          --paper-border: #333;
+
+          width: 210mm;
+          height: 297mm;
+          padding: 8mm 12mm 0;
+
+          color: #111;
+          background: #fff;
+
+          font-family:
+            Arial, "Microsoft JhengHei",
+            "PingFang TC", sans-serif;
+
+          font-size: 7.5pt;
+          line-height: 1.18;
+        }
+
+        .page.prudential-page.prud-page-7 {
+          padding-top: 10mm;
+        }
+
+        .prudential-page .paper-content {
+          width: 100%;
+        }
+
+        .prudential-page .pr-policy {
+          height: 4.5mm;
+          font-size: 8pt;
+          font-weight: 700;
+        }
+
+        .prudential-page .pr-frame {
+          width: 100%;
+          border: .18mm solid #333;
+          min-width: 0;
+          min-height: 0;
+        }
+
+        .prudential-page .pr-row {
+          display: grid;
+          min-width: 0;
+          min-height: 0;
+          border-bottom: .18mm solid #333;
+        }
+
+        .prudential-page .pr-frame > :last-child {
+          border-bottom: 0;
+        }
+
+        .prudential-page .pr-cell {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+
+          min-width: 0;
+          min-height: 0;
+          padding: .65mm 1mm;
+        }
+
+        .prudential-page .pr-cell + .pr-cell {
+          border-left: .18mm solid #333;
+        }
+
+        .prudential-page .pr-cell.pr-top {
+          justify-content: flex-start;
+        }
+
+        .prudential-page .pr-cell.pr-zero {
+          padding: 0;
+        }
+
+        .prudential-page .pr-label {
+          display: block;
+          min-width: 0;
+          flex: 0 0 auto;
+          font-size: 7.5pt;
+          line-height: 1.18;
+          font-weight: 400;
+        }
+
+        .prudential-page .pr-label > span {
+          display: block;
+        }
+
+        .prudential-page .pr-label > span + span {
+          margin-top: .3mm;
+        }
+
+        .prudential-page .pr-fill {
+          display: flex;
+          align-items: flex-start;
+          flex: 1 1 0;
+
+          min-width: 0;
+          min-height: 0;
+          width: 100%;
+        }
+
+        .prudential-page .pr-fill > .v,
+        .prudential-page .pr-cell > .v {
+          display: block;
+          width: 100%;
+          min-width: 0;
+          min-height: 0;
+          max-height: 100%;
+
+          margin: 0;
+          padding: 0;
+
+          color: #111;
+          font-size: 9pt;
+          line-height: 1.23;
+          font-family: var(--paper-font);
+
+          white-space: pre-wrap;
+          overflow-wrap: anywhere;
+          overflow: hidden;
+        }
+
+        .prudential-page .pr-fill.pr-middle {
+          align-items: center;
+        }
+
+        .prudential-page .pr-section {
+          display: flex;
+          align-items: center;
+
+          height: 4mm;
+          padding: .2mm .7mm;
+
+          background: #d5d5d5;
+          border-bottom: .18mm solid #333;
+
+          font-size: 8pt;
+          line-height: 1.1;
+          font-weight: 700;
+        }
+
+        .prudential-page .pr-part {
+          height: 7mm;
+          padding: .6mm .7mm;
+
+          background: #a9a9a9;
+          border-bottom: .18mm solid #333;
+
+          font-size: 7.8pt;
+          line-height: 1.2;
+          font-weight: 700;
+        }
+
+        .prudential-page .pr-option {
+          display: flex;
+          align-items: flex-start;
+          gap: 1.2mm;
+          min-width: 0;
+
+          font-size: 7.4pt;
+          line-height: 1.2;
+        }
+
+        .prudential-page .pr-option > span:last-child {
+          display: block;
+          min-width: 0;
+        }
+
+        .prudential-page .pr-option small {
+          display: block;
+          font: inherit;
+        }
+
+        .prudential-page .tick {
+          flex: 0 0 2.7mm;
+          width: 2.7mm;
+          height: 2.7mm;
+          margin-top: .15mm;
+
+          border: .18mm solid #222;
+          border-radius: 0;
+        }
+
+        .prudential-page .tick.checked::after {
+          top: -.8mm;
+          left: -.1mm;
+          font-size: 10.5pt;
+          color: #111;
+        }
+
+        .prudential-page .pr-choices {
+          display: flex;
+          align-items: flex-start;
+          flex-wrap: wrap;
+          gap: 2mm 5mm;
+          min-width: 0;
+        }
+
+        .prudential-page .pr-choices.pr-vertical {
+          flex-direction: column;
+          gap: 3mm;
+        }
+
+        .prudential-page .pr-choices.pr-tight {
+          gap: 1mm 3mm;
+        }
+
+        .prudential-page .pr-date {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1.35fr;
+          gap: 1.5mm;
+          width: 100%;
+          min-width: 0;
+          flex: 0 0 auto;
+        }
+
+        .prudential-page .pr-date-part {
+          display: grid;
+          grid-template-rows: 4.5mm 3mm;
+          min-width: 0;
+          min-height: 0;
+          text-align: center;
+        }
+
+        .prudential-page .pr-date-part > .v {
+          display: block;
+          width: 100%;
+          height: 4.5mm;
+          min-width: 0;
+          min-height: 0;
+
+          padding: 0 0 .35mm;
+          border-bottom: .16mm solid #333;
+
+          color: #111;
+          font-size: 8.5pt;
+          line-height: 1.2;
+          text-align: center;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+
+        .prudential-page .pr-date-part > small {
+          display: block;
+          padding-top: .4mm;
+          font-size: 7.1pt;
+          line-height: 1.1;
+          white-space: nowrap;
+        }
+
+        .prudential-page .pr-simple-date {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 1mm;
+          min-width: 0;
+          width: 100%;
+        }
+
+        .prudential-page .pr-simple-date > .v {
+          height: 5mm;
+          width: 100%;
+          font-size: 9pt;
+          text-align: center;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+
+        .prudential-page .pr-simple-date > small {
+          text-align: center;
+          font-size: 7.5pt;
+          line-height: 1.1;
+        }
+
+        .prudential-page .pr-inline {
+          display: flex;
+          align-items: center;
+          gap: 2mm;
+          min-width: 0;
+        }
+
+        .prudential-page .pr-inline > .pr-date {
+          flex: 1 1 0;
+          min-width: 0;
+        }
+
+        .prudential-page .pr-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 2mm;
+          min-width: 0;
+          min-height: 0;
+          width: 100%;
+        }
+
+        .prudential-page .pr-nested {
+          display: grid;
+          width: 100%;
+          height: 100%;
+          min-width: 0;
+          min-height: 0;
+        }
+
+        .prudential-page .pr-nested > .pr-row:last-child {
+          border-bottom: 0;
+        }
+
+        .prudential-page .pr-time {
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr);
+          align-items: center;
+          gap: 2mm;
+          width: 100%;
+          min-width: 0;
+        }
+
+        .prudential-page .pr-time-options {
+          display: grid;
+          gap: .5mm;
+        }
+
+        .prudential-page .pr-time-options .pr-option {
+          gap: .7mm;
+          font-size: 7pt;
+        }
+
+        .prudential-page .pr-time-numbers {
+          display: grid;
+          grid-template-columns: 1fr 2mm 1fr;
+          grid-template-rows: 4.5mm 3mm;
+          min-width: 0;
+          min-height: 0;
+          align-items: center;
+          text-align: center;
+        }
+
+        .prudential-page .pr-time-numbers > .v {
+          width: 100%;
+          height: 4.5mm;
+          padding-bottom: .3mm;
+          border-bottom: .16mm solid #333;
+
+          font-size: 8.5pt;
+          line-height: 1.2;
+          text-align: center;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+
+        .prudential-page .pr-time-numbers > small {
+          grid-column: 1 / -1;
+          font-size: 7pt;
+          line-height: 1.1;
+        }
+
+        .prudential-page .pr-cause-column {
+          display: flex;
+          flex-direction: column;
+          gap: 3mm;
+          height: 100%;
+          min-width: 0;
+          min-height: 0;
+        }
+
+        .prudential-page .pr-cause-column .pr-fill {
+          flex: 1 1 0;
+        }
+
+        .prudential-page .pr-factor-columns,
+        .prudential-page .pr-history-columns {
+          display: grid;
+          grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, 1.15fr)
+            minmax(0, 1fr);
+
+          gap: 3mm;
+          width: 100%;
+          height: 100%;
+          min-width: 0;
+          min-height: 0;
+        }
+
+        .prudential-page .pr-factor-column,
+        .prudential-page .pr-history-column {
+          display: flex;
+          flex-direction: column;
+          gap: 2mm;
+          min-width: 0;
+          min-height: 0;
+        }
+
+        .prudential-page .pr-factor-column .pr-option,
+        .prudential-page .pr-history-column .pr-option {
+          font-size: 7.1pt;
+          line-height: 1.18;
+        }
+
+        .prudential-page .pr-other-details {
+          display: flex;
+          flex-direction: column;
+          flex: 1 1 0;
+          min-width: 0;
+          min-height: 0;
+          gap: 1mm;
+        }
+
+        .prudential-page .pr-other-details .pr-fill > .v {
+          font-size: 9pt;
+        }
+
+        .prudential-page .pr-pregnancy {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 10mm auto;
+          gap: .8mm;
+          align-items: start;
+          min-width: 0;
+        }
+
+        .prudential-page .pr-pregnancy > .v {
+          width: 100%;
+          height: 4mm;
+          padding: 0;
+          border-bottom: .16mm solid #333;
+          font-size: 9pt;
+          text-align: center;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+
+        .prudential-page .pr-doctor-gap {
+          height: 4mm;
+        }
+
+        .prudential-page .pr-company {
+          margin-top: 2.5mm;
+          height: 8mm;
+          font-size: 7.6pt;
+          line-height: 1.3;
+        }
+
+        .prudential-page .pr-company > div:first-child {
+          color: #ed2929;
+          font-size: 8.5pt;
+        }
+
+        .prudential-page .paper-footer.pr-footer {
+          left: 12mm;
+          right: 12mm;
+          bottom: 6mm;
+
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          align-items: end;
+
+          color: #111;
+          font-size: 8pt;
+          line-height: 1.1;
+        }
+
+        .prudential-page .pr-page-number {
+          text-align: center;
+          font-size: 10pt;
+          font-weight: 700;
+        }
+
+        .prudential-page .pr-barcode-space {
+          min-height: 7mm;
+        }
+
+        @media print {
+          .page.prudential-page .pr-frame,
+          .page.prudential-page .pr-row {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+        }
+      `;
+
+      document.head.appendChild(prudStyle);
+
+      function prLabel(english, chinese = "") {
+        return `
+          <div class="pr-label pr-fixed">
+            <span>${escapeHTML(english)}</span>
+            ${chinese
+              ? `<span>${escapeHTML(chinese)}</span>`
+              : ""}
+          </div>
+        `;
+      }
+
+      function prCell(content, classes = "") {
+        return `
+          <div class="pr-cell ${classes}">
+            ${content}
+          </div>
+        `;
+      }
+
+      function prFill(key, classes = "") {
+        return `
+          <div class="pr-fill ${classes}">
+            ${bind(key)}
+          </div>
+        `;
+      }
+
+      function prValue(key, classes = "") {
+        return prCell(prFill(key), classes);
+      }
+
+      function prRow(height, columns, cells) {
+        return `
+          <div
+            class="pr-row"
+            style="
+              ${height === null ? "" : `height:${height}mm;`}
+              grid-template-columns:${columns};
+            "
+          >
+            ${cells.join("")}
+          </div>
+        `;
+      }
+
+      function prSection(english, chinese) {
+        return `
+          <div class="pr-section pr-fixed">
+            ${escapeHTML(english)} ${escapeHTML(chinese)}
+          </div>
+        `;
+      }
+
+      function prOption(key, value, english, chinese = "") {
+        return `
+          <div class="pr-option pr-fixed">
+            ${mark(key, value)}
+            <span>
+              ${escapeHTML(english)}
+              ${chinese
+                ? `<small>${escapeHTML(chinese)}</small>`
+                : ""}
+            </span>
+          </div>
+        `;
+      }
+
+      function prYesNo(
+        key,
+        detail = false,
+        vertical = false
+      ) {
+        return `
+          <div class="pr-choices ${vertical ? "pr-vertical" : ""}">
+            ${prOption(key, "N", "No", "沒有")}
+
+            ${prOption(
+              key,
+              "Y",
+              detail
+                ? "Yes, please provide information on the right"
+                : "Yes",
+              detail
+                ? "有，請提供右方所需資料"
+                : "有"
+            )}
+          </div>
+        `;
+      }
+
+      function prDate(key) {
+        return `
+          <div class="pr-date">
+            <div class="pr-date-part">
+              ${bind(key + "_prD")}
+              <small>Day 日</small>
+            </div>
+
+            <div class="pr-date-part">
+              ${bind(key + "_prM")}
+              <small>Month 月</small>
+            </div>
+
+            <div class="pr-date-part">
+              ${bind(key + "_prY")}
+              <small>Year 年</small>
+            </div>
+          </div>
+        `;
+      }
+
+      function prSimpleDate(key) {
+        return `
+          <div class="pr-simple-date">
+            ${bind(key + "_prDate")}
+            <small>(Day/Month/Year)<br>（日／月／年）</small>
+          </div>
+        `;
+      }
+
+      function prTime(key) {
+        return `
+          <div class="pr-time">
+            <div class="pr-time-options">
+              ${prOption(key + "_prPeriod", "AM", "AM 上午")}
+              ${prOption(key + "_prPeriod", "PM", "PM 下午")}
+            </div>
+
+            <div class="pr-time-numbers">
+              ${bind(key + "_prHour")}
+              <span>:</span>
+              ${bind(key + "_prMinute")}
+              <small>Time 時間</small>
+            </div>
+          </div>
+        `;
+      }
+
+      function prQuestion(
+        number,
+        english,
+        chinese,
+        key,
+        height
+      ) {
+        return prRow(
+          height,
+          "24% 76%",
+          [
+            prCell(
+              prLabel(`${number}. ${english}`, chinese),
+              "pr-top"
+            ),
+            prValue(key, "pr-top")
+          ]
+        );
+      }
+
+      function prDetailRow(
+        english,
+        chinese,
+        key,
+        date = false
+      ) {
+        return prRow(
+          null,
+          "30% 70%",
+          [
+            prCell(prLabel(english, chinese)),
+            date
+              ? prCell(prDate(key))
+              : prValue(key)
+          ]
+        );
+      }
+
+      function prArticle(number, content) {
+        return `
+          <article
+            id="prudential-page-${number}"
+            class="page prudential-page prud-page-${number}"
+            aria-label="Prudential 醫療報告，原表第${number}頁"
+          >
+            <div class="paper-content">
+              ${content}
+
+              <div class="pr-company pr-fixed">
+                <div>
+                  Prudential Hong Kong Limited 保誠保險有限公司
+                </div>
+                <div>
+                  Part of Prudential plc (United Kingdom)
+                  保誠集團成員
+                </div>
+              </div>
+            </div>
+
+            <footer class="paper-footer pr-footer">
+              <span>LACL/HOSP (04/26)</span>
+              <span class="pr-page-number">${number}</span>
+              <span
+                class="pr-barcode-space"
+                aria-label="原表條碼未重建"
+              ></span>
+            </footer>
+          </article>
+        `;
+      }
+
+      /* =====================================================
+         66. Prudential 第7頁：第1–13題
+         ===================================================== */
+
+      function buildPrudentialPage7() {
+        const patient = `
+          <div class="pr-part pr-fixed">
+            <div>
+              Part II – Medical Certification
+              (to be completed by the Attending Physician,
+              duly qualified and registered, at the claimant’s expense)
+            </div>
+            <div>
+              第二部分 – 醫療報告
+              （由索償人自費聘請主診註冊西醫填寫）
+            </div>
+          </div>
+
+          ${prSection("Patient Details", "病人資料")}
+
+          ${prRow(
+            11.5,
+            "24% 26% 21% 29%",
+            [
+              prCell(prLabel("1. Name of Patient", "病人姓名")),
+              prValue("patientName"),
+              prCell(prLabel(
+                "2. Identity Document Number",
+                "身份證明文件號碼"
+              )),
+              prValue("patientId")
+            ]
+          )}
+
+          ${prRow(
+            11.5,
+            "24% 26% 21% 29%",
+            [
+              prCell(prLabel("3. Age", "年齡")),
+              prValue("patientAge"),
+              prCell(prLabel("4. Sex", "性別")),
+              prValue("patientSex")
+            ]
+          )}
+
+          ${prRow(
+            12,
+            "24% 76%",
+            [
+              prCell(prLabel(
+                "5. Are you the patient’s usual physician?",
+                "你是否病人慣常求診之醫生？"
+              )),
+
+              prCell(`
+                <div class="pr-inline">
+                  ${prOption("usualDoctor", "N", "No 否")}
+
+                  ${prOption(
+                    "usualDoctor",
+                    "Y",
+                    "Yes, medical records traceable to",
+                    "是，醫療紀錄可追溯至"
+                  )}
+
+                  ${prDate("usualSince")}
+                </div>
+              `)
+            ]
+          )}
+        `;
+
+        const admission = `
+          ${prSection(
+            "Hospitalization / Day Surgery Details",
+            "住院／日間手術詳情"
+          )}
+
+          ${prRow(
+            11.5,
+            "24% 26% 16% 34%",
+            [
+              prCell(prLabel(
+                "6. Date of Admission / Day Surgery",
+                "入院／日間手術日期"
+              )),
+
+              prCell(prDate("admissionFrom")),
+
+              prCell(prLabel(
+                "7. Date of Discharge",
+                "出院日期"
+              )),
+
+              prCell(prDate("admissionTo"))
+            ]
+          )}
+
+          ${prQuestion(
+            8,
+            "Name of Hospital / Day Surgery Center / Clinic",
+            "醫院／日間手術中心／診所名稱",
+            "hospitalClinic",
+            17.5
+          )}
+
+          ${prRow(
+            20,
+            "24% 36% 40%",
+            [
+              prCell(prLabel(
+                "9. Had the patient confined in Intensive Care Unit?",
+                "病人有否入住深切治療部？"
+              ), "pr-top"),
+
+              prCell(prYesNo("icuStayAnswer", true)),
+
+              prCell(`
+                <div class="pr-inline">
+                  <div class="pr-stack">
+                    ${prLabel("From", "由")}
+                    ${prDate("manulifeICUFrom")}
+                  </div>
+
+                  <div class="pr-stack">
+                    ${prLabel("To", "至")}
+                    ${prDate("manulifeICUTo")}
+                  </div>
+                </div>
+              `)
+            ]
+          )}
+
+          ${prRow(
+            62.5,
+            "24% 28% 48%",
+            [
+              prCell(prLabel(
+                "10. Any home leave taken by the patient during the said hospitalization period?",
+                "病人在上述住院期間有否請假離院？"
+              ), "pr-top"),
+
+              prCell(
+                prYesNo("aiaHomeLeave", true),
+                "pr-top"
+              ),
+
+              prCell(`
+                <div
+                  class="pr-nested"
+                  style="grid-template-rows:32mm minmax(0,1fr)"
+                >
+                  ${prRow(
+                    null,
+                    "50% 50%",
+                    [
+                      prCell(`
+                        <div class="pr-stack">
+                          ${prLabel("From", "由")}
+                          ${prDate("homeLeaveFromDate")}
+                          ${prTime("homeLeaveFromTime")}
+                        </div>
+                      `, "pr-top"),
+
+                      prCell(`
+                        <div class="pr-stack">
+                          ${prLabel("To", "至")}
+                          ${prDate("homeLeaveToDate")}
+                          ${prTime("homeLeaveToTime")}
+                        </div>
+                      `, "pr-top")
+                    ]
+                  )}
+
+                  ${prRow(
+                    null,
+                    "18% 82%",
+                    [
+                      prCell(
+                        prLabel("Reason", "原因"),
+                        "pr-top"
+                      ),
+                      prValue("homeLeaveReason", "pr-top")
+                    ]
+                  )}
+                </div>
+              `, "pr-zero")
+            ]
+          )}
+        `;
+
+        const consultation = `
+          ${prSection("Consultation Details", "診治資料")}
+
+          ${prRow(
+            17,
+            "24% 76%",
+            [
+              prCell(prLabel(
+                "11. Date on which the patient FIRST consulted you for this illness or injury",
+                "有關是次病症或受傷，病人首次向閣下求診的日期"
+              ), "pr-top"),
+
+              prCell(prSimpleDate("firstConsultation"))
+            ]
+          )}
+
+          ${prQuestion(
+            12,
+            "Sign and symptoms complained of at the FIRST consultation",
+            "首次求診時出現的徵狀",
+            "chiefComplaints",
+            32
+          )}
+
+          ${prRow(
+            44,
+            "24% 31% 45%",
+            [
+              prCell(prLabel(
+                "13. Cause of Consultation",
+                "求診原因"
+              ), "pr-top"),
+
+              prCell(`
+                <div class="pr-cause-column">
+                  ${prOption(
+                    "consultationCause",
+                    "accident",
+                    "Accident 意外"
+                  )}
+
+                  ${prLabel("Date of accident", "意外日期")}
+                  ${prSimpleDate("prudAccidentDate")}
+
+                  ${prLabel("Time of Accident", "意外時間")}
+                  ${prTime("accidentTime")}
+                </div>
+              `, "pr-top"),
+
+              prCell(`
+                <div class="pr-cause-column">
+                  ${prOption(
+                    "consultationCause",
+                    "illness",
+                    "Illness 病症"
+                  )}
+
+                  ${prLabel(
+                    "How long had the patient been experiencing these sign and symptoms BEFORE the first consultation?",
+                    "首次求診前其徵狀已存在多久？"
+                  )}
+
+                  ${prFill("prudSymptomDuration")}
+                </div>
+              `, "pr-top")
+            ]
+          )}
+        `;
+
+        return prArticle(7, `
+          <div class="pr-policy pr-fixed">
+            Policy Number 保單號碼：
+          </div>
+
+          <div class="pr-frame">
+            ${patient}
+            ${admission}
+            ${consultation}
+          </div>
+        `);
+      }
+
+      /* =====================================================
+         67. Prudential 第8、9頁
+         ===================================================== */
+
+      function buildPrudentialPage8() {
+        const q14 = prRow(
+          34,
+          "24% 34% 42%",
+          [
+            prCell(prLabel(
+              "14. For this episode, had the patient previously seen other physician(s) for these symptoms?",
+              "就此次病症而言，病人之前有否就有關之病況向其他醫生求診？"
+            ), "pr-top"),
+
+            prCell(
+              prYesNo("previousTreatmentAnswer", true),
+              "pr-top"
+            ),
+
+            prCell(`
+              <div
+                class="pr-nested"
+                style="grid-template-rows:10mm 13mm minmax(0,1fr)"
+              >
+                ${prDetailRow(
+                  "Name of Physician",
+                  "醫生名稱",
+                  "previousProvider"
+                )}
+
+                ${prDetailRow(
+                  "Address of Physician",
+                  "醫生地址",
+                  "previousProviderAddress"
+                )}
+
+                ${prDetailRow(
+                  "Date",
+                  "日期",
+                  "previousConsultation",
+                  true
+                )}
+              </div>
+            `, "pr-zero")
+          ]
+        );
+
+        const q15 = prRow(
+          12.5,
+          "58% 42%",
+          [
+            prCell(prLabel(
+              "15. Please state the recommended diagnostic tests and the reason for the tests during this hospitalization.",
+              "請註明是次住院所建議的診斷性檢查之名稱及原因"
+            ), "pr-top"),
+
+            prValue("recommendedDiagnosticTests", "pr-top")
+          ]
+        );
+
+        const q16 = prRow(
+          20,
+          "24% 16% 18% 42%",
+          [
+            prCell(prLabel(
+              "16. Can this type of treatment / test be managed on day care or out-patient basis?",
+              "此次病症之治療／檢查是否可於日間中心或門診內進行？"
+            ), "pr-top"),
+
+            prCell(`
+              <div class="pr-choices pr-tight">
+                ${prOption("aiaOutpatientPossible", "Y", "Yes 是")}
+                ${prOption("aiaOutpatientPossible", "N", "No 否")}
+              </div>
+            `, "pr-top"),
+
+            prCell(prLabel(
+              "Please provide reason(s) for this hospitalization.",
+              "請提供是次住院的原因"
+            ), "pr-top"),
+
+            prValue("aiaOutpatientNoReason", "pr-top")
+          ]
+        );
+
+        const diagnosis = `
+          ${prRow(
+            8,
+            "70% 30%",
+            [
+              prCell(prLabel("17. Final Diagnosis", "最後診斷")),
+              prCell(prLabel(
+                "18. ICD 10 Code",
+                "國際疾病分類編碼（ICD-10）"
+              ))
+            ]
+          )}
+
+          ${[
+            ["a)", "finalDiagnosis", "axaICD10"],
+            ["b)", "diagnosisB", "icd10B"],
+            ["c)", "diagnosisC", "icd10C"]
+          ].map(([letter, diagnosisKey, codeKey]) =>
+            prRow(
+              10,
+              "4% 66% 30%",
+              [
+                prCell(escapeHTML(letter), "pr-top"),
+                prValue(diagnosisKey, "pr-top"),
+                prValue(codeKey, "pr-top")
+              ]
+            )
+          ).join("")}
+        `;
+
+        const surgery = prRow(
+          47,
+          "24% 20% 56%",
+          [
+            prCell(prLabel(
+              "20. What surgery has been performed?",
+              "有否進行手術？"
+            ), "pr-top"),
+
+            prCell(
+              prYesNo("hasSurgery", true, true),
+              "pr-top"
+            ),
+
+            prCell(`
+              <div
+                class="pr-nested"
+                style="grid-template-rows:12.5mm 19mm 7.5mm minmax(0,1fr)"
+              >
+                ${prDetailRow(
+                  "Surgery Date",
+                  "手術日期",
+                  "surgeryDate",
+                  true
+                )}
+
+                ${prDetailRow(
+                  "Surgery Name",
+                  "手術名稱",
+                  "surgeryName"
+                )}
+
+                ${prDetailRow(
+                  "CPT Code",
+                  "醫療程序編碼",
+                  "axaCPT"
+                )}
+
+                ${prDetailRow(
+                  "Surgeon Name",
+                  "外科醫生名稱",
+                  "surgeonName"
+                )}
+              </div>
+            `, "pr-zero")
+          ]
+        );
+
+        const factorColumns = `
+          <div class="pr-factor-columns">
+            <div class="pr-factor-column">
+              ${prOption(
+                "factorDrugs",
+                "true",
+                "Alcohol / narcotics / drug abuse",
+                "飲用酒精飲料／毒品／濫用藥物"
+              )}
+
+              ${prOption(
+                "factorSelfInjury",
+                "true",
+                "Self-inflicted injury",
+                "自我傷害"
+              )}
+
+              <div class="pr-pregnancy">
+                ${prOption(
+                  "factorPregnancy",
+                  "true",
+                  "Childbirth / pregnancy",
+                  "分娩／妊娠"
+                )}
+                ${bind("pregnancyWeeks")}
+                <span>weeks<br>週</span>
+              </div>
+
+              ${prOption(
+                "axaMental",
+                "true",
+                "Mental disorders",
+                "精神紊亂"
+              )}
+
+              <div class="pr-other-details">
+                ${prOption(
+                  "prudOtherFactor",
+                  "true",
+                  "Others, please specify details:",
+                  "如有其他，請說明詳情："
+                )}
+                ${prFill("prudOtherFactorDetails")}
+              </div>
+            </div>
+
+            <div class="pr-factor-column">
+              ${prOption(
+                "factorHazardousActivity",
+                "true",
+                "Hazardous sport / activity",
+                "參與危險性運動／活動"
+              )}
+
+              ${prOption(
+                "factorBirthControl",
+                "true",
+                "Infertility / sterilization / termination of pregnancy",
+                "不育／絕育／終止妊娠"
+              )}
+
+              ${prOption(
+                "factorHIV",
+                "true",
+                "AIDS / AIDS related complex disease",
+                "後天免疫力缺乏症／與後天免疫力缺乏症相關的綜合症"
+              )}
+
+              ${prOption(
+                "prudCheckupVaccination",
+                "true",
+                "Body check / vaccination & immunization injections",
+                "一般身體檢查／防疫注射"
+              )}
+            </div>
+
+            <div class="pr-factor-column">
+              ${prOption(
+                "factorCosmetic",
+                "true",
+                "Cosmetic or plastic surgery",
+                "美容或整形手術"
+              )}
+
+              ${prOption(
+                "factorCongenital",
+                "true",
+                "Congenital / inherited condition",
+                "先天／遺傳性情況"
+              )}
+
+              ${prOption(
+                "factorVision",
+                "true",
+                "Corrective aids or treatment of refractive errors",
+                "視力矯正"
+              )}
+
+              ${prOption(
+                "factorRehabilitation",
+                "true",
+                "Rehabilitation / convalescence",
+                "康復／療養"
+              )}
+            </div>
+          </div>
+        `;
+
+        const factors = `
+          ${prRow(
+            8,
+            "100%",
+            [
+              prCell(prLabel(
+                "22. To the best of your knowledge, was the patient’s injury / illness directly or indirectly due to or aggravated by the following:",
+                "根據閣下所知，病人是否因以下之原因，直接或間接引致或加劇有關之受傷／病症："
+              ))
+            ]
+          )}
+
+          ${prRow(
+            6,
+            "100%",
+            [
+              prCell(`
+                <div class="pr-choices">
+                  ${prOption("factorAnswer", "N", "No 否")}
+
+                  ${prOption(
+                    "factorAnswer",
+                    "Y",
+                    "Yes, please tick where it is appropriate and give details",
+                    "是，請在適當的位置劃上剔號及提供詳情"
+                  )}
+                </div>
+              `)
+            ]
+          )}
+
+          ${prRow(
+            44,
+            "100%",
+            [prCell(factorColumns, "pr-top")]
+          )}
+        `;
+
+        return prArticle(8, `
+          <div class="pr-frame">
+            ${prSection(
+              "Consultation Details (Continued)",
+              "診治資料（續）"
+            )}
+
+            ${q14}
+            ${q15}
+            ${q16}
+
+            ${prSection(
+              "Final Diagnosis Details",
+              "最後診斷之資料"
+            )}
+
+            ${diagnosis}
+
+            ${prQuestion(
+              19,
+              "What is / are the underlying cause(s) for final diagnosis?",
+              "引起上述最後診斷的病因？",
+              "underlyingCause",
+              13.5
+            )}
+
+            ${surgery}
+
+            ${prQuestion(
+              21,
+              "Summary of medical treatment given and tests performed with results",
+              "總結有關治療及檢驗結果",
+              "treatmentSummary",
+              18
+            )}
+
+            ${factors}
+          </div>
+        `);
+      }
+
+      function buildPrudentialPage9() {
+        const referral = prRow(
+          30.5,
+          "24% 27% 49%",
+          [
+            prCell(prLabel(
+              "23. Did you refer the patient to another physician or hospital?",
+              "你有否轉介病人予其他醫生或醫院？"
+            ), "pr-top"),
+
+            prCell(
+              prYesNo("referredOut", true),
+              "pr-top"
+            ),
+
+            prCell(`
+              <div
+                class="pr-nested"
+                style="grid-template-rows:9mm 10mm minmax(0,1fr)"
+              >
+                ${prDetailRow(
+                  "Name of the physician / hospital",
+                  "醫生／醫院名稱",
+                  "referredOutName"
+                )}
+
+                ${prDetailRow(
+                  "Address of the physician / hospital",
+                  "醫生／醫院地址",
+                  "referredOutAddress"
+                )}
+
+                ${prDetailRow(
+                  "Details for the referral reason",
+                  "詳述轉介原因",
+                  "referredOutReason"
+                )}
+              </div>
+            `, "pr-zero")
+          ]
+        );
+
+        const prognosis = prRow(
+          13.5,
+          "24% 27% 23% 26%",
+          [
+            prCell(prLabel(
+              "24. The prognosis of the condition",
+              "預計痊癒後的情況"
+            )),
+
+            prCell(`
+              <div class="pr-stack" style="gap:.4mm">
+                ${prOption("conditionPrognosis", "good", "Good 良好")}
+                ${prOption("conditionPrognosis", "fair", "Fair 一般")}
+                ${prOption("conditionPrognosis", "poor", "Poor 甚差")}
+              </div>
+            `),
+
+            prCell(prLabel(
+              "25. Any possibility of having a relapse?",
+              "有否復發的可能？"
+            )),
+
+            prCell(prYesNo("relapsePossible"))
+          ]
+        );
+
+        const previous = `
+          ${prRow(
+            10.5,
+            "51% 49%",
+            [
+              prCell(prLabel(
+                "26. Other than this episode, has the patient ever been treated for the same / related conditions?",
+                "除了此次病症，病人曾否患有同類／相關病況而接受治療？"
+              )),
+
+              prCell(`
+                <div class="pr-choices">
+                  ${prOption(
+                    "previousTreatmentAnswer",
+                    "N",
+                    "No",
+                    "沒有"
+                  )}
+
+                  ${prOption(
+                    "previousTreatmentAnswer",
+                    "Y",
+                    "Yes, please provide below information",
+                    "有，請提供下列所需資料"
+                  )}
+                </div>
+              `)
+            ]
+          )}
+
+          ${prRow(
+            14,
+            "20% 31% 23% 26%",
+            [
+              prCell(prLabel(
+                "Consultation Date (Day / Month / Year)",
+                "就診日期（日／月／年）"
+              )),
+
+              prCell(prLabel(
+                "Name of Physician / Hospital",
+                "醫生／醫院名稱"
+              )),
+
+              prCell(prLabel("Diagnosis", "診斷")),
+
+              prCell(prLabel(
+                "Details of Treatment(s) / Hospitalization",
+                "診治／住院詳情"
+              ))
+            ]
+          )}
+
+          ${prRow(
+            14.5,
+            "20% 31% 23% 26%",
+            [
+              prValue("previousConsultation_prDate", "pr-top"),
+              prValue("previousProvider", "pr-top"),
+              prValue("previousDisease", "pr-top"),
+              prValue("previousTreatment", "pr-top")
+            ]
+          )}
+        `;
+
+        const historyColumns = `
+          <div class="pr-history-columns">
+            <div class="pr-history-column">
+              ${prOption("historyAsthma", "true", "Asthma 哮喘")}
+              ${prOption("historyHepatitis", "true", "Hepatitis B 乙型肝炎")}
+              ${prOption("historyOperation", "true", "Previous operation 曾接受手術")}
+              ${prOption("historySmoking", "true", "Smoking 吸煙習慣")}
+            </div>
+
+            <div class="pr-history-column">
+              ${prOption("historyCardiac", "true", "Cardiac problem 心臟病")}
+              ${prOption("historyHypertension", "true", "Hypertension 高血壓")}
+              ${prOption("historyDrugs", "true", "Drug addiction 濫用藥物")}
+              ${prOption("historyFamilyCancer", "true", "Family history of cancer 家族性癌症")}
+            </div>
+
+            <div class="pr-history-column">
+              ${prOption("historyDiabetes", "true", "Diabetes mellitus 糖尿病")}
+              ${prOption("historyFamilyHistory", "true", "Unfavourable family history 家族病史")}
+              ${prOption("historyDrinking", "true", "Drinking habit 飲酒習慣")}
+
+              <div class="pr-other-details">
+                ${prOption(
+                  "historyOther",
+                  "true",
+                  "Others, please specify details:",
+                  "其他，請說明詳情："
+                )}
+
+                ${prFill("prudHistoryOtherDetails")}
+              </div>
+            </div>
+          </div>
+        `;
+
+        const history = `
+          ${prRow(
+            5,
+            "100%",
+            [
+              prCell(prLabel(
+                "27. a) Did the patient have the following PAST medical history / habit? 病人過往有否以下之病史／習慣？"
+              ))
+            ]
+          )}
+
+          ${prRow(
+            10,
+            "100%",
+            [
+              prCell(`
+                <div class="pr-choices">
+                  ${prOption("historyAnswer", "N", "No 否")}
+
+                  ${prOption(
+                    "historyAnswer",
+                    "Y",
+                    "Yes, please tick where it is appropriate and give below details",
+                    "是，請在適當的位置劃上剔號及提供以下詳情"
+                  )}
+                </div>
+              `)
+            ]
+          )}
+
+          ${prRow(
+            32,
+            "100%",
+            [prCell(historyColumns, "pr-top")]
+          )}
+
+          ${prRow(
+            18,
+            "51% 49%",
+            [
+              prCell(prLabel(
+                "b) Please give the name and address of the physician / hospital by whom was the above PAST medical history FIRST detected",
+                "請詳述首次診斷出上述過往病史之醫生／醫院名稱及地址"
+              ), "pr-top"),
+
+              prValue("historyPhysician", "pr-top")
+            ]
+          )}
+
+          ${prRow(
+            19,
+            "51% 49%",
+            [
+              prCell(prLabel(
+                "c) Please provide FIRST diagnosis date and treatment details of the above PAST medical history",
+                "請提供上述過往病史之首次診斷日期及治療詳情"
+              ), "pr-top"),
+
+              prValue("prudHistoryDateTreatment", "pr-top")
+            ]
+          )}
+
+          ${prRow(
+            17.5,
+            "51% 49%",
+            [
+              prCell(prLabel(
+                "d) Current prognosis of the above past medical history",
+                "上述病史癒後的情況"
+              ), "pr-top"),
+
+              prValue("prudHistoryCondition", "pr-top")
+            ]
+          )}
+        `;
+
+        const physician = `
+          <div class="pr-doctor-gap"></div>
+
+          <div class="pr-frame">
+            ${prSection("Physician Details", "醫生資料")}
+
+            ${prRow(
+              14.5,
+              "24% 27% 16% 33%",
+              [
+                prCell(prLabel(
+                  "Name of Attending Physician",
+                  "主診醫生姓名"
+                )),
+                prValue("physicianName"),
+
+                prCell(prLabel("Qualification", "資歷")),
+                prValue("qualification")
+              ]
+            )}
+
+            ${prRow(
+              12.5,
+              "24% 27% 16% 33%",
+              [
+                prCell(prLabel(
+                  "Hospital Name (if applicable)",
+                  "醫院名稱（如適用）"
+                )),
+
+                // 按確認：直接共用，不新增醫院輸入。
+                prValue("hospitalClinic"),
+
+                prCell(prLabel("Telephone No.", "聯絡電話")),
+                prValue("physicianTelephone")
+              ]
+            )}
+
+            ${prRow(
+              13,
+              "24% 76%",
+              [
+                prCell(prLabel("Address", "地址")),
+                prValue("physicianAddress", "pr-top")
+              ]
+            )}
+
+            ${prRow(
+              19,
+              "24% 27% 16% 33%",
+              [
+                prCell(prLabel(
+                  "Signature & Hospital / Physician’s Chop",
+                  "醫院／醫生簽署及蓋印"
+                )),
+
+                prCell(`
+                  <div
+                    class="pr-fill"
+                    aria-label="醫院／醫生簽署及蓋印位置留白"
+                  ></div>
+                `),
+
+                prCell(prLabel("Date", "日期")),
+                prCell(prDate("physicianDate"))
+              ]
+            )}
+          </div>
+        `;
+
+        return prArticle(9, `
+          <div class="pr-frame">
+            ${prSection(
+              "Final Diagnosis Details (Continued)",
+              "最後診斷之資料（續）"
+            )}
+
+            ${referral}
+            ${prognosis}
+
+            ${prSection("Medical History Details", "病史詳情")}
+
+            ${previous}
+            ${history}
+          </div>
+
+          ${physician}
+        `);
+      }
+
+      /* =====================================================
+         68. Prudential：資料及溢出檢查
+         原有四間公司的版面檢查保留。
+         ===================================================== */
+
+      const prudBindingCaptions = {
+        prudAccidentDate: "第13題意外日期",
+        prudSymptomDuration: "第13題病徵持續時間",
+        prudOtherFactorDetails: "第22題其他因素",
+        prudHistoryOtherDetails: "第27(a)題其他病史",
+        prudHistoryDateTreatment: "第27(c)題診斷日期及治療詳情",
+        prudHistoryCondition: "第27(d)題病史現況",
+        aiaHomeLeaveDetails: "AIA 第11題離院日期、時間及原因"
+      };
+
+      function prudCaption(key) {
+        const base = key.replace(
+          /_(prD|prM|prY|prDate|prHour|prMinute|prPeriod)$/,
+          ""
+        );
+
+        return prudBindingCaptions[base] ||
+          fieldDefinitions.get(base)?.label ||
+          base;
+      }
+
+      validateData = function validateWithPrudential() {
+        const problems = [...prudBeforeValidate()];
+        const value = tidyEffectiveState();
+        const read = key => String(value[key] ?? "").trim();
+
+        const isPrudential = activeCompany === "prudential";
+        const usesLeave = [
+          "aia",
+          "prudential"
+        ].includes(activeCompany);
+
+        function checkDateOrder(fromKey, toKey, caption) {
+          const from = read(fromKey);
+          const to = read(toKey);
+
+          if (from && to && to < from) {
+            problems.push(`${caption}：結束日期早於開始日期。`);
+          }
+        }
+
+        function checkWithinAdmission(key, caption) {
+          const date = read(key);
+          if (!date) return;
+
+          if (
+            read("admissionFrom") &&
+            date < read("admissionFrom")
+          ) {
+            problems.push(`${caption}早於入院日期。`);
+          }
+
+          if (
+            read("admissionTo") &&
+            date > read("admissionTo")
+          ) {
+            problems.push(`${caption}晚於出院日期。`);
+          }
+        }
+
+        if (usesLeave && read("aiaHomeLeave") === "Y") {
+          checkDateOrder(
+            "homeLeaveFromDate",
+            "homeLeaveToDate",
+            "離院日期"
+          );
+
+          checkWithinAdmission(
+            "homeLeaveFromDate",
+            "離院開始日期"
+          );
+
+          checkWithinAdmission(
+            "homeLeaveToDate",
+            "離院結束日期"
+          );
+
+          [
+            ["homeLeaveFromDate", "homeLeaveFromTime", "離院開始"],
+            ["homeLeaveToDate", "homeLeaveToTime", "離院結束"]
+          ].forEach(([dateKey, timeKey, caption]) => {
+            if (read(timeKey) && !read(dateKey)) {
+              problems.push(`${caption}已填時間，但未填日期。`);
+            }
+          });
+
+          if (
+            read("homeLeaveFromDate") &&
+            read("homeLeaveFromDate") === read("homeLeaveToDate") &&
+            read("homeLeaveFromTime") &&
+            read("homeLeaveToTime") &&
+            read("homeLeaveToTime") < read("homeLeaveFromTime")
+          ) {
+            problems.push(
+              "離院紀錄：同一天的結束時間早於開始時間。"
+            );
+          }
+        }
+
+        if (isPrudential) {
+          if (read("icuStayAnswer") === "Y") {
+            checkDateOrder(
+              "manulifeICUFrom",
+              "manulifeICUTo",
+              "ICU 日期"
+            );
+
+            checkWithinAdmission(
+              "manulifeICUFrom",
+              "ICU 入住日期"
+            );
+
+            checkWithinAdmission(
+              "manulifeICUTo",
+              "ICU 離開日期"
+            );
+          }
+
+          if (read("consultationCause") === "illness") {
+            const symptom = utcDayNumber(read("symptomDate"));
+            const first = utcDayNumber(read("firstConsultation"));
+
+            if (
+              symptom !== null &&
+              first !== null &&
+              first < symptom
+            ) {
+              problems.push(
+                "第13題：首次求診日期早於病徵出現日期，不能計算持續時間。"
+              );
+            }
+          }
+
+          if (
+            read("consultationCause") === "accident" &&
+            read("accidentTime") &&
+            !read("symptomDate")
+          ) {
+            problems.push(
+              "第13題：已填意外時間，但未填意外發生日期。"
+            );
+          }
+
+          [
+            ["patientAge", "年齡"],
+            ["pregnancyWeeks", "妊娠週數"]
+          ].forEach(([key, caption]) => {
+            if (!read(key)) return;
+
+            const number = Number(read(key));
+
+            if (
+              !Number.isFinite(number) ||
+              number < 0 ||
+              !Number.isInteger(number)
+            ) {
+              problems.push(`${caption}請填非負整數。`);
+            }
+          });
+        }
+
+        return [...new Set(problems)];
+      };
+
+      checkOverflow = function checkOverflowWithPrudential() {
+        if (activeCompany !== "prudential") {
+          return prudBeforeOverflow();
+        }
+
+        clearHighlights();
+
+        const papers = getActivePages();
+
+        if (papers.length !== 3) {
+          return ["Prudential：預覽頁數不是3頁，請核對程式。"];
+        }
+
+        const problems = [];
+        const tolerance = 1.5;
+
+        papers.forEach((paper, index) => {
+          const flagged = new Set();
+          const pageNumber = index + 7;
+
+          function flag(element, caption) {
+            if (flagged.has(element)) return;
+
+            flagged.add(element);
+            element.classList.add("over-limit");
+
+            problems.push(
+              `Prudential 第${pageNumber}頁：${caption}`
+            );
+          }
+
+          function ownOverflow(element) {
+            return (
+              element.scrollHeight >
+                element.clientHeight + tolerance ||
+              element.scrollWidth >
+                element.clientWidth + tolerance
+            );
+          }
+
+          function outsideParent(element) {
+            const parent = element.parentElement;
+            if (!parent) return false;
+
+            const rect = element.getBoundingClientRect();
+            const outer = parent.getBoundingClientRect();
+            const style = getComputedStyle(parent);
+
+            const left = outer.left +
+              (parseFloat(style.borderLeftWidth) || 0) +
+              (parseFloat(style.paddingLeft) || 0);
+
+            const right = outer.right -
+              (parseFloat(style.borderRightWidth) || 0) -
+              (parseFloat(style.paddingRight) || 0);
+
+            const top = outer.top +
+              (parseFloat(style.borderTopWidth) || 0) +
+              (parseFloat(style.paddingTop) || 0);
+
+            const bottom = outer.bottom -
+              (parseFloat(style.borderBottomWidth) || 0) -
+              (parseFloat(style.paddingBottom) || 0);
+
+            return (
+              rect.left < left - tolerance ||
+              rect.right > right + tolerance ||
+              rect.top < top - tolerance ||
+              rect.bottom > bottom + tolerance
+            );
+          }
+
+          paper.querySelectorAll("[data-bind]").forEach(element => {
+            if (!element.textContent.trim()) return;
+
+            if (
+              ownOverflow(element) ||
+              outsideParent(element)
+            ) {
+              flag(
+                element,
+                `${prudCaption(element.dataset.bind)}超出欄位空間`
+              );
+            }
+          });
+
+          paper.querySelectorAll(
+            ".pr-cell, .pr-fixed, .pr-date, " +
+            ".pr-time, .pr-factor-columns, .pr-history-columns"
+          ).forEach(element => {
+            if (
+              ownOverflow(element) ||
+              outsideParent(element)
+            ) {
+              flag(
+                element,
+                "固定文字或版面超出空間，請核對紅框"
+              );
+            }
+          });
+
+          const content = paper.querySelector(".paper-content");
+          const footer = paper.querySelector(".paper-footer");
+
+          const paperRect = paper.getBoundingClientRect();
+          const contentRect = content.getBoundingClientRect();
+          const footerRect = footer.getBoundingClientRect();
+
+          const pxPerMm = paperRect.height / 297;
+
+          if (
+            contentRect.bottom >
+            footerRect.top - 2 * pxPerMm + tolerance
+          ) {
+            flag(content, "整頁內容侵入頁尾預留區域");
+          }
+
+          if (
+            contentRect.right > paperRect.right + tolerance ||
+            contentRect.bottom > paperRect.bottom + tolerance
+          ) {
+            flag(content, "內容超出 A4 紙張範圍");
+          }
+        });
+
+        return [...new Set(problems)];
+      };
+
+      /* =====================================================
+         69. 五公司切換及初始化
+         沿用第61節列印流程，只輸出目前公司。
+         ===================================================== */
+
+      companyPageCount = function pageCountWithPrudential() {
+        return activeCompany === "prudential"
+          ? 3
+          : prudBeforePageCount();
+      };
+
+      updateCompanyControls = function controlsWithPrudential() {
+        prudBeforeControls();
+
+        if (activeCompany === "prudential") {
+          $("#printButton").textContent =
+            "列印 Prudential 醫療報告 3 頁";
+
+          $("#checkButton").textContent =
+            "檢查 Prudential 版面及資料";
+
+          const help = $("#companyHelp");
+
+          if (help) {
+            help.textContent =
+              "Prudential：醫療報告三頁，原表第7–9頁；" +
+              "保單號碼及簽署位置留白。";
+          }
+        }
+
+        document.title = "Dr Ray's Insurance Claim Form";
+      };
+
+      init = function initFiveCompanyForms() {
+        /*
+         * 第62節會：
+         * 1. 呼叫上面擴充後的 buildSidebar
+         * 2. 登記全部欄位
+         * 3. resetState / syncInputs
+         * 4. 綁定事件一次
+         *
+         * 不再重複綁定 input/change/print 事件。
+         */
+        prudBeforeInit();
+
+        $("#preview").insertAdjacentHTML(
+          "beforeend",
+          `
+            <div
+              id="company-prudential"
+              class="company-document"
+              aria-label="Prudential 醫療報告三頁"
+              hidden
+            >
+              ${buildPrudentialPage7()}
+              ${buildPrudentialPage8()}
+              ${buildPrudentialPage9()}
+            </div>
+          `
+        );
+
+        /*
+         * tidyCompanies 已包含第五間：
+         * 第62節已建立按鈕及綁好 switchCompany 事件。
+         * 這裏補上原 buttonLabels 沒有的名稱即可。
+         */
+        const button = document.querySelector(
+          '.company-button[data-company="prudential"]'
+        );
+
+        if (!button) {
+          throw new Error("找不到 Prudential 公司切換按鈕。");
+        }
+
+        button.textContent = "Prudential · 醫療索償";
+        button.setAttribute(
+          "aria-controls",
+          "company-prudential"
+        );
+
+        syncInputs();
+        switchCompany("prudential", false);
+
+        setStatus(
+          "已加入 Prudential 醫療報告三頁。" +
+          "共用欄位只填一次；離院日期、時間及原因亦同步至 AIA。" +
+          "診斷 B／C 按「＋」展開。" +
+          "列印前請檢查版面；原表條碼未重建。"
+        );
+      };
+/* =====================================================
+         70. 縮短 Bowtie 其他因素預覽框
+             Manulife N/A 改由主問題自動決定
+         ===================================================== */
+
+      /* ---------- 1. 收緊左側預覽框 ---------- */
+
+      const factorCompactStyle70 = document.createElement("style");
+
+      factorCompactStyle70.id = "factor-compact-style-70";
+
+      factorCompactStyle70.textContent = `
+        /*
+         * 外框不保留 HTML 的縮排及空白行。
+         * 不設定固定高度，長答案仍可完整顯示。
+         */
+        #sidebar .tidy-derived {
+          padding: 8px 10px;
+          white-space: normal;
+          line-height: 1.5;
+        }
+
+        #sidebar .tidy-derived > strong {
+          margin: 0 0 4px;
+        }
+
+        /*
+         * 只有實際答案保留使用者輸入的換行。
+         */
+        #sidebar .tidy-derived > output {
+          display: block;
+          margin: 0;
+          padding: 0;
+          white-space: pre-wrap;
+          overflow-wrap: anywhere;
+        }
+
+        #sidebar .tidy-derived > .tidy-inline-note {
+          margin: 6px 0 0;
+          font-size: 11px;
+          line-height: 1.45;
+          white-space: normal;
+        }
+      `;
+
+      document.head.appendChild(factorCompactStyle70);
+
+      /* ---------- 2. 移除獨立 N/A 輸入 ---------- */
+
+      const factors70BeforeBuildSidebar = buildSidebar;
+
+      buildSidebar = function buildSidebarFactors70() {
+        factors70BeforeBuildSidebar();
+
+        /*
+         * 主問題已有「未回答／否／是」，
+         * 不再保留第二個可能互相矛盾的 N/A 選項。
+         *
+         * 紙張上的 N/A 方格及 binding 保持原樣。
+         */
+        document.querySelector(
+          '#sidebar .tidy-item[data-tidy-key="manulifeFactorsNA"]'
+        )?.remove();
+
+        /*
+         * 精簡預覽框說明。
+         * 手動文字及自動合併規則完全不變。
+         */
+        const previewBox = document
+          .getElementById("tidy-other-preview")
+          ?.closest(".tidy-derived");
+
+        const note = previewBox?.querySelector(
+          ".tidy-inline-note"
+        );
+
+        if (note) {
+          note.textContent =
+            "上述額外因素會自動合併；取消勾選不會刪除手動文字。";
+        }
+      };
+
+      /* ---------- 3. N/A 統一由有效答案衍生 ---------- */
+
+      const factors70BeforeEffectiveState = tidyEffectiveState;
+
+      tidyEffectiveState = function effectiveStateFactors70() {
+        const effective = factors70BeforeEffectiveState();
+
+        /*
+         * 不將 N/A 作為另一份獨立答案。
+         *
+         * 所有紙張輸出及有效資料檢查，
+         * 都讀取同一個衍生結果。
+         */
+        effective.manulifeFactorsNA =
+          effective.factorAnswer === "N";
+
+        return effective;
+      };
+/* =====================================================
+         71. 共用入院／求診原因及意外因素聯動
+
+         唯一原因輸入：consultationCause
+
+         accident：
+           AIA 意外入院 = Y
+           Prudential 求診原因 = accident
+           相關因素主問題 = Y
+           意外身體受傷 = true
+
+         illness：
+           AIA 意外入院 = N
+           Prudential 求診原因 = illness
+           撤回自動意外因素，恢復手動因素答案
+
+         未回答：
+           AIA／Prudential 原因留空
+           撤回自動意外因素，恢復手動因素答案
+
+         自動答案只存在於有效資料副本，
+         不覆蓋原始手動因素答案或文字。
+         ===================================================== */
+
+      const cause71BeforeBuildSidebar = buildSidebar;
+      const cause71BeforeEffectiveState = tidyEffectiveState;
+      const cause71BeforeUpdateEditor = tidyUpdateEditor;
+
+      /* ---------- 1. 唯一一條原因問題 ---------- */
+
+      function cause71QuestionHTML() {
+        const key = "consultationCause";
+
+        // 原本是 select，現在明確改為 radio。
+        fieldDefinitions.set(key, {
+          key,
+          label: "是次入院／求診原因",
+          type: "radio"
+        });
+
+        const options = [
+          ["", "未回答"],
+          ["accident", "意外 Accident"],
+          ["illness", "病症 Illness"]
+        ];
+
+        return tidyItem(
+          key,
+          tidyCompanies.join(" "),
+          `
+            <fieldset class="choice">
+              <legend>是次入院／求診原因</legend>
+
+              <div class="choice-options">
+                ${options.map(([value, label], index) => `
+                  <label class="choice-option">
+                    <input
+                      id="cause71-option-${index}"
+                      type="radio"
+                      name="${key}"
+                      data-key="${key}"
+                      value="${value}"
+                      ${value === "" ? "checked" : ""}
+                    >
+                    <span>${escapeHTML(label)}</span>
+                  </label>
+                `).join("")}
+              </div>
+            </fieldset>
+          `
+        );
+      }
+
+      /* ---------- 2. 合併左側輸入 ---------- */
+
+      buildSidebar = function buildSidebarCause71() {
+        cause71BeforeBuildSidebar();
+
+        const sidebar = $("#sidebar");
+
+        const oldCause = prudEditorItem("consultationCause");
+        const oldAiaQuestion = prudEditorItem(
+          "aiaAdmissionAccident"
+        );
+
+        const accidentDetails = sidebar.querySelector(
+          '[data-tidy-rule="accident"]'
+        );
+
+        const accidentTime = sidebar.querySelector(
+          '[data-tidy-rule="prud-accident-time"]'
+        );
+
+        if (
+          !oldCause ||
+          !oldAiaQuestion ||
+          !accidentDetails ||
+          !accidentTime
+        ) {
+          throw new Error(
+            "第71節：找不到原有求診原因或意外詳情欄位。"
+          );
+        }
+
+        /*
+         * 新問題放在第04節「入院背景」。
+         * 移除第02節原本 Prudential 獨立下拉選單。
+         */
+        oldAiaQuestion.outerHTML = cause71QuestionHTML();
+        oldCause.remove();
+
+        /*
+         * AIA 原因現在是衍生值，不再是獨立輸入。
+         * 紙張原有 binding 保持不變。
+         */
+        fieldDefinitions.delete("aiaAdmissionAccident");
+
+        /*
+         * 意外時間搬到同一個意外詳情組。
+         * 日期繼續沿用第02節「病徵出現／意外發生日期」，
+         * 不新增第二個日期輸入。
+         */
+        accidentDetails.prepend(accidentTime);
+
+        /*
+         * 保留因素清單的 checkbox 外觀，
+         * 但由共用原因自動控制，不再重複詢問。
+         */
+        const accidentFactor = prudEditorItem("axaAccident");
+
+        const accidentLabel = accidentFactor?.querySelector(
+          ".check-input > span"
+        );
+
+        if (accidentLabel) {
+          accidentLabel.textContent =
+            "意外身體受傷（由求診原因自動帶入）";
+        }
+
+        const factorQuestion = prudEditorItem("factorAnswer");
+
+        if (!factorQuestion) {
+          throw new Error(
+            "第71節：找不到相關因素主問題。"
+          );
+        }
+
+        factorQuestion.insertAdjacentHTML(
+          "beforeend",
+          `
+            <p
+              id="cause71-factor-note"
+              class="tidy-inline-note"
+              role="status"
+              hidden
+            >
+              已因選擇「意外」自動設為「是」，
+              並勾選「意外身體受傷」，毋須重複回答。
+              其他相關因素仍可自行勾選。
+            </p>
+          `
+        );
+
+        /*
+         * 意外期間若使用者另行勾選其他因素，
+         * 將手動因素主問題記為 Y。
+         *
+         * 之後撤回「意外」時，這些手動因素仍然有效，
+         * 不會因恢復原本的「否／未回答」而被隱藏。
+         *
+         * 只在使用者勾選時處理；
+         * 不因保留的舊資料而強行改回 Y。
+         */
+        if (sidebar.dataset.cause71Events !== "bound") {
+          sidebar.dataset.cause71Events = "bound";
+
+          const rememberManualFactor = event => {
+            const control = event.target;
+
+            if (
+              !(control instanceof HTMLInputElement) ||
+              control.type !== "checkbox" ||
+              control.disabled ||
+              !control.checked
+            ) {
+              return;
+            }
+
+            const key = control.dataset.key;
+
+            if (
+              key !== "axaAccident" &&
+              tidyFactorKeys.includes(key)
+            ) {
+              state.factorAnswer = "Y";
+            }
+          };
+
+          sidebar.addEventListener(
+            "input",
+            rememberManualFactor,
+            true
+          );
+
+          sidebar.addEventListener(
+            "change",
+            rememberManualFactor,
+            true
+          );
+        }
+      };
+
+      /* ---------- 3. 先聯動，再套用條件遮罩 ---------- */
+
+      tidyEffectiveState = function effectiveStateCause71() {
+        const cause = ["accident", "illness"].includes(
+          state.consultationCause
+        )
+          ? state.consultationCause
+          : "";
+
+        const isAccident = cause === "accident";
+
+        const patch = {
+          consultationCause: cause,
+
+          // 舊 AIA 輸出流程仍使用 Y／N／空白。
+          aiaAdmissionAccident:
+            isAccident
+              ? "Y"
+              : cause === "illness"
+                ? "N"
+                : "",
+
+          // 此因素只有一個來源：共用求診原因。
+          axaAccident: isAccident
+        };
+
+        if (isAccident) {
+          patch.factorAnswer = "Y";
+        }
+
+        /*
+         * 必須在原有 tidyRules 執行之前帶入答案：
+         *
+         * - 展開意外詳情／時間
+         * - 展開相關因素
+         * - 保留適用的手動補充輸出
+         * - 第70節據此計算 Manulife N/A
+         *
+         * callback 完成後，原始 state 自動還原。
+         */
+        return aiaV2WithStatePatch(
+          patch,
+          () => cause71BeforeEffectiveState()
+        );
+      };
+
+      /* ---------- 4. 畫面顯示有效答案 ---------- */
+
+      tidyUpdateEditor = function updateEditorCause71(effective) {
+        const value = effective || tidyEffectiveState();
+
+        cause71BeforeUpdateEditor(value);
+
+        const isAccident =
+          value.consultationCause === "accident";
+
+        /*
+         * 原有同步函式讀取 raw state；
+         * 這兩項要顯示衍生後的有效答案。
+         *
+         * 包裝 tidyUpdateEditor 而非只包裝 refresh，
+         * 確保切換「目前公司適用問題」時亦保持正確。
+         */
+        document.querySelectorAll(
+          '#sidebar input[type="radio"][data-key="factorAnswer"]'
+        ).forEach(control => {
+          control.checked =
+            control.value === String(value.factorAnswer ?? "");
+
+          // 意外已確定有相關因素，避免再選出矛盾答案。
+          control.disabled = isAccident;
+
+          control.title = isAccident
+            ? "已由「意外」自動帶入；更改求診原因後恢復手動答案。"
+            : "";
+        });
+
+        const accidentControl = $("#field-axaAccident");
+
+        if (accidentControl) {
+          accidentControl.checked =
+            value.axaAccident === true;
+
+          // 永遠由原因控制，不建立第二套獨立答案。
+          accidentControl.disabled = true;
+          accidentControl.title =
+            "由第04節「是次入院／求診原因」自動決定。";
+        }
+
+        const note = $("#cause71-factor-note");
+
+        if (note) {
+          note.hidden = !isAccident;
+        }
+      };
+/* =====================================================
+         72. 問題顯示方式改為 radio，搬入頂部粉紅框
+         只修改介面，保留原有公司篩選邏輯。
+         ===================================================== */
+
+      const mode72BeforeBuildSidebar = buildSidebar;
+      const mode72BeforeUpdateEditor = tidyUpdateEditor;
+
+      const mode72Style = document.createElement("style");
+
+      mode72Style.textContent = `
+        #sidebar .mode72-options {
+          display: grid;
+          gap: 9px;
+          min-width: 0;
+          margin: 12px 0 0;
+          padding: 0;
+          border: 0;
+        }
+
+        #sidebar .mode72-option {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          min-width: 0;
+          color: #426172;
+          font-size: 13px;
+          line-height: 1.5;
+          cursor: pointer;
+        }
+
+        #sidebar .mode72-option input {
+          flex: 0 0 auto;
+          width: 16px;
+          height: 16px;
+          margin: 2px 0 0;
+          accent-color: #9e3159;
+        }
+
+        #sidebar .mode72-option span {
+          min-width: 0;
+        }
+
+        #sidebar .mode72-option input:checked + span {
+          color: #9e3159;
+          font-weight: 700;
+        }
+      `;
+
+      document.head.appendChild(mode72Style);
+
+      function mode72Sync() {
+        document.querySelectorAll(
+          '#sidebar input[name="editor-mode-72"]'
+        ).forEach(control => {
+          control.checked = control.value === tidyEditorMode;
+        });
+
+        const caption = $("#mode72-current-label");
+
+        if (caption) {
+          caption.textContent =
+            `只顯示目前公司適用問題（${companyName()}）`;
+        }
+      }
+
+      buildSidebar = function buildSidebarMode72() {
+        mode72BeforeBuildSidebar();
+
+        const heading = $("#sidebar .editor-heading");
+        const oldBox = $("#sidebar .tidy-view-controls");
+        const select = $("#tidy-editor-mode");
+
+        if (!heading || !oldBox || !select) {
+          throw new Error("第72節：找不到問題顯示方式或頂部標題。");
+        }
+
+        /*
+         * 保留原 select 及其事件，但完全隱藏。
+         * 新 radio 使用原有篩選流程，避免建立第二套邏輯。
+         */
+        select.hidden = true;
+        heading.appendChild(select);
+
+        // 移除原本白色框、標題及重複說明。
+        oldBox.remove();
+
+        heading.insertAdjacentHTML(
+          "beforeend",
+          `
+            <fieldset
+              id="mode72-options"
+              class="mode72-options"
+              aria-label="左側問題顯示方式"
+            >
+              <label class="mode72-option">
+                <input
+                  type="radio"
+                  name="editor-mode-72"
+                  value="all"
+                >
+                <span>全部共用問題</span>
+              </label>
+
+              <label class="mode72-option">
+                <input
+                  type="radio"
+                  name="editor-mode-72"
+                  value="current"
+                >
+                <span id="mode72-current-label">
+                  只顯示目前公司適用問題
+                </span>
+              </label>
+            </fieldset>
+          `
+        );
+
+        $("#mode72-options").addEventListener("change", event => {
+          const control = event.target;
+
+          if (
+            !control.matches('input[name="editor-mode-72"]') ||
+            !control.checked
+          ) {
+            return;
+          }
+
+          select.value = control.value;
+
+          // 交回原有 change handler 執行公司篩選。
+          select.dispatchEvent(new Event("change"));
+        });
+
+        mode72Sync();
+      };
+
+      tidyUpdateEditor = function updateEditorMode72(effective) {
+        mode72BeforeUpdateEditor(effective);
+
+        // 切換右側公司時，同步 radio 旁邊的公司名稱。
+        mode72Sync();
+      };
       init();
     })();
   </script>
