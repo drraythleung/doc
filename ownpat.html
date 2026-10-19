@@ -765,7 +765,7 @@ function summary(e,s=db.settings){
  })
 }
 function allergy(p){
- return p.allergyStatus==="none"?"無已知藥物敏感 / No known drug allergies":
+ return p.allergyStatus==="none"?"No known drug allergies / 無已知藥物敏感":
  p.allergyStatus==="known"?"有藥物敏感 / Known drug allergies\n"+(T(p.allergyDetails)||"詳情未記錄"):
  "未確認／未記錄 / Not confirmed or not recorded"
 }
