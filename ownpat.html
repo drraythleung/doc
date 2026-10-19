@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light">
 <meta http-equiv="Content-Security-Policy"
  content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src https://*.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>梁子恒醫生 CMS v5 — 單人加密本機版</title>
+<title>Dr Ray's CMS</title>
 <style>
 :root{
  --bg:#edf2f4;--panel:#fff;--ink:#172a30;--muted:#5b6e76;
@@ -136,13 +136,7 @@ table.ui th,table.ui td{padding:9px;border:1px solid var(--line);text-align:left
 <body>
 <div id="gate">
  <section class="card">
-  <h1>梁子恒醫生 CMS v5</h1>
-  <p>單人、單機加密工作區</p>
-  <div class="notice">
-這不是多人身份驗證系統。操作人姓名是自行填報，不代表身份已驗證。
-密碼遺失無法重設；請保留加密備份及安全保存密碼。
-舊版資料庫、舊明文備份及已輸出的 PDF 不會因此自動加密。
-  </div>
+  <h1>Dr. Ray's Clinical Management System</h1>
   <p id="gateMessage" class="small" style="margin-top:15px">正在檢查本機儲存…</p>
   <form id="gateForm" autocomplete="off">
    <div class="field">
@@ -171,7 +165,7 @@ table.ui th,table.ui td{padding:9px;border:1px solid var(--line);text-align:left
 
 <div id="app" class="hidden">
  <header class="appbar">
-  <div class="brand">梁子恒醫生虛擬醫務所
+  <div class="brand">梁子恒醫生診所管理系統 Dr Ray's Clinical Management System
    <small id="sessionLabel"></small>
   </div>
   <div class="row">
@@ -904,7 +898,7 @@ function backupLabel(){
 function section(label,value){return `<section class="section"><h2>${E(label)}</h2><div class="txt">${E(T(value)?value:"未填寫")}</div></section>`}
 function optional(label,value){return T(value)?section(label,value):""}
 function diagnosis(e){return optional("Diagnosis / 診斷",e.diagnosis)}
-function head(s){return `<header class="letterhead"><div><div class="doctor">${E(s.nameCn)}</div><div class="doctor">${E(s.nameEn)}</div></div><div class="qual">${E(s.qualCn)}</div><div class="qual">${E(s.qualEn)}</div></header><div class="contact">${E(s.address)}\nTel: ${E(s.phone)} | Email: ${E(s.email)}</div>`}
+function head(s){return `<header class="letterhead"><div><div class="doctor">${E(s.nameCn)}</div><div class="doctor">${E(s.nameEn)}</div></div><div class="qual">${E(s.qualCn)}</div><div class="qual">${E(s.qualEn)}</div></header><div class="contact">${E(s.address)}\nTelephone 電話 : ${E(s.phone)} | E-mail 電郵: ${E(s.email)}</div>`}
 function patientBox(e,t){
  const a=age(e.patient.dob,e.date);
  return `<section class="patient"><div class="patientgrid"><strong>Patient / 病人：</strong><span class="full">${E(pname(e.patient)||"—")}</span><strong>Date of Birth：</strong><span>${E(fmt(e.patient.dob))}${a!==""?" · "+a+" years":""}</span><strong>Gender：</strong><span>${E(e.patient.sex||"—")}</span><strong>HKID / ID：</strong><span>${E(mask(e.patient.hkid,e.masks[t]))}</span><strong>Date：</strong><span>${E(fmt(e.date))}</span></div></section>`
@@ -918,16 +912,17 @@ function table(headers,rows,widths=[]){
 }
 function summaryHTML(rows){
  const valid=rows.filter(x=>x.issued),drafts=rows.filter(x=>x.draft);
- return `<section class="section"><h2>Documents saved 已保存有效文件（不等於已交付）</h2>${valid.length?valid.map(x=>`<div class="sub"><h3>${E(TYPES[x.type][0])}</h3><div class="txt">版本時間：${E(stamp(x.issued.savedAt))}\n${E(x.issued.text)}</div></div>`).join(""):"未記錄有效文件。"}</section>`+
+ return `<section class="section"><h2>Related Documents 相關文件 </h2>${valid.length?valid.map(x=>`<div class="sub"><h3>${E(TYPES[x.type][0])}</h3><div class="txt">版本時間：${E(stamp(x.issued.savedAt))}\n${E(x.issued.text)}</div></div>`).join(""):"未記錄有相關文件"}</section>`+
  (drafts.length?`<section class="section"><h2>未出具／有修改草稿</h2>${drafts.map(x=>`<div class="sub"><h3>${E(TYPES[x.type][0])}・草稿</h3><div class="txt">${E(x.draft.text)}</div></div>`).join("")}</section>`:"")
 }
 function noteBody(e,s){
  const sections=[
+  ["Diagnosis 診斷",e.diagnosis],
   ["Chief Complaint & History 主訴及病史",e.soap.s],
   ["Examination & Investigations 檢查及結果",e.soap.o],
-  ["Diagnosis 診斷",e.diagnosis],["Other Assessment 評估補充",e.soap.a],["Plan 治療計劃",e.soap.p]
+  ["Other Assessment 評估補充",e.soap.a],["Plan 治療計劃",e.soap.p]
  ];
- let h=sections.map(([k,v])=>section(k,v)).join("")+section("Drug Allergies 藥物敏感",allergy(e.patient)+"\n本次覆核："+(e.allergyReviewed?"已覆核":"未記錄"));
+ let h=sections.map(([k,v])=>section(k,v)).join("")+section("Drug Allergies 藥物敏感",allergy(e.patient)+"，本次覆核："+(e.allergyReviewed?"已覆核":"未記錄"));
  for(const t of INVS)if(e[t]?.items.length){
   h+=section(TYPES[t][0]+"及結果",e[t].items.map(i=>[
    i.name,i.details,ISTATE[i.status],i.performedDate?"檢查日期："+fmt(i.performedDate):"",
@@ -969,8 +964,8 @@ function docBody(e,t){
 function page(t,s){
  const e=s.data;let mark="";
  if(t==="note")mark=s.kind==="revision"?"已完成診症紀錄／完成時快照 · "+stamp(s.savedAt):
-  e.status==="completed"?"舊版完成紀錄，沒有當時完成快照；不代表原始完成版本":"草稿／未完成 · DRAFT / NOT COMPLETED";
- else if(s.kind!=="document")mark="草稿預覽 · DRAFT · 正式輸出請使用系統列印按鈕";
+  e.status==="completed"?"舊版完成紀錄，沒有當時完成快照；不代表原始完成版本":"草稿 · DRAFT";
+ else if(s.kind!=="document")mark="草稿預覽 · 正式輸出請使用系統列印按鈕";
  else if(s.entry.state!=="issued")mark="歷史存檔副本 · "+VSTATE[s.entry.state]+" · 非目前有效文件"+(s.entry.voidReason?"\n作廢原因："+s.entry.voidReason:"");
  return head(s.settings)+`<div class="title">${E(TYPES[t][1])}<br>${E(TYPES[t][2])}</div>`+
   (mark?`<div class="state">${E(mark)}</div>`:"")+patientBox(e,t)+
@@ -2847,7 +2842,7 @@ render = function() {
   if (!db) return;
 
   $("sessionLabel").textContent =
-    "雲端加密工作區 · 已登入：" +
+    "已登入：" +
     cloud.session.user.email +
     " · 雲端版本 " + rev;
 };
@@ -2896,11 +2891,7 @@ cloudPanel.style.cssText =
 
 cloudPanel.innerHTML = `
 <section class="card">
-  <h1>梁子恒醫生 CMS — 雲端登入</h1>
-  <p class="small">
-    先登入 Supabase 帳戶，再解鎖加密工作區。
-    帳戶密碼、工作區密碼及登入 token 不寫入瀏覽器儲存。
-  </p>
+  <h1>Dr. Ray's Clinical Management System</h1>
   <form id="cloudForm">
     <div class="field">
       <label for="cloudUrl">Supabase Project URL</label>
@@ -3070,7 +3061,7 @@ singleLoginForm.id = "cloudForm";
 
 singleLoginForm.innerHTML = `
   <div class="field">
-    <label for="cloudEmail">帳戶／電郵</label>
+    <label for="cloudEmail">電郵帳戶</label>
     <input id="cloudEmail" type="email" required
       autocomplete="username">
   </div>
@@ -3088,10 +3079,10 @@ singleLoginForm.innerHTML = `
 oldCloudForm.replaceWith(singleLoginForm);
 
 cloudPanel.querySelector("h1").textContent =
-  "梁子恒醫生 CMS";
+  "Dr Ray's Clinical Management System";
 
 cloudPanel.querySelector("p.small").textContent =
-  "使用 Supabase 帳戶登入；毋須另外輸入工作區姓名或密碼。";
+  "";
 
 $("gate").classList.add("hidden");
 
@@ -3278,8 +3269,7 @@ async function startSingleLoginWorkspace() {
   document.title = "梁子恒醫生 CMS — Supabase";
 
   message(
-    "已登入 Supabase。病歷儲存於雲端，由帳戶權限及 RLS 保護；" +
-    "此版本不使用獨立工作區密碼或瀏覽器端工作區加密。"
+    "已登入 Supabase。病歷儲存於雲端，由帳戶權限及 RLS 保護。" 
   );
   status("已連接 Supabase · 雲端版本 " + rev);
 }
@@ -3394,5 +3384,1307 @@ singleLoginForm.addEventListener("submit", async event => {
   }
 });
 </script>
+<!-- ===== CMS 介面整理：只調整版面及搬移現有按鈕 ===== -->
+<style id="cms-organised-ui">
+/* 統一按鈕尺寸 */
+#app button,
+#modal button,
+#secretDialog button{
+ min-height:38px;
+ font-weight:500;
+ transition:background-color .15s,border-color .15s;
+}
+
+/* 桌面使用可伸縮版面，不再估算頂部高度 */
+#app:not(.hidden){
+ height:100dvh;
+ display:flex;
+ flex-direction:column;
+ overflow:hidden;
+}
+
+#app > .appbar,
+#app > #appNotice{
+ flex:0 0 auto;
+}
+
+#app > .layout{
+ flex:1 1 auto;
+ height:auto;
+ min-height:0;
+}
+
+/* 頂部：品牌、日常導航、管理選單 */
+header.appbar{
+ position:relative;
+ z-index:20;
+ padding:12px 18px;
+ gap:12px 20px;
+ align-items:center;
+ background:#fff;
+}
+
+.appbar .brand{
+ flex:1 1 280px;
+ max-width:470px;
+ font-size:15px;
+ line-height:1.5;
+}
+
+.appbar .brand small{
+ margin-top:3px;
+ font-size:11px;
+ color:var(--muted);
+ overflow-wrap:anywhere;
+}
+
+.cms-main-nav{
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:7px;
+}
+
+.cms-main-nav button{
+ white-space:nowrap;
+ padding:9px 12px;
+}
+
+.cms-main-nav button[data-act="new"]{
+ background:var(--accent);
+ border-color:var(--accent);
+ color:#fff;
+}
+
+.cms-main-nav button[data-act="new"]:hover:not(:disabled){
+ background:#194c42;
+}
+
+/* 管理選單 */
+.cms-admin-menu{
+ position:relative;
+ margin-left:3px;
+}
+
+.cms-admin-menu > summary{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:10px;
+ min-height:38px;
+ padding:9px 12px;
+ border:1px solid var(--line);
+ border-radius:8px;
+ background:#f8fafb;
+ font-size:13px;
+ font-weight:500;
+ list-style:none;
+ user-select:none;
+}
+
+.cms-admin-menu > summary::-webkit-details-marker{
+ display:none;
+}
+
+.cms-admin-menu > summary::after{
+ content:"▾";
+ font-size:11px;
+ color:var(--muted);
+}
+
+.cms-admin-menu[open] > summary{
+ margin-bottom:0;
+ background:var(--soft);
+ border-color:#a5cbbd;
+}
+
+.cms-admin-menu[open] > summary::after{
+ content:"▴";
+}
+
+.cms-admin-panel{
+ position:absolute;
+ right:0;
+ top:calc(100% + 8px);
+ width:250px;
+ max-height:70dvh;
+ overflow:auto;
+ padding:10px;
+ background:#fff;
+ border:1px solid var(--line);
+ border-radius:12px;
+ box-shadow:0 12px 36px #172a3026;
+}
+
+.cms-menu-section + .cms-menu-section{
+ margin-top:8px;
+ padding-top:8px;
+ border-top:1px solid var(--line);
+}
+
+.cms-menu-label{
+ margin:2px 8px 6px;
+ color:var(--muted);
+ font-size:11px;
+ font-weight:bold;
+}
+
+.cms-admin-panel button{
+ display:block;
+ width:100%;
+ text-align:left;
+ margin:2px 0;
+ padding:9px 10px;
+ border-color:transparent;
+ background:transparent;
+}
+
+.cms-admin-panel button:hover:not(:disabled){
+ background:var(--soft);
+}
+
+.cms-admin-panel button[data-act="lock"]{
+ color:var(--bad);
+}
+
+/* 提示列壓縮，保留原有內容 */
+#appNotice{
+ padding:8px 18px;
+ font-size:12px;
+ line-height:1.6;
+}
+
+/* 左邊編輯區 */
+.editor{
+ padding:14px;
+ scroll-padding-top:14px;
+}
+
+.editor .card{
+ border-radius:12px;
+ margin-bottom:12px;
+}
+
+#patientHeading{
+ display:block;
+ margin-bottom:5px;
+ font-size:16px;
+}
+
+.cms-patient-actions{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:8px;
+ padding-top:10px;
+ margin-top:10px !important;
+ border-top:1px solid var(--line);
+}
+
+.cms-patient-actions button{
+ width:100%;
+ padding:8px;
+ font-size:12px;
+}
+
+.tabs{
+ gap:6px;
+ margin:0 0 14px;
+}
+
+.tabs button{
+ min-height:51px !important;
+ border-radius:8px;
+}
+
+.tabs button.active{
+ background:var(--accent);
+ border-color:var(--accent);
+}
+
+/* 右邊：一個統一的操作中心 */
+.preview{
+ padding:0 18px 28px;
+ background:var(--bg);
+}
+
+.toolbar.cms-workbar{
+ position:sticky;
+ top:0;
+ z-index:10;
+ margin:0 -18px 14px;
+ padding:14px 18px 12px;
+ background:#f8fafb;
+ border-bottom:1px solid var(--line);
+ box-shadow:0 3px 10px #172a3007;
+}
+
+.cms-workbar-heading{
+ display:flex;
+ align-items:flex-start;
+ justify-content:space-between;
+ gap:12px;
+ flex-wrap:wrap;
+ margin-bottom:12px;
+}
+
+.cms-workbar-title{
+ min-width:0;
+ flex:1;
+}
+
+#previewTitle{
+ display:block;
+ font-size:16px;
+ line-height:1.5;
+ overflow-wrap:anywhere;
+}
+
+#saveState{
+ display:block;
+ margin-top:4px;
+ line-height:1.5;
+}
+
+#backupState{
+ display:block;
+ margin-top:3px;
+ font-size:11px;
+ line-height:1.5;
+ color:var(--muted);
+}
+
+.cms-workbar-actions{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:flex-end;
+ gap:10px 16px;
+}
+
+.cms-action-group{
+ display:flex;
+ flex-direction:column;
+ gap:6px;
+ min-width:0;
+}
+
+.cms-action-label{
+ color:var(--muted);
+ font-size:11px;
+ font-weight:bold;
+ line-height:1.4;
+}
+
+.cms-action-buttons{
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:6px;
+}
+
+.cms-action-buttons button{
+ padding:8px 11px;
+ white-space:nowrap;
+ font-size:13px;
+}
+
+.cms-action-group + .cms-action-group{
+ padding-left:16px;
+ border-left:1px solid var(--line);
+}
+
+.cms-action-group.cms-preview-group{
+ margin-left:auto;
+}
+
+.cms-preview-group label{
+ margin:0;
+ font-size:12px;
+}
+
+.cms-preview-group select{
+ width:125px;
+ min-height:38px;
+ padding:7px 9px;
+ font-size:12px;
+}
+
+#completeBtn{
+ border-color:#96b8aa;
+ background:var(--soft);
+ color:var(--accent);
+ font-weight:bold;
+}
+
+#completeBtn:hover:not(:disabled){
+ background:#dceee4;
+}
+
+.cms-action-buttons button[data-act="print"]{
+ padding-left:17px;
+ padding-right:17px;
+}
+
+.cms-workbar-heading #returnBtn{
+ flex:0 0 auto;
+}
+
+.cms-print-return:not(.hidden){
+ margin-top:10px;
+ width:100%;
+ border-color:#96b8aa;
+ background:var(--soft);
+}
+
+#workflow{
+ margin-bottom:14px !important;
+ font-size:12px;
+ line-height:1.65;
+}
+
+/* 彈窗底部／局部操作組保持一致 */
+#modal .row{
+ gap:8px;
+}
+
+#modal .row > button{
+ min-height:38px;
+}
+
+#modal .item > .row{
+ margin-top:9px;
+}
+
+/* 中型畫面 */
+@media(max-width:1100px){
+ header.appbar{
+  gap:10px;
+ }
+
+ .appbar .brand{
+  max-width:none;
+  flex-basis:100%;
+ }
+
+ .cms-main-nav{
+  width:100%;
+ }
+
+ .cms-admin-menu{
+  margin-left:auto;
+ }
+
+ .cms-action-group.cms-preview-group{
+  margin-left:0;
+ }
+}
+
+/* 手機／窄畫面：避免固定工具列佔滿畫面 */
+@media(max-width:820px){
+ #app:not(.hidden){
+  height:auto;
+  min-height:100dvh;
+  overflow:visible;
+ }
+
+ #app > .layout{
+  display:block;
+  flex:none;
+  min-height:0;
+ }
+
+ header.appbar{
+  padding:12px;
+ }
+
+ .cms-main-nav{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+ }
+
+ .cms-main-nav > button{
+  width:100%;
+  min-width:0;
+  white-space:normal;
+ }
+
+ .cms-admin-menu{
+  grid-column:1 / -1;
+  margin:0;
+ }
+
+ .cms-admin-panel{
+  width:min(320px,calc(100vw - 24px));
+ }
+
+ #appNotice{
+  padding:9px 12px;
+ }
+
+ .preview{
+  padding:0 12px 24px;
+ }
+
+ .toolbar.cms-workbar{
+  position:relative;
+  margin:0 -12px 14px;
+  padding:14px 12px;
+ }
+
+ .cms-workbar-actions{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+ }
+
+ .cms-action-group + .cms-action-group{
+  padding-left:0;
+  padding-top:10px;
+  border-left:0;
+  border-top:1px solid var(--line);
+ }
+
+ .cms-action-buttons{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+ }
+
+ .cms-action-buttons button{
+  width:100%;
+  min-width:0;
+  white-space:normal;
+ }
+
+ .cms-preview-group .cms-action-buttons{
+  display:flex;
+ }
+
+ .cms-preview-group select{
+  width:145px;
+ }
+}
+
+/* 不改變原本列印規則 */
+@media print{
+ #app{
+  display:none !important;
+ }
+}
+</style>
+
+<script>
+(function organiseCMSInterface(){
+ "use strict";
+
+ const app = document.getElementById("app");
+ if(!app || app.dataset.organisedUI === "1") return;
+
+ const header = app.querySelector("header.appbar");
+ const toolbar = app.querySelector(".preview > .toolbar");
+ const zoom = document.getElementById("zoom");
+
+ if(!header || !toolbar || !zoom) return;
+
+ /*
+  只搬移既有元素：
+  保留 id、data-act、狀態及原本事件處理。
+  不呼叫儲存、登入、還原或任何網絡功能。
+ */
+ const findButton = action =>
+  app.querySelector('button[data-act="' + action + '"]');
+
+ const actions = [
+  "new", "patients", "history", "followups",
+  "catalogue", "templates", "backup", "settings",
+  "quality", "lock", "save", "export",
+  "return", "complete", "diff", "batch",
+  "print", "printDone"
+ ];
+
+ const buttons = Object.fromEntries(
+  actions.map(action => [action, findButton(action)])
+ );
+
+ const make = (tag, className, text) => {
+  const node = document.createElement(tag);
+  if(className) node.className = className;
+  if(text) node.textContent = text;
+  return node;
+ };
+
+ const appendButtons = (parent, names) => {
+  names.forEach(name => {
+   if(buttons[name]) parent.append(buttons[name]);
+  });
+ };
+
+ /* 1. 頂部日常導航 */
+ const oldHeaderRow = buttons.new?.parentElement;
+ const nav = make("nav", "cms-main-nav");
+ nav.setAttribute("aria-label", "主要功能");
+
+ if(buttons.new) buttons.new.textContent = "＋ 新診症";
+ if(buttons.patients) buttons.patients.textContent = "病人主檔";
+ if(buttons.history) buttons.history.textContent = "診症紀錄";
+ if(buttons.followups) buttons.followups.textContent = "檢查跟進";
+
+ appendButtons(nav, [
+  "new", "patients", "history", "followups"
+ ]);
+
+ /* 2. 將非日常操作收進同一個選單 */
+ const menu = make("details", "cms-admin-menu");
+ const summary = make("summary", "", "管理及設定");
+ const menuPanel = make("div", "cms-admin-panel");
+
+ menu.append(summary, menuPanel);
+
+ function menuSection(title, names){
+  const section = make("div", "cms-menu-section");
+  section.append(make("div", "cms-menu-label", title));
+  appendButtons(section, names);
+  menuPanel.append(section);
+ }
+
+ if(buttons.backup) buttons.backup.textContent = "備份及還原";
+ if(buttons.export) buttons.export.textContent = "下載加密備份";
+ if(buttons.quality) buttons.quality.textContent = "工作區狀態";
+ if(buttons.lock) buttons.lock.textContent = "登出";
+
+ menuSection("內容管理", ["catalogue", "templates"]);
+ menuSection("備份", ["export", "backup"]);
+ menuSection("系統", ["settings", "quality", "lock"]);
+
+ nav.append(menu);
+ header.append(nav);
+
+ if(oldHeaderRow &&
+    oldHeaderRow !== header &&
+    oldHeaderRow.children.length === 0){
+  oldHeaderRow.remove();
+ }
+
+ /* 選中項目後收起；沿用原本 document click handler */
+ menuPanel.addEventListener("click", event => {
+  const button = event.target.closest("button[data-act]");
+  if(button && !button.disabled) menu.open = false;
+ });
+
+ document.addEventListener("click", event => {
+  if(menu.open && !menu.contains(event.target)){
+   menu.open = false;
+  }
+ });
+
+ document.addEventListener("keydown", event => {
+  if(event.key === "Escape" && menu.open){
+   menu.open = false;
+   summary.focus();
+  }
+ });
+
+ /* 3. 合併預覽、儲存、完成及列印工具列 */
+ const title = document.getElementById("previewTitle");
+ const saveState = document.getElementById("saveState");
+ const backupState = document.getElementById("backupState");
+
+ const oldPreviewRow = zoom.closest(".row");
+ const zoomLabel = app.querySelector('label[for="zoom"]');
+
+ const heading = make("div", "cms-workbar-heading");
+ const titleBox = make("div", "cms-workbar-title");
+
+ [title, saveState, backupState].forEach(node => {
+  if(node) titleBox.append(node);
+ });
+
+ heading.append(titleBox);
+
+ if(buttons.return){
+  buttons.return.textContent = "← 返回目前診症";
+  heading.append(buttons.return);
+ }
+
+ const actionBar = make("div", "cms-workbar-actions");
+
+ function actionGroup(label, names){
+  const group = make("div", "cms-action-group");
+  const row = make("div", "cms-action-buttons");
+
+  group.append(make("div", "cms-action-label", label));
+  appendButtons(row, names);
+  group.append(row);
+  actionBar.append(group);
+
+  return {group, row};
+ }
+
+ if(buttons.save) buttons.save.textContent = "立即儲存";
+
+ actionGroup("診症操作", [
+  "save", "diff", "complete"
+ ]);
+
+ actionGroup("文件輸出", [
+  "batch", "print"
+ ]);
+
+ const previewGroup = actionGroup("預覽顯示", []);
+ previewGroup.group.classList.add("cms-preview-group");
+
+ if(zoomLabel) previewGroup.row.append(zoomLabel);
+ previewGroup.row.append(zoom);
+
+ toolbar.classList.add("cms-workbar");
+ toolbar.replaceChildren(heading, actionBar);
+
+ if(buttons.printDone){
+  buttons.printDone.classList.add("cms-print-return");
+  toolbar.append(buttons.printDone);
+ }
+
+ /* 原本散落在紙張上方的一行已搬空 */
+ if(oldPreviewRow && oldPreviewRow !== toolbar){
+  oldPreviewRow.remove();
+ }
+
+ /* 4. 病人卡片內兩個按鈕對齊 */
+ const identity = findButton("identity");
+ const publishMaster = findButton("publishMaster");
+
+ if(identity && publishMaster &&
+    identity.parentElement === publishMaster.parentElement){
+  identity.parentElement.classList.add("cms-patient-actions");
+  identity.textContent = "編輯本次身份";
+  publishMaster.textContent = "更新病人主檔";
+ }
+
+ app.dataset.organisedUI = "1";
+
+ /* 只重新計算預覽縮放，不重繪或儲存病歷 */
+ requestAnimationFrame(() => {
+  window.dispatchEvent(new Event("resize"));
+ });
+})();
+</script>
+<!-- ===== 介面整理完 ===== -->
+<!-- ===== 病人主檔及更正紀錄：UI 改善 ===== -->
+<style>
+.patient-profile{
+ display:grid;
+ gap:16px;
+}
+
+.patient-profile .profile-hero{
+ display:flex;
+ align-items:center;
+ gap:14px;
+ padding:18px;
+ border:1px solid #cee0d7;
+ border-radius:12px;
+ background:linear-gradient(135deg,#edf7f1,#f8fbfa);
+}
+
+.patient-profile .profile-avatar{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ flex:0 0 52px;
+ width:52px;
+ height:52px;
+ border-radius:15px;
+ background:var(--accent);
+ color:#fff;
+ font-size:24px;
+ font-weight:bold;
+}
+
+.patient-profile .profile-name{
+ margin:0 0 5px;
+ font-size:20px;
+ line-height:1.4;
+}
+
+.patient-profile .profile-meta{
+ display:flex;
+ flex-wrap:wrap;
+ gap:6px 12px;
+ color:var(--muted);
+ font-size:12px;
+}
+
+.patient-profile .profile-section{
+ overflow:hidden;
+ border:1px solid var(--line);
+ border-radius:12px;
+ background:#fff;
+}
+
+.patient-profile .profile-section-head{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ flex-wrap:wrap;
+ gap:8px;
+ padding:13px 16px;
+ border-bottom:1px solid var(--line);
+ background:#f8fafb;
+}
+
+.patient-profile .profile-section-head h3{
+ margin:0;
+ font-size:15px;
+}
+
+.patient-profile .profile-section-body{
+ padding:16px;
+}
+
+.patient-profile .profile-grid{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:16px 22px;
+}
+
+.patient-profile .profile-field{
+ min-width:0;
+}
+
+.patient-profile .profile-field.full{
+ grid-column:1/-1;
+}
+
+.patient-profile .profile-label{
+ margin-bottom:4px;
+ color:var(--muted);
+ font-size:12px;
+}
+
+.patient-profile .profile-value{
+ color:var(--ink);
+ font-size:14px;
+ line-height:1.7;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+.patient-profile .profile-empty{
+ color:#84939a;
+}
+
+.patient-profile .profile-source{
+ margin:0 0 14px;
+ padding:10px 12px;
+ border-radius:8px;
+ background:#f1f6f8;
+ color:#48616c;
+ font-size:12px;
+ line-height:1.7;
+}
+
+.patient-profile .contact-cards{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:12px;
+ margin-top:16px;
+}
+
+.patient-profile .contact-card{
+ padding:13px;
+ border:1px solid var(--line);
+ border-radius:9px;
+ background:#fbfdfd;
+}
+
+.patient-profile .contact-card h4{
+ margin:0 0 10px;
+ font-size:13px;
+ color:var(--accent);
+}
+
+.patient-profile .contact-card .profile-field + .profile-field{
+ margin-top:10px;
+}
+
+.patient-profile .profile-allergy{
+ margin-top:16px;
+ padding:12px;
+ border:1px solid var(--line);
+ border-radius:9px;
+ background:#f8fafb;
+}
+
+.patient-profile .profile-allergy.is-known{
+ border-color:#e2b3b8;
+ background:var(--badbg);
+}
+
+.patient-profile .history-list{
+ display:grid;
+ gap:12px;
+}
+
+.patient-profile .history-entry{
+ overflow:hidden;
+ border:1px solid var(--line);
+ border-radius:10px;
+ background:#fff;
+}
+
+.patient-profile .history-entry > summary{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ flex-wrap:wrap;
+ gap:8px;
+ padding:13px 14px;
+ margin:0;
+ background:#f8fafb;
+ list-style:none;
+}
+
+.patient-profile .history-entry > summary::-webkit-details-marker{
+ display:none;
+}
+
+.patient-profile .history-entry > summary::after{
+ content:"展開 ▾";
+ color:var(--muted);
+ font-size:12px;
+ font-weight:normal;
+}
+
+.patient-profile .history-entry[open] > summary::after{
+ content:"收起 ▴";
+}
+
+.patient-profile .history-time{
+ display:block;
+ margin-bottom:3px;
+ font-size:13px;
+}
+
+.patient-profile .history-person{
+ color:var(--muted);
+ font-size:12px;
+ font-weight:normal;
+ overflow-wrap:anywhere;
+}
+
+.patient-profile .history-count{
+ padding:3px 8px;
+ border-radius:20px;
+ background:var(--soft);
+ color:var(--accent);
+ font-size:11px;
+ font-weight:normal;
+}
+
+.patient-profile .history-body{
+ padding:14px;
+ border-top:1px solid var(--line);
+}
+
+.patient-profile .history-reason{
+ margin:0 0 14px;
+ padding:10px 12px;
+ border-radius:8px;
+ background:#f4f7f8;
+ font-size:13px;
+ line-height:1.7;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+.patient-profile .profile-diff{
+ display:grid;
+ gap:12px;
+}
+
+.patient-profile .profile-diff-item{
+ overflow:hidden;
+ border:1px solid var(--line);
+ border-radius:9px;
+}
+
+.patient-profile .profile-diff-label{
+ padding:8px 11px;
+ border-bottom:1px solid var(--line);
+ background:#f8fafb;
+ font-size:12px;
+ font-weight:bold;
+}
+
+.patient-profile .profile-diff-values{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+}
+
+.patient-profile .profile-diff-before,
+.patient-profile .profile-diff-after{
+ min-width:0;
+ padding:10px 12px;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+ font-size:13px;
+ line-height:1.7;
+}
+
+.patient-profile .profile-diff-before{
+ background:#fff5f5;
+}
+
+.patient-profile .profile-diff-after{
+ border-left:1px solid var(--line);
+ background:#eff8f1;
+}
+
+.patient-profile .diff-caption{
+ display:block;
+ margin-bottom:5px;
+ color:var(--muted);
+ font-size:11px;
+}
+
+.patient-profile .profile-footnote{
+ margin:0;
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.7;
+}
+
+.patient-profile .profile-no-history{
+ padding:22px;
+ text-align:center;
+ color:var(--muted);
+ background:#f8fafb;
+ border-radius:9px;
+}
+
+@media(max-width:600px){
+ .patient-profile .profile-grid,
+ .patient-profile .contact-cards,
+ .patient-profile .profile-diff-values{
+  grid-template-columns:1fr;
+ }
+
+ .patient-profile .profile-diff-after{
+  border-left:0;
+  border-top:1px solid var(--line);
+ }
+
+ .patient-profile .profile-hero{
+  align-items:flex-start;
+  padding:15px;
+ }
+
+ .patient-profile .profile-name{
+  font-size:18px;
+ }
+
+ .patient-profile .profile-section-body{
+  padding:13px;
+ }
+}
+</style>
+
+<script>
+/*
+  取代原本顯示 JSON 的主檔彈窗。
+  只讀取現有資料及更正紀錄，不修改或儲存病歷。
+*/
+masterHistory = function(id){
+ const p = db.patients.find(item => item.id === id);
+ assert(p, "主檔不存在");
+
+ const data = p.data;
+
+ const labels = {
+  surname: "英文姓氏",
+  given: "英文名字",
+  cn: "中文姓名",
+  hkid: "HKID／證件號碼",
+  dob: "出生日期",
+  sex: "性別",
+  phone: "電話",
+  email: "電郵",
+  address: "地址",
+  contact1Name: "聯絡人 1 姓名",
+  contact1Phone: "聯絡人 1 電話",
+  contact2Name: "聯絡人 2 姓名",
+  contact2Phone: "聯絡人 2 電話",
+  allergyStatus: "藥物敏感狀態",
+  allergyDetails: "敏感藥物及反應"
+ };
+
+ const timeValue = value => {
+  const number = Date.parse(value || "");
+  return Number.isFinite(number) ? number : 0;
+ };
+
+ function displayValue(key, value){
+  if(value === null || value === undefined || value === ""){
+   return "未填寫";
+  }
+
+  if(key === "allergyStatus"){
+   return ALLERGY[value] || S(value);
+  }
+
+  if(key === "dob"){
+   return dateOK(value) ? fmt(value) : S(value);
+  }
+
+  if(typeof value === "object"){
+   return JSON.stringify(value, null, 2);
+  }
+
+  return S(value);
+ }
+
+ function fieldHTML(label, value, full = false){
+  const empty = !T(value);
+
+  return `
+   <div class="profile-field ${full ? "full" : ""}">
+    <div class="profile-label">${E(label)}</div>
+    <div class="profile-value ${empty ? "profile-empty" : ""}">${
+     E(empty ? "未填寫" : value)
+    }</div>
+   </div>`;
+ }
+
+ /*
+  選用最後更新時間較新的完整聯絡資料快照。
+  不逐欄拼湊，避免把已清空的舊資料重新補回。
+  時間相同時優先保留主檔。
+ */
+ let contactSource = {
+  kind: "master",
+  data,
+  updated: p.updated,
+  encounterDate: ""
+ };
+
+ for(const encounter of db.encounters){
+  if(encounter.patientId !== p.id) continue;
+
+  if(timeValue(encounter.updated) >
+     timeValue(contactSource.updated)){
+   contactSource = {
+    kind: "encounter",
+    data: encounter.patient,
+    updated: encounter.updated,
+    encounterDate: encounter.date
+   };
+  }
+ }
+
+ const contact = contactSource.data;
+
+ const contactDiffers = CONTACTS.some(key =>
+  S(contact[key]) !== S(data[key])
+ );
+
+ const sourceText = contactSource.kind === "master"
+  ? "資料來源：目前病人主檔"
+  : "資料來源：" + contactSource.encounterDate +
+    " 診症的病人資料快照";
+
+ const sourceNote = contactSource.kind === "encounter" &&
+                    contactDiffers
+  ? "此聯絡資料與目前主檔不同，尚未自動更新至主檔。"
+  : "此聯絡資料與目前主檔一致。";
+
+ const changes = (p.changes || [])
+  .slice()
+  .sort((a, b) => timeValue(b.at) - timeValue(a.at));
+
+ function changedFields(change){
+  const before = change.before || {};
+  const after = change.after || {};
+
+  const keys = [
+   ...new Set([
+    ...Object.keys(before),
+    ...Object.keys(after)
+   ])
+  ];
+
+  return keys
+   .filter(key => !equal(before[key], after[key]))
+   .map(key => ({
+    key,
+    label: labels[key] || key,
+    before: displayValue(key, before[key]),
+    after: displayValue(key, after[key])
+   }));
+ }
+
+ function historyHTML(change, index){
+  const fields = changedFields(change);
+
+  return `
+   <details class="history-entry" ${index === 0 ? "open" : ""}>
+    <summary>
+     <span>
+      <strong class="history-time">${E(stamp(change.at))}</strong>
+      <span class="history-person">
+       修改人：${E(change.actor || "未記錄")}
+      </span>
+     </span>
+     <span class="history-count">
+      ${fields.length} 項更改
+     </span>
+    </summary>
+
+    <div class="history-body">
+     <div class="history-reason"><strong>更改原因</strong><br>${
+      E(T(change.reason) || "未記錄")
+     }</div>
+
+     <div class="profile-diff">
+      ${fields.map(item => `
+       <div class="profile-diff-item">
+        <div class="profile-diff-label">${E(item.label)}</div>
+
+        <div class="profile-diff-values">
+         <div class="profile-diff-before"><span class="diff-caption">修改前</span>${E(item.before)}</div>
+         <div class="profile-diff-after"><span class="diff-caption">修改後</span>${E(item.after)}</div>
+        </div>
+       </div>
+      `).join("") || `
+       <p class="profile-footnote">
+        此筆紀錄沒有可顯示的欄位差異。
+       </p>
+      `}
+     </div>
+    </div>
+   </details>`;
+ }
+
+ const titleName = pname(data) || "未填姓名";
+ const avatar = T(data.cn)
+  ? Array.from(T(data.cn))[0]
+  : Array.from(T(data.surname) || T(data.given) || "P")[0]
+    .toUpperCase();
+
+ const html = `
+  <div class="patient-profile">
+
+   <section class="profile-hero">
+    <div class="profile-avatar" aria-hidden="true">${E(avatar)}</div>
+
+    <div>
+     <h3 class="profile-name">${E(titleName)}</h3>
+     <div class="profile-meta">
+      <span>病歷編號：${E(p.mrn)}</span>
+      <span>主檔更新：${E(stamp(p.updated))}</span>
+     </div>
+    </div>
+   </section>
+
+   <section class="profile-section">
+    <div class="profile-section-head">
+     <h3>目前主檔</h3>
+     <span class="pill">目前保存資料</span>
+    </div>
+
+    <div class="profile-section-body">
+     <div class="profile-grid">
+      ${fieldHTML("中文姓名", data.cn)}
+      ${fieldHTML(
+       "英文姓名",
+       [T(data.surname).toUpperCase(), T(data.given)]
+        .filter(Boolean).join(" ")
+      )}
+      ${fieldHTML("HKID／證件號碼", data.hkid)}
+      ${fieldHTML(
+       "出生日期",
+       data.dob ? displayValue("dob", data.dob) : ""
+      )}
+      ${fieldHTML("性別", data.sex)}
+      ${fieldHTML("病歷編號", p.mrn)}
+     </div>
+
+     <div class="profile-allergy ${
+      data.allergyStatus === "known" ? "is-known" : ""
+     }">
+      <div class="profile-label">主檔藥物敏感紀錄</div>
+      <div class="profile-value">${E(allergy(data))}</div>
+     </div>
+    </div>
+   </section>
+
+   <section class="profile-section">
+    <div class="profile-section-head">
+     <h3>最新聯絡資料</h3>
+     <span class="pill">按資料更新時間選取</span>
+    </div>
+
+    <div class="profile-section-body">
+     <div class="profile-source">
+      ${E(sourceText)}<br>
+      該份資料最後更新：${E(stamp(contactSource.updated))}<br>
+      ${E(sourceNote)}
+     </div>
+
+     <div class="profile-grid">
+      ${fieldHTML("電話", contact.phone)}
+      ${fieldHTML("電郵", contact.email)}
+      ${fieldHTML("地址", contact.address, true)}
+     </div>
+
+     <div class="contact-cards">
+      <section class="contact-card">
+       <h4>聯絡人 1</h4>
+       ${fieldHTML("姓名", contact.contact1Name)}
+       ${fieldHTML("電話", contact.contact1Phone)}
+      </section>
+
+      <section class="contact-card">
+       <h4>聯絡人 2</h4>
+       ${fieldHTML("姓名", contact.contact2Name)}
+       ${fieldHTML("電話", contact.contact2Phone)}
+      </section>
+     </div>
+    </div>
+   </section>
+
+   <section class="profile-section">
+    <div class="profile-section-head">
+     <h3>主檔更正紀錄</h3>
+     <span class="pill">${changes.length} 次修改</span>
+    </div>
+
+    <div class="profile-section-body">
+     <p class="profile-footnote" style="margin-bottom:14px">
+      最新修改排最上。以下只列出已保存的主檔更正，
+      不包含尚未更新至主檔的診症內修改；
+      此紀錄並非防竄改審計。
+     </p>
+
+     <div class="history-list">
+      ${changes.length
+       ? changes.map(historyHTML).join("")
+       : `<div class="profile-no-history">
+           暫時未有主檔更正紀錄
+          </div>`
+      }
+     </div>
+    </div>
+   </section>
+
+  </div>
+ `;
+
+ showModal(
+  p.mrn + " · 病人主檔及更正紀錄",
+  html,
+  "masterHistory"
+ );
+};
+</script>
+<!-- ===== 主檔彈窗 UI 改善完 ===== -->
 </body>
 </html>
