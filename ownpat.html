@@ -964,8 +964,8 @@ function docBody(e,t){
 function page(t,s){
  const e=s.data;let mark="";
  if(t==="note")mark=s.kind==="revision"?"已完成診症紀錄／完成時快照 · "+stamp(s.savedAt):
-  e.status==="completed"?"舊版完成紀錄，沒有當時完成快照；不代表原始完成版本":"草稿 · DRAFT";
- else if(s.kind!=="document")mark="草稿預覽 · 正式輸出請使用系統列印按鈕";
+  e.status==="completed"?"舊版完成紀錄，沒有當時完成快照；不代表原始完成版本":"草稿預覽 · 正式輸出請使用系統「立即儲存」按鈕";
+ else if(s.kind!=="document")mark="草稿預覽 · 正式輸出請使用系統「列印」按鈕";
  else if(s.entry.state!=="issued")mark="歷史存檔副本 · "+VSTATE[s.entry.state]+" · 非目前有效文件"+(s.entry.voidReason?"\n作廢原因："+s.entry.voidReason:"");
  return head(s.settings)+`<div class="title">${E(TYPES[t][1])}<br>${E(TYPES[t][2])}</div>`+
   (mark?`<div class="state">${E(mark)}</div>`:"")+patientBox(e,t)+
