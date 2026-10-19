@@ -1,86 +1,3388 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-HK">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dr. Ray's Form Generator</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #111;
-            color: white;
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 20px;
-        }
-        h1 {
-            margin-bottom: 5px;
-        }
-        .subtitle {
-            color: #888;
-            margin-bottom: 40px;
-        }
-        a.card {
-            display: block;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            color: white;
-            text-decoration: none;
-        }
-        a.card:hover {
-            border-color: #666;
-            background: #222;
-        }
-        .card h2 {
-            margin: 0 0 6px 0;
-            font-size: 18px;
-        }
-        .card p {
-            margin: 0;
-            color: #999;
-            font-size: 14px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta http-equiv="Content-Security-Policy"
+ content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src https://*.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Dr Ray's CMS</title>
+<style>
+:root{
+ --bg:#edf2f4;--panel:#fff;--ink:#172a30;--muted:#5b6e76;
+ --line:#d5e0e4;--accent:#235f54;--soft:#eaf4ef;
+ --warn:#775516;--warnbg:#fff7df;--bad:#a32e35;--badbg:#fff0f1;
+ font-family:Arial,"Microsoft JhengHei","PingFang TC",sans-serif
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:14px}
+button,input,select,textarea{font:inherit}
+button{padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer;line-height:1.4}
+button:hover:not(:disabled){background:var(--soft)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.danger{color:var(--bad)}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,select,textarea{width:100%;padding:9px;border:1px solid #bfced5;border-radius:7px;background:#fff;color:var(--ink)}
+textarea{min-height:86px;resize:vertical;line-height:1.6}
+input[type=checkbox]{width:auto;accent-color:var(--accent)}
+input[readonly],textarea[readonly]{background:#f1f5f6}
+label{display:block;font-size:12px;line-height:1.6;margin:0 0 5px;color:#425d67}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid #a5cbbd;outline-offset:2px}
+fieldset{margin:0;padding:0;border:0;min-width:0}
+h1{font-size:22px}h2{font-size:18px}h3{font-size:15px}
+h1,h2,h3,h4,p{margin-top:0}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+small,.small{font-size:12px;color:var(--muted);line-height:1.7}
+.hidden{display:none!important}
+.row{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.between{justify-content:space-between}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{margin-bottom:13px;min-width:0}
+.check{display:flex;gap:8px;align-items:flex-start;color:var(--ink);font-size:13px;margin:10px 0}
+.check input{margin-top:4px;flex:0 0 auto}
+.card{padding:16px;background:#fff;border:1px solid var(--line);border-radius:11px;margin-bottom:13px}
+.notice{padding:12px 15px;border:1px solid #dfd0a4;background:var(--warnbg);color:var(--warn);border-radius:8px;line-height:1.7;white-space:pre-wrap}
+.notice.error{background:var(--badbg);border-color:#e2b3b8;color:var(--bad)}
+.pill{padding:3px 8px;background:var(--soft);border-radius:15px;font-size:11px}
+header.appbar{background:#fff;border-bottom:1px solid var(--line);padding:13px 18px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.brand{font-size:17px;font-weight:bold}
+.brand small{display:block;font-weight:normal}
+#appNotice{border-radius:0}
+.layout{height:calc(100dvh - 136px);min-height:420px;display:grid;grid-template-columns:420px minmax(0,1fr)}
+.editor{overflow:auto;padding:15px;border-right:1px solid var(--line);background:#f8fafb}
+.preview{overflow:auto;padding:0 20px 35px;min-width:0}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0}
+.tabs button{padding:9px 3px;font-size:12px}
+.tabs button.active{background:var(--ink);color:#fff}
+.tabs small{display:block;font-size:10px;color:inherit;margin-top:3px}
+.toolbar{position:sticky;top:0;z-index:4;padding:12px 0;background:var(--bg)}
+#saveState{display:block;font-size:12px;margin-top:5px}
+#paperViewport{overflow:auto;padding:2px 0 20px}
+#paperScale{position:relative;margin:auto}
+#paper{transform-origin:top left}
+#patientBanner{white-space:pre-wrap;line-height:1.7}
+.item{border:1px solid var(--line);border-radius:8px;background:#fbfdfd;padding:12px;margin:11px 0}
+.linked{background:var(--soft)}
+summary{cursor:pointer;font-weight:bold;line-height:1.6}
+details[open]>summary{margin-bottom:12px}
+dialog{width:min(1000px,95vw);max-height:90dvh;padding:21px;border:1px solid var(--line);border-radius:13px;color:var(--ink)}
+dialog::backdrop{background:#122b3688}
+.dialoghead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}
+.dialoghead h2{margin:0}
+#secretDialog{width:min(460px,95vw)}
+#gate{max-width:680px;margin:8vh auto;padding:20px}
+#gate .card{padding:25px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;font-family:inherit}
+table.ui{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+table.ui th,table.ui td{padding:9px;border:1px solid var(--line);text-align:left;vertical-align:top;overflow-wrap:anywhere;white-space:pre-wrap}
+.scrolltable{overflow:auto}
+.signatureThumb{max-height:70px;max-width:180px;object-fit:contain}
+#fatal{max-width:800px;margin:20px auto}
+#printRoot{display:none}
+#modalBody{line-height:1.6}
+#modalBody textarea.large{min-height:180px}
+.diffOld{background:#fff0f1}.diffNew{background:#eaf5ec}
+.badge{display:inline-block;border:1px solid currentColor;padding:2px 6px;border-radius:5px;font-size:11px}
+.paper{
+ width:210mm;min-height:297mm;padding:17mm 18mm 18mm;background:#fff;color:#000;
+ box-shadow:0 7px 28px #16333e18;overflow-wrap:anywhere;
+ font-family:Arial,"DFKai-SB","BiauKai","標楷體",serif;font-size:11pt;line-height:1.45
+}
+.paper *{color:#000;border-color:#000}
+.paper .letterhead{display:grid;grid-template-columns:1fr 1.15fr 1.25fr;gap:3mm}
+.paper .doctor{font-size:14pt;font-weight:bold;line-height:1.25}
+.paper .qual{font-size:9.8pt;white-space:pre-line;line-height:1.25}
+.paper .contact{margin-top:5mm;padding-bottom:3mm;border-bottom:1px solid;font-size:10pt;white-space:pre-line}
+.paper .title{text-align:center;font-size:14pt;font-weight:bold;margin:4mm 0;break-after:avoid}
+.paper .state{border:2px solid;padding:3mm;white-space:pre-wrap;margin:3mm 0;break-inside:avoid}
+.paper .patient{border-top:1px solid;border-bottom:1px solid;padding:3mm 0;margin-bottom:5mm;break-inside:avoid;break-after:avoid}
+.paper .patientgrid{display:grid;grid-template-columns:30mm 1fr 21mm 1fr;gap:2mm}
+.paper .full{grid-column:2/-1}
+.paper .section{margin:5mm 0}
+.paper h2,.paper h3{font-size:11pt;margin:0 0 2mm;break-after:avoid}
+.paper .txt{white-space:pre-wrap;orphans:3;widows:3}
+.paper p{margin:0 0 4mm;orphans:3;widows:3}
+.paper .sub{margin:4mm 0;border-top:1px solid;padding-top:3mm}
+.paper .recipient{white-space:pre-wrap;margin-bottom:5mm}
+.paper .leave{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4mm;border-top:1px solid;border-bottom:1px solid;padding:4mm 0;margin:5mm 0;break-inside:avoid}
+.paper .leave strong,.paper .leave span{display:block}
+.paper .allergy{border:2px solid;padding:3mm;white-space:pre-wrap;break-inside:avoid;margin-bottom:5mm}
+.paper table{width:100%;table-layout:fixed;border-collapse:collapse;font:inherit;margin:4mm 0}
+.paper th,.paper td{padding:3mm 2mm;border-bottom:1px solid;text-align:left;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere}
+.paper th{border-top:1px solid}
+.paper th:first-child,.paper td:first-child{padding-left:0}
+.paper th:last-child,.paper td:last-child{padding-right:0}
+.paper thead{display:table-header-group}
+.paper tr{break-inside:avoid;page-break-inside:avoid}
+.paper .num{text-align:right}
+.paper .total{border-top:1px solid;padding-top:3mm;text-align:right;font-weight:bold;break-inside:avoid}
+.paper .signature{width:78mm;margin:12mm 0 0 auto;break-inside:avoid}
+.paper .signature .space{height:18mm;display:flex;align-items:flex-end;padding-bottom:2mm}
+.paper .signature img{max-width:48mm;max-height:16mm;object-fit:contain}
+.paper .signature .line{border-top:1px solid;padding-top:3mm}
+.paper .footer{font-size:10pt;border-top:1px solid;padding-top:3mm;margin-top:8mm;break-inside:avoid}
+.paper .end{text-align:center;margin-top:8mm;break-inside:avoid}
+@media(max-width:1100px){.layout{grid-template-columns:370px minmax(0,1fr)}.preview{padding-left:12px;padding-right:12px}}
+@media(max-width:820px){.layout{display:block;height:auto}.editor,.preview{overflow:visible}.toolbar{position:relative}.editor{border-right:0}.grid{grid-template-columns:1fr}}
+@page{size:A4;margin:17mm 18mm 18mm}
+@media print{
+ body>*{display:none!important}
+ body>#printRoot{display:block!important}
+ #printRoot>.paper{width:auto;min-height:0;padding:0;margin:0;box-shadow:none;transform:none}
+ #printRoot>.paper+.paper{break-before:page;page-break-before:always}
+}
+</style>
 </head>
 <body>
-    <h1>Dr. Ray Leung's</h1>
-    <p class="subtitle">Forms filling machinery</p>
+<div id="gate">
+ <section class="card">
+  <h1>Dr. Ray's Clinical Management System</h1>
+  <p id="gateMessage" class="small" style="margin-top:15px">正在檢查本機儲存…</p>
+  <form id="gateForm" autocomplete="off">
+   <div class="field">
+    <label for="actor">操作人姓名／代號（自行填報）</label>
+    <input id="actor" maxlength="100" required autocomplete="off">
+   </div>
+   <div class="field">
+    <label for="vaultPassword">工作區密碼</label>
+    <input id="vaultPassword" type="password" required autocomplete="current-password">
+   </div>
+   <div id="createConfirm" class="field hidden">
+    <label for="vaultConfirm">再次輸入密碼（新密碼最少 12 字元）</label>
+    <input id="vaultConfirm" type="password" autocomplete="new-password">
+   </div>
+   <button id="unlockBtn" class="primary">解鎖</button>
+   <button id="gateRaw" type="button">匯出本機密文原件</button>
+   <button id="gateRecover" type="button">從備份復原</button>
+  </form>
+  <p class="small" style="margin-top:15px">
+請固定使用同一瀏覽器、設定檔及開啟位置。
+復原功能不會清除或取代既有工作區；既有工作區無法解鎖時，
+請改用另一個受保護的瀏覽器設定檔建立空白工作區，再匯入備份。
+  </p>
+ </section>
+</div>
 
-<a class="card" href="./ownpat.html" target="_blank">
-        <h2>Dr Ray's Virtual Clinic</h2>
-    </a>  
-    <a class="card" href="./amc-blood.html" target="_blank">
-        <h2>AMC-TKP Investigations Request Form</h2>
-        <p></p>
-    </a>
-    
-    <a class="card" href="./amc-radi.html" target="_blank">
-        <h2>AMC-TKP Radiology Request Form</h2>
-        <p></p>
-    </a>
+<div id="app" class="hidden">
+ <header class="appbar">
+  <div class="brand">梁子恒醫生診所管理系統 Dr Ray's Clinical Management System
+   <small id="sessionLabel"></small>
+  </div>
+  <div class="row">
+   <button data-act="new">＋ 新病人診症</button>
+   <button data-act="patients">病人主檔／時間線</button>
+   <button data-act="history">診症／版本</button>
+   <button data-act="followups">檢查跟進</button>
+   <button data-act="catalogue">檢查目錄</button>
+   <button data-act="templates">範本</button>
+   <button data-act="backup">備份／還原</button>
+   <button data-act="settings">設定</button>
+   <button data-act="quality">健康／驗收</button>
+   <button data-act="lock">鎖定</button>
+  </div>
+ </header>
+ <div id="appNotice" class="notice">
+本機原型：未經獨立安全或臨床驗證。舊資料及已輸出文件不會自動加密。
+ </div>
+ <div class="layout">
+  <aside class="editor">
+   <section class="card">
+    <strong id="patientHeading"></strong>
+    <div id="patientBanner" class="small"></div>
+    <div class="row" style="margin-top:9px">
+     <button data-act="identity">編輯本次身份</button>
+     <button data-act="publishMaster">更新病人主檔</button>
+    </div>
+   </section>
+   <div id="tabs" class="tabs"></div>
+   <div id="validation" class="notice error hidden"></div>
+   <fieldset id="editorFields">
+    <section class="card">
+     <details><summary>本次聯絡資料（不印於對外文件）</summary><div id="contactFields"></div></details>
+    </section>
+    <section class="card">
+     <details><summary>藥物敏感及覆核</summary><div id="allergyFields"></div></details>
+    </section>
+    <section class="card" id="clinicalFields"></section>
+    <section class="card" id="documentFields"></section>
+    <section class="card" id="outputFields"></section>
+   </fieldset>
+  </aside>
+  <main class="preview">
+   <div class="toolbar">
+    <div class="row between">
+     <div><strong id="previewTitle"></strong><span id="saveState"></span><small id="backupState"></small></div>
+     <div class="row">
+      <button data-act="return" id="returnBtn">返回</button>
+      <button data-act="complete" id="completeBtn">完成診症</button>
+      <button data-act="diff">比較版本</button>
+      <button data-act="batch">多份列印</button>
+      <button data-act="print" class="primary">列印／PDF</button>
+     </div>
+    </div>
+   </div>
+   <div id="workflow" class="notice" style="margin-bottom:12px"></div>
+   <div class="row" style="margin-bottom:12px">
+    <label for="zoom" style="margin:0">預覽</label>
+    <select id="zoom" style="width:auto">
+     <option value="fit">適合寬度</option><option value="0.75">75%</option>
+     <option value="1">100%</option><option value="1.25">125%</option>
+    </select>
+    <button data-act="save">立即儲存</button>
+    <button data-act="export">加密備份</button>
+    <button data-act="printDone" id="printDone" class="hidden">列印視窗已關閉，返回</button>
+   </div>
+   <div id="paperViewport"><div id="paperScale"><article id="paper" class="paper"></article></div></div>
+  </main>
+ </div>
+</div>
 
-  <a class="card" href="./insurance-referral.html" target="_blank">
-        <h2>Insurance Pre-approval and Referral Forms </h2>
-        <p></p>
-    </a>
+<dialog id="modal">
+ <div class="dialoghead"><h2 id="modalTitle"></h2><button id="modalClose" type="button">關閉</button></div>
+ <div id="modalBody"></div>
+</dialog>
+<dialog id="secretDialog">
+ <form id="secretForm" autocomplete="off">
+  <h2 id="secretTitle"></h2>
+  <p id="secretHint" class="small"></p>
+  <label for="secret1">密碼</label>
+  <input id="secret1" type="password" autocomplete="off" required>
+  <div id="secretSecond" class="field" style="margin-top:12px">
+   <label for="secret2">再次輸入</label>
+   <input id="secret2" type="password" autocomplete="off">
+  </div>
+  <p id="secretError" class="small"></p>
+  <div class="row" style="margin-top:15px">
+   <button class="primary">確定</button><button id="secretCancel" type="button">取消</button>
+  </div>
+ </form>
+</dialog>
+<input id="backupFile" type="file" accept=".json,application/json" hidden>
+<div id="fatal" class="notice error hidden"></div>
+<div id="printRoot"></div>
 
-      <a class="card" href="./insurance-claim-form.html" target="_blank">
-        <h2>Insurance Claim Forms</h2>
-        <p></p>
-    </a>
-    <a class="card" href="./amc-pharmacy.html" target="_blank">
-        <h2>AMC 1+2 Drug Inventory </h2>
-        <p></p>
-    </a>
+<script>
+"use strict";
 
-    <a class="card" href="./paed-drug.html" target="_blank">
-        <h2>Paediatric Drug calculator </h2>
-        <p></p>
-    </a>
-    
+/* 單人本機原型。無外部程式庫、無網絡請求。
+   v4 的資料以 JSON 匯入；不自動讀寫舊資料庫。
+   工作區只保存密文；解鎖後資料存在記憶體及畫面。
+*/
+const VERSION="5.0.0", SCHEMA=5;
+const DBNAME="ray_leung_clinic_cms_v5_encrypted";
+const STORE="vault", KEY="main", ITERATIONS=600000;
+const MAXFILE=50*1024*1024;
+const $=id=>document.getElementById(id);
+const C=x=>JSON.parse(JSON.stringify(x));
+const now=()=>new Date().toISOString();
+const S=x=>String(x??"");
+const T=x=>S(x).trim();
+const O=x=>x!==null&&typeof x==="object"&&!Array.isArray(x);
+const E=x=>S(x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const TYPES={
+ note:["診症","PROGRESS NOTE","診症紀錄"],
+ referral:["轉介","REFERRAL LETTER","轉介信"],
+ sick:["病假","SICK LEAVE CERTIFICATE","病假證明書"],
+ attendance:["到診","ATTENDANCE CERTIFICATE","到診證明書"],
+ receipt:["收據","RECEIPT","收據"],
+ rx:["處方","PRESCRIPTION","處方"],
+ lab:["化驗","LABORATORY REQUEST FORM","化驗檢查申請表"],
+ imaging:["影像","RADIOLOGY IMAGING REQUEST FORM","影像檢查申請表"]
+};
+const DOCS=Object.keys(TYPES).filter(t=>t!=="note");
+const INVS=["lab","imaging"];
+const IDFIELDS=["surname","given","cn","hkid","dob","sex"];
+const CONTACTS=["phone","email","address","contact1Name","contact1Phone","contact2Name","contact2Phone"];
+const ALLERGY={unknown:"未確認／未記錄",none:"無已知藥物敏感",known:"有藥物敏感"};
+const VSTATE={issued:"目前有效",superseded:"已取代",void:"已作廢",legacy:"舊版待確認"};
+const ISTATE={ordered:"已申請／待完成",completed:"已完成檢查",results:"已收到報告"};
+const BILLING={clinic:"診所收費",centre:"檢查中心直接收費"};
+const PAYMENT={unknown:"未記錄",unpaid:"未收款",paid:"已收款"};
+const DEFAULT={
+ nameCn:"梁子恒醫生",nameEn:"Dr. LEUNG Tsz Hang",
+ qualCn:"急症科專科醫生\n香港中文大學內外全科醫學士\n香港急症科醫學院院士\n香港醫學專科學院院士(急症科)\n香港中文大學醫學院意外及急救醫學教研部名譽臨床助理教授",
+ qualEn:"Specialist in Emergency Medicine\nMBChB (CUHK)\nFHKCEM\nFHKAM (Emergency Medicine)\nClinical Assist Prof (Honorary)\nA&E Academic Unit, CUHK",
+ address:"Unit 1603, 16/F, The L. Plaza, 367–375 Queen's Road Central, Sheung Wan, Hong Kong\n香港上環皇后大道中367-375號萬利商業大廈16樓1603室",
+ phone:"2632 9288 / 9867 7100",email:"drraytleung@gmail.com",reg:"",signature:"",
+ masks:{note:"full",referral:"full",sick:"partial",attendance:"partial",receipt:"partial",rx:"full",lab:"full",imaging:"full"},
+ timestamp:false,idleMinutes:10
+};
+const CHECKS=[
+ ["autosave","輸入 SOAP，確認已儲存，再重新載入核對"],
+ ["conflict","兩個分頁修改：第二頁停止寫入，未覆蓋第一頁"],
+ ["complete","完成、重開及再完成：舊快照不變"],
+ ["version","修訂文件：新舊內容及修訂原因可追溯"],
+ ["void","作廢文件：沒有自動恢復舊版"],
+ ["cancel","取消列印：未自動標記成功列印或交付"],
+ ["pagination","長轉介、多頁處方、長檢查名稱：無漏字／重疊"],
+ ["restore","外部備份在獨立測試環境復原，逐項核對"],
+ ["migration","真實舊版備份移轉：SOAP、版本、快照及收費一致"],
+ ["lock","閒置鎖定、密碼錯誤及重開解鎖已測試"],
+ ["incident","密碼、電腦遺失及資料外洩應變流程已演練"]
+];
+let db=null, idb=null, vaultKey=null, salt="", rev=0, actor="", sessionId="";
+let selected="", tab="note", view=null, dirty=0, saved=0, saving=null;
+let busy=false, conflict=false, printing=false, timer=null, previewTimer=null;
+let channel=null, startupEnvelope=null, pending=null, lastActivity=Date.now();
+let modalMode="", catDraft=[], templateDraft=null, selfResults=[];
+let signatureDraft="", lastPrint=[], newVault=false;
+const enc=new TextEncoder(), dec=new TextDecoder();
+
+function assert(ok,msg){if(!ok)throw new Error(msg)}
+function uid(){return crypto.randomUUID?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,"0")).join("")}
+function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function dateOK(s){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(S(s)))return false;
+ const d=new Date(s+"T12:00:00");
+ return Number.isFinite(d.getTime())&&d.getFullYear()===+s.slice(0,4)&&d.getMonth()+1===+s.slice(5,7)&&d.getDate()===+s.slice(8,10)
+}
+function fmt(s){return dateOK(s)?new Date(s+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}):"—"}
+function cnDate(s){return dateOK(s)?`${+s.slice(0,4)}年${+s.slice(5,7)}月${+s.slice(8,10)}日`:"—"}
+function stamp(s){const d=new Date(s);return Number.isFinite(d.getTime())?d.toLocaleString("en-GB",{hour12:false}):"—"}
+function age(d,b){if(!dateOK(d)||!dateOK(b)||d>b)return "";return +b.slice(0,4)-+d.slice(0,4)-(b.slice(5)<d.slice(5)?1:0)}
+function pname(p){return [[T(p.surname).toUpperCase(),T(p.given)].filter(Boolean).join(" "),T(p.cn)].filter(Boolean).join(" ")}
+function normID(s){s=S(s).replace(/\s/g,"").toUpperCase();const m=s.match(/^([A-Z]{1,2}\d{6})([0-9A])$/);return m?m[1]+"("+m[2]+")":s}
+function mask(s,mode="partial"){
+ s=normID(s);if(!s)return "—";if(mode==="full")return s;
+ const m=s.match(/^([A-Z]{1,2})(\d{6})(?:\([0-9A]\))?$/);
+ return m?m[1]+m[2].slice(0,3)+"***":s.length<4?"***":s.slice(0,3)+"*".repeat(Math.min(12,s.length-3))
+}
+function stable(x){return Array.isArray(x)?x.map(stable):O(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,stable(x[k])])):x}
+function serial(x){return JSON.stringify(stable(x))}
+function equal(a,b){return serial(a)===serial(b)}
+function parse(raw){return JSON.parse(raw,(k,v)=>{assert(!["__proto__","constructor","prototype"].includes(k),"資料含不允許欄位");return v})}
+function image(s){return typeof s==="string"&&s.length<=1500000&&/^data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/=\r\n]+$/.test(s)?s:""}
+function cents(s){
+ s=T(s);if(!/^\d+(?:\.\d{1,2})?$/.test(s))return NaN;
+ const [a,b=""]=s.split(".");const n=Number(a)*100+Number(b.padEnd(2,"0"));return Number.isSafeInteger(n)?n:NaN
+}
+function cash(s){return Number.isFinite(Number(s))?Number(s).toLocaleString("en-HK",{minimumFractionDigits:2,maximumFractionDigits:2}):"—"}
+function items(e){return e.receipt.items.filter(i=>T(i.desc)||T(i.amount))}
+function drugs(e){return e.rx.items.filter(i=>["name","dose","frequency","route","duration"].some(k=>T(i[k])))}
+function total(e){return items(e).reduce((a,i)=>a+(Number.isFinite(cents(i.amount))?cents(i.amount):0),0)}
+function get(x,p){return p.split(".").reduce((v,k)=>v?.[k],x)}
+function put(x,p,v){
+ const a=p.split(".");assert(a.every(k=>!["__proto__","constructor","prototype"].includes(k)),"無效欄位");
+ const k=a.pop(),o=a.reduce((v,k)=>v?.[k],x);assert(o&&Object.hasOwn(o,k),"欄位不存在");o[k]=v
+}
+function current(){return db?.encounters.find(e=>e.id===selected)}
+function master(e=current()){return db?.patients.find(p=>p.id===e?.patientId)}
+function effective(e,t){return e.versions.find(v=>v.type===t&&v.state==="issued")}
+function editable(){return !!db&&!busy&&!printing&&!conflict&&!view&&current()?.status==="draft"}
+function message(s,error=false){$("appNotice").textContent=s;$("appNotice").classList.toggle("error",error)}
+function status(s,error=false){$("saveState").textContent=s;$("saveState").style.color=error?"var(--bad)":""}
+function fail(error){console.error(error?.name||"Error");const s=error?.message||"操作失敗";if(db)status(s,true);else $("gateMessage").textContent=s;alert(s)}
+function download(obj,name){
+ const raw=typeof obj==="string"?obj:JSON.stringify(obj,null,2);
+ const u=URL.createObjectURL(new Blob([raw],{type:"application/json;charset=utf-8"}));
+ const a=document.createElement("a");a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)
+}
+function filename(prefix){return prefix+"-"+now().replace(/[:.]/g,"-")+".json"}
+function b64(bytes){
+ let s="";for(let i=0;i<bytes.length;i+=32768)s+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(s)
+}
+function unb64(s,max=MAXFILE*2){
+ assert(typeof s==="string"&&s.length<=max&&/^[A-Za-z0-9+/]*={0,2}$/.test(s),"密文編碼無效");
+ const raw=atob(s);return Uint8Array.from(raw,c=>c.charCodeAt(0))
+}
+async function hash(x){return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",enc.encode(typeof x==="string"?x:serial(x)))),b=>b.toString(16).padStart(2,"0")).join("")}
+async function derive(password,saltValue){
+ return crypto.subtle.deriveKey(
+  {name:"PBKDF2",salt:unb64(saltValue,100),iterations:ITERATIONS,hash:"SHA-256"},
+  await crypto.subtle.importKey("raw",enc.encode(password),"PBKDF2",false,["deriveKey"]),
+  {name:"AES-GCM",length:256},false,["encrypt","decrypt"]
+ )
+}
+function header(purpose,s){return {format:"ray-clinic-encrypted",version:1,purpose,kdf:"PBKDF2-SHA256",iterations:ITERATIONS,salt:s,algorithm:"AES-256-GCM"}}
+function checkEnvelope(v,purpose=null){
+ assert(O(v)&&v.format==="ray-clinic-encrypted"&&v.version===1,"不是支援的加密檔案");
+ assert(["vault","backup","drill"].includes(v.purpose)&&(!purpose||v.purpose===purpose),"加密用途不符");
+ assert(v.kdf==="PBKDF2-SHA256"&&v.iterations===ITERATIONS&&v.algorithm==="AES-256-GCM","加密參數不支援");
+ assert(unb64(v.salt,100).length===16&&unb64(v.iv,100).length===12,"加密 salt／IV 無效");
+ assert(typeof v.ciphertext==="string"&&v.ciphertext.length<=MAXFILE*2,"密文過大")
+}
+async function seal(value,key,s,purpose){
+ const h=header(purpose,s),iv=crypto.getRandomValues(new Uint8Array(12));
+ const result=await crypto.subtle.encrypt({name:"AES-GCM",iv,additionalData:enc.encode(serial(h)),tagLength:128},key,enc.encode(JSON.stringify(value)));
+ return {...h,iv:b64(iv),ciphertext:b64(new Uint8Array(result))}
+}
+async function unseal(v,key,purpose=null){
+ checkEnvelope(v,purpose);
+ let raw;
+ try{raw=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(v.iv,100),additionalData:enc.encode(serial(header(v.purpose,v.salt))),tagLength:128},key,unb64(v.ciphertext))}
+ catch{throw new Error("密碼不符或密文已損壞；沒有修改現有資料")}
+ return parse(dec.decode(raw))
+}
+function secret(title,confirmPassword=false,hint=""){
+ return new Promise(resolve=>{
+  $("secretTitle").textContent=title;$("secretHint").textContent=hint;
+  $("secret1").value="";$("secret2").value="";$("secretError").textContent="";
+  $("secretSecond").classList.toggle("hidden",!confirmPassword);
+  $("secretDialog").showModal();setTimeout(()=>$("secret1").focus(),0);
+  const done=v=>{
+   $("secret1").value="";$("secret2").value="";
+   $("secretForm").onsubmit=null;$("secretCancel").onclick=null;
+   $("secretDialog").removeEventListener("cancel",cancel);$("secretDialog").close();resolve(v)
+  };
+  const cancel=e=>{e.preventDefault();done(null)};
+  $("secretDialog").addEventListener("cancel",cancel);
+  $("secretCancel").onclick=()=>done(null);
+  $("secretForm").onsubmit=e=>{
+   e.preventDefault();const p=$("secret1").value;
+   if(confirmPassword&&(p.length<12||p!==$("secret2").value)){$("secretError").textContent="最少 12 字元，兩次須相同。";return}
+   done(p)
+  }
+ })
+}
+async function reauth(){
+ const p=await secret("再次輸入工作區密碼",false,"用於圖片簽名或敏感操作；不是另一位使用者的身份驗證。");
+ if(p===null)return false;
+ const k=await derive(p,salt),test=await seal({check:sessionId},vaultKey,salt,"drill");
+ const value=await unseal(test,k,"drill");assert(value.check===sessionId,"密碼不符");return true
+}
+
+/* 資料模型 */
+function patient(){return {surname:"",given:"",cn:"",hkid:"",dob:"",sex:"",phone:"",email:"",address:"",contact1Name:"",contact1Phone:"",contact2Name:"",contact2Phone:"",allergyStatus:"unknown",allergyDetails:""}}
+function request(){return {centre:"",indication:"",remarks:"",items:[]}}
+function encounter(settings=DEFAULT){
+ const d=today();return {
+  id:uid(),patientId:uid(),created:now(),updated:now(),date:d,status:"draft",diagnosis:"",
+  patient:patient(),allergyReviewed:false,allergyReviewedAt:"",allergyReviewedBy:"",
+  soap:{s:"",o:"",a:"",p:""},masks:C(settings.masks),signature:"manual",timestamp:!!settings.timestamp,
+  used:Object.fromEntries(DOCS.map(t=>[t,false])),
+  referral:{target:"",institution:"",to:"",salutation:"Dear Doctor,",body:""},
+  sick:{from:d,fromPeriod:"AM",to:d,toPeriod:"PM",days:"1",remarks:"",showDiagnosis:true},
+  attendance:{date:d,period:"AM",remarks:"",showDiagnosis:true},
+  receipt:{no:"",payment:"Cash 現金",paymentStatus:"unknown",showDiagnosis:false,items:[{desc:"",amount:""}],remarks:""},
+  rx:{items:[{name:"",dose:"",frequency:"",route:"",duration:""}],remarks:"",showDiagnosis:true},
+  lab:request(),imaging:request(),versions:[],revisions:[],audit:[],identityChanges:[]
+ }
+}
+function database(){return {schema:5,appVersion:VERSION,settings:C(DEFAULT),patients:[],catalogue:[],templates:[],encounters:[],counter:0,patientCounter:0,currentId:"",meta:{lastExport:"",lastRestore:null,checks:{},security:[]}}}
+function audit(e,action,reason="",versionId=""){
+ e.audit.push({at:now(),action,reason,versionId,actor,sessionId})
+}
+function core(e){const r=C(e);delete r.versions;delete r.revisions;delete r.audit;return r}
+function addMaster(d,id,data){
+ d.patientCounter++;
+ const p={id,mrn:"P-"+String(d.patientCounter).padStart(6,"0"),data:C(data),updated:now(),changes:[]};
+ d.patients.push(p);return p
+}
+function addEncounter(d,pid=null){
+ const e=encounter(d.settings);d.counter++;
+ e.receipt.no="R-"+e.date.replaceAll("-","")+"-"+String(d.counter).padStart(5,"0");
+ if(pid){const p=d.patients.find(p=>p.id===pid);assert(p,"找不到病人主檔");e.patientId=pid;e.patient=C(p.data)}
+ else addMaster(d,e.patientId,e.patient);
+ audit(e,"建立診症",pid?"沿用主檔；本次敏感覆核重設":"新病人");
+ d.encounters.unshift(e);d.currentId=e.id;return e
+}
+function followDefaults(i){
+ return {...i,due:i.due??"",owner:i.owner??"",next:i.next??"",contacted:i.contacted??false,
+ contactAt:i.contactAt??"",contactNote:i.contactNote??"",reviewedBy:i.reviewedBy??"",
+ closed:i.closed??false,closedAt:i.closedAt??"",closedBy:i.closedBy??"",closureReason:i.closureReason??""}
+}
+
+/* 結構驗證：拒絕危險鍵及錯誤引用，保留舊快照，不重寫病人歷史。 */
+function str(v,label){assert(typeof v==="string"&&v.length<=2000000,label+"須為文字")}
+function arr(v,label){assert(Array.isArray(v)&&v.length<=100000,label+"須為列表")}
+function bool(v,label){assert(typeof v==="boolean",label+"須為布林值")}
+function choice(v,list,label){assert(list.includes(v),label+"無效")}
+function unique(a,label){const s=new Set();for(const v of a){str(v,label);assert(v&&!s.has(v),label+"空白或重複");s.add(v)}}
+function guard(x,depth=0,counter={n:0}){
+ assert(depth<60&&++counter.n<3000000,"資料結構過深或過大");
+ if(Array.isArray(x)){assert(x.length<=100000,"列表過大");x.forEach(v=>guard(v,depth+1,counter))}
+ else if(O(x)){for(const [k,v] of Object.entries(x)){assert(!["__proto__","constructor","prototype"].includes(k),"危險欄位");guard(v,depth+1,counter)}}
+ else assert(x===null||typeof x==="string"||typeof x==="boolean"||(typeof x==="number"&&Number.isFinite(x)),"資料值無效")
+}
+function checkPatient(p){
+ assert(O(p),"缺少病人資料");
+ for(const k of IDFIELDS)str(p[k],"病人."+k);
+ if(p.allergyStatus!==undefined)choice(p.allergyStatus,Object.keys(ALLERGY),"敏感狀態");
+ for(const k of [...CONTACTS,"allergyDetails"])if(p[k]!==undefined)str(p[k],"病人."+k)
+}
+function checkSettings(s,full=true){
+ assert(O(s),"設定錯誤");
+ for(const k of ["nameCn","nameEn","qualCn","qualEn","address","phone","email","reg","signature"])str(s[k],"設定."+k);
+ assert(!s.signature||image(s.signature),"簽名格式無效");
+ if(full){
+  assert(O(s.masks),"缺少證件顯示設定");
+  for(const t of Object.keys(TYPES))choice(s.masks[t],["full","partial"],"證件顯示");
+  bool(s.timestamp,"時間設定");
+  assert(Number.isInteger(s.idleMinutes)&&s.idleMinutes>=1&&s.idleMinutes<=120,"閒置分鐘無效")
+ }
+}
+function checkContent(e,t,publicOnly=false){
+ const r=e[t];assert(O(r),"缺少 "+t+" 資料");
+ if(INVS.includes(t)){
+  for(const k of ["centre","indication","remarks"])str(r[k],t+"."+k);
+  arr(r.items,"檢查項目");
+  if(!publicOnly){unique(r.items.map(i=>i.id),"檢查 ID");unique(r.items.map(i=>i.catalogueId),"檢查目錄連結")}
+  for(const i of r.items){
+   str(i.name,"檢查名稱");str(i.details,"檢查詳情");assert(T(i.name),"空白檢查名稱");
+   if(publicOnly)continue;
+   choice(i.billing,Object.keys(BILLING),"檢查收費");str(i.price,"檢查價錢");
+   assert(!T(i.price)||Number.isFinite(cents(i.price)),"檢查價錢無效");
+   assert(i.billing!=="clinic"||Number.isFinite(cents(i.price)),"診所收費缺少價錢");
+   choice(i.status,Object.keys(ISTATE),"檢查狀態");
+   for(const k of ["result","performedDate","resultDate","statusUpdatedAt","reviewedAt"])str(i[k],"檢查."+k);
+   bool(i.reviewed,"覆核狀態");
+   for(const k of ["performedDate","resultDate","due"])if(i[k])assert(dateOK(i[k]),"檢查日期無效");
+   for(const k of ["due","owner","next","contactAt","contactNote","reviewedBy","closedAt","closedBy","closureReason"])if(i[k]!==undefined)str(i[k],"跟進."+k);
+   for(const k of ["contacted","closed"])if(i[k]!==undefined)bool(i[k],"跟進."+k);
+   if(i.closed)assert(i.reviewed&&i.status==="results"&&T(i.closureReason),"結案須有已覆核報告及原因")
+  }
+ }else if(t==="rx"){
+  bool(r.showDiagnosis,"處方診斷");str(r.remarks,"處方備註");arr(r.items,"藥物");
+  for(const i of r.items)for(const k of ["name","dose","frequency","route","duration"])str(i[k],"藥物."+k)
+ }else if(t==="receipt"){
+  for(const k of ["no","payment","remarks"])str(r[k],"收據."+k);
+  bool(r.showDiagnosis,"收據診斷");if(r.paymentStatus!==undefined)choice(r.paymentStatus,Object.keys(PAYMENT),"收款狀態");
+  arr(r.items,"收費");
+  for(const i of r.items){
+   str(i.desc,"收費名稱");str(i.amount,"收費金額");
+   if(i.investigationId!==undefined){str(i.investigationId,"收費連結");choice(i.investigationType,INVS,"收費連結類別")}
+  }
+ }else if(t==="referral"){for(const k of ["target","institution","to","salutation","body"])str(r[k],"轉介."+k)}
+ else if(t==="sick"){
+  for(const k of ["from","to","days","remarks"])str(r[k],"病假."+k);
+  choice(r.fromPeriod,["AM","PM"],"開始時段");choice(r.toPeriod,["AM","PM"],"結束時段");bool(r.showDiagnosis,"病假診斷")
+ }else if(t==="attendance"){
+  str(r.date,"到診日期");str(r.remarks,"到診備註");choice(r.period,["AM","PM"],"到診時段");bool(r.showDiagnosis,"到診診斷")
+ }
+}
+function checkCore(e,type=null){
+ assert(O(e),"診症格式錯誤");
+ for(const k of ["id","patientId","date","created","updated","diagnosis"])str(e[k],"診症."+k);
+ assert(e.id&&e.patientId,"診症／病人 ID 空白");checkPatient(e.patient);
+ choice(e.status,["draft","completed"],"診症狀態");choice(e.signature,["manual","image"],"簽名方式");bool(e.timestamp,"版本時間");
+ assert(O(e.masks),"證件設定錯誤");
+ for(const t of type?[type]:Object.keys(TYPES))choice(e.masks[t],["full","partial"],"證件設定");
+ if(!type){
+  assert(O(e.soap)&&O(e.used),"SOAP／文件狀態錯誤");
+  for(const k of ["s","o","a","p"])str(e.soap[k],"SOAP."+k);
+  bool(e.allergyReviewed,"敏感覆核");
+  for(const t of DOCS)bool(e.used[t],"文件使用");
+ }
+ for(const t of type?[type]:DOCS)checkContent(e,t,!!type)
+}
+function checkDB(d){
+ guard(d);assert(O(d)&&d.schema===5,"只支援 v5 或指定的 v4 JSON");
+ checkSettings(d.settings);for(const k of ["patients","catalogue","templates","encounters"])arr(d[k],k);
+ for(const k of ["counter","patientCounter"])assert(Number.isSafeInteger(d[k])&&d[k]>=0,"計數器無效");
+ unique(d.encounters.map(e=>e.id),"診症 ID");unique(d.patients.map(p=>p.id),"病人 ID");unique(d.patients.map(p=>p.mrn),"病歷編號");
+ unique(d.catalogue.map(c=>c.id),"檢查目錄 ID");unique(d.templates.map(t=>t.id),"範本 ID");
+ for(const p of d.patients){checkPatient(p.data);str(p.mrn,"病歷編號");str(p.updated,"主檔時間");arr(p.changes,"主檔更正")}
+ for(const r of d.catalogue){
+  choice(r.type,INVS,"檢查類別");str(r.name,"檢查名稱");assert(T(r.name),"檢查名稱不可空白");
+  str(r.price,"價錢");assert(!T(r.price)||Number.isFinite(cents(r.price)),"價錢無效");choice(r.billing,Object.keys(BILLING),"收費方式");bool(r.enabled,"啟用")
+ }
+ for(const t of d.templates){
+  str(t.name,"範本名稱");assert(T(t.name),"範本名稱空白");choice(t.type,["note","referral","receipt"],"範本類別");
+  assert(O(t.content),"範本內容錯誤");
+  if(t.type==="note")for(const k of ["s","o","a","p"])str(t.content[k],"SOAP 範本");
+  if(t.type==="referral")str(t.content.body,"轉介範本");
+  if(t.type==="receipt"){arr(t.content.items,"收費範本");for(const i of t.content.items){str(i.desc,"範本項目");str(i.amount,"範本金額");assert(T(i.desc)&&Number.isFinite(cents(i.amount)),"收費範本項目不完整")}}
+ }
+ for(const e of d.encounters){
+  checkCore(e);assert(d.patients.some(p=>p.id===e.patientId),"診症缺少病人主檔");
+  arr(e.versions,"文件版本");arr(e.revisions,"完成快照");arr(e.audit,"操作紀錄");arr(e.identityChanges,"身份更正");
+  unique(e.versions.map(v=>v.id),"文件版本 ID");unique(e.revisions.map(r=>r.id),"快照 ID");
+  for(const v of e.versions){
+   choice(v.type,DOCS,"文件類別");choice(v.state,Object.keys(VSTATE),"文件狀態");
+   str(v.savedAt,"版本時間");checkCore(v.data,v.type);checkSettings(v.settings,false);assert(v.data.id===e.id,"文件診症不符");
+   if(v.replacedBy)assert(e.versions.some(x=>x.id===v.replacedBy&&x.type===v.type),"取代版本不存在");
+   if(v.deliveries!==undefined)arr(v.deliveries,"交付紀錄")
+  }
+  for(const t of DOCS)assert(e.versions.filter(v=>v.type===t&&v.state==="issued").length<=1,"同類文件有多個有效版本");
+  for(const r of e.revisions){
+   checkCore(r.data);checkSettings(r.settings,false);assert(r.data.id===e.id&&r.data.status==="completed","完成快照診症不符");
+   str(r.savedAt,"快照時間");arr(r.summary,"完成摘要");
+   for(const s of r.summary){
+    choice(s.type,DOCS,"摘要類別");
+    if(s.issued){str(s.issued.text,"文件摘要");assert(e.versions.some(v=>v.id===s.issued.id&&v.type===s.type),"摘要版本不存在")}
+    if(s.draft)str(s.draft.text,"草稿摘要")
+   }
+  }
+ }
+ assert(O(d.meta)&&O(d.meta.checks)&&Array.isArray(d.meta.security),"工作區管理資料錯誤");
+ return d
+}
+function migrate(raw){
+ guard(raw);
+ if(raw.schema===5)return checkDB(C(raw));
+ assert(raw.schema===4,"本版直接支援你提供的 v4 JSON 及 v5 備份。v1–v3 請先用原版轉成 v4 並核對。");
+ const d=C(raw);d.schema=5;d.appVersion=VERSION;
+ d.settings={...C(DEFAULT),...d.settings,masks:{...DEFAULT.masks,...d.settings?.masks}};
+ d.settings.idleMinutes=10;d.patients=[];d.patientCounter=0;d.templates=[];
+ d.meta={lastExport:"",lastRestore:null,checks:{},security:[],migratedAt:now(),migratedFrom:4};
+ arr(d.encounters,"診症");
+ for(const e of d.encounters){
+  if(!T(e.patientId))e.patientId=e.id;
+  e.identityChanges=[];e.allergyReviewedBy=e.allergyReviewedBy||"";
+  for(const t of INVS)e[t].items=e[t].items.map(followDefaults);
+  for(const v of e.versions)v.deliveries=[];
+  /* 舊完成快照及舊文件 data 保持原狀，不補寫當時操作人。 */
+ }
+ const groups=new Map();
+ for(const e of d.encounters){
+  const old=groups.get(e.patientId);
+  if(!old||S(e.updated)>S(old.updated))groups.set(e.patientId,e)
+ }
+ for(const [id,e]of groups)addMaster(d,id,e.patient);
+ return checkDB(d)
+}
+
+/* IndexedDB：加密在交易外完成，revision 比較與寫入同一交易。 */
+function openIDB(name=DBNAME){
+ return new Promise((resolve,reject)=>{
+  const q=indexedDB.open(name,1);
+  q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains(STORE))q.result.createObjectStore(STORE)};
+  q.onerror=()=>reject(q.error||new Error("資料庫開啟失敗"));
+  q.onblocked=()=>reject(new Error("資料庫被另一頁阻擋，請關閉其他頁面"));
+  q.onsuccess=()=>resolve(q.result)
+ })
+}
+function readRecord(handle,key=KEY){
+ return new Promise((resolve,reject)=>{
+  const tx=handle.transaction(STORE,"readonly"),q=tx.objectStore(STORE).get(key);let result=null;
+  q.onsuccess=()=>result=q.result??null;tx.oncomplete=()=>resolve(result);tx.onabort=()=>reject(tx.error||new Error("讀取中止"));tx.onerror=()=>{}
+ })
+}
+function cas(handle,envelope,expected,key=KEY){
+ return new Promise((resolve,reject)=>{
+  const tx=handle.transaction(STORE,"readwrite"),store=tx.objectStore(STORE),q=store.get(key);let custom=null;
+  q.onsuccess=()=>{
+   if((q.result?.revision??0)!==expected){custom=new Error("另一頁已更新資料，停止寫入以免覆蓋。請匯出本頁加密備份後重新載入。");custom.name="ConflictError";tx.abort();return}
+   store.put({revision:expected+1,envelope,updatedAt:now()},key)
+  };
+  tx.oncomplete=()=>resolve(expected+1);tx.onerror=()=>{};tx.onabort=()=>reject(custom||tx.error||new Error("儲存未完成"))
+ })
+}
+function deleteDB(name){
+ return new Promise((resolve,reject)=>{
+  const q=indexedDB.deleteDatabase(name);q.onsuccess=()=>resolve();q.onerror=()=>reject(q.error);q.onblocked=()=>reject(new Error("演練資料庫刪除被阻擋"))
+ })
+}
+async function persistSnapshot(snapshot,expected=rev,key=vaultKey,s=salt){
+ const envelope=await seal(snapshot,key,s,"vault");
+ const r=await cas(idb,envelope,expected);
+ startupEnvelope=envelope;rev=r;
+ try{channel?.postMessage({revision:r})}catch{}
+ return r
+}
+function storageFailure(e){
+ if(e.name==="ConflictError")conflict=true;
+ message("未完成儲存："+e.message+"\n請勿關閉此頁；先匯出本頁加密備份。",true);
+ status("未儲存／停止寫入",true);updateButtons()
+}
+async function save(){
+ clearTimeout(timer);if(saving){await saving;if(dirty!==saved)return save();return}
+ assert(db&&vaultKey,"工作區未解鎖");assert(!conflict,"目前有分頁衝突，請先備份");
+ if(dirty===saved)return;
+ const generation=dirty,snapshot=C(db);snapshot.currentId=selected;
+ saving=(async()=>{
+  try{status("正在加密儲存…");await persistSnapshot(snapshot);saved=generation;status(dirty===saved?"已加密儲存 · "+new Date().toLocaleTimeString():"仍有修改待儲存")}
+  catch(e){storageFailure(e);throw e}
+ })();
+ try{await saving}finally{saving=null}
+ if(dirty!==saved)return save()
+}
+function changed(){
+ current().updated=now();dirty++;status("有修改，等待加密儲存");
+ clearTimeout(timer);timer=setTimeout(()=>save().catch(()=>{}),700);
+ clearTimeout(previewTimer);previewTimer=setTimeout(()=>{preview();banner();renderTabs()},160)
+}
+async function commit(fn){
+ await save();assert(!conflict,"有分頁衝突");
+ const candidate=C(db);fn(candidate);candidate.currentId=selected;candidate.appVersion=VERSION;
+ checkDB(candidate);
+ try{await persistSnapshot(candidate)}catch(e){storageFailure(e);throw e}
+ db=candidate;dirty++;saved=dirty;status("已加密儲存 · "+new Date().toLocaleTimeString())
+}
+async function run(fn){
+ if(busy)return;busy=true;updateButtons();
+ try{return await fn()}finally{if(!printing){busy=false;if(db)render()}}
+}
+function showModal(title,html,mode=""){
+ modalMode=mode;$("modalTitle").textContent=title;$("modalBody").innerHTML=html;
+ if(!$("modal").open)$("modal").showModal()
+}
+function closeModal(){if(busy||printing)return;$("modal").close();$("modalBody").replaceChildren();modalMode=""}
+
+/* 對外文件資料只取需要內容，不包含聯絡資料／檢查結果／價錢。 */
+function publicPatient(p,t){
+ const r=Object.fromEntries(IDFIELDS.map(k=>[k,S(p[k])]));
+ if(t==="rx"){r.allergyStatus=p.allergyStatus||"unknown";r.allergyDetails=S(p.allergyDetails)}
+ return r
+}
+function doctor(s,mode){
+ return Object.fromEntries([...["nameCn","nameEn","qualCn","qualEn","address","phone","email","reg"].map(k=>[k,S(s[k])]),["signature",mode==="image"?image(s.signature):""]])
+}
+function publicContent(e,t){
+ if(INVS.includes(t))return {centre:e[t].centre,indication:e[t].indication,remarks:e[t].remarks,items:e[t].items.map(i=>({name:i.name,details:i.details}))};
+ if(t==="receipt"){
+  const r=C(e.receipt);delete r.paymentStatus;r.items=r.items.map(i=>({desc:i.desc,amount:i.amount}));return r
+ }
+ return C(e[t])
+}
+function docDiagnosis(e,t){
+ if(["sick","attendance","rx","receipt"].includes(t)&&!e[t].showDiagnosis)return "";
+ if(INVS.includes(t)&&T(e[t].indication))return "";return e.diagnosis
+}
+function docData(e,t){
+ return {id:e.id,patientId:e.patientId,created:e.created,updated:e.updated,date:e.date,status:e.status,
+ diagnosis:docDiagnosis(e,t),patient:publicPatient(e.patient,t),masks:{[t]:e.masks[t]},signature:e.signature,timestamp:e.timestamp,[t]:publicContent(e,t)}
+}
+function fingerprint(e,t,s){
+ return {patient:publicPatient(e.patient,t),date:e.date,diagnosis:docDiagnosis(e,t),content:publicContent(e,t),mask:e.masks[t],signature:e.signature,timestamp:e.timestamp,doctor:doctor(s,e.signature)}
+}
+function different(e,t,s=db.settings){
+ const v=effective(e,t);return !!v&&!equal(fingerprint(e,t,s),fingerprint(v.data,t,v.settings))
+}
+function source(){
+ const e=current();
+ if(view?.kind==="document"){const v=e.versions.find(v=>v.id===view.id);assert(v,"找不到版本");return {kind:"document",entry:v,data:v.data,settings:v.settings,savedAt:v.savedAt}}
+ if(view?.kind==="revision"){const r=e.revisions.find(r=>r.id===view.id);assert(r,"找不到快照");return {kind:"revision",entry:r,data:r.data,settings:r.settings,savedAt:r.savedAt}}
+ if(e.status==="completed"){
+  if(tab==="note"&&e.revisions.length){const r=e.revisions.at(-1);return {kind:"revision",entry:r,data:r.data,settings:r.settings,savedAt:r.savedAt}}
+  const v=effective(e,tab);if(v)return {kind:"document",entry:v,data:v.data,settings:v.settings,savedAt:v.savedAt}
+ }
+ return {kind:"live",entry:null,data:e,settings:db.settings,savedAt:e.updated}
+}
+function shortSummary(e,t){
+ if(t==="sick")return `${e.sick.days} 日\n${fmt(e.sick.from)} ${e.sick.fromPeriod} → ${fmt(e.sick.to)} ${e.sick.toPeriod}\n${e.sick.remarks}`;
+ if(t==="attendance")return `${fmt(e.attendance.date)} ${e.attendance.period}\n${e.attendance.remarks}`;
+ if(t==="referral")return [e.referral.target,e.referral.institution,e.referral.to,e.referral.body].filter(Boolean).join("\n");
+ if(t==="rx")return drugs(e).map((i,n)=>`${n+1}. ${i.name} | ${i.dose} | ${i.frequency} | ${i.route} | ${i.duration}`).join("\n")+(T(e.rx.remarks)?"\n"+e.rx.remarks:"");
+ if(t==="receipt")return [e.receipt.no,...items(e).map(i=>i.desc+"：HKD "+cash(i.amount)),"Total HKD "+cash(total(e)/100),"付款方式："+e.receipt.payment,e.receipt.paymentStatus?"收款："+PAYMENT[e.receipt.paymentStatus]:""].filter(Boolean).join("\n");
+ return [e[t].centre,...e[t].items.map(i=>i.name+(T(i.details)?" — "+i.details:""))].filter(Boolean).join("\n")
+}
+function summary(e,s=db.settings){
+ return DOCS.map(t=>{
+  const v=effective(e,t);return {type:t,issued:v?{id:v.id,savedAt:v.savedAt,text:shortSummary(v.data,t)}:null,
+   draft:(v?different(e,t,s):e.used[t])?{text:shortSummary(e,t)}:null,
+   legacyCount:e.versions.filter(v=>v.type===t&&v.state==="legacy").length,hadVoid:e.versions.some(v=>v.type===t&&v.state==="void")}
+ })
+}
+function allergy(p){
+ return p.allergyStatus==="none"?"無已知藥物敏感 / No known drug allergies":
+ p.allergyStatus==="known"?"有藥物敏感 / Known drug allergies\n"+(T(p.allergyDetails)||"詳情未記錄"):
+ "未確認／未記錄 / Not confirmed or not recorded"
+}
+
+/* 表單 */
+function fid(p){return "f-"+p.replaceAll(".","-")}
+function field(label,p,type="text",readonly=false){
+ return `<div class="field"><label for="${fid(p)}">${E(label)}</label><input id="${fid(p)}" type="${E(type)}" data-path="${E(p)}" ${readonly?"readonly":""} ${type==="number"?'min="0" step="0.01"':""}></div>`
+}
+function area(label,p){return `<div class="field"><label for="${fid(p)}">${E(label)}</label><textarea id="${fid(p)}" data-path="${E(p)}"></textarea></div>`}
+function select(label,p,options){return `<div class="field"><label for="${fid(p)}">${E(label)}</label><select id="${fid(p)}" data-path="${E(p)}">${Object.entries(options).map(([v,n])=>`<option value="${E(v)}">${E(n)}</option>`).join("")}</select></div>`}
+function check(label,p){return `<label class="check"><input type="checkbox" data-path="${E(p)}"><span>${E(label)}</span></label>`}
+function fill(root,e){root.querySelectorAll("[data-path]").forEach(i=>{const v=get(e,i.dataset.path);if(i.type==="checkbox")i.checked=!!v;else i.value=v??""})}
+function financialLocked(e){return e.receipt.paymentStatus==="paid"||!!effective(e,"receipt")}
+function formDocument(e){
+ let h="",t=tab,live=!view&&current().status==="draft";
+ if(t==="note"){
+  h="<h3>診症紀錄 SOAP</h3>"+area("Chief Complaint & History 主訴及病史","soap.s")+area("Examination & Investigations 檢查及結果","soap.o")+area("Other Assessment 評估補充","soap.a")+area("Plan 治療計劃","soap.p");
+ }else if(INVS.includes(t)){
+  const r=e[t];h=`<h3>${E(TYPES[t][0])}申請及跟進</h3><p class="small">申請表不印結果、價錢、聯絡及跟進資料。</p>`+
+  field("檢查中心",t+".centre")+area("Clinical indication（留空使用診斷）",t+".indication");
+  if(live){
+   const rows=db.catalogue.filter(c=>c.type===t&&c.enabled);
+   h+=`<label>從目錄加入檢查</label><div class="row"><select id="pickInvestigation"><option value="">請選擇</option>${rows.map(c=>`<option value="${E(c.id)}">${E(c.name)} · ${T(c.price)?"HKD "+cash(c.price):"未定價"} · ${E(BILLING[c.billing])}</option>`).join("")}</select><button data-act="addInvestigation">加入</button></div>`;
+   if(financialLocked(current()))h+='<p class="small">有效／已收款收據的財務內容已鎖定；報告及跟進仍可更新。</p>'
+  }
+  h+=r.items.map((raw,n)=>{
+   const i=followDefaults(raw),p=t+".items."+n,pub=raw.status===undefined;
+   return `<section class="item"><div class="row between"><strong>${n+1}. ${E(i.name)}</strong>${live?`<button data-act="removeInvestigation" data-index="${n}">移除待完成項目</button>`:""}</div>`+
+    area("申請詳情／部位／左右側（對外）",p+".details")+
+    (pub?"":`
+      <p class="small">選取時價錢：${T(i.price)?"HKD "+cash(i.price):"未定價"}</p>
+      <label>收費方式</label><select data-order-billing="${n}">${Object.entries(BILLING).map(([k,v])=>`<option value="${k}" ${i.billing===k?"selected":""}>${E(v)}</option>`).join("")}</select>
+      ${select("實際檢查狀態",p+".status",ISTATE)}
+      <div class="grid">${field("實際檢查日期",p+".performedDate","date")}${field("收報告日期",p+".resultDate","date")}</div>
+      ${area("結果摘要（內部）",p+".result")}
+      <p class="small">覆核：${i.reviewed?"已覆核 · "+E(i.reviewedBy||"舊版未記錄")+" · "+E(stamp(i.reviewedAt)):"未覆核"}</p>
+      <div class="grid">${field("預計跟進日期",p+".due","date")}${field("負責人（自行填報）",p+".owner")}</div>
+      ${area("下一步安排",p+".next")}
+      ${check("已聯絡病人",p+".contacted")}
+      ${area("聯絡摘要（避免不必要敏感資料）",p+".contactNote")}
+      <p class="small">聯絡記錄時間：${E(stamp(i.contactAt))}<br>結案：${i.closed?E(i.closureReason)+" · "+E(i.closedBy)+" · "+E(stamp(i.closedAt)):"未結案"}</p>
+      ${live?`<div class="row"><button data-act="reviewOrder" data-index="${n}">${i.reviewed?"取消報告覆核":"記錄報告覆核"}</button><button data-act="closeOrder" data-index="${n}">${i.closed?"重新開啟跟進":"結案"}</button></div>`:""}
+    `)+"</section>"
+  }).join("");
+  if(!r.items.length)h+='<p class="small" style="margin-top:12px">未選擇檢查。</p>';
+  h+=area("申請表其他備註",t+".remarks");
+ }else{
+  h=`<h3>${E(TYPES[t][0])}資料</h3>`+(live?check("本次需要此文件","used."+t):"");
+  if(t==="referral")h+=field("轉介對象／醫生","referral.target")+field("機構／專科","referral.institution")+area("收件人／地址","referral.to")+field("稱呼","referral.salutation")+area("轉介正文","referral.body");
+  if(t==="sick")h+=field("日數（0.5 日為單位）","sick.days","number")+`<div class="grid">${field("開始日期","sick.from","date")}${select("開始時段","sick.fromPeriod",{AM:"上午 AM",PM:"下午 PM"})}${field("結束日期","sick.to","date")}${select("結束時段","sick.toPeriod",{AM:"上午 AM",PM:"下午 PM"})}</div>`+check("顯示診斷","sick.showDiagnosis")+area("備註","sick.remarks");
+  if(t==="attendance")h+=field("到診日期","attendance.date","date")+select("到診時段","attendance.period",{AM:"上午 AM",PM:"下午 PM"})+check("顯示診斷","attendance.showDiagnosis")+area("備註","attendance.remarks");
+  if(t==="receipt"){
+   const locked=financialLocked(current());
+   h+=field("收據編號","receipt.no", "text",locked)+field("付款方式","receipt.payment","text",locked)+select("收款狀態（內部）","receipt.paymentStatus",PAYMENT)+check("顯示診斷","receipt.showDiagnosis");
+   if(locked)h+='<div class="notice">財務內容已鎖定。未收款修訂請先作廢有效收據；已收款退款／補收請使用獨立財務流程，本版不提供沖銷。</div>';
+   h+=e.receipt.items.map((i,n)=>`<section class="item ${i.investigationId?"linked":""}"><strong>${i.investigationId?"檢查連動":"收費項目"} ${n+1}</strong>`+
+    field("項目",`receipt.items.${n}.desc`,"text",locked||!!i.investigationId)+field("HKD",`receipt.items.${n}.amount`,"number",locked||!!i.investigationId)+
+    (live&&!locked&&!i.investigationId?`<button data-act="removeItem" data-list="receipt" data-index="${n}">移除</button>`:"")+"</section>").join("");
+   if(live&&!locked)h+='<button data-act="addItem" data-list="receipt">＋ 收費項目</button>';
+   h+=`<p style="margin-top:12px"><strong>合計 HKD ${cash(total(e)/100)}</strong></p>`+area("收據備註","receipt.remarks");
+  }
+  if(t==="rx"){
+   h+=check("顯示診斷","rx.showDiagnosis");
+   h+=e.rx.items.map((i,n)=>`<section class="item"><strong>藥物 ${n+1}</strong>`+
+    field("Medication name & strength 藥名及強度",`rx.items.${n}.name`)+
+    `<div class="grid">${field("Dose 劑量",`rx.items.${n}.dose`)}${field("Frequency 頻次",`rx.items.${n}.frequency`)}${field("Route 途徑",`rx.items.${n}.route`)}${field("Duration / Qty 療程／數量",`rx.items.${n}.duration`)}</div>`+
+    (live?`<button data-act="removeItem" data-list="rx" data-index="${n}">移除</button>`:"")+"</section>").join("");
+   if(live)h+='<button data-act="addItem" data-list="rx">＋ 藥物</button>';
+   h+=area("Instructions / Remarks 注意事項","rx.remarks")
+  }
+ }
+ return h
+}
+function renderTabs(){
+ if(!db)return;
+ const e=current();$("tabs").innerHTML=Object.entries(TYPES).map(([t,n])=>{
+  const v=effective(e,t),label=t==="note"?(e.status==="completed"?"已完成":"草稿"):v?(different(e,t)&&e.status==="draft"?"有修改":"有效版本"):e.used[t]?"草稿":"未製作";
+  return `<button data-act="tab" data-type="${t}" class="${t===tab?"active":""}" ${busy||view?"disabled":""}>${E(n[0])}<small>${E(label)}</small></button>`
+ }).join("")
+}
+function banner(){
+ if(!db)return;const s=source(),e=s.data,p=master();
+ $("patientHeading").textContent=pname(e.patient)||"未填病人";
+ $("patientBanner").textContent=[
+  p?.mrn||"",mask(e.patient.hkid),e.date,current().status==="completed"?"已完成":"未完成",
+  "本次快照："+allergy(e.patient),
+  s.kind==="document"?"":"敏感覆核："+(e.allergyReviewed?"已覆核":"未記錄"),
+  p&&!equal(p.data,current().patient)?"主檔與本次資料不同；不會自動互相覆蓋。":""
+ ].filter(Boolean).join("\n")
+}
+function render(){
+ if(!db)return;
+ const s=source(),e=s.data;
+ $("sessionLabel").textContent="v"+VERSION+" · 單人本機版 · 操作人："+actor+"（自行填報）";
+ renderTabs();banner();
+ $("contactFields").innerHTML=CONTACTS.map(k=>field(({phone:"電話",email:"電郵",address:"地址",contact1Name:"聯絡人 1 姓名",contact1Phone:"聯絡人 1 電話",contact2Name:"聯絡人 2 姓名",contact2Phone:"聯絡人 2 電話"})[k],"patient."+k)).join("");
+ $("allergyFields").innerHTML=select("藥物敏感狀態","patient.allergyStatus",ALLERGY)+area("敏感藥物及反應","patient.allergyDetails")+check("本次已覆核上述敏感紀錄","allergyReviewed")+'<p class="small">系統不進行敏感藥物、交互作用或劑量核對。</p>';
+ $("clinicalFields").innerHTML="<h3>本次診症</h3>"+field("文件／診症日期","date","date")+area("Diagnosis 診斷","diagnosis");
+ $("documentFields").innerHTML=formDocument(e);
+ $("outputFields").innerHTML="<h3>輸出選項</h3>"+select("本頁證件顯示","masks."+tab,{full:"完整",partial:"部分遮蔽"})+
+  (tab==="note"?"":select("簽署方式","signature",{manual:"留空手簽",image:"圖片簽名（列印前再確認密碼）"})+check("顯示文件版本時間","timestamp"));
+ fill($("editorFields"),e);$("editorFields").disabled=!editable();
+ $("returnBtn").classList.toggle("hidden",!view);
+ $("completeBtn").textContent=current().status==="completed"?"重新開啟診症":"完成診症";
+ $("printDone").classList.toggle("hidden",!printing);
+ preview();updateButtons();backupLabel()
+}
+function updateButtons(){
+ if(!db)return;
+ $("app").querySelectorAll("button[data-act]").forEach(b=>{
+  const a=b.dataset.act;
+  b.disabled=busy||printing;
+  if(a==="printDone")b.disabled=!printing;
+  if(a==="identity"||a==="publishMaster")b.disabled=!editable();
+  if(["new","complete","batch","print","save","catalogue","templates","publishMaster"].includes(a)&&conflict)b.disabled=true;
+  if(a==="complete"&&(view||conflict))b.disabled=true;
+  if(a==="batch"&&view)b.disabled=true;
+ });
+ $("editorFields").disabled=!editable();
+ if(busy)$("modalBody").querySelectorAll("button,input,select,textarea").forEach(x=>x.disabled=true);
+ else $("modalBody").querySelectorAll("[data-temporary-disabled]").forEach(x=>x.disabled=false)
+}
+function backupLabel(){
+ $("backupState").textContent="啟動匯出："+stamp(db.meta.lastExport)+
+  " · 確認還原："+stamp(db.meta.lastRestore?.at)
+}
+
+/* 文件排版 */
+function section(label,value){return `<section class="section"><h2>${E(label)}</h2><div class="txt">${E(T(value)?value:"未填寫")}</div></section>`}
+function optional(label,value){return T(value)?section(label,value):""}
+function diagnosis(e){return optional("Diagnosis / 診斷",e.diagnosis)}
+function head(s){return `<header class="letterhead"><div><div class="doctor">${E(s.nameCn)}</div><div class="doctor">${E(s.nameEn)}</div></div><div class="qual">${E(s.qualCn)}</div><div class="qual">${E(s.qualEn)}</div></header><div class="contact">${E(s.address)}\nTel: ${E(s.phone)} | Email: ${E(s.email)}</div>`}
+function patientBox(e,t){
+ const a=age(e.patient.dob,e.date);
+ return `<section class="patient"><div class="patientgrid"><strong>Patient / 病人：</strong><span class="full">${E(pname(e.patient)||"—")}</span><strong>Date of Birth：</strong><span>${E(fmt(e.patient.dob))}${a!==""?" · "+a+" years":""}</span><strong>Gender：</strong><span>${E(e.patient.sex||"—")}</span><strong>HKID / ID：</strong><span>${E(mask(e.patient.hkid,e.masks[t]))}</span><strong>Date：</strong><span>${E(fmt(e.date))}</span></div></section>`
+}
+function signature(e,s){
+ const src=e.signature==="image"?image(s.signature):"";
+ return `<section class="signature"><div class="space">${src?`<img src="${src}" alt="醫生圖片簽名">`:""}</div><div class="line"><strong>${E(s.nameCn)}<br>${E(s.nameEn)}</strong>${T(s.reg)?"<br>Reg. No. 註冊編號："+E(s.reg):""}</div></section>`
+}
+function table(headers,rows,widths=[]){
+ return `<table>${widths.length?"<colgroup>"+widths.map(w=>`<col style="width:${w}%">`).join("")+"</colgroup>":""}<thead><tr>${headers.map(h=>"<th>"+E(h)+"</th>").join("")}</tr></thead><tbody>${rows.map(r=>"<tr>"+r.map(c=>"<td>"+E(c)+"</td>").join("")+"</tr>").join("")}</tbody></table>`
+}
+function summaryHTML(rows){
+ const valid=rows.filter(x=>x.issued),drafts=rows.filter(x=>x.draft);
+ return `<section class="section"><h2>Documents saved 已保存有效文件（不等於已交付）</h2>${valid.length?valid.map(x=>`<div class="sub"><h3>${E(TYPES[x.type][0])}</h3><div class="txt">版本時間：${E(stamp(x.issued.savedAt))}\n${E(x.issued.text)}</div></div>`).join(""):"未記錄有效文件。"}</section>`+
+ (drafts.length?`<section class="section"><h2>未出具／有修改草稿</h2>${drafts.map(x=>`<div class="sub"><h3>${E(TYPES[x.type][0])}・草稿</h3><div class="txt">${E(x.draft.text)}</div></div>`).join("")}</section>`:"")
+}
+function noteBody(e,s){
+ const sections=[
+  ["Chief Complaint & History 主訴及病史",e.soap.s],
+  ["Examination & Investigations 檢查及結果",e.soap.o],
+  ["Diagnosis 診斷",e.diagnosis],["Other Assessment 評估補充",e.soap.a],["Plan 治療計劃",e.soap.p]
+ ];
+ let h=sections.map(([k,v])=>section(k,v)).join("")+section("Drug Allergies 藥物敏感",allergy(e.patient)+"\n本次覆核："+(e.allergyReviewed?"已覆核":"未記錄"));
+ for(const t of INVS)if(e[t]?.items.length){
+  h+=section(TYPES[t][0]+"及結果",e[t].items.map(i=>[
+   i.name,i.details,ISTATE[i.status],i.performedDate?"檢查日期："+fmt(i.performedDate):"",
+   i.resultDate?"報告日期："+fmt(i.resultDate):"",i.result,
+   "報告覆核："+(i.reviewed?"已覆核":"未覆核"),
+   i.reviewedBy?"覆核人："+i.reviewedBy:"",i.due?"跟進日期："+fmt(i.due):"",
+   i.owner?"負責人："+i.owner:"",i.next?"安排："+i.next:"",
+   i.contacted?"已記錄聯絡病人："+stamp(i.contactAt):"",i.contactNote,
+   i.closed?"結案："+i.closureReason:""
+  ].filter(Boolean).join("\n")).join("\n\n"))
+ }
+ return h+summaryHTML(s.kind==="revision"?s.entry.summary:summary(e,s.settings))+
+  `<footer class="footer">記錄醫生：${E(s.settings.nameCn)} / ${E(s.settings.nameEn)}<br>${s.kind==="revision"?"完成快照":"修改"}時間：${E(stamp(s.savedAt))}</footer>`
+}
+function docBody(e,t){
+ if(t==="referral")return `<div class="recipient">${E(T(e.referral.to)||[e.referral.target,e.referral.institution].filter(Boolean).join("\n"))}</div><p>${E(e.referral.salutation)}</p>`+diagnosis(e)+`<div class="txt">${E(e.referral.body)}</div>`;
+ if(t==="sick"){
+  const s=e.sick,period=p=>p==="AM"?"上午":"下午";
+  return `<div class="recipient">致有關人士：\nTo Whom It May Concern,</div><p>茲證明上述病人經診症後獲建議休假，詳情如下。</p><p>This is to certify that the above-named patient has been advised to take sick leave as detailed below.</p>`+
+  (s.showDiagnosis?diagnosis(e):"")+
+  `<section class="leave"><div><strong>病假日數 / Days</strong><span>${E(s.days)} 日 / day(s)</span></div><div><strong>由 / From</strong><span>${E(cnDate(s.from))}${period(s.fromPeriod)}</span><span>${E(fmt(s.from))} · ${E(s.fromPeriod)}</span></div><div><strong>至（包括）/ To (inclusive)</strong><span>${E(cnDate(s.to))}${period(s.toPeriod)}</span><span>${E(fmt(s.to))} · ${E(s.toPeriod)}</span></div></section>`+optional("Remarks / 備註",s.remarks)
+ }
+ if(t==="attendance"){
+  const a=e.attendance;
+  return `<div class="recipient">致有關人士：\nTo Whom It May Concern,</div><p>茲證明上述病人已於 ${E(cnDate(a.date))}${a.period==="AM"?"上午":"下午"} 到本處診治。</p><p>This is to certify that the above-named patient attended this practice on <strong>${E(fmt(a.date))} (${E(a.period)})</strong>.</p>`+(a.showDiagnosis?diagnosis(e):"")+optional("Remarks / 備註",a.remarks)
+ }
+ if(t==="receipt")return `<p>Receipt No. <strong>${E(e.receipt.no)}</strong></p>`+
+  (e.receipt.showDiagnosis?diagnosis(e):"")+
+  table(["Description\n收費項目","Amount (HKD)\n金額（港元）"],items(e).map(i=>[i.desc,"$"+cash(i.amount)]),[72,28])+
+  `<div class="total">Total / 總額 (HKD)　$${cash(total(e)/100)}</div><p style="margin-top:5mm">Payment Method 支付方式：${E(e.receipt.payment)}</p>`+optional("Remarks / 備註",e.receipt.remarks);
+ if(t==="rx")return `<div class="allergy"><strong>Drug Allergies / 藥物敏感</strong>\n${E(allergy(e.patient))}</div>`+
+  (e.rx.showDiagnosis?diagnosis(e):"")+
+  table(["Medication\n藥物","Dose\n劑量","Frequency\n頻次","Route\n途徑","Duration / Qty\n療程／數量"],drugs(e).map((i,n)=>[(n+1)+". "+i.name,i.dose,i.frequency,i.route,i.duration]),[35,14,19,13,19])+
+  optional("Instructions / Remarks 注意事項／備註",e.rx.remarks)+`<div class="end">—— End of Prescription 處方完 ——</div>`;
+ const r=e[t];return `<div class="recipient">To / 致：${E(T(r.centre)||"Investigation Centre / 檢查中心")}</div>`+
+ optional("Clinical Indication / 臨床資料",T(r.indication)||e.diagnosis)+
+ table(["No.","Requested Investigation\n申請檢查","Details\n詳情"],r.items.map((i,n)=>[n+1,i.name,i.details]),[8,47,45])+optional("Additional Information / 其他備註",r.remarks)
+}
+function page(t,s){
+ const e=s.data;let mark="";
+ if(t==="note")mark=s.kind==="revision"?"已完成診症紀錄／完成時快照 · "+stamp(s.savedAt):
+  e.status==="completed"?"舊版完成紀錄，沒有當時完成快照；不代表原始完成版本":"草稿／未完成 · DRAFT / NOT COMPLETED";
+ else if(s.kind!=="document")mark="草稿預覽 · DRAFT · 正式輸出請使用系統列印按鈕";
+ else if(s.entry.state!=="issued")mark="歷史存檔副本 · "+VSTATE[s.entry.state]+" · 非目前有效文件"+(s.entry.voidReason?"\n作廢原因："+s.entry.voidReason:"");
+ return head(s.settings)+`<div class="title">${E(TYPES[t][1])}<br>${E(TYPES[t][2])}</div>`+
+  (mark?`<div class="state">${E(mark)}</div>`:"")+patientBox(e,t)+
+  (t==="note"?noteBody(e,s):docBody(e,t)+signature(e,s.settings)+(e.timestamp?`<footer class="footer">Document Version 文件版本：${E(stamp(s.savedAt))}</footer>`:""))
+}
+function preview(){
+ if(!db)return;const s=source();
+ $("previewTitle").textContent=TYPES[tab][0]+" · "+(pname(s.data.patient)||"未填病人");
+ $("workflow").textContent=conflict?"另一頁已更新，停止寫入。請先備份。":
+ view?"歷史快照唯讀；重印不代表原件仍有效或已交付。":
+ current().status==="completed"?"已完成。修改或補入報告前請重新開啟；舊完成快照保留。":
+ tab==="note"?"診症草稿自動加密儲存；完成診症才建立完成快照。":
+ effective(current(),tab)?different(current(),tab)?"與有效版本不同；列印前需記錄修訂原因並保存新版本。":"與有效版本相同；列印重用有效版本。":
+ "列印前保存有效版本；取消列印不撤銷版本，也不自動確認交付。";
+ $("paper").innerHTML=page(tab,s);requestAnimationFrame(scale)
+}
+function scale(){
+ const p=$("paper"),w=p.offsetWidth;if(!w)return;
+ const n=$("zoom").value,s=n==="fit"?Math.min(1,Math.max(.1,($("paperViewport").clientWidth-4)/w)):Number(n);
+ p.style.transform=`scale(${s})`;$("paperScale").style.width=w*s+"px";$("paperScale").style.height=p.offsetHeight*s+"px"
+}
+
+/* 驗證及日期 */
+function half(d,p){return dateOK(d)&&["AM","PM"].includes(p)?Date.parse(d+"T00:00:00Z")/86400000*2+(p==="PM"?1:0):NaN}
+function updateSick(path){
+ const s=current().sick;
+ if(["sick.from","sick.fromPeriod","sick.days"].includes(path)){
+  const start=half(s.from,s.fromPeriod),days=Number(s.days);
+  if(Number.isFinite(start)&&days>=.5&&days<=3660&&Number.isInteger(days*2)){
+   const end=start+days*2-1;s.to=new Date(Math.floor(end/2)*86400000).toISOString().slice(0,10);s.toPeriod=end%2===0?"AM":"PM"
+  }
+ }else if(["sick.to","sick.toPeriod"].includes(path)){
+  const n=(half(s.to,s.toPeriod)-half(s.from,s.fromPeriod)+1)/2;if(Number.isFinite(n)&&n>=.5)s.days=S(n)
+ }
+ for(const k of ["days","to","toPeriod"]){const i=$(fid("sick."+k));if(i&&i!==document.activeElement)i.value=s[k]}
+}
+function warnings(e,t="note",settings=db.settings){
+ const errors=[];
+ if(!pname(e.patient))errors.push("請填寫病人姓名");
+ if(!dateOK(e.date))errors.push("文件／診症日期無效");
+ if(e.patient.dob&&(!dateOK(e.patient.dob)||e.patient.dob>e.date))errors.push("出生日期無效或遲於診症日期");
+ if(e.patient.allergyStatus==="known"&&!T(e.patient.allergyDetails))errors.push("有藥物敏感但未填寫詳情");
+ if(e.patient.allergyStatus&&e.patient.allergyStatus!=="known"&&T(e.patient.allergyDetails))errors.push("敏感狀態與已有詳情不一致");
+ if(t==="note")return errors;
+ if(e.signature==="image"&&!image(settings.signature))errors.push("缺少有效簽名圖片");
+ if(t==="referral"&&(!T(e.referral.body)||!T(e.referral.target+e.referral.institution+e.referral.to)))errors.push("轉介對象／機構／收件人及正文未完整填寫");
+ if(t==="sick"){
+  const n=(half(e.sick.to,e.sick.toPeriod)-half(e.sick.from,e.sick.fromPeriod)+1)/2;
+  if(!Number.isFinite(n)||n<.5||n>3660||n!==Number(e.sick.days))errors.push("病假日期、時段與日數不一致")
+ }
+ if(t==="attendance"&&!dateOK(e.attendance.date))errors.push("到診日期無效");
+ if(t==="receipt"){
+  if(!T(e.receipt.no)||!T(e.receipt.payment)||!items(e).length)errors.push("收據編號、付款方式或收費項目未填寫");
+  if(items(e).some(i=>!T(i.desc)||!Number.isFinite(cents(i.amount)))||!Number.isSafeInteger(total(e)))errors.push("收費項目名稱／金額無效")
+ }
+ if(t==="rx"){
+  if(!T(settings.reg))errors.push("請先在設定填寫醫生註冊編號");
+  if(!drugs(e).length||drugs(e).some(i=>["name","dose","frequency","route","duration"].some(k=>!T(i[k]))))errors.push("處方藥名、劑量、頻次、途徑及療程／數量須完整")
+ }
+ if(INVS.includes(t)&&!e[t].items.length)errors.push("未選擇檢查");
+ return errors
+}
+function showErrors(errors){
+ $("validation").classList.toggle("hidden",!errors.length);
+ $("validation").textContent=errors.length?"請先處理：\n• "+errors.join("\n• "):"";
+ if(errors.length)$("validation").scrollIntoView({block:"nearest"});
+ return errors.length>0
+}
+function duplicatePatients(data,exclude){
+ return db.patients.filter(p=>p.id!==exclude&&(
+  T(data.hkid)&&normID(data.hkid)===normID(p.data.hkid)||
+  pname(data)&&pname(data).toLowerCase()===pname(p.data).toLowerCase()
+ ))
+}
+
+/* 病人身份、主檔與時間線 */
+function identityModal(){
+ assert(editable(),"請先開啟未完成診症");
+ const p=current().patient;
+ showModal("編輯本次身份（原子式保存）",`
+ <div class="notice">只用於更正同一病人的身份。不要把診症改成另一個人。舊文件及完成快照不會改寫。</div>
+ <div class="grid" style="margin-top:15px">${IDFIELDS.map(k=>`<div class="field"><label>${E(({surname:"英文姓氏",given:"英文名字",cn:"中文姓名",hkid:"HKID／證件",dob:"出生日期",sex:"性別（例如 Female / Male）"})[k])}</label><input data-idfield="${k}" type="${k==="dob"?"date":"text"}" value="${E(p[k])}"></div>`).join("")}</div>
+ <label>更正／首次填寫原因（必填）</label><textarea id="identityReason"></textarea>
+ <button data-act="saveIdentity" class="primary" style="margin-top:12px">保存本次身份</button>`,"identity")
+}
+async function saveIdentity(){
+ const before=C(current().patient),after=C(before);
+ $("modalBody").querySelectorAll("[data-idfield]").forEach(i=>after[i.dataset.idfield]=i.value);
+ const reason=T($("identityReason").value);assert(reason,"請填寫原因");assert(pname(after),"請填寫姓名");
+ if(after.dob)assert(dateOK(after.dob),"出生日期無效");
+ const dup=duplicatePatients(after,current().patientId);
+ if(dup.length&&!confirm("發現可能重複病人："+dup.map(p=>p.mrn).join("、")+"\n不會自動合併。請核對是否應使用既有主檔。仍保存此身份？"))return;
+ await run(async()=>{
+  await commit(d=>{
+   const e=d.encounters.find(e=>e.id===selected);assert(e.status==="draft","診症已完成");
+   e.patient=after;e.updated=now();e.identityChanges.push({at:now(),actor,sessionId,reason,before:Object.fromEntries(IDFIELDS.map(k=>[k,before[k]])),after:Object.fromEntries(IDFIELDS.map(k=>[k,after[k]]))});
+   audit(e,"保存身份更正","詳情存於身份更正紀錄；已出具文件未改寫")
+  });
+  $("modal").close()
+ })
+}
+async function publishMaster(){
+ assert(editable(),"請先開啟未完成診症");const e=current(),p=master();
+ assert(pname(e.patient),"請先填寫姓名");
+ const reason=prompt("更新病人主檔原因（必填）：\n不會改寫其他診症、文件或完成快照。");if(!T(reason))return;
+ const dup=duplicatePatients(e.patient,e.patientId);
+ if(dup.length&&!confirm("可能重複主檔："+dup.map(p=>p.mrn).join("、")+"\n不會合併，仍更新？"))return;
+ if(equal(p.data,e.patient)){alert("主檔與本次資料相同。");return}
+ await run(()=>commit(d=>{
+  const e=d.encounters.find(e=>e.id===selected),p=d.patients.find(p=>p.id===e.patientId);
+  p.changes.push({at:now(),actor,sessionId,reason:T(reason),before:C(p.data),after:C(e.patient)});
+  p.data=C(e.patient);p.updated=now();audit(e,"更新病人主檔","原因及前後資料存於主檔更正紀錄")
+ }))
+}
+function patientsModal(query=""){
+ const q=T(query).toLowerCase();
+ const list=db.patients.filter(p=>[p.mrn,pname(p.data),normID(p.data.hkid),p.data.phone].join(" ").toLowerCase().includes(q));
+ showModal("病人主檔及診症時間線",`
+ <label>搜尋病歷編號、姓名、證件或電話</label><input id="patientSearch" value="${E(query)}">
+ <p class="small">主檔是目前資料；診症內保存本次快照。只沿用既有 patientId，不按姓名或證件自動合併。</p>
+ <div id="patientResults">${list.slice(0,100).map(p=>{
+  const es=db.encounters.filter(e=>e.patientId===p.id).sort((a,b)=>b.date.localeCompare(a.date));
+  return `<section class="item"><strong>${E(p.mrn)} · ${E(pname(p.data)||"未命名")}</strong><p class="small">${E(mask(p.data.hkid))} · ${E(p.data.phone)}</p>
+   <div class="row"><button data-act="newForPatient" data-patient="${E(p.id)}">用此主檔建立新診症</button><button data-act="masterHistory" data-patient="${E(p.id)}">主檔及更正紀錄</button></div>
+   <details style="margin-top:12px"><summary>診症時間線（${es.length}）</summary>${es.map(e=>`<div class="item"><strong>${E(e.date)}</strong> · ${e.status==="completed"?"已完成":"草稿"}<p class="small">${E(e.diagnosis)}</p><button data-act="open" data-id="${E(e.id)}">開啟本次快照</button></div>`).join("")}</details></section>`
+ }).join("")||"沒有紀錄。"}</div><p class="small">最多顯示 100 個主檔；請縮窄搜尋。</p>`,"patients")
+}
+function masterHistory(id){
+ const p=db.patients.find(p=>p.id===id);assert(p,"主檔不存在");
+ showModal(p.mrn+" · 主檔及更正紀錄",`<h3>目前主檔</h3><pre>${E(JSON.stringify(p.data,null,2))}</pre><h3>更正紀錄（包含敏感前後資料，非防竄改審計）</h3>${p.changes.slice().reverse().map(c=>`<section class="item"><strong>${E(stamp(c.at))} · ${E(c.actor)}</strong><p>${E(c.reason)}</p>${diffTable(c.before,c.after)}</section>`).join("")||"未有更正紀錄。"}`,"masterHistory")
+}
+async function newEncounter(pid=null){
+ if(!confirm(pid?"用目前主檔建立新診症？敏感覆核會重設。":"建立全新病人的診症？如為舊病人，請改用病人主檔。"))return;
+ await run(async()=>{
+  let id;await commit(d=>{id=addEncounter(d,pid).id});
+  selected=id;db.currentId=id;tab="note";view=null;$("modal").close();showErrors([])
+ });
+ if(!pid)identityModal()
+}
+async function openEncounter(id,v=null,t="note"){
+ await run(async()=>{await save();assert(db.encounters.some(e=>e.id===id),"找不到診症");selected=id;db.currentId=id;view=v;tab=t;$("modal").close();showErrors([])})
+}
+async function complete(){
+ assert(!view&&!conflict,"目前不能完成／重開");
+ const e=current();
+ if(e.status==="completed"){
+  const reason=prompt("重新開啟診症原因（必填）：");if(!T(reason))return;
+  await run(()=>commit(d=>{const e=d.encounters.find(e=>e.id===selected);e.status="draft";e.updated=now();audit(e,"重新開啟診症",T(reason))}));return
+ }
+ if(showErrors(warnings(e)))return;
+ const missing=["s","o","a","p"].filter(k=>!T(e.soap[k])&&!(k==="a"&&T(e.diagnosis)));
+ const drafts=summary(e).filter(x=>x.draft).map(x=>TYPES[x.type][0]);
+ if(!confirm("保存完成快照並完成診症？\n\n"+
+  (missing.length?"未填 SOAP："+missing.join("、")+"\n":"")+
+  (drafts.length?"未出具／有修改草稿："+drafts.join("、")+"；不會自動出具。\n":"")+
+  (!e.allergyReviewed?"本次未記錄敏感覆核。\n":"")+"檢查跟進不會因完成診症而自動結案。"))return;
+ await run(async()=>{
+  await commit(d=>{
+   const e=d.encounters.find(e=>e.id===selected),s=summary(e,d.settings);
+   e.status="completed";e.updated=now();
+   e.revisions.push({id:uid(),savedAt:e.updated,actor,sessionId,data:core(e),settings:doctor(d.settings,"manual"),summary:s});
+   audit(e,"完成診症","保存第 "+e.revisions.length+" 個完成快照")
+  });tab="note";view=null
+ })
+}
+
+/* 差異／歷史 */
+function flatten(x,p="",out={}){
+ if(p.endsWith("signature")&&typeof x==="string"){out[p]=x?"[圖片簽名資料]":"";return out}
+ if(Array.isArray(x)){if(!x.length)out[p]="[]";else x.forEach((v,i)=>flatten(v,p+"["+i+"]",out))}
+ else if(O(x)){for(const [k,v]of Object.entries(x))flatten(v,p?p+"."+k:k,out)}
+ else out[p]=S(x);
+ return out
+}
+function diffTable(a,b){
+ const x=flatten(a),y=flatten(b),keys=[...new Set([...Object.keys(x),...Object.keys(y)])].filter(k=>x[k]!==y[k]);
+ return keys.length?`<div class="scrolltable"><table class="ui"><thead><tr><th>欄位</th><th>之前</th><th>之後</th></tr></thead><tbody>${keys.map(k=>`<tr><td>${E(k)}</td><td class="diffOld">${E(x[k]??"（不存在）")}</td><td class="diffNew">${E(y[k]??"（不存在）")}</td></tr>`).join("")}</tbody></table></div>`:"<p>沒有文字／結構差異。</p>"
+}
+function compareModal(){
+ const e=current();
+ if(tab==="note"){
+  const revisions=e.revisions;
+  if(!revisions.length){alert("尚未有完成快照。");return}
+  const r=view?.kind==="revision"?revisions.find(r=>r.id===view.id):revisions.at(-1);
+  showModal("SOAP／診症與完成快照比較",`<p class="small">之前：${E(stamp(r.savedAt))} 完成快照；之後：目前診症資料。圖片內容不在文字差異中展示。</p>`+diffTable(r.data,core(e)),"diff");return
+ }
+ const v=view?.kind==="document"?e.versions.find(v=>v.id===view.id):effective(e,tab);
+ if(!v){alert("尚未有可比較版本。");return}
+ showModal("文件版本與目前草稿比較",`<p class="small">之前：${E(stamp(v.savedAt))}；之後：目前草稿。圖片簽名只顯示有／無；實際是否改變會另行核對。</p>`+
+ diffTable(fingerprint(v.data,tab,v.settings),fingerprint(e,tab,db.settings))+
+ (!equal(v.settings.signature,doctor(db.settings,e.signature).signature)?"<p>圖片簽名資料不同。</p>":""),"diff")
+}
+function historyModal(query=""){
+ const q=T(query).toLowerCase(),list=db.encounters.filter(e=>[master(e)?.mrn,pname(e.patient),e.patient.hkid,e.date,e.diagnosis,...Object.values(e.soap)].join(" ").toLowerCase().includes(q));
+ showModal("診症、版本及操作紀錄",`<label>搜尋姓名、病歷編號、日期、診斷或 SOAP</label><input id="historySearch" value="${E(query)}"><p class="small">有效版本不等於已交付。身份前後資料另存於更正紀錄。以下最多顯示 80 次診症。</p>`+
+ list.slice(0,80).map(e=>`<section class="item"><strong>${E(e.date)} · ${E(pname(e.patient)||"未命名")} · ${E(master(e)?.mrn)}</strong><p class="small">${e.status==="completed"?"已完成":"草稿"} · ${E(e.diagnosis)}</p>
+ <button data-act="open" data-id="${E(e.id)}">開啟診症</button>
+ <details style="margin-top:10px"><summary>完成快照（${e.revisions.length}）</summary>${e.revisions.slice().reverse().map(r=>`<div class="item"><button data-act="revision" data-id="${E(e.id)}" data-version="${E(r.id)}">${E(stamp(r.savedAt))}</button> <small>${E(r.actor||"舊版未記錄")}</small></div>`).join("")}</details>
+ <details><summary>文件版本（${e.versions.length}）</summary>${e.versions.slice().reverse().map(v=>`<section class="item"><strong>${E(TYPES[v.type][0])} · ${E(VSTATE[v.state])}</strong><p class="small">${E(stamp(v.savedAt))} · ${E(v.actor||"舊版未記錄")}<br>修訂原因：${E(v.reason||"未另記錄")}<br>作廢原因：${E(v.voidReason||"—")}</p>
+ <div class="row"><button data-act="version" data-id="${E(e.id)}" data-version="${E(v.id)}">查看／重印</button>
+ ${v.state==="issued"?`<button data-act="void" data-id="${E(e.id)}" data-version="${E(v.id)}" class="danger">作廢</button><button data-act="deliver" data-id="${E(e.id)}" data-version="${E(v.id)}">記錄交付</button>`:""}
+ ${v.state==="legacy"?`<button data-act="adopt" data-id="${E(e.id)}" data-version="${E(v.id)}">確認舊版有效</button>`:""}</div>
+ ${(v.deliveries||[]).map(x=>`<p class="small">自行確認交付：${E(stamp(x.at))} · ${E(x.actor)} · ${E(x.method)} · ${E(x.note)}</p>`).join("")}</section>`).join("")}</details>
+ <details><summary>本次身份更正（${e.identityChanges.length}）</summary>${e.identityChanges.slice().reverse().map(c=>`<section class="item"><p>${E(stamp(c.at))} · ${E(c.actor)} · ${E(c.reason)}</p>${diffTable(c.before,c.after)}</section>`).join("")}</details>
+ <details><summary>操作紀錄（非防竄改審計）</summary>${e.audit.slice().reverse().map(a=>`<p class="small">${E(stamp(a.at))} · ${E(a.actor||"舊版未記錄")} · ${E(a.action)} · ${E(a.reason)}</p>`).join("")}</details></section>`).join(""),"history")
+}
+async function versionAction(eid,vid,action){
+ const original=db.encounters.find(e=>e.id===eid),v=original?.versions.find(v=>v.id===vid);assert(v,"找不到版本");
+ if(action==="deliver"){
+  assert(v.state==="issued","不能將非有效版本記作目前交付");
+  const method=prompt("交付方式（例如：親身、郵寄、受保護傳送）：");if(!T(method))return;
+  const note=prompt("交付備註（避免不必要身份資料；留空亦可）：");if(note===null)return;
+  if(!confirm("這是你自行確認已交付，而非瀏覽器自動判斷。確定記錄？"))return;
+  await run(()=>commit(d=>{const e=d.encounters.find(e=>e.id===eid),v=e.versions.find(v=>v.id===vid);assert(v.state==="issued","版本狀態已改變");v.deliveries??=[];v.deliveries.push({at:now(),actor,sessionId,method:T(method),note:T(note)});audit(e,"自行確認文件交付",T(method),vid)}));
+ }else{
+  assert(original.status==="draft","請先開啟並重新開啟該診症");
+  const reason=prompt(action==="void"?"作廢原因（必填；不會恢復上一版）：":"現在確認舊版有效的原因（必填；不代表知道當時交付狀態）：");if(!T(reason))return;
+  if(action==="adopt"){assert(v.state==="legacy","不是待確認舊版");const w=warnings(v.data,v.type,v.settings);assert(!w.length,w.join("\n"))}
+  await run(()=>commit(d=>{
+   const e=d.encounters.find(e=>e.id===eid),v=e.versions.find(v=>v.id===vid);
+   if(action==="void"){assert(v.state==="issued","版本已非有效");v.state="void";v.voidReason=T(reason);v.voidAt=now();e.used[v.type]=false}
+   else{const old=effective(e,v.type);if(old){old.state="superseded";old.replacedBy=v.id}v.state="issued";v.confirmedAt=now()}
+   audit(e,action==="void"?"作廢文件":"確認舊版有效",T(reason),vid)
+  }))
+ }
+ historyModal()
+}
+
+/* 檢查與跟進 */
+function orders(e){return INVS.flatMap(t=>e[t].items.map(i=>({type:t,item:i})))}
+function charges(e){
+ return orders(e).filter(x=>x.item.billing==="clinic").map(({type,item:i})=>{
+  assert(Number.isFinite(cents(i.price)),"檢查缺少價錢："+i.name);
+  return {desc:(type==="lab"?"LAB: ":"Imaging: ")+i.name,amount:(cents(i.price)/100).toFixed(2),investigationId:i.id,investigationType:type}
+ })
+}
+function syncCharges(e){
+ const before=e.receipt.items.filter(i=>i.investigationId),after=charges(e);
+ assert(equal(before,after)||!financialLocked(e),"收據已出具或已收款，不能修改自動收費；未收款請先作廢有效收據");
+ if(!equal(before,after)){e.receipt.items=[...e.receipt.items.filter(i=>!i.investigationId),...after];e.used.receipt=items(e).length>0}
+}
+async function addInvestigation(){
+ assert(editable()&&INVS.includes(tab),"目前不能加入檢查");
+ const id=$("pickInvestigation").value,c=db.catalogue.find(c=>c.id===id&&c.type===tab&&c.enabled);assert(c,"請選擇有效檢查");
+ assert(!current()[tab].items.some(i=>i.catalogueId===id),"此檢查已加入");
+ assert(c.billing!=="clinic"||Number.isFinite(cents(c.price)),"請先在目錄填寫診所收費價錢；免費填 0");
+ const type=tab;
+ await run(()=>commit(d=>{
+  const e=d.encounters.find(e=>e.id===selected);
+  e[type].items.push(followDefaults({id:uid(),catalogueId:c.id,name:c.name,price:c.price,billing:c.billing,details:"",status:"ordered",result:"",performedDate:"",resultDate:"",statusUpdatedAt:now(),reviewed:false,reviewedAt:""}));
+  syncCharges(e);e.used[type]=true;e.updated=now();audit(e,"加入檢查","項目 ID 已保留於申請紀錄")
+ }))
+}
+async function removeInvestigation(n){
+ const i=current()[tab].items[n];assert(i,"找不到檢查");
+ assert(i.status==="ordered"&&!T(i.result)&&!i.performedDate&&!i.resultDate&&!i.reviewed&&!i.contacted&&!i.closed,"已有完成／報告／聯絡等紀錄，不能直接移除");
+ if(!confirm("移除待完成檢查「"+i.name+"」？\n已出具申請表不會自動撤回，請另行通知機構。"))return;
+ const t=tab;
+ await run(()=>commit(d=>{const e=d.encounters.find(e=>e.id===selected);e[t].items.splice(n,1);syncCharges(e);e.used[t]=e[t].items.length>0;e.updated=now();audit(e,"移除待完成檢查","檢查 ID："+i.id)}))
+}
+async function orderBilling(n,value){
+ const t=tab;
+ await run(()=>commit(d=>{const e=d.encounters.find(e=>e.id===selected),i=e[t].items[n];choice(value,Object.keys(BILLING),"收費方式");i.billing=value;syncCharges(e);e.updated=now();audit(e,"更改檢查收費","檢查 ID："+i.id)}))
+}
+async function reviewOrder(n){
+ assert(editable(),"請先重開診症");const t=tab,i=current()[t].items[n];assert(i,"檢查不存在");
+ if(!i.reviewed)assert(i.status==="results","請先標記已收到報告");
+ const reason=prompt(i.reviewed?"取消覆核原因（必填）：":"覆核／下一步安排摘要（必填；不會自動結案）：");if(!T(reason))return;
+ await run(()=>commit(d=>{
+  const e=d.encounters.find(e=>e.id===selected),i=e[t].items[n];
+  i.reviewed=!i.reviewed;i.reviewedAt=i.reviewed?now():"";i.reviewedBy=i.reviewed?actor:"";
+  if(!i.reviewed){i.closed=false;i.closedAt="";i.closedBy="";i.closureReason=""}
+  else i.next=T(reason);
+  audit(e,i.reviewed?"記錄報告覆核":"取消報告覆核","檢查 ID："+i.id+"；詳細安排存於檢查紀錄");e.updated=now()
+ }))
+}
+async function closeOrder(n){
+ assert(editable(),"請先重開診症");const t=tab,i=current()[t].items[n];
+ if(!i.closed)assert(i.status==="results"&&i.reviewed,"結案前須收到並覆核報告");
+ const reason=prompt(i.closed?"重新開啟跟進原因（必填）：":"結案原因／已完成安排（必填）：");if(!T(reason))return;
+ await run(()=>commit(d=>{
+  const e=d.encounters.find(e=>e.id===selected),i=e[t].items[n];i.closed=!i.closed;
+  i.closedAt=i.closed?now():"";i.closedBy=i.closed?actor:"";i.closureReason=i.closed?T(reason):"";
+  audit(e,i.closed?"檢查跟進結案":"重新開啟檢查跟進","檢查 ID："+i.id+"；"+(i.closed?"原因存於檢查紀錄":T(reason)));e.updated=now()
+ }))
+}
+function followupModal(){
+ const rows=db.encounters.flatMap(e=>orders(e).filter(x=>!x.item.closed).map(x=>({e,...x}))).sort((a,b)=>(a.item.due||"9999").localeCompare(b.item.due||"9999"));
+ showModal("檢查跟進工作台",`<div class="notice">收到報告、完成覆核及跟進結案是三個不同狀態。清單不自動判斷報告正常與否，也不發送提醒或訊息。</div>`+
+ rows.map(({e,type,item:i})=>`<section class="item"><strong>${E(pname(e.patient))} · ${E(i.name)}</strong>
+ <p class="small">${E(master(e)?.mrn)} · 診症 ${E(e.date)} · ${E(ISTATE[i.status])}<br>
+ 預計跟進：${E(i.due||"未設定")}${i.due&&i.due<today()?" · 日期已過（非臨床優先級）":""}<br>
+ 負責人：${E(i.owner||"未設定")} · ${i.reviewed?"已覆核":"未覆核"} · ${i.contacted?"已記錄聯絡":"未記錄聯絡"}</p>
+ <pre>${E(i.next||"未設定下一步安排")}</pre>
+ <button data-act="openOrder" data-id="${E(e.id)}" data-type="${type}">開啟檢查／跟進</button></section>`).join("")+
+(!rows.length?"<p>目前沒有未結案檢查。</p>":""),"followups")
+}
+
+/* 檢查目錄 */
+function catalogueModal(){
+ catDraft=C(db.catalogue);
+ drawCatalogue()
+}
+function drawCatalogue(){
+ showModal("檢查目錄",`
+ <div class="notice">
+修改目錄只影響之後加入的項目，不會回寫既有診症的名稱或價錢。
+停用可保留既有紀錄；此頁不提供永久刪除。
+ </div>
+ <div class="row" style="margin-top:12px">
+  <button data-act="catAdd" data-type="lab">＋ 化驗</button>
+  <button data-act="catAdd" data-type="imaging">＋ 影像</button>
+  <button data-act="catSave" class="primary">保存目錄</button>
+ </div>
+ ${catDraft.map((c,n)=>`
+ <section class="item">
+  <strong>${E(TYPES[c.type][0])} ${n+1}</strong>
+  <div class="field">
+   <label>檢查名稱</label>
+   <input data-catfield="name" data-index="${n}" value="${E(c.name)}">
+  </div>
+  <div class="grid">
+   <div class="field">
+    <label>HKD（中心直接收費可留空）</label>
+    <input data-catfield="price" data-index="${n}"
+     inputmode="decimal" value="${E(c.price)}">
+   </div>
+   <div class="field">
+    <label>預設收費方式</label>
+    <select data-catfield="billing" data-index="${n}">
+     ${Object.entries(BILLING).map(([k,v])=>
+      `<option value="${k}" ${c.billing===k?"selected":""}>${E(v)}</option>`
+     ).join("")}
+    </select>
+   </div>
+  </div>
+  <label class="check">
+   <input type="checkbox" data-catfield="enabled" data-index="${n}"
+    ${c.enabled?"checked":""}>
+   <span>啟用</span>
+  </label>
+ </section>`).join("")}
+ `,"catalogue")
+}
+async function saveCatalogue(){
+ const list=C(catDraft);
+ for(const c of list){
+  c.name=T(c.name);c.price=T(c.price);
+  assert(c.name,"每個檢查均須填寫名稱");
+  choice(c.billing,Object.keys(BILLING),"收費方式");
+  assert(!c.price||Number.isFinite(cents(c.price)),"價錢格式無效");
+  assert(c.billing!=="clinic"||Number.isFinite(cents(c.price)),
+   "診所收費須有價錢；免費請填 0")
+ }
+ await run(()=>commit(d=>{d.catalogue=list}));
+ catalogueModal()
+}
+
+/* 可編輯範本：不自動套用臨床事實 */
+function templatesModal(){
+ showModal("範本",`
+ <div class="notice">
+範本只供整理結構。套用前須逐項核對，不代表已詢問、已檢查或已確認。
+不會自動套用「檢查正常」或「無藥物敏感」。
+ </div>
+ <div class="row" style="margin-top:12px">
+  <button data-act="templateNew" data-type="note">＋ SOAP 範本</button>
+  <button data-act="templateNew" data-type="referral">＋ 轉介範本</button>
+  <button data-act="templateNew" data-type="receipt">＋ 收費組合</button>
+ </div>
+ ${db.templates.map(t=>`
+ <section class="item">
+  <strong>${E(t.name)}</strong>
+  <p class="small">${E(TYPES[t.type][0])}</p>
+  <div class="row">
+   <button data-act="templateEdit" data-template="${E(t.id)}">編輯</button>
+   <button data-act="templateApply" data-template="${E(t.id)}">套用本次診症</button>
+   <button data-act="templateDelete" data-template="${E(t.id)}"
+    class="danger">刪除</button>
+  </div>
+ </section>`).join("")||"<p style='margin-top:15px'>尚未建立範本。</p>"}
+ `,"templates")
+}
+function templateEditor(id=null,type="note"){
+ const existing=id?db.templates.find(t=>t.id===id):null;
+ if(id)assert(existing,"找不到範本");
+ templateDraft=existing?C(existing):{
+  id:uid(),name:"",type,
+  content:type==="note"?{s:"",o:"",a:"",p:""}:
+   type==="referral"?{body:""}:{items:[]}
+ };
+ const t=templateDraft;
+ showModal(existing?"編輯範本":"新增範本",`
+ <div class="field">
+  <label>範本名稱</label>
+  <input id="templateName" value="${E(t.name)}">
+ </div>
+ ${t.type==="note"?["s","o","a","p"].map(k=>`
+ <div class="field">
+  <label>SOAP ${k.toUpperCase()}</label>
+  <textarea data-templatefield="${k}">${E(t.content[k])}</textarea>
+ </div>`).join(""):
+ t.type==="referral"?`
+ <div class="field">
+  <label>轉介正文範本</label>
+  <textarea class="large" data-templatefield="body">${E(t.content.body)}</textarea>
+ </div>`:`
+ <div class="notice">每行一個項目，格式：項目名稱 | 金額，例如：診金 | 500</div>
+ <textarea id="templateCharges" class="large" style="margin-top:12px">${
+  E(t.content.items.map(i=>i.desc+" | "+i.amount).join("\n"))
+ }</textarea>`}
+ <button data-act="templateSave" class="primary">保存範本</button>
+ `,"templateEditor")
+}
+async function saveTemplate(){
+ assert(templateDraft,"沒有正在編輯的範本");
+ const t=C(templateDraft);t.name=T($("templateName").value);
+ assert(t.name,"請填寫範本名稱");
+ if(t.type==="receipt"){
+  const lines=$("templateCharges").value.split(/\r?\n/).map(T).filter(Boolean);
+  assert(lines.length,"請至少填寫一個收費項目");
+  t.content.items=lines.map(line=>{
+   const at=line.lastIndexOf("|");
+   assert(at>0,"收費格式須為：項目名稱 | 金額");
+   const desc=T(line.slice(0,at)),amount=T(line.slice(at+1));
+   assert(desc&&Number.isFinite(cents(amount)),"收費名稱或金額無效");
+   return {desc,amount:(cents(amount)/100).toFixed(2)}
+  })
+ }else{
+  $("modalBody").querySelectorAll("[data-templatefield]").forEach(i=>{
+   t.content[i.dataset.templatefield]=i.value
+  })
+ }
+ await run(()=>commit(d=>{
+  const n=d.templates.findIndex(x=>x.id===t.id);
+  if(n<0)d.templates.push(t);else d.templates[n]=t
+ }));
+ templateDraft=null;templatesModal()
+}
+async function applyTemplate(id){
+ assert(editable(),"請先開啟未完成診症");
+ const t=db.templates.find(t=>t.id===id);assert(t,"找不到範本");
+ if(t.type==="receipt")assert(!financialLocked(current()),"收據財務內容已鎖定");
+ if(!confirm(
+  t.type==="receipt"?
+  "將此收費組合附加至目前項目？請核對是否重複收費。":
+  "將範本附加至目前文字？請自行核對每一項內容。"
+ ))return;
+ await run(()=>commit(d=>{
+  const e=d.encounters.find(e=>e.id===selected);
+  const append=(a,b)=>[T(a)?a:"",T(b)?b:""].filter(Boolean).join("\n\n");
+  if(t.type==="note"){
+   for(const k of ["s","o","a","p"])e.soap[k]=append(e.soap[k],t.content[k])
+  }else if(t.type==="referral"){
+   e.referral.body=append(e.referral.body,t.content.body);e.used.referral=true
+  }else{
+   e.receipt.items.push(...C(t.content.items));e.used.receipt=true
+  }
+  e.updated=now();audit(e,"套用範本",t.name)
+ }));
+ $("modal").close()
+}
+async function deleteTemplate(id){
+ const t=db.templates.find(t=>t.id===id);assert(t,"找不到範本");
+ if(!confirm("刪除範本「"+t.name+"」？已套用的診症不受影響。"))return;
+ await run(()=>commit(d=>{d.templates=d.templates.filter(t=>t.id!==id)}));
+ templatesModal()
+}
+
+/* 設定及圖片簽名 */
+function settingsModal(){
+ signatureDraft=image(db.settings.signature);
+ const s=db.settings;
+ showModal("工作區設定",`
+ <div class="notice">
+醫生身份及註冊編號須由使用者核實。
+圖片簽名只是可複製的圖片，不是數碼簽署。
+改設定不會改寫既有文件版本及完成快照。
+ </div>
+ <div style="margin-top:15px">
+ ${[
+  ["nameCn","醫生中文姓名"],["nameEn","醫生英文姓名"],
+  ["phone","電話"],["email","電郵"],["reg","醫生註冊編號"]
+ ].map(([k,label])=>`
+  <div class="field"><label>${E(label)}</label>
+   <input data-setting="${k}" value="${E(s[k])}">
+  </div>`).join("")}
+ ${[
+  ["qualCn","中文資歷"],["qualEn","英文資歷"],["address","診所地址"]
+ ].map(([k,label])=>`
+  <div class="field"><label>${E(label)}</label>
+   <textarea data-setting="${k}">${E(s[k])}</textarea>
+  </div>`).join("")}
+ <div class="field">
+  <label>閒置鎖定分鐘（1–120）</label>
+  <input data-setting="idleMinutes" type="number" min="1" max="120"
+   step="1" value="${s.idleMinutes}">
+ </div>
+ <label class="check">
+  <input data-setting="timestamp" type="checkbox" ${s.timestamp?"checked":""}>
+  <span>新診症預設顯示文件版本時間</span>
+ </label>
+ <h3 style="margin-top:18px">新診症預設證件顯示</h3>
+ <div class="grid">
+ ${Object.entries(TYPES).map(([t,n])=>`
+  <div class="field">
+   <label>${E(n[0])}</label>
+   <select data-setting-mask="${t}">
+    <option value="full" ${s.masks[t]==="full"?"selected":""}>完整</option>
+    <option value="partial" ${s.masks[t]==="partial"?"selected":""}>部分遮蔽</option>
+   </select>
+  </div>`).join("")}
+ </div>
+ <h3>圖片簽名</h3>
+ <div id="signaturePreview">${
+  signatureDraft?`<img class="signatureThumb" src="${signatureDraft}" alt="簽名預覽">`:
+  "<p class='small'>未設定圖片簽名。</p>"
+ }</div>
+ <input id="signatureFile" type="file" accept="image/png,image/jpeg">
+ <button data-act="signatureClear" style="margin-top:8px">移除圖片簽名</button>
+ <hr>
+ <button data-act="settingsSave" class="primary">保存設定</button>
+ </div>
+ `,"settings")
+}
+function fileDataURL(file){
+ return new Promise((resolve,reject)=>{
+  const r=new FileReader();
+  r.onload=()=>resolve(S(r.result));
+  r.onerror=()=>reject(new Error("圖片讀取失敗"));
+  r.readAsDataURL(file)
+ })
+}
+async function loadSignature(file){
+ assert(file&&["image/png","image/jpeg"].includes(file.type),"只接受 PNG／JPEG");
+ assert(file.size<=3*1024*1024,"圖片不可超過 3 MB");
+ const url=await fileDataURL(file);
+ const img=await new Promise((resolve,reject)=>{
+  const i=new Image();i.onload=()=>resolve(i);
+  i.onerror=()=>reject(new Error("圖片不能解碼"));i.src=url
+ });
+ assert(img.naturalWidth>0&&img.naturalHeight>0,"圖片尺寸無效");
+ assert(img.naturalWidth*img.naturalHeight<=12000000,"圖片像素過大");
+ const ratio=Math.min(1,1200/img.naturalWidth,500/img.naturalHeight);
+ const canvas=document.createElement("canvas");
+ canvas.width=Math.max(1,Math.round(img.naturalWidth*ratio));
+ canvas.height=Math.max(1,Math.round(img.naturalHeight*ratio));
+ const ctx=canvas.getContext("2d");assert(ctx,"無法處理圖片");
+ ctx.drawImage(img,0,0,canvas.width,canvas.height);
+ const result=canvas.toDataURL("image/png");
+ assert(image(result),"處理後圖片過大");
+ signatureDraft=result;
+ if($("signaturePreview")){
+  $("signaturePreview").innerHTML=
+   `<img class="signatureThumb" src="${result}" alt="簽名預覽">`
+ }
+}
+async function saveSettings(){
+ const s=C(db.settings);
+ $("modalBody").querySelectorAll("[data-setting]").forEach(i=>{
+  const k=i.dataset.setting;
+  s[k]=i.type==="checkbox"?i.checked:k==="idleMinutes"?Number(i.value):i.value
+ });
+ $("modalBody").querySelectorAll("[data-setting-mask]").forEach(i=>{
+  s.masks[i.dataset.settingMask]=i.value
+ });
+ s.signature=signatureDraft;
+ checkSettings(s);
+ assert(T(s.nameCn)||T(s.nameEn),"請填寫醫生姓名");
+ if(!equal(s.signature,db.settings.signature)){
+  if(!await reauth())return
+ }
+ await run(()=>commit(d=>{
+  d.settings=s;
+  d.meta.security.push({
+   at:now(),actor,sessionId,action:"修改工作區設定",
+   signatureChanged:!equal(db.settings.signature,s.signature)
+  })
+ }));
+ signatureDraft="";$("modal").close()
+}
+
+/* 備份：另外設定備份密碼，不把密碼寫入檔案 */
+function counts(d){
+ return {
+  patients:d.patients.length,
+  encounters:d.encounters.length,
+  versions:d.encounters.reduce((n,e)=>n+e.versions.length,0),
+  revisions:d.encounters.reduce((n,e)=>n+e.revisions.length,0),
+  investigations:d.encounters.reduce((n,e)=>n+orders(e).length,0),
+  catalogue:d.catalogue.length,
+  templates:d.templates.length
+ }
+}
+function countsHTML(d){
+ const labels={
+  patients:"病人主檔",encounters:"診症",versions:"文件版本",
+  revisions:"完成快照",investigations:"檢查項目",
+  catalogue:"檢查目錄",templates:"範本"
+ };
+ return `<table class="ui"><tbody>${
+  Object.entries(counts(d)).map(([k,n])=>
+   `<tr><th>${E(labels[k])}</th><td>${n}</td></tr>`
+  ).join("")
+ }</tbody></table>`
+}
+function backupModal(){
+ showModal("加密備份及還原",`
+ <div class="notice">
+「啟動匯出」只表示已要求瀏覽器下載，不能證明檔案已保存。
+請自行確認下載檔案、保存於受保護位置，並在獨立測試環境還原核對。
+備份密碼遺失無法重設。
+ </div>
+ <p class="small">
+ 啟動匯出：${E(stamp(db.meta.lastExport))}<br>
+ 確認還原：${E(stamp(db.meta.lastRestore?.at))}
+ </p>
+ ${countsHTML(db)}
+ <div class="row" style="margin-top:15px">
+  <button data-act="export" class="primary">建立加密備份</button>
+  <button data-act="rawExport">匯出已儲存密文原件</button>
+  <button data-act="import">選取備份／v4 JSON</button>
+ </div>
+ <p class="small" style="margin-top:12px">
+密文原件使用當時工作區密碼，只包含成功儲存的狀態，
+不包含本頁尚未儲存的修改。發生分頁衝突時，請優先建立「加密備份」
+以保留本頁記憶體中的資料。
+ </p>
+ <div class="notice">
+還原是整個工作區取代，不是病人合併。
+會先顯示預覽，再要求確認；不會在選檔後立即取代資料。
+舊版明文備份不會因匯入而自動從電腦刪除。
+ </div>
+ `,"backup")
+}
+async function exportBackup(){
+ const password=await secret(
+  "設定此份備份的密碼",true,
+  "最少 12 字元；可與工作區不同。請安全保存，遺失無法重設。"
+ );
+ if(password===null)return;
+ await run(async()=>{
+  if(!conflict)await save();
+  const snapshot=C(db);
+  snapshot.currentId=selected;
+  checkDB(snapshot);
+  const exportedAt=now();
+  const payload={
+   format:"ray-clinic-backup",
+   version:1,appVersion:VERSION,createdAt:exportedAt,
+   data:snapshot,digest:await hash(snapshot)
+  };
+  const backupSalt=b64(crypto.getRandomValues(new Uint8Array(16)));
+  const key=await derive(password,backupSalt);
+  const envelope=await seal(payload,key,backupSalt,"backup");
+  download(envelope,filename("clinic-v5-encrypted-backup"));
+  if(!conflict){
+   await commit(d=>{d.meta.lastExport=exportedAt})
+  }
+  message(
+   "已啟動加密備份下載。請自行確認檔案已保存；"+
+   "此狀態不代表已完成還原驗證。"
+  )
+ })
+}
+async function exportRaw(){
+ const record=await readRecord(idb);
+ assert(record?.envelope,"本機未有成功儲存的密文");
+ checkEnvelope(record.envelope,"vault");
+ download(record.envelope,filename("clinic-v5-vault-original"));
+ if(db)message("已啟動密文原件下載；使用該原件儲存時的工作區密碼。");
+ else $("gateMessage").textContent="已啟動密文原件下載。請自行確認檔案已保存。"
+}
+function chooseBackup(){
+ assert(!busy&&!printing,"請等待目前操作完成");
+ pending=null;$("backupFile").value="";$("backupFile").click()
+}
+async function decodeBackupFile(file){
+ assert(file&&file.size>0,"檔案為空");
+ assert(file.size<=MAXFILE,"檔案超過 50 MB；本版不接受");
+ let raw=parse(await file.text());
+ let encrypted=false,kind="明文 JSON",originCreated="";
+ if(O(raw)&&O(raw.envelope)&&raw.envelope.format==="ray-clinic-encrypted"){
+  raw=raw.envelope
+ }
+ if(raw?.format==="ray-clinic-encrypted"){
+  checkEnvelope(raw);
+  assert(["vault","backup"].includes(raw.purpose),"不能匯入演練密文");
+  const password=await secret(
+   raw.purpose==="vault"?"輸入原工作區密碼":"輸入此備份的密碼",
+   false,"解密只用於預覽，不會立即取代工作區。"
+  );
+  if(password===null)return null;
+  const key=await derive(password,raw.salt);
+  raw=await unseal(raw,key);
+  encrypted=true;kind="已驗證加密檔案"
+ }
+ let data;
+ if(raw?.format==="ray-clinic-backup"){
+  assert(raw.version===1&&O(raw.data),"備份格式不支援");
+  assert(typeof raw.digest==="string","備份缺少摘要");
+  assert(await hash(raw.data)===raw.digest,"備份摘要不符；停止匯入");
+  originCreated=S(raw.createdAt);data=raw.data
+ }else if(O(raw)&&[4,5].includes(raw.schema)){
+  data=raw
+ }else{
+  throw new Error("不是支援的 v4／v5 資料或加密備份")
+ }
+ const originalSchema=data.schema;
+ const migrated=migrate(data);
+ return {
+  data:migrated,
+  filename:file.name,
+  kind,encrypted,originalSchema,
+  originCreated,
+  digest:await hash(migrated)
+ }
+}
+async function stageBackup(file){
+ if(!db){
+  const record=await readRecord(idb);
+  assert(!record,
+   "既有工作區不能在未解鎖狀態被取代。請先解鎖，或改用另一個空白瀏覽器設定檔。")
+ }
+ const result=await decodeBackupFile(file);
+ if(!result)return;
+ pending=result;
+ showModal("還原預覽：尚未修改工作區",`
+ <p><strong>檔案：</strong>${E(result.filename)}</p>
+ <p class="small">
+ 類別：${E(result.kind)}<br>
+ 原資料版本：v${result.originalSchema}<br>
+ 原備份時間：${E(stamp(result.originCreated))}
+ </p>
+ ${countsHTML(result.data)}
+ <p class="small">資料摘要：<br>${E(result.digest)}</p>
+ <div class="notice">
+結構及解密驗證不代表病歷內容正確。
+請在還原後逐項核對 SOAP、身份、文件版本、完成快照、檢查結果及收費。
+${result.encrypted?"":"此原檔是明文；匯入不會刪除原檔。"}
+ </div>
+ <div class="row" style="margin-top:15px">
+  <button data-act="restoreConfirm" class="primary">${
+   db?"確認取代目前已解鎖工作區":"準備在空白工作區還原"
+  }</button>
+  <button data-act="restoreCancel">取消並清除預覽</button>
+ </div>
+ `,"restorePreview")
+}
+async function confirmRestore(){
+ assert(pending,"沒有等待還原的資料");
+ assert(!conflict,"目前有分頁衝突；請先匯出本頁備份，重新載入後再還原");
+ if(!db){
+  const record=await readRecord(idb);
+  assert(!record,"本機已有工作區，不能從鎖定畫面取代");
+  $("modal").close();
+  newVault=true;$("createConfirm").classList.remove("hidden");
+  $("unlockBtn").textContent="建立加密工作區並還原";
+  $("gateMessage").textContent=
+   "備份已解密及通過結構檢查。請填寫操作人，再設定新的工作區密碼並確認。"+
+   "按下建立後才會寫入；備份原密碼不會被沿用。";
+  $("vaultPassword").value="";$("vaultConfirm").value="";
+  $("vaultPassword").autocomplete="new-password";
+  $("vaultPassword").focus();return
+ }
+ const typed=prompt(
+  "這會取代整個目前工作區，不是合併。\n"+
+  "系統會先啟動下載目前已儲存密文原件，"+
+  "但你仍須自行確認已保存。\n\n"+
+  "如確定，請輸入 RESTORE："
+ );
+ if(typed!=="RESTORE")return;
+ if(!await reauth())return;
+ await run(async()=>{
+  await save();
+  await exportRaw();
+  if(!confirm("請確認已保存取代前的密文原件及其密碼。現在繼續還原？"))return;
+  const imported=C(pending.data);
+  const info={
+   at:now(),actor,sessionId,
+   filename:pending.filename,digest:pending.digest,
+   sourceSchema:pending.originalSchema,
+   contentVerified:false
+  };
+  imported.meta.lastRestore=info;
+  imported.meta.checks={};
+  imported.meta.security.push({
+   at:now(),actor,sessionId,action:"整體還原工作區"
+  });
+  if(!imported.encounters.length)addEncounter(imported);
+  const next=imported.encounters.some(e=>e.id===imported.currentId)?
+   imported.currentId:imported.encounters[0].id;
+  imported.currentId=next;checkDB(imported);
+  await persistSnapshot(imported);
+  db=imported;selected=next;view=null;tab="note";
+  dirty++;saved=dirty;pending=null;
+  $("modal").close();
+  message("已還原並加密儲存。內容尚未逐項核對，請先完成驗收。")
+ })
+}
+
+/* 列印及文件版本 */
+function batchModal(){
+ assert(!view,"歷史查看模式不能批量製作");
+ showModal("多份列印",`
+ <div class="notice">
+選取對外文件時，會先保存或重用版本。
+取消瀏覽器列印不會撤銷已保存版本，也不會自動記錄交付。
+ </div>
+ <div style="margin-top:15px">
+ ${Object.entries(TYPES).map(([t,n])=>`
+ <label class="check">
+  <input type="checkbox" data-batch="${t}" ${
+   t==="note"||current().used[t]||effective(current(),t)?"checked":""
+  }>
+  <span>${E(n[0])}</span>
+ </label>`).join("")}
+ </div>
+ <button data-act="batchStart" class="primary">保存需要的版本並開啟列印</button>
+ `,"batch")
+}
+function issuedVersion(e,t,settings,reason){
+ const old=effective(e,t);
+ if(old&&!different(e,t,settings))return old;
+ const savedAt=now();
+ const v={
+  id:uid(),type:t,state:"issued",
+  savedAt,actor,sessionId,reason,
+  data:docData(e,t),settings:doctor(settings,e.signature),
+  deliveries:[]
+ };
+ if(old){old.state="superseded";old.replacedBy=v.id}
+ e.versions.push(v);e.used[t]=true;
+ audit(e,"保存文件版本",reason,v.id);
+ return v
+}
+async function printDocuments(types){
+ assert(!conflict,"有分頁衝突，不能製作或列印文件");
+ assert(Array.isArray(types)&&types.length,"請至少選擇一份文件");
+ unique(types,"列印類別");
+ types.forEach(t=>choice(t,Object.keys(TYPES),"列印類別"));
+ if(view){
+  assert(types.length===1&&types[0]===tab,"歷史模式只可重印目前版本")
+ }
+ let reason="";
+ const e=current();
+ const needsVersion=!view&&e.status==="draft"?
+  types.filter(t=>t!=="note"&&(!effective(e,t)||different(e,t))):[];
+ const allErrors=[];
+ for(const t of types){
+  let data=e,settings=db.settings;
+  if(view){
+   const s=source();data=s.data;settings=s.settings
+  }else if(e.status==="completed"&&t!=="note"){
+   const v=effective(e,t);
+   if(!v){allErrors.push(TYPES[t][0]+"：沒有有效版本，請先重開診症製作");continue}
+   data=v.data;settings=v.settings
+  }else if(e.status==="completed"&&t==="note"&&e.revisions.length){
+   data=e.revisions.at(-1).data
+  }
+  allErrors.push(...warnings(data,t,settings).map(s=>TYPES[t][0]+"："+s))
+ }
+ if(showErrors(allErrors))return;
+ if(needsVersion.length){
+  const revised=needsVersion.filter(t=>effective(e,t));
+  if(revised.length){
+   reason=prompt(
+    "下列文件有修改："+revised.map(t=>TYPES[t][0]).join("、")+
+    "\n修訂原因（必填；會保存新版本，舊版保留）："
+   );
+   if(!T(reason))return
+  }else reason="首次保存文件版本";
+  if(!confirm(
+   "將保存以下文件版本："+needsVersion.map(t=>TYPES[t][0]).join("、")+
+   "\n即使稍後取消列印，版本仍會保留。\n是否繼續？"
+  ))return
+ }
+ if(types.includes("rx")){
+  const p=view?source().data.patient:
+   e.status==="completed"?effective(e,"rx")?.data.patient:e.patient;
+  if(p?.allergyStatus==="unknown"||!p?.allergyStatus){
+   if(!confirm("處方的藥物敏感狀態未確認。請先作臨床核實；仍繼續輸出？"))return
+  }
+ }
+ const usesImage=types.some(t=>{
+  if(t==="note")return false;
+  if(view)return source().data.signature==="image";
+  if(e.status==="completed")return effective(e,t)?.data.signature==="image";
+  return e.signature==="image"
+ });
+ if(usesImage&&!await reauth())return;
+ await run(async()=>{
+  await save();
+  const refs=[];
+  if(needsVersion.length){
+   await commit(d=>{
+    const target=d.encounters.find(x=>x.id===selected);
+    assert(target.status==="draft","診症狀態已改變");
+    for(const t of needsVersion)issuedVersion(target,t,d.settings,T(reason));
+    target.updated=now()
+   })
+  }
+  const target=current();
+  const pages=types.map(t=>{
+   let s;
+   if(view)s=source();
+   else if(t==="note"){
+    if(target.status==="completed"&&target.revisions.length){
+     const r=target.revisions.at(-1);
+     s={kind:"revision",entry:r,data:r.data,settings:r.settings,savedAt:r.savedAt}
+    }else{
+     s={kind:"live",entry:null,data:target,settings:db.settings,savedAt:target.updated}
+    }
+   }else{
+    const v=effective(target,t);assert(v,"文件版本不存在");
+    s={kind:"document",entry:v,data:v.data,settings:v.settings,savedAt:v.savedAt}
+   }
+   if(s.kind==="document")refs.push({type:t,id:s.entry.id});
+   return `<article class="paper">${page(t,s)}</article>`
+  });
+  /* 只記錄要求開啟列印，不推定印出、保存 PDF 或交付成功。 */
+  await commit(d=>{
+   const x=d.encounters.find(x=>x.id===selected);
+   audit(x,"要求開啟列印視窗",
+    types.map(t=>TYPES[t][0]).join("、")+"；不代表成功列印或交付")
+  });
+  lastPrint=refs;
+  $("modal").close();
+  $("printRoot").innerHTML=pages.join("");
+  printing=true;
+  $("printDone").classList.remove("hidden");
+  updateButtons();
+  try{
+   const imgs=[...$("printRoot").querySelectorAll("img")];
+   await Promise.all(imgs.map(i=>i.decode?i.decode().catch(()=>{}):Promise.resolve()));
+   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+   window.print()
+  }catch(error){
+   finishPrinting();throw error
+  }
+ })
+}
+function finishPrinting(){
+ if(!printing)return;
+ printing=false;busy=false;
+ $("printRoot").replaceChildren();
+ if(db){
+  render();
+  message(
+   "列印視窗已關閉；系統不知道你有沒有列印或保存 PDF。"+
+   "如已交付，請到「診症／版本」自行記錄交付。"
+  )
+ }
+}
+window.addEventListener("afterprint",()=>{
+ if(printing)finishPrinting();
+ else $("printRoot").replaceChildren()
+});
+window.addEventListener("beforeprint",()=>{
+ if(!printing){
+  $("printRoot").innerHTML=
+   '<article class="paper"><h2>請使用系統內的「列印／PDF」按鈕</h2>'+
+   '<p>直接使用瀏覽器列印不會製作正式文件版本。</p></article>'
+ }
+});
+
+/* 健康狀態與驗收 */
+function qualityModal(){
+ showModal("儲存健康及驗收",`
+ <div class="notice">
+以下自動檢查只是程式基本檢查，不等同安全審計、臨床驗證或災難復原演練。
+人工驗收須由使用者實際操作；還原檔案後會清除舊環境的驗收勾選。
+ </div>
+ <section class="item">
+  <h3>目前狀態</h3>
+  <p class="small">
+  版本：${E(VERSION)} · Schema ${SCHEMA}<br>
+  本機 revision：${rev}<br>
+  儲存：${dirty===saved?"目前修改已儲存":"仍有修改未儲存"}<br>
+  分頁衝突：${conflict?"有，已停止寫入":"未偵測到"}<br>
+  工作區位置：${E(location.protocol)}<br>
+  操作人：${E(actor)}（自行填報，不是身份驗證）
+  </p>
+  <div id="storageHealth" class="small">正在查詢儲存狀態…</div>
+  <div class="row" style="margin-top:12px">
+   <button data-act="persistent">申請持久儲存</button>
+   <button data-act="selfTest">執行基本自動檢查</button>
+  </div>
+ </section>
+ <section class="item">
+  <h3>自動檢查結果</h3>
+  <div id="selfTestResults">${
+   selfResults.length?selfResults.map(r=>
+    `<p>${r.ok?"✓":"✗"} ${E(r.name)}${r.error?"："+E(r.error):""}</p>`
+   ).join(""):"尚未執行。"
+  }</div>
+ </section>
+ <section class="item">
+  <h3>人工驗收清單</h3>
+  ${CHECKS.map(([k,label])=>{
+   const c=db.meta.checks[k];
+   return `<label class="check">
+    <input type="checkbox" data-quality="${k}" ${c?.ok?"checked":""}>
+    <span>${E(label)}<br><small>${
+     c?.ok?E(stamp(c.at))+" · "+E(c.actor):"未確認"
+    }</small></span>
+   </label>`
+  }).join("")}
+ </section>
+ <section class="item">
+  <h3>還原內容核對</h3>
+  <p class="small">最近還原：${E(stamp(db.meta.lastRestore?.at))}</p>
+  ${db.meta.lastRestore?`
+   <p>${db.meta.lastRestore.contentVerified?
+    "已由使用者自行確認逐項核對。":"尚未記錄內容核對完成。"}</p>
+   <button data-act="restoreVerified">記錄已逐項核對還原內容</button>`:
+   "<p class='small'>此工作區尚未有還原紀錄。</p>"}
+ </section>
+ `,"quality");
+ refreshStorageHealth()
+}
+async function refreshStorageHealth(){
+ const target=$("storageHealth");if(!target)return;
+ try{
+  const estimate=navigator.storage?.estimate?
+   await navigator.storage.estimate():null;
+  const persisted=navigator.storage?.persisted?
+   await navigator.storage.persisted():null;
+  if(!target.isConnected)return;
+  const mb=n=>Number.isFinite(n)?(n/1024/1024).toFixed(1)+" MB":"無法取得";
+  target.textContent=
+   "估算使用量："+mb(estimate?.usage)+
+   "／估算配額："+mb(estimate?.quota)+
+   "\n持久儲存："+(persisted===null?"瀏覽器不支援查詢":persisted?"已獲准":"未獲准")+
+   "\n即使獲准，仍須保留外部備份。";
+  target.style.whiteSpace="pre-wrap"
+ }catch{
+  if(target.isConnected)target.textContent="瀏覽器未能提供儲存配額資料。"
+ }
+}
+async function requestPersistence(){
+ assert(navigator.storage?.persist,"此瀏覽器／開啟方式不支援持久儲存申請");
+ const granted=await navigator.storage.persist();
+ alert(granted?"已獲准持久儲存；仍然需要外部備份。":
+  "未獲准持久儲存。請保留外部備份，不要只依賴瀏覽器。");
+ await refreshStorageHealth()
+}
+async function selfTest(){
+ const results=[];
+ async function test(name,fn){
+  try{await fn();results.push({name,ok:true})}
+  catch(e){results.push({name,ok:false,error:e.message||"失敗"})}
+ }
+ await run(async()=>{
+  await save();
+  await test("目前工作區結構檢查",()=>checkDB(C(db)));
+  await test("金額以整數分計算",()=>{
+   assert(cents("0.10")+cents("0.20")===30,"分幣計算不符");
+   assert(Number.isNaN(cents("-1"))&&Number.isNaN(cents("1.234")),"無效金額未被拒絕")
+  });
+  await test("病假半日時段計算",()=>{
+   assert((half("2026-01-02","AM")-half("2026-01-01","PM")+1)/2===1,
+    "跨日時段計算不符");
+   assert(!dateOK("2026-02-30"),"無效日期未被拒絕")
+  });
+  await test("加密／解密及竄改拒絕（只使用測試文字）",async()=>{
+   const probe={test:"dummy-only",id:uid()};
+   const v=await seal(probe,vaultKey,salt,"drill");
+   assert(equal(await unseal(v,vaultKey,"drill"),probe),"解密不一致");
+   const damaged=C(v),bytes=unb64(damaged.ciphertext);
+   bytes[0]^=1;damaged.ciphertext=b64(bytes);
+   let rejected=false;
+   try{await unseal(damaged,vaultKey,"drill")}catch{rejected=true}
+   assert(rejected,"竄改密文未被拒絕")
+  });
+  await test("IndexedDB revision 衝突保護（獨立測試庫）",async()=>{
+   const name=DBNAME+"-selftest-"+uid();
+   let handle=null;
+   try{
+    handle=await openIDB(name);
+    const envelope=await seal({test:true},vaultKey,salt,"drill");
+    const r=await cas(handle,envelope,0);
+    assert(r===1,"初次 revision 不符");
+    let rejected=false;
+    try{await cas(handle,envelope,0)}
+    catch(e){rejected=e.name==="ConflictError"}
+    assert(rejected,"過期 revision 未被拒絕");
+    assert((await readRecord(handle)).revision===1,"衝突後資料被改寫")
+   }finally{
+    handle?.close();await deleteDB(name)
+   }
+  });
+  await test("公共檢查申請內容不含內部結果及價錢",()=>{
+   const e=encounter(db.settings);
+   e.lab.items=[{
+    name:"TEST ONLY",details:"TEST",
+    price:"123",result:"PRIVATE TEST RESULT",owner:"TEST OWNER"
+   }];
+   const p=publicContent(e,"lab");
+   assert(equal(Object.keys(p.items[0]).sort(),["details","name"]),
+    "對外資料含額外欄位")
+  });
+  selfResults=results
+ });
+ qualityModal()
+}
+async function qualityCheck(key,checked){
+ assert(CHECKS.some(c=>c[0]===key),"未知驗收項目");
+ if(checked&&!confirm("你已親自完成這項測試，並確認結果符合預期？")){
+  qualityModal();return
+ }
+ await run(()=>commit(d=>{
+  d.meta.checks[key]={ok:checked,at:now(),actor,sessionId}
+ }));
+ qualityModal()
+}
+async function restoreVerified(){
+ assert(db.meta.lastRestore,"沒有還原紀錄");
+ if(!confirm(
+  "你已核對還原後的身份、SOAP、版本、完成快照、檢查及收費，"+
+  "並確認與原資料一致？這不是系統自動驗證。"
+ ))return;
+ await run(()=>commit(d=>{
+  d.meta.lastRestore.contentVerified=true;
+  d.meta.lastRestore.verifiedAt=now();
+  d.meta.lastRestore.verifiedBy=actor
+ }));
+ qualityModal()
+}
+
+/* 編輯器輸入 */
+function clearReview(i){
+ i.reviewed=false;i.reviewedAt="";i.reviewedBy="";
+ i.closed=false;i.closedAt="";i.closedBy="";i.closureReason=""
+}
+function editorInput(input){
+ if(!editable()){render();return}
+ const path=input.dataset.path;
+ if(!path)return;
+ const e=current();
+ const previous=get(e,path);
+ let value=input.type==="checkbox"?input.checked:input.value;
+ if(equal(previous,value))return;
+ if(path.startsWith("receipt.")&&financialLocked(e)){
+  if(path!=="receipt.paymentStatus"){
+   fill($("editorFields"),e);
+   throw new Error("收據財務內容已鎖定")
+  }
+  if(e.receipt.paymentStatus==="paid"&&value!=="paid"){
+   fill($("editorFields"),e);
+   throw new Error("不能直接把已收款改回未收款；本版未提供退款／沖銷流程")
+  }
+ }
+ if(path==="receipt.paymentStatus"&&value==="paid"){
+  assert(items(e).length,"未有收費項目");
+  assert(!items(e).some(i=>!T(i.desc)||!Number.isFinite(cents(i.amount))),
+   "請先填妥有效收費項目");
+  if(!confirm("確認已實際收款？確認後財務內容會鎖定。")){
+   fill($("editorFields"),e);return
+  }
+ }
+ const match=path.match(/^(lab|imaging)\.items\.(\d+)\.(.+)$/);
+ let refresh=false;
+ if(match){
+  const [,type,index,key]=match,i=e[type].items[+index];
+  assert(i,"檢查項目不存在");
+  if(["status","result","performedDate","resultDate"].includes(key)&&
+    (i.reviewed||i.closed)){
+   if(!confirm("修改報告相關內容會取消原覆核及結案狀態，須重新覆核。繼續？")){
+    fill($("editorFields"),e);return
+   }
+   clearReview(i);refresh=true;
+   audit(e,"修改報告內容並重設覆核","檢查 ID："+i.id)
+  }
+  if(key==="status"){
+   choice(value,Object.keys(ISTATE),"檢查狀態");
+   i.statusUpdatedAt=now();refresh=true
+  }
+  if(key==="contacted"){
+   i.contactAt=value?now():"";refresh=true;
+   audit(e,value?"記錄已聯絡病人":"取消已聯絡標記","檢查 ID："+i.id)
+  }
+ }
+ if(["patient.allergyStatus","patient.allergyDetails"].includes(path)){
+  e.allergyReviewed=false;e.allergyReviewedAt="";e.allergyReviewedBy=""
+ }
+ if(path==="allergyReviewed"){
+  e.allergyReviewedAt=value?now():"";
+  e.allergyReviewedBy=value?actor:"";
+  audit(e,value?"記錄本次敏感覆核":"取消本次敏感覆核")
+ }
+ put(e,path,value);
+ if(path.startsWith("sick."))updateSick(path);
+ const doc=DOCS.find(t=>path.startsWith(t+"."));
+ if(doc)e.used[doc]=true;
+ if(path==="receipt.paymentStatus")refresh=true;
+ changed();
+ if(refresh)render();
+ else if(["patient.allergyStatus","allergyReviewed"].includes(path)){
+  render()
+ }
+}
+async function addItem(list){
+ assert(editable(),"目前不能編輯");
+ choice(list,["rx","receipt"],"項目類別");
+ if(list==="receipt")assert(!financialLocked(current()),"財務內容已鎖定");
+ await run(()=>commit(d=>{
+  const e=d.encounters.find(e=>e.id===selected);
+  e[list].items.push(list==="rx"?
+   {name:"",dose:"",frequency:"",route:"",duration:""}:
+   {desc:"",amount:""});
+  e.used[list]=true;e.updated=now()
+ }))
+}
+async function removeItem(list,n){
+ assert(editable(),"目前不能編輯");
+ choice(list,["rx","receipt"],"項目類別");
+ const i=current()[list].items[n];assert(i,"項目不存在");
+ if(list==="receipt"){
+  assert(!financialLocked(current()),"財務內容已鎖定");
+  assert(!i.investigationId,"檢查連動收費須從檢查項目處理")
+ }
+ if(!confirm("移除此項目？已保存的舊文件版本不會改寫。"))return;
+ await run(()=>commit(d=>{
+  const e=d.encounters.find(e=>e.id===selected);
+  e[list].items.splice(n,1);e.updated=now()
+ }))
+}
+
+/* 修正按鈕狀態：不永久改寫彈窗欄位的 disabled 屬性 */
+updateButtons=function(){
+ if(!db)return;
+ $("app").querySelectorAll("button[data-act]").forEach(b=>{
+  const a=b.dataset.act;
+  b.disabled=busy||printing;
+  if(a==="printDone")b.disabled=!printing;
+  if(a==="identity"||a==="publishMaster")b.disabled=!editable();
+  if([
+   "new","complete","batch","print","save","catalogue","templates","publishMaster"
+  ].includes(a)&&conflict)b.disabled=true;
+  if(a==="complete"&&(view||conflict))b.disabled=true;
+  if(a==="batch"&&view)b.disabled=true;
+  if(a==="tab"&&view)b.disabled=true
+ });
+ $("editorFields").disabled=!editable();
+ $("modalBody").inert=busy||printing
+};
+
+/* 鎖定：清除應用程式持有的明文引用與畫面。
+   JavaScript 無法保證作業系統／瀏覽器記憶體已被安全覆寫。 */
+async function lockWorkspace(automatic=false){
+ if(!db||busy||printing)return;
+ busy=true;updateButtons();
+ try{
+  if(conflict){
+   message("有分頁衝突，尚未鎖定。請先建立本頁加密備份，再重新載入。",true);
+   return
+  }
+  await save();
+  clearTimeout(timer);clearTimeout(previewTimer);
+  $("modal").close();$("modalBody").replaceChildren();modalMode="";
+  $("printRoot").replaceChildren();
+  [
+   "paper","contactFields","allergyFields","clinicalFields",
+   "documentFields","outputFields","tabs"
+  ].forEach(id=>$(id).replaceChildren());
+  [
+   "patientHeading","patientBanner","previewTitle","workflow",
+   "saveState","backupState","sessionLabel","validation"
+  ].forEach(id=>$(id).textContent="");
+  catDraft=[];templateDraft=null;signatureDraft="";pending=null;
+  selfResults=[];lastPrint=[];view=null;selected="";tab="note";
+  db=null;vaultKey=null;actor="";sessionId="";
+  $("actor").value="";
+  $("vaultPassword").value="";$("vaultConfirm").value="";
+  $("secret1").value="";$("secret2").value="";
+  $("app").classList.add("hidden");$("gate").classList.remove("hidden");
+  const record=await readRecord(idb);
+  startupEnvelope=record?.envelope??null;rev=record?.revision??0;
+  newVault=!record;
+  $("createConfirm").classList.toggle("hidden",!newVault);
+  $("unlockBtn").textContent=newVault?"建立加密工作區":"解鎖";
+  $("vaultPassword").autocomplete=newVault?"new-password":"current-password";
+  $("gateMessage").textContent=automatic?
+   "已因閒置鎖定。請重新輸入操作人及密碼。":"工作區已鎖定。";
+  $("vaultPassword").focus()
+ }catch(e){
+  if(db)message("未能安全完成儲存，因此沒有鎖定："+e.message,true);
+  else $("gateMessage").textContent=e.message
+ }finally{
+  busy=false;
+  if(db)updateButtons()
+ }
+}
+function attachChannel(){
+ try{
+  channel?.close();
+  channel=new BroadcastChannel(DBNAME+"-revision");
+  channel.onmessage=event=>{
+   const r=event.data?.revision;
+   if(!db||!Number.isSafeInteger(r)||r<=rev)return;
+   conflict=true;
+   clearTimeout(timer);
+   message(
+    "另一頁已更新此工作區，這頁已停止寫入。\n"+
+    "請先建立本頁加密備份，再重新載入。不要直接關閉未儲存的頁面。",
+    true
+   );
+   updateButtons();preview()
+  }
+ }catch{channel=null}
+}
+function activateWorkspace(){
+ $("gate").classList.add("hidden");$("app").classList.remove("hidden");
+ $("vaultPassword").value="";$("vaultConfirm").value="";
+ newVault=false;conflict=false;dirty=0;saved=0;
+ selected=db.encounters.some(e=>e.id===db.currentId)?
+  db.currentId:db.encounters[0]?.id;
+ assert(selected,"工作區沒有可開啟的診症");
+ tab="note";view=null;lastActivity=Date.now();
+ attachChannel();
+ message(
+  "本機原型：未經獨立安全或臨床驗證。"+
+  "操作人為自行填報；舊資料及已輸出文件不會自動加密。"
+ );
+ render();status("已解鎖 · 目前資料已加密儲存")
+}
+async function unlockWorkspace(event){
+ event.preventDefault();if(busy)return;
+ busy=true;$("unlockBtn").disabled=true;
+ let password=$("vaultPassword").value;
+ try{
+  const operator=T($("actor").value);
+  assert(operator,"請填寫操作人姓名／代號");
+  assert(password,"請輸入密碼");
+  const record=await readRecord(idb);
+  let candidate,key,nextSalt;
+  actor=operator;sessionId=uid();
+  if(record){
+   assert(!pending,"本機已有工作區，不能從鎖定畫面取代");
+   assert(Number.isSafeInteger(record.revision)&&record.revision>=1,
+    "本機 revision 無效；請先匯出密文原件");
+   checkEnvelope(record.envelope,"vault");
+   nextSalt=record.envelope.salt;
+   $("gateMessage").textContent="正在解密及驗證…";
+   key=await derive(password,nextSalt);
+   candidate=checkDB(await unseal(record.envelope,key,"vault"));
+   assert(candidate.encounters.length,"工作區沒有診症；請保留原件後檢查");
+   rev=record.revision;startupEnvelope=record.envelope
+  }else{
+   assert(password.length>=12,"新密碼最少 12 字元");
+   assert(password===$("vaultConfirm").value,"兩次密碼不相同");
+   nextSalt=b64(crypto.getRandomValues(new Uint8Array(16)));
+   $("gateMessage").textContent="正在建立加密工作區…";
+   key=await derive(password,nextSalt);
+   candidate=pending?C(pending.data):database();
+   if(pending){
+    candidate.meta.lastRestore={
+     at:now(),actor,sessionId,filename:pending.filename,
+     digest:pending.digest,sourceSchema:pending.originalSchema,
+     contentVerified:false
+    };
+    candidate.meta.checks={}
+   }
+   if(!candidate.encounters.length)addEncounter(candidate);
+   candidate.currentId=candidate.encounters.some(e=>e.id===candidate.currentId)?
+    candidate.currentId:candidate.encounters[0].id;
+   checkDB(candidate);
+   vaultKey=key;salt=nextSalt;rev=0;
+   await persistSnapshot(candidate,0,key,nextSalt);
+   pending=null
+  }
+  vaultKey=key;salt=nextSalt;db=candidate;
+  activateWorkspace()
+ }catch(error){
+  if(!db){vaultKey=null;actor="";sessionId=""}
+  $("gateMessage").textContent=error.message||"未能解鎖";
+  $("vaultPassword").value="";$("vaultConfirm").value="";
+  console.error(error?.name||"UnlockError")
+ }finally{
+  password="";busy=false;$("unlockBtn").disabled=false;
+  if(db)updateButtons()
+ }
+}
+
+/* 統一事件處理 */
+async function action(button){
+ const a=button.dataset.act;
+ if(a==="printDone"){finishPrinting();return}
+ if(busy||printing)return;
+ if(a==="restoreCancel"){
+  pending=null;$("modal").close();return
+ }
+ if(a==="restoreConfirm"){await confirmRestore();return}
+ assert(db,"請先解鎖工作區");
+ if(a==="tab"){
+  if(view)return;
+  tab=button.dataset.type;
+  choice(tab,Object.keys(TYPES),"頁籤");
+  showErrors([]);render();return
+ }
+ switch(a){
+  case "new":await newEncounter();break;
+  case "patients":patientsModal();break;
+  case "history":historyModal();break;
+  case "followups":followupModal();break;
+  case "catalogue":catalogueModal();break;
+  case "templates":templatesModal();break;
+  case "settings":settingsModal();break;
+  case "backup":backupModal();break;
+  case "quality":qualityModal();break;
+  case "lock":await lockWorkspace();break;
+  case "identity":identityModal();break;
+  case "saveIdentity":await saveIdentity();break;
+  case "publishMaster":await publishMaster();break;
+  case "save":await run(()=>save());break;
+  case "export":await exportBackup();break;
+  case "rawExport":await exportRaw();break;
+  case "import":chooseBackup();break;
+  case "complete":await complete();break;
+  case "return":view=null;showErrors([]);render();break;
+  case "diff":compareModal();break;
+  case "batch":batchModal();break;
+  case "batchStart":{
+   const selectedTypes=[...$("modalBody").querySelectorAll("[data-batch]:checked")]
+    .map(i=>i.dataset.batch);
+   await printDocuments(selectedTypes);break
+  }
+  case "print":await printDocuments([tab]);break;
+  case "newForPatient":await newEncounter(button.dataset.patient);break;
+  case "masterHistory":masterHistory(button.dataset.patient);break;
+  case "open":await openEncounter(button.dataset.id);break;
+  case "openOrder":await openEncounter(button.dataset.id,null,button.dataset.type);break;
+  case "revision":
+   await openEncounter(button.dataset.id,{
+    kind:"revision",id:button.dataset.version
+   },"note");break;
+  case "version":{
+   const e=db.encounters.find(e=>e.id===button.dataset.id);
+   const v=e?.versions.find(v=>v.id===button.dataset.version);
+   assert(v,"找不到文件版本");
+   await openEncounter(e.id,{kind:"document",id:v.id},v.type);break
+  }
+  case "void":
+  case "adopt":
+  case "deliver":
+   await versionAction(button.dataset.id,button.dataset.version,a);break;
+  case "addInvestigation":await addInvestigation();break;
+  case "removeInvestigation":await removeInvestigation(+button.dataset.index);break;
+  case "reviewOrder":await reviewOrder(+button.dataset.index);break;
+  case "closeOrder":await closeOrder(+button.dataset.index);break;
+  case "addItem":await addItem(button.dataset.list);break;
+  case "removeItem":await removeItem(button.dataset.list,+button.dataset.index);break;
+  case "catAdd":{
+   const type=button.dataset.type;choice(type,INVS,"檢查類別");
+   catDraft.push({id:uid(),type,name:"",price:"",billing:"centre",enabled:true});
+   drawCatalogue();break
+  }
+  case "catSave":await saveCatalogue();break;
+  case "templateNew":templateEditor(null,button.dataset.type);break;
+  case "templateEdit":templateEditor(button.dataset.template);break;
+  case "templateSave":await saveTemplate();break;
+  case "templateApply":await applyTemplate(button.dataset.template);break;
+  case "templateDelete":await deleteTemplate(button.dataset.template);break;
+  case "signatureClear":
+   signatureDraft="";
+   if($("signaturePreview"))$("signaturePreview").textContent="未設定圖片簽名。";
+   if($("signatureFile"))$("signatureFile").value="";
+   break;
+  case "settingsSave":await saveSettings();break;
+  case "persistent":await requestPersistence();break;
+  case "selfTest":await selfTest();break;
+  case "restoreVerified":await restoreVerified();break;
+  default:throw new Error("未支援的操作："+a)
+ }
+}
+document.addEventListener("click",event=>{
+ const b=event.target.closest("button[data-act]");
+ if(!b||b.disabled)return;
+ event.preventDefault();
+ action(b).catch(fail)
+});
+$("editorFields").addEventListener("input",event=>{
+ const i=event.target;
+ if(!i.matches("[data-path]")||i.type==="checkbox"||i.tagName==="SELECT")return;
+ try{editorInput(i)}catch(error){fill($("editorFields"),current());fail(error)}
+});
+$("editorFields").addEventListener("change",event=>{
+ const i=event.target;
+ if(i.matches("[data-path]")&&(i.type==="checkbox"||i.tagName==="SELECT")){
+  try{editorInput(i)}catch(error){fill($("editorFields"),current());fail(error)}
+ }
+ if(i.matches("[data-order-billing]")){
+  if(!editable()){render();return}
+  orderBilling(+i.dataset.orderBilling,i.value).catch(error=>{
+   render();fail(error)
+  })
+ }
+});
+let searchTimer=null;
+function rerenderSearch(id,fn){
+ clearTimeout(searchTimer);
+ const input=$(id),value=input.value,start=input.selectionStart;
+ searchTimer=setTimeout(()=>{
+  if(!db||busy||!$(id))return;
+  fn(value);
+  const next=$(id);
+  if(next){next.focus();try{next.setSelectionRange(start,start)}catch{}}
+ },250)
+}
+$("modalBody").addEventListener("input",event=>{
+ if(busy||printing)return;
+ const i=event.target;
+ if(i.id==="patientSearch")rerenderSearch("patientSearch",patientsModal);
+ if(i.id==="historySearch")rerenderSearch("historySearch",historyModal);
+ if(i.matches("[data-catfield]")){
+  const c=catDraft[+i.dataset.index];
+  if(c)c[i.dataset.catfield]=i.type==="checkbox"?i.checked:i.value
+ }
+});
+$("modalBody").addEventListener("change",event=>{
+ if(busy||printing)return;
+ const i=event.target;
+ if(i.matches("[data-catfield]")){
+  const c=catDraft[+i.dataset.index];
+  if(c)c[i.dataset.catfield]=i.type==="checkbox"?i.checked:i.value
+ }
+ if(i.matches("[data-quality]")){
+  qualityCheck(i.dataset.quality,i.checked).catch(error=>{
+   qualityModal();fail(error)
+  })
+ }
+ if(i.id==="signatureFile"&&i.files?.[0]){
+  run(()=>loadSignature(i.files[0])).catch(fail)
+ }
+});
+$("modalClose").addEventListener("click",closeModal);
+$("modal").addEventListener("cancel",event=>{
+ if(busy||printing)event.preventDefault()
+});
+$("modal").addEventListener("close",()=>{
+ clearTimeout(searchTimer);
+ /* 還原候選資料在準備建立新工作區時仍須保留。 */
+ if(modalMode!=="restorePreview")pending=null;
+ catDraft=[];templateDraft=null;signatureDraft="";
+ $("modalBody").replaceChildren();modalMode=""
+});
+$("zoom").addEventListener("change",scale);
+window.addEventListener("resize",scale);
+if(typeof ResizeObserver!=="undefined"){
+ new ResizeObserver(()=>{if(db)scale()}).observe($("paper"))
+}
+$("gateForm").addEventListener("submit",unlockWorkspace);
+$("gateRaw").addEventListener("click",()=>{
+ if(!busy)exportRaw().catch(fail)
+});
+$("gateRecover").addEventListener("click",()=>{
+ if(!busy)chooseBackup()
+});
+$("backupFile").addEventListener("change",event=>{
+ const file=event.target.files?.[0];if(!file)return;
+ (async()=>{
+  if(busy||printing)return;
+  busy=true;
+  if(db)updateButtons();
+  try{await stageBackup(file)}
+  finally{
+   busy=false;
+   if(db)updateButtons();
+   event.target.value=""
+  }
+ })().catch(fail)
+});
+
+/* 閒置保護：
+   長時間離開後的首次按鍵／點擊先觸發鎖定，不繼續執行該次操作。 */
+function idleExpired(){
+ return !!db&&Date.now()-lastActivity>=db.settings.idleMinutes*60000
+}
+function activity(event){
+ if(!db)return;
+ if(idleExpired()&&!busy&&!printing){
+  event.preventDefault();event.stopImmediatePropagation();
+  lockWorkspace(true).catch(fail);return
+ }
+ lastActivity=Date.now()
+}
+document.addEventListener("pointerdown",activity,true);
+document.addEventListener("keydown",activity,true);
+document.addEventListener("visibilitychange",()=>{
+ if(document.visibilityState==="visible"&&idleExpired()&&!busy&&!printing){
+  lockWorkspace(true).catch(fail)
+ }
+});
+setInterval(()=>{
+ if(idleExpired()&&!busy&&!printing)lockWorkspace(true).catch(fail)
+},15000);
+window.addEventListener("beforeunload",event=>{
+ if(db&&(dirty!==saved||saving||printing)){
+  event.preventDefault();event.returnValue=""
+ }
+});
+
+/* 啟動 */
+async function boot(){
+ try{
+  assert(window.indexedDB,"此瀏覽器不支援 IndexedDB");
+  assert(window.crypto?.subtle,
+   "此開啟方式不能使用 Web Crypto。請使用支援的瀏覽器及受信任的本機開啟環境。");
+  assert(typeof $("modal").showModal==="function","此瀏覽器不支援所需的對話框功能");
+  idb=await openIDB();
+  idb.onversionchange=()=>{
+   idb.close();
+   if(db){
+    conflict=true;message("資料庫版本已改變。請先建立本頁備份，再重新載入。",true);
+    updateButtons()
+   }
+  };
+  const record=await readRecord(idb);
+  newVault=!record;
+  if(record){
+   assert(Number.isSafeInteger(record.revision)&&record.revision>=1,
+    "本機 revision 無效；請先匯出密文原件，勿覆寫");
+   startupEnvelope=record.envelope;rev=record.revision;
+   checkEnvelope(startupEnvelope,"vault")
+  }
+  $("createConfirm").classList.toggle("hidden",!newVault);
+  $("vaultPassword").autocomplete=newVault?"new-password":"current-password";
+  $("unlockBtn").textContent=newVault?"建立加密工作區":"解鎖";
+  $("gateMessage").textContent=newVault?
+   "此位置未有 v5 工作區。請填寫操作人並設定至少 12 字元的密碼；也可先從備份復原。":
+   "已找到加密工作區。請填寫操作人並輸入工作區密碼。";
+  $("actor").focus()
+ }catch(error){
+  $("unlockBtn").disabled=true;
+  $("gateMessage").textContent="啟動失敗："+error.message;
+  $("fatal").classList.remove("hidden");
+  $("fatal").textContent=
+   "未開啟工作區，也沒有清除既有資料。\n"+
+   error.message+
+   "\n請保留原 HTML、原瀏覽器設定檔及已有備份，不要清除網站資料。";
+  console.error(error?.name||"BootError")
+ }
+}
+/* Supabase 雲端接駁。
+   取代最後的 boot();，不要另加 <script>。
+   不讀取或覆寫原本 IndexedDB 工作區。
+*/
+const CLOUD_CLINIC = "6833ef5f-35aa-4818-a365-95dfbcb90e66";
+const CLOUD_DOCTOR = "11691d05-d580-4bec-b82d-86f608328721";
+
+const cloud = {
+  url: "",
+  key: "",
+  session: null,
+  expiresAt: 0,
+  refreshing: null
+};
+
+const cloudHandle = {
+  close() {},
+  onversionchange: null
+};
+
+async function cloudHTTP(path, {
+  method = "GET",
+  body,
+  authorized = true
+} = {}) {
+  if (authorized) await cloudEnsureSession();
+
+  const headers = {
+    apikey: cloud.key,
+    "Content-Type": "application/json"
+  };
+
+  if (authorized) {
+    headers.Authorization = "Bearer " + cloud.session.access_token;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
+
+  let response;
+  try {
+    response = await fetch(cloud.url + path, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: controller.signal,
+      cache: "no-store",
+      credentials: "omit"
+    });
+  } catch (error) {
+    throw new Error(
+      error.name === "AbortError"
+        ? "雲端請求逾時；未確認儲存，請勿關閉本頁。"
+        : "無法連接 Supabase；未確認儲存，請勿關閉本頁。"
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  const text = await response.text();
+  let data = null;
+  if (text) {
+    try { data = JSON.parse(text); }
+    catch { throw new Error("Supabase 回應格式不正確"); }
+  }
+
+  if (!response.ok) {
+    const error = new Error(
+      data?.message ||
+      data?.error_description ||
+      data?.msg ||
+      "Supabase 請求失敗：" + response.status
+    );
+    error.code = data?.code;
+    throw error;
+  }
+
+  return data;
+}
+
+function cloudRememberSession(value) {
+  assert(value?.access_token && value?.refresh_token,
+    "登入回應缺少有效 session");
+
+  cloud.session = {
+    ...value,
+    user: value.user || cloud.session?.user
+  };
+
+  cloud.expiresAt =
+    Date.now() + Number(value.expires_in || 3600) * 1000;
+}
+
+async function cloudEnsureSession() {
+  assert(cloud.session, "請重新登入 Supabase");
+
+  if (Date.now() < cloud.expiresAt - 60000) return;
+
+  if (!cloud.refreshing) {
+    cloud.refreshing = (async () => {
+      const value = await cloudHTTP(
+        "/auth/v1/token?grant_type=refresh_token",
+        {
+          method: "POST",
+          authorized: false,
+          body: { refresh_token: cloud.session.refresh_token }
+        }
+      );
+      cloudRememberSession(value);
+    })();
+  }
+
+  try {
+    await cloud.refreshing;
+  } finally {
+    cloud.refreshing = null;
+  }
+}
+
+/* 用雲端儲存介面取代本機介面。
+   其他名稱（包括原本的本機自動測試庫）不允許使用。
+*/
+openIDB = async function(name = DBNAME) {
+  assert(name === DBNAME,
+    "雲端模式不執行原本的 IndexedDB 測試");
+  assert(cloud.session, "請先登入 Supabase");
+  return cloudHandle;
+};
+
+readRecord = async function(handle, key = KEY) {
+  assert(handle === cloudHandle && key === KEY,
+    "不支援的雲端工作區");
+
+  const query =
+    "/rest/v1/cms_cloud_vaults" +
+    "?select=revision,envelope,updated_at" +
+    "&clinic_id=eq." + CLOUD_CLINIC +
+    "&owner_id=eq." + CLOUD_DOCTOR;
+
+  const rows = await cloudHTTP(query);
+  assert(Array.isArray(rows), "雲端工作區回應無效");
+  assert(rows.length <= 1, "雲端工作區數量異常");
+
+  if (!rows.length) return null;
+
+  checkEnvelope(rows[0].envelope, "vault");
+
+  const revision = Number(rows[0].revision);
+  assert(Number.isSafeInteger(revision) && revision >= 1,
+    "雲端版本號無效");
+
+  return {
+    revision,
+    envelope: rows[0].envelope,
+    updatedAt: rows[0].updated_at
+  };
+};
+
+cas = async function(
+  handle, envelope, expected, key = KEY
+) {
+  assert(handle === cloudHandle && key === KEY,
+    "不支援的雲端工作區");
+
+  checkEnvelope(envelope, "vault");
+
+  try {
+    const value = await cloudHTTP(
+      "/rest/v1/rpc/cms_cloud_vault_save",
+      {
+        method: "POST",
+        body: {
+          p_expected_revision: expected,
+          p_envelope: envelope
+        }
+      }
+    );
+
+    const revision = Number(value);
+    assert(
+      Number.isSafeInteger(revision) &&
+      revision === expected + 1,
+      "雲端儲存回應版本不符"
+    );
+
+    return revision;
+  } catch (error) {
+    if (error.code === "40001") error.name = "ConflictError";
+    throw error;
+  }
+};
+
+/* 只通知同一專案／同一帳戶的雲端分頁。
+   跨裝置衝突由伺服器版本比較阻擋。
+*/
+attachChannel = function() {
+  try {
+    channel?.close();
+    channel = new BroadcastChannel(
+      DBNAME + "-cloud-" + cloud.url + "-" + CLOUD_DOCTOR
+    );
+
+    channel.onmessage = event => {
+      const incoming = event.data?.revision;
+      if (!db ||
+          !Number.isSafeInteger(incoming) ||
+          incoming <= rev) return;
+
+      conflict = true;
+      clearTimeout(timer);
+
+      message(
+        "另一頁已更新雲端工作區，這頁已停止寫入。" +
+        "請先建立本頁加密備份，再重新載入。",
+        true
+      );
+
+      updateButtons();
+      preview();
+    };
+  } catch {
+    channel = null;
+  }
+};
+
+/* 清楚顯示雲端模式，避免誤認為仍在本機儲存。 */
+const cloudOriginalRender = render;
+render = function() {
+  cloudOriginalRender();
+  if (!db) return;
+
+  $("sessionLabel").textContent =
+    "已登入：" +
+    cloud.session.user.email +
+    " · 版本編號 " + rev;
+};
+
+const cloudOriginalActivate = activateWorkspace;
+activateWorkspace = function() {
+  cloudOriginalActivate();
+  message(
+    "Supabase 雲端加密工作區：" +
+    "儲存成功才會更新雲端版本。" +
+    "單醫生使用；斷網不會自動同步，未儲存前請勿關閉。"
+  );
+};
+
+const cloudOriginalLock = lockWorkspace;
+lockWorkspace = async function(automatic = false) {
+  await cloudOriginalLock(automatic);
+  if (!db && cloud.session) {
+    $("actor").value = cloud.session.user.email;
+    $("actor").readOnly = true;
+  }
+};
+
+/* 原本健康頁的 IndexedDB 測試不適用於雲端。 */
+qualityModal = function() {
+  showModal("雲端工作區狀態",
+    `<p>已登入：${E(cloud.session.user.email)}</p>
+     <p>雲端版本：${rev}</p>
+     <p>本頁修改：${dirty === saved ? "已儲存" : "尚未全部儲存"}</p>
+     <p>寫入衝突：${conflict ? "有，已停止寫入" : "未偵測到"}</p>
+     <div class="notice">
+     此版本儲存整個加密工作區，不是多人逐筆病歷同步。
+     本機 IndexedDB 自動測試不適用。
+     </div>`,
+    "cloudStatus"
+  );
+};
+
+/* 先登入 Supabase，再開啟原有工作區密碼畫面。 */
+$("gate").classList.add("hidden");
+
+const cloudPanel = document.createElement("div");
+cloudPanel.id = "cloudConnect";
+cloudPanel.style.cssText =
+  "max-width:680px;margin:6vh auto;padding:20px";
+
+cloudPanel.innerHTML = `
+<section class="card">
+  <h1>Dr. Ray's Clinical Management System</h1>
+  <form id="cloudForm">
+    <div class="field">
+      <label for="cloudUrl">Supabase Project URL</label>
+      <input id="cloudUrl" type="url" required
+        placeholder="https://你的專案.supabase.co">
+    </div>
+    <div class="field">
+      <label for="cloudKey">Publishable key／anon key</label>
+      <input id="cloudKey" required autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="cloudEmail">醫生帳戶電郵</label>
+      <input id="cloudEmail" type="email" required
+        autocomplete="username">
+    </div>
+    <div class="field">
+      <label for="cloudPassword">Supabase 帳戶密碼</label>
+      <input id="cloudPassword" type="password" required
+        autocomplete="current-password">
+    </div>
+    <button id="cloudLoginButton" class="primary">登入雲端</button>
+    <p id="cloudLoginMessage" class="small" role="status"></p>
+  </form>
+</section>`;
+
+document.body.prepend(cloudPanel);
+
+/* 只保存公開連接設定，沒有密碼或 token。 */
+try {
+  const config = JSON.parse(
+    localStorage.getItem("ray-cms-cloud-config") || "{}"
+  );
+  $("cloudUrl").value = config.url || "";
+  $("cloudKey").value = config.key || "";
+} catch {}
+
+$("cloudForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const button = $("cloudLoginButton");
+  if (button.disabled) return;
+  button.disabled = true;
+
+  try {
+    cloud.url = T($("cloudUrl").value).replace(/\/+$/, "");
+    cloud.key = T($("cloudKey").value);
+
+    assert(
+      /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(cloud.url),
+      "請使用專案原本的 https://專案.supabase.co URL"
+    );
+
+    if (!cloud.key.startsWith("sb_publishable_")) {
+      let role = "";
+      try {
+        let payload = cloud.key.split(".")[1]
+          .replace(/-/g, "+").replace(/_/g, "/");
+        payload = payload.padEnd(
+          Math.ceil(payload.length / 4) * 4, "="
+        );
+        role = JSON.parse(atob(payload)).role;
+      } catch {}
+
+      assert(role === "anon",
+        "只接受 publishable／anon key，禁止 secret／service_role key");
+    }
+
+    $("cloudLoginMessage").textContent = "正在登入…";
+
+    const login = await cloudHTTP(
+      "/auth/v1/token?grant_type=password",
+      {
+        method: "POST",
+        authorized: false,
+        body: {
+          email: T($("cloudEmail").value),
+          password: $("cloudPassword").value
+        }
+      }
+    );
+
+    cloudRememberSession(login);
+
+    assert(cloud.session.user?.id === CLOUD_DOCTOR,
+      "請使用已建立的梁子恒醫生帳戶登入");
+
+    const membership = await cloudHTTP(
+      "/rest/v1/clinic_memberships" +
+      "?select=user_id,role,is_active" +
+      "&clinic_id=eq." + CLOUD_CLINIC +
+      "&user_id=eq." + CLOUD_DOCTOR
+    );
+
+    assert(
+      Array.isArray(membership) &&
+      membership.some(m =>
+        m.role === "doctor" && m.is_active === true
+      ),
+      "醫生成員資格無效或已停用"
+    );
+
+    try {
+      localStorage.setItem("ray-cms-cloud-config", JSON.stringify({
+        url: cloud.url,
+        key: cloud.key
+      }));
+    } catch {}
+
+    $("cloudPassword").value = "";
+    cloudPanel.classList.add("hidden");
+    $("gate").classList.remove("hidden");
+
+    document.title = "梁子恒醫生 CMS — 雲端加密工作區";
+    $("gate").querySelector("h1").textContent =
+      "梁子恒醫生 CMS — 雲端加密工作區";
+    $("gate").querySelector("h1 + p").textContent =
+      "已登入 Supabase；現在解鎖工作區";
+
+    $("gate").querySelector(".notice").textContent =
+      "工作區密碼用於加密病歷，與 Supabase 帳戶密碼分開。" +
+      "遺失工作區密碼無法解密；請保留外部加密備份。";
+
+    $("gate").querySelector("p.small:last-child").textContent =
+      "新裝置登入同一帳戶，再輸入同一工作區密碼，讀取雲端工作區。" +
+      "原本本機資料不會自動搬移；請使用加密備份匯入。";
+
+    $("actor").value = cloud.session.user.email;
+    $("actor").readOnly = true;
+    $("actor").previousElementSibling.textContent = "已驗證帳戶";
+
+    $("gateRaw").textContent = "匯出雲端密文原件";
+
+    await boot();
+
+    if (!$("unlockBtn").disabled) {
+      $("gateMessage").textContent = newVault
+        ? "此帳戶未有雲端工作區。設定至少 12 字元的工作區密碼，" +
+          "或先按「從備份復原」。"
+        : "已找到雲端加密工作區。輸入原工作區密碼解鎖。";
+    }
+  } catch (error) {
+    cloud.session = null;
+    $("cloudLoginMessage").textContent =
+      error.message || "雲端登入失敗";
+  } finally {
+    $("cloudPassword").value = "";
+    button.disabled = false;
+  }
+});
+/* ===== 單次 Supabase 登入修正 ===== */
+
+const FIXED_SUPABASE_URL =
+  "https://pdtiwdndcwtojqfoxrfe.supabase.co";
+
+const FIXED_SUPABASE_KEY =
+  "sb_publishable_MX1K8ycnd9rTcbp6pRMJpQ_xXr4kxIR";
+
+cloud.url = FIXED_SUPABASE_URL;
+cloud.key = FIXED_SUPABASE_KEY;
+
+/* 取代原登入表單，同時移除上一版的 submit handler。 */
+const oldCloudForm = $("cloudForm");
+assert(oldCloudForm, "請先保留上一版 Supabase 接駁程式");
+
+const singleLoginForm = document.createElement("form");
+singleLoginForm.id = "cloudForm";
+
+singleLoginForm.innerHTML = `
+  <div class="field">
+    <label for="cloudEmail">電郵帳戶</label>
+    <input id="cloudEmail" type="email" required
+      autocomplete="username">
+  </div>
+  <div class="field">
+    <label for="cloudPassword">密碼</label>
+    <input id="cloudPassword" type="password" required
+      autocomplete="current-password">
+  </div>
+  <button id="cloudLoginButton" class="primary">
+    登入
+  </button>
+  <p id="cloudLoginMessage" class="small" role="status"></p>
+`;
+
+oldCloudForm.replaceWith(singleLoginForm);
+
+cloudPanel.querySelector("h1").textContent =
+  "Dr Ray's Clinical Management System";
+
+cloudPanel.querySelector("p.small").textContent =
+  "";
+
+$("gate").classList.add("hidden");
+
+/* 雲端讀取：不再要求工作區解密。 */
+readRecord = async function(handle, key = KEY) {
+  assert(handle === cloudHandle && key === KEY,
+    "不支援的工作區");
+
+  const rows = await cloudHTTP(
+    "/rest/v1/cms_cloud_vaults" +
+    "?select=revision,envelope,updated_at" +
+    "&clinic_id=eq." + CLOUD_CLINIC +
+    "&owner_id=eq." + CLOUD_DOCTOR
+  );
+
+  assert(Array.isArray(rows) && rows.length <= 1,
+    "雲端工作區回應無效");
+
+  if (!rows.length) return null;
+
+  const revision = Number(rows[0].revision);
+  assert(Number.isSafeInteger(revision) && revision >= 1,
+    "雲端版本號無效");
+
+  return {
+    revision,
+    envelope: rows[0].envelope,
+    updatedAt: rows[0].updated_at
+  };
+};
+
+/* 雲端寫入：伺服器比較 revision，防止直接覆蓋新版。 */
+persistSnapshot = async function(snapshot, expected = rev) {
+  checkDB(snapshot);
+
+  const envelope = {
+    format: "ray-clinic-auth-workspace",
+    version: 1,
+    data: snapshot
+  };
+
+  let result;
+  try {
+    result = await cloudHTTP(
+      "/rest/v1/rpc/cms_cloud_vault_save",
+      {
+        method: "POST",
+        body: {
+          p_expected_revision: expected,
+          p_envelope: envelope
+        }
+      }
+    );
+  } catch (error) {
+    if (error.code === "40001") {
+      error.name = "ConflictError";
+    }
+    throw error;
+  }
+
+  const next = Number(result);
+
+  assert(
+    Number.isSafeInteger(next) && next === expected + 1,
+    "雲端儲存回應版本不符"
+  );
+
+  rev = next;
+  startupEnvelope = envelope;
+
+  try {
+    channel?.postMessage({ revision: next });
+  } catch {}
+
+  return next;
+};
+
+/* 不再依賴工作區加密匙。 */
+save = async function() {
+  clearTimeout(timer);
+
+  if (saving) {
+    await saving;
+    if (dirty !== saved) return save();
+    return;
+  }
+
+  assert(db && cloud.session, "請先登入");
+  assert(!conflict, "目前有版本衝突，請先備份");
+  if (dirty === saved) return;
+
+  const generation = dirty;
+  const snapshot = C(db);
+  snapshot.currentId = selected;
+
+  saving = (async () => {
+    try {
+      status("正在儲存至 Supabase…");
+      await persistSnapshot(snapshot);
+      saved = generation;
+
+      status(
+        dirty === saved
+          ? "已儲存至 Supabase · " +
+            new Date().toLocaleTimeString()
+          : "仍有修改待儲存"
+      );
+    } catch (error) {
+      storageFailure(error);
+      throw error;
+    }
+  })();
+
+  try {
+    await saving;
+  } finally {
+    saving = null;
+  }
+
+  if (dirty !== saved) return save();
+};
+
+/* 修正原版「已加密儲存」字眼。 */
+const singleLoginOriginalStatus = status;
+status = function(text, error = false) {
+  singleLoginOriginalStatus(
+    S(text)
+      .replaceAll("正在加密儲存", "正在儲存至 Supabase")
+      .replaceAll("已加密儲存", "已儲存至 Supabase"),
+    error
+  );
+};
+
+/* 敏感操作使用現有登入 session，不再問工作區密碼。
+   這不是第二次身份驗證。 */
+reauth = async function() {
+  await cloudEnsureSession();
+  return true;
+};
+
+/* 原密文原件按鈕改用原有的加密備份功能。
+   備份檔密碼只在主動匯出備份時設定，唔係登入要求。 */
+exportRaw = async function() {
+  assert(db, "請先登入");
+  return exportBackup();
+};
+
+/* 工作區啟動：直接讀取或建立，不開第二個登入畫面。 */
+async function startSingleLoginWorkspace() {
+  idb = cloudHandle;
+
+  const record = await readRecord(idb);
+  let candidate;
+
+  if (record) {
+    assert(
+      record.envelope?.format === "ray-clinic-auth-workspace",
+      "雲端仍是舊密碼加密資料，未有覆寫。" +
+      "請保留舊版，先解鎖匯出備份後再處理移轉。"
+    );
+
+    candidate = checkDB(C(record.envelope.data));
+    assert(candidate.encounters.length,
+      "工作區沒有診症，已停止載入");
+    rev = record.revision;
+    startupEnvelope = record.envelope;
+  } else {
+    rev = 0;
+    candidate = database();
+    addEncounter(candidate);
+    checkDB(candidate);
+    await persistSnapshot(candidate, 0);
+  }
+
+  db = candidate;
+  vaultKey = null;
+  salt = "";
+  actor = cloud.session.user.email || CLOUD_DOCTOR;
+  sessionId = uid();
+
+  activateWorkspace();
+
+  $("gate").classList.add("hidden");
+  document.title = "梁子恒醫生 CMS — Supabase";
+
+  message(
+    "已登入 Supabase。病歷儲存於雲端，由帳戶權限及 RLS 保護；" +
+    "此版本不使用獨立工作區密碼或瀏覽器端工作區加密。"
+  );
+  status("已連接 Supabase · 雲端版本 " + rev);
+}
+
+/* 登出：必須先完成儲存；有衝突就保留畫面讓你備份。 */
+lockWorkspace = async function(automatic = false) {
+  if (!db || busy || printing) return;
+
+  busy = true;
+  updateButtons();
+
+  try {
+    assert(!conflict,
+      "有版本衝突，尚未登出。請先建立本頁加密備份。");
+
+    await save();
+
+    await cloudHTTP("/auth/v1/logout", {
+      method: "POST"
+    });
+
+    clearTimeout(timer);
+    clearTimeout(previewTimer);
+    channel?.close();
+
+    db = null;
+    cloud.session = null;
+    actor = "";
+    sessionId = "";
+
+    location.reload();
+  } catch (error) {
+    message(
+      "未完成登出：" + error.message +
+      "。本頁資料仍保留，請勿直接關閉。",
+      true
+    );
+  } finally {
+    busy = false;
+    if (db) updateButtons();
+  }
+};
+
+const logoutButton =
+  document.querySelector('button[data-act="lock"]');
+
+if (logoutButton) logoutButton.textContent = "登出";
+
+/* 唯一一次登入。 */
+singleLoginForm.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const button = $("cloudLoginButton");
+  if (button.disabled) return;
+  button.disabled = true;
+
+  try {
+    cloud.url = FIXED_SUPABASE_URL;
+    cloud.key = FIXED_SUPABASE_KEY;
+
+    $("cloudLoginMessage").textContent = "正在登入…";
+
+    const login = await cloudHTTP(
+      "/auth/v1/token?grant_type=password",
+      {
+        method: "POST",
+        authorized: false,
+        body: {
+          email: T($("cloudEmail").value),
+          password: $("cloudPassword").value
+        }
+      }
+    );
+
+    cloudRememberSession(login);
+
+    assert(
+      cloud.session.user?.id === CLOUD_DOCTOR,
+      "請使用已建立的梁子恒醫生帳戶登入"
+    );
+
+    const membership = await cloudHTTP(
+      "/rest/v1/clinic_memberships" +
+      "?select=user_id,role,is_active" +
+      "&clinic_id=eq." + CLOUD_CLINIC +
+      "&user_id=eq." + CLOUD_DOCTOR
+    );
+
+    assert(
+      Array.isArray(membership) &&
+      membership.some(m =>
+        m.role === "doctor" && m.is_active === true
+      ),
+      "醫生成員資格無效或已停用"
+    );
+
+    $("cloudLoginMessage").textContent = "正在載入工作區…";
+
+    await startSingleLoginWorkspace();
+    cloudPanel.classList.add("hidden");
+
+  } catch (error) {
+    /* 如果已登入但載入失敗，清除本頁 session；
+       不刪除或取代任何既有雲端資料。 */
+    if (!db) cloud.session = null;
+
+    $("cloudLoginMessage").textContent =
+      error.message || "登入失敗";
+  } finally {
+    $("cloudPassword").value = "";
+    button.disabled = false;
+  }
+});
+</script>
 </body>
 </html>
