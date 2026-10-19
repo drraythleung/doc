@@ -4686,5 +4686,253 @@ masterHistory = function(id){
 };
 </script>
 <!-- ===== 主檔彈窗 UI 改善完 ===== -->
+<!-- ===== 加闊左欄 + 右上完整病人資料 ===== -->
+<style id="cms-wide-patient-ui">
+/* 桌面：左邊由 420px 加闊至 560px */
+#app > .layout{
+ grid-template-columns:560px minmax(0,1fr);
+}
+
+#app > .layout > .editor{
+ min-width:0;
+}
+
+/* 中型畫面：左邊由 370px 加闊至 480px */
+@media(min-width:821px) and (max-width:1100px){
+ #app > .layout{
+  grid-template-columns:480px minmax(0,1fr);
+ }
+}
+
+/* 手機／窄畫面保留原本上下排列 */
+@media(max-width:820px){
+ #app > .layout{
+  display:block;
+ }
+}
+
+/* 右上完整病人資料 */
+.cms-workbar-title{
+ flex:1 1 0;
+ min-width:0;
+}
+
+#previewTitle.cms-full-patient{
+ display:block;
+ width:100%;
+ min-width:0;
+ font-weight:normal;
+}
+
+.cms-patient-document{
+ display:block;
+ margin-bottom:8px;
+ color:var(--muted);
+ font-size:12px;
+ font-weight:bold;
+ line-height:1.5;
+}
+
+.cms-patient-names{
+ display:grid;
+ gap:4px;
+ margin-bottom:10px;
+}
+
+.cms-patient-cn,
+.cms-patient-en{
+ display:block;
+ min-width:0;
+ white-space:normal;
+ overflow-wrap:anywhere;
+}
+
+.cms-patient-cn{
+ font-size:21px;
+ font-weight:bold;
+ line-height:1.4;
+}
+
+.cms-patient-en{
+ font-size:17px;
+ font-weight:bold;
+ line-height:1.5;
+}
+
+.cms-patient-facts{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:9px 16px;
+ padding:11px 13px;
+ border:1px solid var(--line);
+ border-radius:9px;
+ background:#fff;
+}
+
+.cms-patient-fact{
+ display:block;
+ min-width:0;
+}
+
+.cms-patient-fact-label{
+ display:block;
+ margin-bottom:3px;
+ color:var(--muted);
+ font-size:11px;
+ font-weight:normal;
+ line-height:1.5;
+}
+
+.cms-patient-fact-value{
+ display:block;
+ color:var(--ink);
+ font-size:15px;
+ font-weight:bold;
+ line-height:1.5;
+ white-space:normal;
+ overflow-wrap:anywhere;
+ /* 不裁剪、不使用省略號 */
+}
+
+.cms-patient-fact-value.cms-identifier{
+ font-family:Arial,"Microsoft JhengHei",sans-serif;
+ font-variant-numeric:tabular-nums;
+}
+
+@media(max-width:480px){
+ .cms-patient-facts{
+  grid-template-columns:1fr;
+ }
+
+ .cms-patient-cn{
+  font-size:19px;
+ }
+
+ .cms-patient-en{
+  font-size:16px;
+ }
+}
+</style>
+
+<script>
+(function installWidePatientHeader(){
+ "use strict";
+
+ const app = document.getElementById("app");
+ if(!app || app.dataset.widePatientHeader === "1") return;
+
+ /*
+  計算診症當日已滿的年及月。
+  出生日期缺失、無效或遲於診症日期時，不推算。
+ */
+ function ageYearsMonths(dob, referenceDate){
+  if(!dateOK(dob) ||
+     !dateOK(referenceDate) ||
+     dob > referenceDate){
+   return "未能計算";
+  }
+
+  const birthYear = Number(dob.slice(0,4));
+  const birthMonth = Number(dob.slice(5,7));
+  const birthDay = Number(dob.slice(8,10));
+
+  const referenceYear = Number(referenceDate.slice(0,4));
+  const referenceMonth = Number(referenceDate.slice(5,7));
+  const referenceDay = Number(referenceDate.slice(8,10));
+
+  let months =
+   (referenceYear - birthYear) * 12 +
+   referenceMonth - birthMonth;
+
+  if(referenceDay < birthDay) months--;
+
+  if(months < 0) return "未能計算";
+
+  return Math.floor(months / 12) + "y" + (months % 12) + "m";
+ }
+
+ function fact(label, value, identifier = false){
+  return `
+   <span class="cms-patient-fact">
+    <span class="cms-patient-fact-label">${E(label)}</span>
+    <span class="cms-patient-fact-value ${
+     identifier ? "cms-identifier" : ""
+    }">${E(T(value) || "未填寫")}</span>
+   </span>`;
+ }
+
+ function updateFullPatientHeader(){
+  if(!db) return;
+
+  const title = document.getElementById("previewTitle");
+  if(!title) return;
+
+  /*
+   source() 會沿用目前畫面來源：
+   本次診症、歷史文件或完成快照。
+   不用目前主檔身份取代歷史身份。
+  */
+  const displayed = source();
+  const encounterData = displayed.data;
+  const patientData = encounterData.patient || {};
+
+  const patientMaster = db.patients.find(
+   item => item.id === encounterData.patientId
+  );
+
+  const englishName = [
+   T(patientData.surname).toUpperCase(),
+   T(patientData.given)
+  ].filter(Boolean).join(" ");
+
+  const documentName = TYPES[tab]?.[0] || "診症";
+
+  title.classList.add("cms-full-patient");
+
+ title.textContent = [
+ T(patientData.cn) || "未填中文姓名",
+ englishName || "未填英文姓名",
+ dateOK(patientData.dob) ? fmt(patientData.dob) : "未填出生日期",
+ ageYearsMonths(patientData.dob, encounterData.date),
+ T(patientData.sex) || "未填性別",
+ normID(patientData.hkid) || "未填證件",
+ patientMaster?.mrn || "未填病人號碼"
+].join(" · ");
+ }
+
+ /*
+  原本 preview() 每次會重寫 previewTitle。
+  所以在原有預覽完成後再更新病人欄，
+  避免切換頁籤或輸入後變回舊標題。
+ */
+ const originalPreview = preview;
+
+ preview = function(){
+  const result = originalPreview.apply(this, arguments);
+  updateFullPatientHeader();
+  return result;
+ };
+
+ app.dataset.widePatientHeader = "1";
+
+ if(db){
+  updateFullPatientHeader();
+  requestAnimationFrame(() => {
+   window.dispatchEvent(new Event("resize"));
+  });
+ }
+})();
+</script>
+<style>
+#previewTitle.cms-full-patient{
+ font-size:15px;
+ font-weight:bold;
+ line-height:1.6;
+ white-space:nowrap;
+ overflow-x:auto;
+}
+</style>
+<!-- ===== 加闊左欄及病人資料完成 ===== -->
+
 </body>
 </html>
