@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -913,7 +914,7 @@ function table(headers,rows,widths=[]){
 function summaryHTML(rows){
  const valid=rows.filter(x=>x.issued),drafts=rows.filter(x=>x.draft);
  return `<section class="section"><h2>Related Documents 相關文件 </h2>${valid.length?valid.map(x=>`<div class="sub"><h3>${E(TYPES[x.type][0])}</h3><div class="txt">版本時間：${E(stamp(x.issued.savedAt))}\n${E(x.issued.text)}</div></div>`).join(""):"未記錄有相關文件"}</section>`+
- (drafts.length?`<section class="section"><h2>未出具／有修改草稿</h2>${drafts.map(x=>`<div class="sub"><h3>${E(TYPES[x.type][0])}・草稿</h3><div class="txt">${E(x.draft.text)}</div></div>`).join("")}</section>`:"")
+ (drafts.length?`<section class="section"><h2>未完成之修改草稿</h2>${drafts.map(x=>`<div class="sub"><h3>${E(TYPES[x.type][0])}・草稿</h3><div class="txt">${E(x.draft.text)}</div></div>`).join("")}</section>`:"")
 }
 function noteBody(e,s){
  const sections=[
@@ -922,7 +923,7 @@ function noteBody(e,s){
   ["Examination & Investigations 檢查及結果",e.soap.o],
   ["Other Assessment 評估補充",e.soap.a],["Plan 治療計劃",e.soap.p]
  ];
- let h=sections.map(([k,v])=>section(k,v)).join("")+section("Drug Allergies 藥物敏感",allergy(e.patient)+"，本次覆核："+(e.allergyReviewed?"已覆核":"未記錄"));
+ let h=sections.map(([k,v])=>section(k,v)).join("")+section("Drug Allergies 藥物敏感",allergy(e.patient)+"，本次求診："+(e.allergyReviewed?"已覆核":"未記錄"));
  for(const t of INVS)if(e[t]?.items.length){
   h+=section(TYPES[t][0]+"及結果",e[t].items.map(i=>[
    i.name,i.details,ISTATE[i.status],i.performedDate?"檢查日期："+fmt(i.performedDate):"",
