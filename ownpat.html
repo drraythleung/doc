@@ -6766,5 +6766,78 @@ masterHistory = function(id){
 })();
 </script>
 <!-- ===== 藥物敏感三色按鈕完成 ===== -->
+ <!-- ===== Allergy button 搬至病人資料右上角 ===== -->
+<style id="cms-allergy-header-position">
+#cmsPatientCard .cms-patient-card-head{
+ display:flex;
+ align-items:flex-start;
+ justify-content:space-between;
+ gap:12px;
+ margin-bottom:0;
+}
+
+#cmsPatientCard .cms-patient-card-head > :first-child{
+ flex:1 1 auto;
+ min-width:0;
+}
+
+#cmsPatientCard .cms-patient-card-head #patientHeading{
+ margin:0 0 5px;
+}
+
+#cmsPatientCard .cms-patient-card-head #cmsAllergyToggle{
+ flex:0 0 auto;
+ min-width:96px;
+ margin:0;
+ padding:8px 14px;
+}
+
+#cmsPatientCard #cmsAllergyPanel{
+ clear:both;
+ margin-top:12px;
+}
+
+@media(max-width:480px){
+ #cmsPatientCard .cms-patient-card-head{
+  gap:8px;
+ }
+
+ #cmsPatientCard .cms-patient-card-head #cmsAllergyToggle{
+  min-width:86px;
+  padding:8px 10px;
+  font-size:13px;
+ }
+}
+</style>
+
+<script>
+(function moveAllergyButtonToPatientHeader(){
+ "use strict";
+
+ const card = document.getElementById("cmsPatientCard");
+ const button = document.getElementById("cmsAllergyToggle");
+ const panel = document.getElementById("cmsAllergyPanel");
+ const banner = document.getElementById("patientBanner");
+
+ const head = card?.querySelector(".cms-patient-card-head");
+ const titleBox = head?.firstElementChild;
+
+ if(!card || !button || !panel || !banner || !head || !titleBox){
+  return;
+ }
+
+ /*
+  左邊：標題、姓名及病人摘要。
+  右邊：原有三色 allergy button。
+  只搬移現有元素，保留所有事件及狀態。
+ */
+ titleBox.append(banner);
+ head.append(button);
+
+ /* 展開內容放在整個病人摘要下方 */
+ head.after(panel);
+})();
+</script>
+<!-- ===== Allergy button 位置調整完成 ===== -->
 </body>
 </html>
