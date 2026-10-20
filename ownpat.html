@@ -4897,8 +4897,8 @@ masterHistory = function(id){
  T(patientData.cn) || "未填中文姓名",
  englishName || "未填英文姓名",
  ageYearsMonths(patientData.dob, encounterData.date),
- dateOK(patientData.dob) ? fmt(patientData.dob) : "未填出生日期",
  T(patientData.sex) || "未填性別",
+  dateOK(patientData.dob) ? fmt(patientData.dob) : "未填出生日期",
  normID(patientData.hkid) || "未填證件",
  patientMaster?.mrn || "未填病人號碼"
 ].join(" · ");
