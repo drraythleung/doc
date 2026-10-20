@@ -4934,6 +4934,726 @@ masterHistory = function(id){
 }
 </style>
 <!-- ===== 加闊左欄及病人資料完成 ===== -->
+<!-- ===== 獨立病人登記 + 家人關係 ===== -->
+<style>
+#app .pf-register{
+ background:var(--accent);
+ color:#fff;
+ border-color:var(--accent);
+}
+.pf-tools{
+ display:flex;
+ flex-wrap:wrap;
+ gap:8px;
+ margin:12px 0;
+}
+.pf-meta{
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.8;
+ white-space:pre-wrap;
+}
+.pf-family-table{
+ overflow:auto;
+ margin-top:10px;
+}
+.pf-family-table table{
+ width:100%;
+ border-collapse:collapse;
+ font-size:12px;
+ white-space:nowrap;
+}
+.pf-family-table th,
+.pf-family-table td{
+ padding:8px;
+ text-align:left;
+ border-bottom:1px solid var(--line);
+}
+.pf-name-button{
+ padding:3px 0;
+ min-height:0 !important;
+ background:none;
+ border:0;
+ color:var(--accent);
+ font-weight:bold !important;
+ text-align:left;
+}
+.pf-family-card{
+ overflow:hidden;
+}
+.pf-family-card h3{
+ margin:0;
+}
+.pf-family-card .pf-family-table{
+ margin-left:-5px;
+ margin-right:-5px;
+}
+.pf-empty{
+ padding:12px 0;
+ color:var(--muted);
+ font-size:12px;
+}
+</style>
 
+<script>
+(function installPatientRegistrationAndFamily(){
+ "use strict";
+
+ if(document.documentElement.dataset.patientFamily === "1") return;
+ document.documentElement.dataset.patientFamily = "1";
+
+ const labels = {
+  cn:"中文姓名",
+  surname:"英文姓氏",
+  given:"英文名字",
+  hkid:"HKID／證件號碼",
+  dob:"出生日期",
+  sex:"性別（例如 Male／Female）",
+  phone:"電話",
+  email:"電郵",
+  address:"地址",
+  contact1Name:"聯絡人 1 姓名",
+  contact1Phone:"聯絡人 1 電話",
+  contact2Name:"聯絡人 2 姓名",
+  contact2Phone:"聯絡人 2 電話"
+ };
+
+ const fields = [
+  "cn","surname","given","hkid","dob","sex",
+  ...CONTACTS
+ ];
+
+ const findPatient = id => {
+  const p = db?.patients.find(x => x.id === id);
+  assert(p, "找不到病人主檔");
+  return p;
+ };
+
+ function ageText(dob){
+  const reference = today();
+  if(!dateOK(dob) || dob > reference) return "—";
+
+  let months =
+   (+reference.slice(0,4) - +dob.slice(0,4)) * 12 +
+   +reference.slice(5,7) - +dob.slice(5,7);
+
+  if(+reference.slice(8,10) < +dob.slice(8,10)) months--;
+
+  return months < 0
+   ? "—"
+   : Math.floor(months / 12) + "y" + (months % 12) + "m";
+ }
+
+ function relations(d = db){
+  return d.patientRelations || [];
+ }
+
+ function relatives(id){
+  return relations()
+   .filter(r => r.active && (r.a === id || r.b === id))
+   .map(r => ({
+    relation:r,
+    patient:findPatient(r.a === id ? r.b : r.a),
+    label:r.a === id ? r.labelA : r.labelB
+   }));
+ }
+
+ function auditFamily(d, actionName, detail){
+  d.meta.security.push({
+   at:now(),
+   actor,
+   sessionId,
+   action:actionName,
+   ...detail
+  });
+ }
+
+ /*
+  可選擴充欄位：
+  舊工作區沒有 patientRelations 亦可正常載入。
+  新關係會跟隨整個工作區儲存及備份。
+ */
+ const originalCheckDB = checkDB;
+
+ checkDB = function(d){
+  const result = originalCheckDB(d);
+
+  if(d.patientRelations === undefined) return result;
+
+  arr(d.patientRelations, "病人關係");
+  unique(d.patientRelations.map(r => r.id), "病人關係 ID");
+
+  const ids = new Set(d.patients.map(p => p.id));
+  const activePairs = new Set();
+
+  for(const r of d.patientRelations){
+   assert(O(r), "病人關係格式無效");
+
+   for(const k of [
+    "id","a","b","labelA","labelB",
+    "createdAt","createdBy","sessionId"
+   ]) str(r[k], "病人關係." + k);
+
+   bool(r.active, "病人關係狀態");
+
+   assert(ids.has(r.a) && ids.has(r.b),
+    "病人關係連結的主檔不存在");
+
+   assert(r.a !== r.b, "不能將病人連結自己");
+
+   assert(
+    T(r.labelA) && T(r.labelB) &&
+    r.labelA.length <= 100 && r.labelB.length <= 100,
+    "雙向關係名稱須填寫，最多 100 字"
+   );
+
+   if(r.active){
+    const pair = JSON.stringify([r.a,r.b].sort());
+    assert(!activePairs.has(pair), "病人關係重複");
+    activePairs.add(pair);
+   }
+  }
+
+  return result;
+ };
+
+ function familyHTML(id, allowRemove = false){
+  const list = relatives(id);
+
+  if(!list.length){
+   return '<div class="pf-empty">未連結其他已登記家人。</div>';
+  }
+
+  return `
+   <div class="pf-family-table">
+    <table>
+     <thead>
+      <tr>
+       <th>姓名／關係</th>
+       <th>年紀</th>
+       <th>性別</th>
+       <th>出生日期</th>
+       <th>電話</th>
+       ${allowRemove ? "<th></th>" : ""}
+      </tr>
+     </thead>
+     <tbody>
+      ${list.map(({patient:p,label,relation:r}) => `
+       <tr>
+        <td>
+         <button type="button"
+          class="pf-name-button"
+          data-act="pfOpen"
+          data-patient="${E(p.id)}">${E(pname(p.data) || "未填姓名")}</button>
+         <div class="small">${E(label)} · ${E(p.mrn)}</div>
+        </td>
+        <td>${E(ageText(p.data.dob))}</td>
+        <td>${E(p.data.sex || "—")}</td>
+        <td>${E(fmt(p.data.dob))}</td>
+        <td>${E(p.data.phone || "—")}</td>
+        ${allowRemove ? `
+         <td>
+          <button type="button"
+           class="danger"
+           data-act="pfUnlink"
+           data-patient="${E(id)}"
+           data-relation="${E(r.id)}">解除</button>
+         </td>` : ""}
+       </tr>
+      `).join("")}
+     </tbody>
+    </table>
+   </div>`;
+ }
+
+ function drawSideFamily(){
+  let card = $("pfSideFamily");
+
+  if(!db || !current()){
+   card?.remove();
+   return;
+  }
+
+  if(!card){
+   card = document.createElement("section");
+   card.id = "pfSideFamily";
+   card.className = "card pf-family-card";
+
+   const patientCard = $("patientHeading").closest(".card");
+   patientCard.after(card);
+  }
+
+  const id = current().patientId;
+
+  card.innerHTML = `
+   <div class="row between">
+    <h3>已連結家人</h3>
+    <button type="button"
+     data-act="pfOpen"
+     data-patient="${E(id)}">主檔／管理關係</button>
+   </div>
+   ${familyHTML(id)}
+   <div class="small">
+    顯示目前主檔資料；年紀按今日計算。
+   </div>`;
+ }
+
+ const originalRender = render;
+
+ render = function(){
+  const result = originalRender.apply(this, arguments);
+  drawSideFamily();
+  return result;
+ };
+
+ /*
+  沿用既有主檔畫面，加入主檔操作及家人清單。
+  開啟家人只顯示對方主檔，不切換或建立診症。
+ */
+ const originalMasterHistory = masterHistory;
+
+ masterHistory = function(id){
+  const p = findPatient(id);
+  originalMasterHistory(id);
+
+  const count = db.encounters.filter(
+   e => e.patientId === id
+  ).length;
+
+  const actions = document.createElement("section");
+  actions.className = "item";
+
+  actions.innerHTML = `
+   <div class="pf-meta">
+    診症紀錄：${count} 次 · 年紀：${E(ageText(p.data.dob))}
+   </div>
+   <div class="pf-tools">
+    <button type="button"
+     data-act="pfEdit"
+     data-patient="${E(id)}">編輯病人主檔</button>
+
+    <button type="button"
+     data-act="pfLink"
+     data-patient="${E(id)}">＋ 連結家人</button>
+
+    <button type="button"
+     data-act="newForPatient"
+     data-patient="${E(id)}">建立新診症</button>
+
+    <button type="button"
+     data-act="pfRegistry">返回病人名單</button>
+   </div>`;
+
+  const family = document.createElement("section");
+  family.className = "item";
+  family.innerHTML = `
+   <h3>已登記家人</h3>
+   ${familyHTML(id, true)}
+   <p class="small" style="margin-top:10px">
+    只列出人手直接連結的家人。
+    聯絡資料取自各自目前主檔；不會互相同步病歷。
+   </p>`;
+
+  $("modalBody").prepend(actions);
+  $("modalBody").append(family);
+ };
+
+ function registry(query = ""){
+  const q = T(query).toLowerCase();
+
+  const list = db.patients.filter(p =>
+   [
+    p.mrn,
+    pname(p.data),
+    normID(p.data.hkid),
+    p.data.phone
+   ].join(" ").toLowerCase().includes(q)
+  ).sort((a,b) => a.mrn.localeCompare(b.mrn));
+
+  showModal("病人主檔", `
+   <div class="pf-tools">
+    <button type="button"
+     class="primary"
+     data-act="pfNew">＋ 只登記病人</button>
+   </div>
+
+   <label for="pfRegistryQuery">搜尋姓名、病歷編號、證件或電話</label>
+   <div class="row">
+    <input id="pfRegistryQuery"
+     style="flex:1;min-width:180px"
+     value="${E(query)}">
+    <button type="button" data-act="pfSearch">搜尋</button>
+   </div>
+
+   <p class="small" style="margin-top:10px">
+    登記主檔不會建立診症，亦不需要診斷。
+    以下最多顯示 100 人。
+   </p>
+
+   ${list.slice(0,100).map(p => {
+    const count = db.encounters.filter(
+     e => e.patientId === p.id
+    ).length;
+
+    return `
+     <section class="item">
+      <button type="button"
+       class="pf-name-button"
+       data-act="pfOpen"
+       data-patient="${E(p.id)}">
+       ${E(p.mrn)} · ${E(pname(p.data) || "未填姓名")}
+      </button>
+
+      <div class="pf-meta">${E([
+       ageText(p.data.dob),
+       p.data.sex || "未填性別",
+       fmt(p.data.dob),
+       p.data.phone || "未填電話"
+      ].join(" · "))}</div>
+
+      <div class="small">
+       診症紀錄：${count} 次 · 已連結家人：${relatives(p.id).length}
+      </div>
+
+      <div class="pf-tools">
+       <button type="button"
+        data-act="pfOpen"
+        data-patient="${E(p.id)}">開啟主檔</button>
+
+       <button type="button"
+        data-act="newForPatient"
+        data-patient="${E(p.id)}">建立新診症</button>
+      </div>
+     </section>`;
+   }).join("") || '<div class="pf-empty">沒有符合的病人。</div>'}
+  `, "pfRegistry");
+ }
+
+ function editPatient(id = ""){
+  const p = id ? findPatient(id) : null;
+  const data = p ? p.data : patient();
+
+  showModal(p ? "編輯病人主檔" : "只登記病人", `
+   <div class="notice">
+    ${p
+     ? "只更新目前主檔；不會改寫既有診症、歷史文件或完成快照。"
+     : "只建立病人主檔。不建立診症，不需要填寫診斷，亦不產生收據。"}
+   </div>
+
+   <div class="grid" style="margin-top:15px">
+    ${fields.map(k => `
+     <div class="field" ${k === "address" ? 'style="grid-column:1/-1"' : ""}>
+      <label for="pfField-${k}">${E(labels[k])}</label>
+      <input id="pfField-${k}"
+       data-pf-field="${k}"
+       type="${k === "dob" ? "date" : "text"}"
+       value="${E(data[k])}">
+     </div>
+    `).join("")}
+   </div>
+
+   ${p ? `
+    <label for="pfEditReason">主檔修改原因（必填）</label>
+    <textarea id="pfEditReason"></textarea>
+   ` : ""}
+
+   <div class="pf-tools">
+    <button type="button"
+     class="primary"
+     data-act="pfSave"
+     data-patient="${E(id)}">
+     ${p ? "保存主檔" : "登記病人（不建立診症）"}
+    </button>
+    <button type="button" data-act="pfRegistry">返回名單</button>
+   </div>
+  `, "pfEdit");
+ }
+
+ async function savePatient(id){
+  const old = id ? findPatient(id) : null;
+  const data = old ? C(old.data) : patient();
+
+  $("modalBody").querySelectorAll("[data-pf-field]").forEach(i => {
+   data[i.dataset.pfField] = T(i.value);
+  });
+
+  data.hkid = normID(data.hkid);
+
+  assert(pname(data), "請至少填寫中文或英文姓名");
+
+  if(data.dob){
+   assert(dateOK(data.dob) && data.dob <= today(),
+    "出生日期無效或遲於今日");
+  }
+
+  const reason = old ? T($("pfEditReason").value) : "首次登記主檔";
+  assert(reason, "請填寫主檔修改原因");
+
+  const duplicates = duplicatePatients(data, id);
+
+  if(duplicates.length && !confirm(
+   "發現可能重複病人：\n" +
+   duplicates.map(p => p.mrn + " · " + pname(p.data)).join("\n") +
+   "\n\n不會自動合併。確認仍要保存？"
+  )) return;
+
+  let savedId = id;
+
+  await run(() => commit(d => {
+   if(id){
+    const p = d.patients.find(x => x.id === id);
+    assert(p, "主檔不存在");
+
+    p.changes.push({
+     at:now(),
+     actor,
+     sessionId,
+     reason,
+     before:C(p.data),
+     after:C(data)
+    });
+
+    p.data = C(data);
+    p.updated = now();
+   }else{
+    savedId = uid();
+    addMaster(d, savedId, data);
+
+    auditFamily(d, "只登記病人主檔", {
+     patientId:savedId
+    });
+   }
+  }));
+
+  masterHistory(savedId);
+ }
+
+ function linkDialog(id){
+  const p = findPatient(id);
+
+  const linked = new Set(relatives(id).map(x => x.patient.id));
+
+  const candidates = db.patients.filter(
+   x => x.id !== id && !linked.has(x.id)
+  ).sort((a,b) => a.mrn.localeCompare(b.mrn));
+
+  showModal("連結家人 · " + pname(p.data), `
+   <p class="small">
+    只可連結診所已登記病人；請核實身份及關係。
+    雙向名稱由你確認，不會按性別或姓名推斷。
+   </p>
+
+   <div class="field">
+    <label for="pfRelative">選擇已登記家人</label>
+    <select id="pfRelative">
+     <option value="">請選擇</option>
+     ${candidates.map(x => `
+      <option value="${E(x.id)}">
+       ${E(x.mrn)} · ${E(pname(x.data))} · ${E(fmt(x.data.dob))}
+      </option>
+     `).join("")}
+    </select>
+   </div>
+
+   <div class="field">
+    <label for="pfRelationA">對方係呢位病人嘅……</label>
+    <input id="pfRelationA"
+     maxlength="100"
+     placeholder="例如：父親、母親、配偶、兒子、女兒">
+   </div>
+
+   <div class="field">
+    <label for="pfRelationB">呢位病人係對方嘅……</label>
+    <input id="pfRelationB"
+     maxlength="100"
+     placeholder="例如：女兒、兒子、配偶、父親、母親">
+   </div>
+
+   <p class="small">
+    例：現時病人係陳小明，選擇佢爸爸陳大文：<br>
+    第一格填「父親」，第二格填「兒子」。
+   </p>
+
+   ${!candidates.length ? `
+    <div class="notice">
+     暫時沒有其他可連結病人。請先登記家人。
+    </div>` : ""}
+
+   <div class="pf-tools">
+    <button type="button"
+     class="primary"
+     data-act="pfSaveLink"
+     data-patient="${E(id)}">確認雙向連結</button>
+
+    <button type="button"
+     data-act="pfOpen"
+     data-patient="${E(id)}">返回主檔</button>
+   </div>
+  `, "pfLink");
+ }
+
+ async function saveLink(id){
+  const target = $("pfRelative").value;
+  const labelA = T($("pfRelationA").value);
+  const labelB = T($("pfRelationB").value);
+
+  findPatient(id);
+  findPatient(target);
+
+  assert(target !== id, "不能連結自己");
+  assert(labelA && labelB, "請填寫雙向關係名稱");
+
+  await run(() => commit(d => {
+   d.patientRelations ??= [];
+
+   assert(!d.patientRelations.some(r =>
+    r.active &&
+    (
+     (r.a === id && r.b === target) ||
+     (r.a === target && r.b === id)
+    )
+   ), "這兩位病人已經連結");
+
+   const relationId = uid();
+
+   d.patientRelations.push({
+    id:relationId,
+    a:id,
+    b:target,
+    labelA,
+    labelB,
+    active:true,
+    createdAt:now(),
+    createdBy:actor,
+    sessionId
+   });
+
+   auditFamily(d, "建立家人關係", {
+    relationId,
+    patientIds:[id,target]
+   });
+  }));
+
+  masterHistory(id);
+ }
+
+ async function unlink(id, relationId){
+  const reason = prompt(
+   "解除關係原因（必填）：\n只解除連結，不刪除任何病人或病歷。"
+  );
+
+  if(!T(reason)) return;
+
+  await run(() => commit(d => {
+   const r = relations(d).find(x => x.id === relationId);
+
+   assert(r?.active && (r.a === id || r.b === id),
+    "找不到有效關係");
+
+   r.active = false;
+   r.removedAt = now();
+   r.removedBy = actor;
+   r.removalReason = T(reason);
+
+   auditFamily(d, "解除家人關係", {
+    relationId,
+    reason:T(reason)
+   });
+  }));
+
+  masterHistory(id);
+ }
+
+ /*
+  沿用原本統一事件處理。
+  新操作只更新主檔或關係，不呼叫 addEncounter()。
+ */
+ const originalAction = action;
+
+ action = async function(button){
+  const a = button.dataset.act;
+
+  if(!a.startsWith("pf")) {
+   return originalAction(button);
+  }
+
+  if(busy || printing) return;
+
+  assert(db, "請先登入工作區");
+
+  const id = button.dataset.patient || "";
+
+  switch(a){
+   case "pfNew":
+    editPatient();
+    break;
+   case "pfRegistry":
+    registry();
+    break;
+   case "pfSearch":
+    registry($("pfRegistryQuery").value);
+    break;
+   case "pfOpen":
+    masterHistory(id);
+    break;
+   case "pfEdit":
+    editPatient(id);
+    break;
+   case "pfSave":
+    await savePatient(id);
+    break;
+   case "pfLink":
+    linkDialog(id);
+    break;
+   case "pfSaveLink":
+    await saveLink(id);
+    break;
+   case "pfUnlink":
+    await unlink(id, button.dataset.relation);
+    break;
+   default:
+    throw new Error("未支援的病人主檔操作");
+  }
+ };
+
+ /* 頂部新增獨立登記按鈕 */
+ const newVisit = document.querySelector(
+  '#app button[data-act="new"]'
+ );
+
+ if(newVisit){
+  const register = document.createElement("button");
+  register.type = "button";
+  register.className = "pf-register";
+  register.dataset.act = "pfNew";
+  register.textContent = "＋ 登記病人";
+  newVisit.before(register);
+ }
+
+ /* 頂部病人主檔改用同一個主檔名單 */
+ const patientsButton = document.querySelector(
+  '#app button[data-act="patients"]'
+ );
+
+ if(patientsButton){
+  patientsButton.dataset.act = "pfRegistry";
+ }
+
+ /*
+  新增側欄也要在登出時清除。
+  原登出成功會重新載入；此處在明文 db 已清除時移除側欄。
+ */
+ const originalLock = lockWorkspace;
+
+ lockWorkspace = async function(){
+  const result = await originalLock.apply(this, arguments);
+  if(!db) $("pfSideFamily")?.remove();
+  return result;
+ };
+
+ if(db) render();
+})();
+</script>
+<!-- ===== 獨立病人登記 + 家人關係完成 ===== -->
 </body>
 </html>
