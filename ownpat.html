@@ -6410,5 +6410,361 @@ masterHistory = function(id){
 })();
 </script>
 <!-- ===== 左欄入口整理完成 ===== -->
+ <!-- ===== 藥物敏感：三色按鈕 + 原有覆核欄位搬移 ===== -->
+<style id="cms-allergy-button-style">
+#cmsPatientCard #cmsAllergyToggle{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ min-width:112px;
+ min-height:40px;
+ margin-top:11px;
+ padding:9px 17px;
+ border:1px solid transparent;
+ border-radius:9px;
+ font-size:14px;
+ font-weight:bold;
+ line-height:1.4;
+ letter-spacing:.3px;
+ white-space:nowrap;
+}
+
+/* 無已知藥物敏感 */
+#cmsPatientCard #cmsAllergyToggle[data-status="none"]{
+ background:#237348;
+ border-color:#237348;
+ color:#fff;
+}
+
+#cmsPatientCard #cmsAllergyToggle[data-status="none"]:hover:not(:disabled){
+ background:#195c38;
+ border-color:#195c38;
+}
+
+/* 有藥物敏感 */
+#cmsPatientCard #cmsAllergyToggle[data-status="known"]{
+ background:#b52e3a;
+ border-color:#b52e3a;
+ color:#fff;
+}
+
+#cmsPatientCard #cmsAllergyToggle[data-status="known"]:hover:not(:disabled){
+ background:#96232e;
+ border-color:#96232e;
+}
+
+/* 未確認／未記錄 */
+#cmsPatientCard #cmsAllergyToggle[data-status="unknown"]{
+ background:#e1e5e9;
+ border-color:#c4ccd3;
+ color:#34434e;
+}
+
+#cmsPatientCard #cmsAllergyToggle[data-status="unknown"]:hover:not(:disabled){
+ background:#d2d9df;
+ border-color:#b3bec7;
+}
+
+#cmsPatientCard #cmsAllergyToggle:focus-visible{
+ outline:3px solid #8ba8bd;
+ outline-offset:3px;
+}
+
+#cmsPatientCard #cmsAllergyPanel{
+ margin-top:10px;
+ padding:14px;
+ border:1px solid var(--line);
+ border-radius:10px;
+ background:#f8fafb;
+}
+
+#cmsPatientCard #cmsAllergyPanel[hidden]{
+ display:none !important;
+}
+
+#cmsPatientCard #cmsAllergyPanelTitle{
+ margin:0 0 13px;
+ font-size:14px;
+ line-height:1.6;
+}
+
+#cmsPatientCard #cmsAllergyEditor{
+ min-width:0;
+ margin:0;
+ padding:0;
+ border:0;
+}
+
+#cmsPatientCard #cmsAllergyEditor .field{
+ margin-bottom:13px;
+}
+
+#cmsPatientCard #cmsAllergyEditor textarea{
+ min-height:90px;
+}
+
+#cmsPatientCard #cmsAllergyEditor p:last-child{
+ margin-bottom:0;
+}
+
+#cmsPatientCard .cms-allergy-readonly{
+ margin:0 0 12px;
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.7;
+}
+</style>
+
+<script>
+(function installAllergyStatusButton(){
+ "use strict";
+
+ const app = $("app");
+ const card = $("cmsPatientCard");
+ const oldSummary = $("cmsPatientAllergy");
+ const allergyFields = $("allergyFields");
+
+ if(
+  !app ||
+  !card ||
+  !oldSummary ||
+  !allergyFields ||
+  app.dataset.allergyStatusButton === "1"
+ ){
+  return;
+ }
+
+ app.dataset.allergyStatusButton = "1";
+
+ /*
+  搬移同一份 allergyFields。
+  不建立第二份表單，也不修改病歷資料結構。
+ */
+ const oldAllergyCard = allergyFields.closest("section.card");
+
+ const button = document.createElement("button");
+ button.id = "cmsAllergyToggle";
+ button.type = "button";
+ button.dataset.status = "unknown";
+ button.textContent = "？N/KDA";
+ button.setAttribute("aria-expanded", "false");
+ button.setAttribute("aria-controls", "cmsAllergyPanel");
+
+ const panel = document.createElement("section");
+ panel.id = "cmsAllergyPanel";
+ panel.hidden = true;
+ panel.setAttribute("role", "region");
+ panel.setAttribute("aria-labelledby", "cmsAllergyPanelTitle");
+
+ const title = document.createElement("h3");
+ title.id = "cmsAllergyPanelTitle";
+ title.textContent = "藥物敏感及覆核";
+
+ const readonlyNote = document.createElement("p");
+ readonlyNote.className = "cms-allergy-readonly";
+ readonlyNote.hidden = true;
+
+ const editor = document.createElement("fieldset");
+ editor.id = "cmsAllergyEditor";
+ editor.append(allergyFields);
+
+ panel.append(title, readonlyNote, editor);
+
+ /*
+  原有摘要程式仍持有 oldSummary 的引用。
+  將它移離畫面，但不破壞其引用，避免舊補丁出錯。
+ */
+ oldSummary.replaceWith(button, panel);
+
+ /*
+  allergyFields 已搬走，可移除原本空咗嘅獨立卡片。
+ */
+ if(oldAllergyCard && oldAllergyCard !== card){
+  oldAllergyCard.remove();
+ }
+
+ function setExpanded(expanded){
+  panel.hidden = !expanded;
+  button.setAttribute("aria-expanded", String(expanded));
+ }
+
+ button.addEventListener("click", ()=>{
+  if(!db || busy || printing) return;
+  setExpanded(panel.hidden);
+ });
+
+ const states = {
+  none:{
+   text:"NKDA",
+   description:"無已知藥物敏感"
+  },
+  known:{
+   text:"Alert",
+   description:"有藥物敏感"
+  },
+  unknown:{
+   text:"？N/KDA",
+   description:"未確認／未記錄藥物敏感狀態"
+  }
+ };
+
+ let lastContext = "";
+
+ function syncAllergyButton(){
+  if(!db || !current()) return;
+
+  const displayed = source();
+  const e = displayed.data;
+  const p = e.patient || {};
+
+  const state = Object.hasOwn(states, p.allergyStatus)
+   ? p.allergyStatus
+   : "unknown";
+
+  const config = states[state];
+
+  button.dataset.status = state;
+  button.textContent = config.text;
+
+  const reviewText = displayed.kind === "document"
+   ? "此文件快照未保存本次敏感覆核狀態。"
+   : "本次覆核：" + (e.allergyReviewed ? "已覆核" : "未記錄");
+
+  const missingRecord = !Object.hasOwn(states, p.allergyStatus);
+
+  const description = missingRecord
+   ? "此快照不包含藥物敏感狀態；請返回診症查看。"
+   : config.description;
+
+  button.title = description + "；" + reviewText;
+
+  button.setAttribute(
+   "aria-label",
+   config.text + "：" + description +
+   "。" + reviewText + "。展開或收起藥物敏感及覆核。"
+  );
+
+  /*
+   正常重新繪製／輸入時保留展開狀態；
+   切換診症或歷史快照時收起。
+  */
+  const context = [
+   selected,
+   view?.kind || "",
+   view?.id || "",
+   displayed.kind
+  ].join("|");
+
+  if(context !== lastContext){
+   setExpanded(false);
+   lastContext = context;
+  }
+
+  /*
+   修改敏感詳情會重設覆核。
+   即使文字輸入沒有觸發 render()，
+   亦同步取消畫面上的覆核勾選。
+  */
+  const reviewCheckbox = editor.querySelector(
+   '[data-path="allergyReviewed"]'
+  );
+
+  if(reviewCheckbox){
+   reviewCheckbox.checked = !!e.allergyReviewed;
+  }
+
+  const readOnly = !editable();
+
+  readonlyNote.hidden = !readOnly;
+  readonlyNote.textContent = missingRecord
+   ? "此快照沒有藥物敏感紀錄。以下欄位不可編輯；請返回診症查看及覆核。"
+   : "目前為唯讀。若要修改，請返回本次診症，並確認診症處於未完成狀態。";
+
+  editor.disabled = readOnly;
+  button.disabled = busy || printing;
+ }
+
+ /*
+  allergyFields 已搬離 editorFields，
+  補回原有輸入事件；繼續使用 editorInput()，
+  沿用自動儲存、覆核重設及操作紀錄。
+ */
+ function handleAllergyInput(event){
+  const input = event.target;
+
+  if(!input.matches("[data-path]")) return;
+
+  const isChoice =
+   input.type === "checkbox" ||
+   input.tagName === "SELECT";
+
+  if(event.type === "input" && isChoice) return;
+  if(event.type === "change" && !isChoice) return;
+
+  try{
+   editorInput(input);
+  }catch(error){
+   if(db && current()){
+    fill(editor, source().data);
+   }
+   fail(error);
+  }finally{
+   syncAllergyButton();
+  }
+ }
+
+ editor.addEventListener("input", handleAllergyInput);
+ editor.addEventListener("change", handleAllergyInput);
+
+ /*
+  原本 render() 會重新產生 allergyFields 內容。
+  完成後填入搬移後的欄位值。
+ */
+ const previousRender = render;
+
+ render = function(){
+  const result = previousRender.apply(this, arguments);
+
+  if(db && current()){
+   fill(editor, source().data);
+   syncAllergyButton();
+  }
+
+  return result;
+ };
+
+ /*
+  原程式部分輸入只更新 banner()，
+  因此同時接駁按鈕狀態更新。
+ */
+ const previousBanner = banner;
+
+ banner = function(){
+  const result = previousBanner.apply(this, arguments);
+  syncAllergyButton();
+  return result;
+ };
+
+ /*
+  按鈕可於唯讀模式展開查看，
+  但表單仍跟隨 editable() 鎖定。
+ */
+ const previousUpdateButtons = updateButtons;
+
+ updateButtons = function(){
+  const result = previousUpdateButtons.apply(this, arguments);
+
+  editor.disabled = !editable();
+  button.disabled = !db || busy || printing;
+
+  return result;
+ };
+
+ if(db){
+  render();
+ }
+})();
+</script>
+<!-- ===== 藥物敏感三色按鈕完成 ===== -->
 </body>
 </html>
