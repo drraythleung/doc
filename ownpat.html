@@ -6350,5 +6350,65 @@ masterHistory = function(id){
 })();
 </script>
 <!-- ===== 病人資料整合完成 ===== -->
+ <!-- ===== 左欄：只保留病人主檔入口 ===== -->
+<style id="cms-patient-entry-cleanup">
+/* 保留底層元素供原程式使用，只移除畫面入口 */
+#cmsPatientCard button[data-act="identity"],
+#cmsPatientCard button[data-act="publishMaster"],
+#cmsPatientContact{
+ display:none !important;
+}
+
+#cmsPatientCard .cms-removed-patient-action{
+ display:none !important;
+}
+</style>
+
+<script>
+(function simplifyPatientEntries(){
+ "use strict";
+
+ const card = document.getElementById("cmsPatientCard");
+ if(!card) return;
+
+ /* 隱藏兩個操作連同其說明 */
+ ["identity", "publishMaster"].forEach(actionName=>{
+  const button = card.querySelector(
+   'button[data-act="' + actionName + '"]'
+  );
+
+  if(!button) return;
+
+  const wrapper = button.parentElement;
+
+  if(wrapper?.parentElement?.classList.contains(
+   "cms-patient-actions"
+  )){
+   wrapper.classList.add("cms-removed-patient-action");
+  }else{
+   button.hidden = true;
+  }
+ });
+
+ /* 保留欄位供原程式更新，但不顯示 */
+ const contactSection =
+  document.getElementById("cmsPatientContact");
+
+ if(contactSection){
+  contactSection.open = false;
+  contactSection.hidden = true;
+ }
+
+ /* 只改左欄主檔按鈕名稱，不改功能 */
+ const masterButton = card.querySelector(
+  '#cmsPatientManage button[data-act="pfOpen"]'
+ );
+
+ if(masterButton){
+  masterButton.textContent = "病人主檔";
+ }
+})();
+</script>
+<!-- ===== 左欄入口整理完成 ===== -->
 </body>
 </html>
