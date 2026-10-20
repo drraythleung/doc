@@ -5658,5 +5658,697 @@ masterHistory = function(id){
 })();
 </script>
 <!-- ===== 獨立病人登記 + 家人關係完成 ===== -->
+ <!-- ===== 病人資料整合：放在所有現有程式之後 ===== -->
+<style id="cms-patient-compact-style">
+/* 左欄：一張病人資料卡 */
+#cmsPatientCard .cms-patient-card-head{
+ display:flex;
+ justify-content:space-between;
+ align-items:flex-start;
+ gap:12px;
+ margin-bottom:8px;
+}
+
+#cmsPatientCard #patientHeading{
+ margin:0;
+ font-size:17px;
+ line-height:1.5;
+ overflow-wrap:anywhere;
+}
+
+#cmsPatientCard .cms-card-caption{
+ margin-bottom:4px;
+ color:var(--muted);
+ font-size:11px;
+}
+
+#cmsPatientCard #patientBanner{
+ font-size:12px;
+ line-height:1.8;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+/* 藥物敏感繼續直接顯示 */
+#cmsPatientAllergy{
+ margin-top:10px;
+ padding:9px 11px;
+ border:1px solid var(--line);
+ border-radius:8px;
+ background:#f8fafb;
+ font-size:12px;
+ line-height:1.7;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+#cmsPatientAllergy.is-known{
+ background:var(--badbg);
+ border-color:#e2b3b8;
+ color:var(--bad);
+}
+
+/* 不常用功能：預設收起 */
+#cmsPatientCard .cms-patient-fold{
+ margin-top:12px;
+ padding-top:11px;
+ border-top:1px solid var(--line);
+}
+
+#cmsPatientCard .cms-patient-fold > summary{
+ font-size:13px;
+ line-height:1.7;
+}
+
+#cmsPatientCard .cms-patient-fold[open] > summary{
+ margin-bottom:11px;
+}
+
+#cmsPatientCard .cms-patient-actions{
+ display:grid;
+ grid-template-columns:1fr;
+ gap:9px;
+ margin:0 !important;
+ padding:0;
+ border:0;
+}
+
+#cmsPatientCard .cms-action-description{
+ margin-top:4px;
+ font-size:11px;
+ color:var(--muted);
+ line-height:1.7;
+}
+
+#cmsPatientCard .cms-patient-actions button{
+ width:100%;
+ text-align:left;
+ font-size:12px;
+}
+
+#cmsPatientCard .cms-fold-help{
+ margin:8px 0 0;
+ color:var(--muted);
+ font-size:11px;
+ line-height:1.7;
+}
+
+#cmsPatientCard #pfSideFamily{
+ padding:0;
+ margin:0;
+ border:0;
+ border-radius:0;
+ background:transparent;
+ box-shadow:none;
+}
+
+/* 已由外面的「已連結家人」標題取代 */
+#cmsPatientCard #pfSideFamily > .row{
+ display:none;
+}
+
+#cmsPatientCard #pfSideFamily .pf-family-table{
+ margin:0;
+}
+
+#cmsPatientCard #cmsContactEditor{
+ min-width:0;
+ margin:0;
+ padding:0;
+ border:0;
+}
+
+#cmsPatientCard #contactFields .field:last-child{
+ margin-bottom:0;
+}
+
+/* 主檔更正紀錄：整組收起 */
+.patient-profile details.cms-profile-history{
+ padding:0;
+}
+
+.patient-profile details.cms-profile-history > summary{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:8px;
+ margin:0;
+ padding:13px 16px;
+ background:#f8fafb;
+ list-style:none;
+}
+
+.patient-profile details.cms-profile-history > summary::-webkit-details-marker{
+ display:none;
+}
+
+.patient-profile details.cms-profile-history > summary::after{
+ content:"展開 ▾";
+ color:var(--muted);
+ font-size:12px;
+ font-weight:normal;
+}
+
+.patient-profile details.cms-profile-history[open] > summary::after{
+ content:"收起 ▴";
+}
+
+.patient-profile details.cms-profile-history > .profile-section-body{
+ border-top:1px solid var(--line);
+}
+
+/* 主檔家人區沿用現有主檔樣式 */
+.patient-profile .cms-profile-family .pf-family-table{
+ margin-top:0;
+}
+
+.patient-profile .cms-profile-family .profile-section-head button{
+ font-size:12px;
+}
+
+@media(max-width:600px){
+ #cmsPatientCard .cms-patient-card-head{
+  gap:8px;
+ }
+
+ .patient-profile details.cms-profile-history > summary{
+  padding:13px;
+ }
+}
+</style>
+
+<script>
+(function installCompactPatientInterface(){
+ "use strict";
+
+ const app = $("app");
+ if(!app || app.dataset.compactPatientUI === "1") return;
+
+ const heading = $("patientHeading");
+ const bannerNode = $("patientBanner");
+ const patientCard = heading?.closest(".card");
+ const contactFields = $("contactFields");
+
+ if(!patientCard || !bannerNode || !contactFields) return;
+
+ app.dataset.compactPatientUI = "1";
+ patientCard.id = "cmsPatientCard";
+
+ /*
+  只整理畫面。
+  不呼叫 commit()、不更改 db、不建立診症。
+ */
+
+ function numericDOB(value){
+  return dateOK(value)
+   ? value.slice(8,10) + "-" +
+     value.slice(5,7) + "-" +
+     value.slice(0,4)
+   : "—";
+ }
+
+ function ageAt(dob, reference){
+  if(!dateOK(dob) || !dateOK(reference) || dob > reference){
+   return "—";
+  }
+
+  let months =
+   (+reference.slice(0,4) - +dob.slice(0,4)) * 12 +
+   +reference.slice(5,7) - +dob.slice(5,7);
+
+  if(+reference.slice(8,10) < +dob.slice(8,10)){
+   months--;
+  }
+
+  return months < 0
+   ? "—"
+   : Math.floor(months / 12) + "y" + (months % 12) + "m";
+ }
+
+ function makeDetails(id, title){
+  const details = document.createElement("details");
+  details.id = id;
+  details.className = "cms-patient-fold";
+
+  const summary = document.createElement("summary");
+  summary.textContent = title;
+
+  details.append(summary);
+  return details;
+ }
+
+ /* 1. 搬移現有身份操作，保留原本按鈕 */
+ const identityButton = app.querySelector(
+  'button[data-act="identity"]'
+ );
+
+ const publishButton = app.querySelector(
+  'button[data-act="publishMaster"]'
+ );
+
+ const oldActionRow = identityButton?.parentElement;
+
+ const cardHead = document.createElement("div");
+ cardHead.className = "cms-patient-card-head";
+
+ const titleBox = document.createElement("div");
+
+ const caption = document.createElement("div");
+ caption.className = "cms-card-caption";
+ caption.textContent = "病人資料 · 本次顯示快照";
+
+ titleBox.append(caption, heading);
+ cardHead.append(titleBox);
+
+ const allergyBox = document.createElement("div");
+ allergyBox.id = "cmsPatientAllergy";
+
+ const manageFold = makeDetails(
+  "cmsPatientManage",
+  "管理資料"
+ );
+
+ const actionList = document.createElement("div");
+ actionList.className = "cms-patient-actions";
+
+ function addExistingAction(button, description){
+  if(!button) return;
+
+  const item = document.createElement("div");
+  const note = document.createElement("div");
+  note.className = "cms-action-description";
+  note.textContent = description;
+
+  item.append(button, note);
+  actionList.append(item);
+ }
+
+ addExistingAction(
+  identityButton,
+  "只更正本次診症身份；不改寫舊文件或完成快照。"
+ );
+
+ addExistingAction(
+  publishButton,
+  "將本次病人資料更新至主檔；不會改寫其他診症。"
+ );
+
+ const openMasterButton = document.createElement("button");
+ openMasterButton.type = "button";
+ openMasterButton.dataset.act = "pfOpen";
+ openMasterButton.textContent = "開啟病人主檔／管理家人";
+
+ addExistingAction(
+  openMasterButton,
+  "查看或編輯目前主檔，以及新增／解除家人關係。"
+ );
+
+ manageFold.append(actionList);
+
+ const familyFold = makeDetails(
+  "cmsPatientFamily",
+  "已連結家人（0）"
+ );
+
+ const familyHost = document.createElement("div");
+ familyHost.id = "cmsPatientFamilyHost";
+ familyFold.append(familyHost);
+
+ /* 2. 本次聯絡資料搬入同一張卡 */
+ const oldContactCard = contactFields.closest(".card");
+
+ const contactFold = makeDetails(
+  "cmsPatientContact",
+  "本次聯絡資料"
+ );
+
+ const contactHelp = document.createElement("p");
+ contactHelp.className = "cms-fold-help";
+ contactHelp.textContent =
+  "只編輯本次診症的聯絡資料，不印於對外文件。" +
+  "如需沿用至之後診症，請另外更新病人主檔。";
+
+ const contactEditor = document.createElement("fieldset");
+ contactEditor.id = "cmsContactEditor";
+ contactEditor.append(contactFields);
+
+ contactFold.append(contactEditor, contactHelp);
+
+ patientCard.replaceChildren(
+  cardHead,
+  bannerNode,
+  allergyBox,
+  manageFold,
+  familyFold,
+  contactFold
+ );
+
+ if(oldActionRow && oldActionRow !== patientCard){
+  oldActionRow.remove();
+ }
+
+ if(oldContactCard && oldContactCard !== patientCard){
+  oldContactCard.remove();
+ }
+
+ /*
+  聯絡欄位已搬離 editorFields，
+  所以補回原本的輸入事件及唯讀控制。
+ */
+ function processContactInput(event){
+  const input = event.target;
+  if(!input.matches("[data-path]")) return;
+
+  const isChoice =
+   input.type === "checkbox" ||
+   input.tagName === "SELECT";
+
+  if(event.type === "input" && isChoice) return;
+  if(event.type === "change" && !isChoice) return;
+
+  try{
+   editorInput(input);
+  }catch(error){
+   if(db && current()){
+    fill(contactEditor, source().data);
+   }
+   fail(error);
+  }
+ }
+
+ contactEditor.addEventListener("input", processContactInput);
+ contactEditor.addEventListener("change", processContactInput);
+
+ const previousUpdateButtons = updateButtons;
+
+ updateButtons = function(){
+  const result = previousUpdateButtons.apply(this, arguments);
+  contactEditor.disabled = !editable();
+  return result;
+ };
+
+ /*
+  只修改家人表格中的出生日期欄。
+  不改全域 fmt()，避免影響對外文件格式。
+ */
+ function formatFamilyDates(root){
+  if(!db || !root) return;
+
+  root.querySelectorAll(".pf-family-table tbody tr").forEach(row=>{
+   const nameButton = row.querySelector(
+    'button[data-act="pfOpen"][data-patient]'
+   );
+
+   const patient = db.patients.find(
+    p => p.id === nameButton?.dataset.patient
+   );
+
+   if(patient && row.cells.length >= 4){
+    row.cells[3].textContent = numericDOB(patient.data.dob);
+   }
+  });
+ }
+
+ /* 3. 左欄摘要：使用畫面正在顯示的資料來源 */
+ function drawCompactSummary(){
+  if(!db || !current()) return;
+
+  const displayed = source();
+  const e = displayed.data;
+  const p = e.patient || {};
+
+  const patientMaster = db.patients.find(
+   item => item.id === e.patientId
+  );
+
+  heading.textContent = pname(p) || "未填病人";
+  openMasterButton.dataset.patient = e.patientId;
+
+  const referenceAge = ageAt(p.dob, e.date);
+
+  const identityLine = [
+   patientMaster?.mrn || "",
+   p.sex || "未填性別",
+   referenceAge === "—" ? "" : referenceAge,
+   dateOK(p.dob) ? numericDOB(p.dob) : ""
+  ].filter(Boolean).join(" · ");
+
+  const context = displayed.kind === "document"
+   ? "文件版本快照"
+   : displayed.kind === "revision"
+    ? "完成時快照"
+    : "本次診症";
+
+  const lines = [
+   identityLine,
+   context + "：" + (e.date || "—") +
+    " · " +
+    (current().status === "completed" ? "已完成" : "未完成")
+  ];
+
+  /*
+   對外文件快照沒有聯絡資料：
+   不以目前主檔電話冒充歷史電話。
+  */
+  if(displayed.kind !== "document"){
+   lines.push("本次電話：" + (T(p.phone) || "未填寫"));
+  }else{
+   lines.push("此文件快照不包含聯絡資料。");
+  }
+
+  if(
+   patientMaster &&
+   !equal(patientMaster.data, current().patient)
+  ){
+   lines.push("主檔與本次資料不同；不會自動互相覆蓋。");
+  }
+
+  bannerNode.textContent = lines.filter(Boolean).join("\n");
+
+  /*
+   文件快照未必包含敏感紀錄，
+   缺少資料時不誤顯示成「無敏感」。
+  */
+  if(p.allergyStatus){
+   allergyBox.textContent =
+    "本次顯示資料的藥物敏感：\n" +
+    allergy(p) +
+    (displayed.kind === "document"
+     ? ""
+     : "\n本次覆核：" + (e.allergyReviewed ? "已覆核" : "未記錄"));
+  }else{
+   allergyBox.textContent =
+    "此文件快照不包含藥物敏感紀錄；" +
+    "請返回診症查看及覆核。";
+  }
+
+  allergyBox.classList.toggle(
+   "is-known",
+   p.allergyStatus === "known"
+  );
+ }
+
+ /*
+  原程式輸入後會直接呼叫 banner()，
+  因此一併接駁，避免摘要變回舊版。
+ */
+ const previousBanner = banner;
+
+ banner = function(){
+  const result = previousBanner.apply(this, arguments);
+  drawCompactSummary();
+  return result;
+ };
+
+ let lastContext = "";
+
+ function syncPatientCard(){
+  if(!db || !current()) return;
+
+  const displayed = source();
+
+  const contextKey = [
+   selected,
+   view?.kind || "",
+   view?.id || "",
+   displayed.kind
+  ].join("|");
+
+  /*
+   切換診症／歷史快照後重新收起；
+   同一診症內正常輸入或切換頁籤則保留展開狀態。
+  */
+  if(contextKey !== lastContext){
+   manageFold.open = false;
+   familyFold.open = false;
+   contactFold.open = false;
+   lastContext = contextKey;
+  }
+
+  drawCompactSummary();
+
+  /* 補回已搬移聯絡欄位的表單值及唯讀狀態 */
+  fill(contactEditor, displayed.data);
+  contactEditor.disabled = !editable();
+
+  /*
+   原家人補丁每次 render() 會更新 pfSideFamily。
+   將同一個現有元素搬入收合區，不另建一份清單。
+  */
+  const familyCard = $("pfSideFamily");
+
+  if(familyCard){
+   if(familyCard.parentElement !== familyHost){
+    familyHost.append(familyCard);
+   }
+
+   formatFamilyDates(familyCard);
+  }
+
+  const count = (db.patientRelations || []).filter(r =>
+   r.active &&
+   (r.a === current().patientId || r.b === current().patientId)
+  ).length;
+
+  familyFold.querySelector("summary").textContent =
+   "已連結家人（" + count + "）";
+ }
+
+ const previousRender = render;
+
+ render = function(){
+  const result = previousRender.apply(this, arguments);
+  syncPatientCard();
+  return result;
+ };
+
+ /* 4. 主檔：家人前移，更正紀錄置底及收起 */
+ const previousMasterHistory = masterHistory;
+
+ masterHistory = function(id){
+  const result = previousMasterHistory.apply(this, arguments);
+
+  const body = $("modalBody");
+  const profile = body.querySelector(".patient-profile");
+
+  if(!profile) return result;
+
+  const sections = [...profile.children].filter(
+   node => node.classList.contains("profile-section")
+  );
+
+  const sectionTitle = section =>
+   T(section.querySelector(
+    ".profile-section-head h3"
+   )?.textContent);
+
+  const contactSection = sections.find(
+   section => sectionTitle(section) === "最新聯絡資料"
+  );
+
+  const historySection = sections.find(
+   section => sectionTitle(section) === "主檔更正紀錄"
+  );
+
+  /*
+   找出原家人補丁加在 modalBody 最底的家人區。
+  */
+  const oldFamilySection = [...body.children].find(node =>
+   node.matches("section.item") &&
+   T(node.querySelector("h3")?.textContent) === "已登記家人"
+  );
+
+  if(oldFamilySection){
+   const familySection = document.createElement("section");
+   familySection.className =
+    "profile-section cms-profile-family";
+
+   const head = document.createElement("div");
+   head.className = "profile-section-head";
+
+   const title = document.createElement("h3");
+   title.textContent = "已登記家人";
+
+   const linkButton = document.createElement("button");
+   linkButton.type = "button";
+   linkButton.dataset.act = "pfLink";
+   linkButton.dataset.patient = id;
+   linkButton.textContent = "＋ 連結家人";
+
+   head.append(title, linkButton);
+
+   const content = document.createElement("div");
+   content.className = "profile-section-body";
+
+   const oldTitle = oldFamilySection.querySelector("h3");
+   oldTitle?.remove();
+
+   while(oldFamilySection.firstChild){
+    content.append(oldFamilySection.firstChild);
+   }
+
+   familySection.append(head, content);
+
+   if(contactSection){
+    contactSection.after(familySection);
+   }else{
+    profile.append(familySection);
+   }
+
+   oldFamilySection.remove();
+  }
+
+  if(historySection){
+   const fold = document.createElement("details");
+   fold.className =
+    "profile-section cms-profile-history";
+
+   const summary = document.createElement("summary");
+
+   const title = document.createElement("strong");
+   title.textContent = "主檔更正紀錄";
+
+   const count = document.createElement("span");
+   count.className = "pill";
+
+   const p = db.patients.find(item => item.id === id);
+   count.textContent = (p?.changes?.length || 0) + " 次修改";
+
+   summary.append(title, count);
+   fold.append(summary);
+
+   const historyContent = historySection.querySelector(
+    ".profile-section-body"
+   );
+
+   if(historyContent){
+    /*
+     外層及每筆紀錄均預設收起。
+     保留所有原有內容，不刪除更正紀錄。
+    */
+    historyContent.querySelectorAll("details").forEach(item=>{
+     item.open = false;
+    });
+
+    fold.append(historyContent);
+   }
+
+   historySection.remove();
+   profile.append(fold);
+  }
+
+  formatFamilyDates(profile);
+
+  return result;
+ };
+
+ if(db){
+  render();
+ }
+
+})();
+</script>
+<!-- ===== 病人資料整合完成 ===== -->
 </body>
 </html>
