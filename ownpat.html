@@ -9574,5 +9574,1064 @@ body.cms-split-dragging *{
 })();
 </script>
 <!-- ===== 病人主檔同步修正完成 ===== -->
+<!-- ===== CMS 第 1 階段：儲存／出具／完成／列印分工 ===== -->
+
+<style id="cms-stage1-workflow-style">
+#cmsStage1IssueButton{
+ border-color:var(--accent);
+ background:var(--accent);
+ color:#fff;
+ font-weight:bold;
+}
+
+#cmsStage1IssueButton:hover:not(:disabled){
+ background:#194c42;
+}
+
+.cms-s1-summary{
+ margin-bottom:15px;
+ padding:13px 15px;
+ border:1px solid var(--line);
+ border-radius:9px;
+ background:#f4f8f9;
+ line-height:1.8;
+}
+
+.cms-s1-summary strong{
+ display:block;
+ margin-bottom:4px;
+}
+
+.cms-s1-document{
+ margin:10px 0;
+ padding:13px;
+ border:1px solid var(--line);
+ border-radius:10px;
+ background:#fff;
+}
+
+.cms-s1-document-label{
+ display:flex;
+ align-items:flex-start;
+ gap:10px;
+ margin:0;
+ color:var(--ink);
+ font-size:14px;
+ cursor:pointer;
+}
+
+.cms-s1-document-label input{
+ flex:0 0 auto;
+ margin-top:5px;
+}
+
+.cms-s1-document-title{
+ display:block;
+ font-weight:bold;
+}
+
+.cms-s1-document-state{
+ display:block;
+ margin-top:3px;
+ color:var(--muted);
+ font-size:12px;
+ font-weight:normal;
+}
+
+.cms-s1-document-errors{
+ margin:9px 0 0 25px;
+ color:var(--bad);
+ font-size:12px;
+ line-height:1.8;
+}
+
+.cms-s1-document-details{
+ margin:9px 0 0 25px;
+}
+
+.cms-s1-document-details summary{
+ color:var(--muted);
+ font-size:12px;
+ font-weight:normal;
+}
+
+.cms-s1-document-details pre{
+ margin:9px 0 0;
+ padding:10px;
+ border-radius:7px;
+ background:#f5f8f9;
+ font-size:12px;
+}
+
+.cms-s1-reason{
+ margin-top:17px;
+}
+
+.cms-s1-reason textarea{
+ min-height:85px;
+}
+
+.cms-s1-allergy{
+ margin-top:15px;
+ padding:12px;
+ border:1px solid #dfd0a4;
+ border-radius:9px;
+ background:var(--warnbg);
+}
+
+.cms-s1-allergy label{
+ margin-bottom:0;
+}
+
+#cmsStage1IssueErrors{
+ margin:13px 0;
+}
+
+#cmsStage1IssueErrors[hidden]{
+ display:none !important;
+}
+
+.cms-s1-footer{
+ display:flex;
+ justify-content:flex-end;
+ flex-wrap:wrap;
+ gap:8px;
+ margin-top:18px;
+ padding-top:14px;
+ border-top:1px solid var(--line);
+}
+
+.cms-s1-footnote{
+ margin:14px 0 0;
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.8;
+}
+
+.cms-s1-context{
+ display:inline-block;
+ margin-left:7px;
+ padding:2px 7px;
+ border:1px solid var(--line);
+ border-radius:5px;
+ color:var(--muted);
+ font-size:11px;
+ vertical-align:middle;
+}
+
+@media(max-width:600px){
+ .cms-s1-footer{
+  display:grid;
+  grid-template-columns:1fr;
+ }
+
+ .cms-s1-footer button{
+  width:100%;
+ }
+}
+</style>
+
+<script>
+(function installStage1Workflow(){
+ "use strict";
+
+ const app = $("app");
+
+ if(
+  !app ||
+  app.dataset.stage1Workflow === "1"
+ ){
+  return;
+ }
+
+ const workbar = $("cmsVisitWorkbar");
+
+ const saveButton = workbar?.querySelector(
+  'button[data-act="save"]'
+ );
+
+ const printButton = workbar?.querySelector(
+  'button[data-act="print"]'
+ );
+
+ const batchButton = workbar?.querySelector(
+  'button[data-act="batch"]'
+ );
+
+ if(!workbar || !saveButton || !printButton){
+  console.warn(
+   "第 1 階段未安裝：找不到現有診症操作列。"
+  );
+  return;
+ }
+
+ app.dataset.stage1Workflow = "1";
+
+ const ACTION_OPEN = "cmsS1OpenIssue";
+ const ACTION_CONFIRM = "cmsS1ConfirmIssue";
+ const ACTION_CANCEL = "cmsS1CancelIssue";
+
+ let issueContext = null;
+
+ /*
+  只新增出具入口。
+
+  原本的儲存按鈕由 action() 攔截，
+  唔再進入上一版「立即儲存並出具」流程。
+ */
+ const issueButton = document.createElement("button");
+
+ issueButton.id = "cmsStage1IssueButton";
+ issueButton.type = "button";
+ issueButton.dataset.act = ACTION_OPEN;
+ issueButton.textContent = "出具文件";
+
+ saveButton.after(issueButton);
+
+ function pendingTypes(e, settings = db.settings){
+  return DOCS.filter(type => {
+   const version = effective(e, type);
+
+   if(version){
+    return different(e, type, settings);
+   }
+
+   return e.used[type] === true;
+  });
+ }
+
+ function validCurrent(){
+  return !!(
+   db &&
+   current()
+  );
+ }
+
+ function canIssue(){
+  return !!(
+   validCurrent() &&
+   !busy &&
+   !printing &&
+   !conflict &&
+   !view &&
+   current().status === "draft"
+  );
+ }
+
+ function selectedIssueTypes(){
+  return [
+   ...$("modalBody").querySelectorAll(
+    '[data-cms-s1-document]:checked'
+   )
+  ].map(input => input.dataset.cmsS1Document);
+ }
+
+ function setIssueErrors(errors){
+  const node = $("cmsStage1IssueErrors");
+
+  if(!node) return;
+
+  node.hidden = errors.length === 0;
+
+  node.textContent = errors.length
+   ? "未有出具任何文件，請先處理：\n• " +
+     errors.join("\n• ")
+   : "";
+
+  if(errors.length){
+   node.scrollIntoView({
+    block:"nearest"
+   });
+  }
+ }
+
+ /*
+  同步現有工具列文字及狀態。
+  唔改動資料，亦唔建立文件版本。
+ */
+ function syncControls(){
+  if(!validCurrent()){
+   issueButton.disabled = true;
+   return;
+  }
+
+  const e = current();
+  const types = pendingTypes(e);
+
+  const blocked = !!(
+   busy ||
+   printing ||
+   conflict
+  );
+
+  saveButton.textContent = "儲存草稿";
+
+  saveButton.title =
+   "只保存目前工作區資料；" +
+   "不出具文件、不建立完成快照，也不列印。";
+
+  saveButton.disabled =
+   blocked ||
+   !!view ||
+   e.status !== "draft";
+
+  issueButton.textContent =
+   "出具文件" +
+   (types.length ? "（" + types.length + "）" : "");
+
+  issueButton.disabled =
+   !canIssue() ||
+   types.length === 0;
+
+  issueButton.title = types.length
+   ? "核對並選擇要出具的文件。" +
+     "未選文件保持草稿；不會自動列印或記錄交付。"
+   : "目前沒有待出具或待修訂的文件。";
+
+  if(view?.kind === "document"){
+   printButton.textContent = "重印歷史版本／PDF";
+
+   printButton.title =
+    "列印目前正在查看的文件版本。" +
+    "歷史版本會保留原有狀態標示。";
+
+  }else if(view?.kind === "revision"){
+   printButton.textContent = "列印完成快照／PDF";
+
+   printButton.title =
+    "列印目前正在查看的診症完成快照。";
+
+  }else if(tab === "note"){
+   printButton.textContent =
+    e.status === "completed"
+     ? "列印診症紀錄／PDF"
+     : "列印草稿／PDF";
+
+   printButton.title =
+    e.status === "completed"
+     ? "列印診症紀錄；有完成快照時使用完成快照。"
+     : "列印未完成診症草稿，不會將診症標記完成。";
+
+  }else if(e.status === "draft"){
+   const version = effective(e, tab);
+
+   const requiresIssue =
+    !version ||
+    different(e, tab);
+
+   printButton.textContent = requiresIssue
+    ? "出具並列印／PDF"
+    : "列印／PDF";
+
+   printButton.title = requiresIssue
+    ? "原有列印流程會先驗證並確認出具目前文件，" +
+      "然後開啟列印。取消列印不會撤銷已出具版本。"
+    : "重用目前有效版本列印，不建立相同的新版本。";
+
+  }else{
+   printButton.textContent = "列印／PDF";
+
+   printButton.title =
+    "使用目前有效文件版本列印。" +
+    "如未有有效版本，須先重開診症製作。";
+  }
+
+  if(batchButton){
+   batchButton.textContent = "選擇多份列印";
+
+   batchButton.title =
+    "選擇多份文件；如包含未出具或有修改的文件，" +
+    "會先確認出具，再開啟列印。";
+  }
+
+  /*
+   單次登入版本不再要求工作區密碼。
+   避免輸出選項仍顯示過時承諾。
+  */
+  document.querySelectorAll(
+   '[data-path="signature"] option[value="image"]'
+  ).forEach(option => {
+   option.textContent =
+    "圖片簽名（使用目前登入狀態）";
+  });
+ }
+
+ /*
+  單純保存草稿。
+
+  直接呼叫目前的 save()，
+  唔呼叫上一版 saveAndIssueCurrent()。
+ */
+ async function saveDraftOnly(){
+  assert(db, "請先登入");
+
+  assert(
+   !conflict,
+   "目前有版本衝突，請先建立本頁加密備份"
+  );
+
+  assert(
+   !view,
+   "目前正在查看歷史版本，請先返回本次診症"
+  );
+
+  assert(
+   current()?.status === "draft",
+   "診症已完成；如要修改，請先重新開啟診症"
+  );
+
+  await run(async () => {
+   await save();
+  });
+
+  status(
+   "草稿已儲存至 Supabase · " +
+   new Date().toLocaleTimeString()
+  );
+
+  message(
+   "草稿已儲存；沒有出具文件、" +
+   "沒有建立完成快照，也沒有列印。"
+  );
+ }
+
+ function issueRow(e, type){
+  const version = effective(e, type);
+
+  const errors = warnings(
+   e,
+   type,
+   db.settings
+  );
+
+  const stateText = version
+   ? "有修改：確認後建立修訂版本，原版本保留"
+   : "未出具：確認後建立首個有效版本";
+
+  const summaryText = shortSummary(e, type);
+
+  return `
+   <section class="cms-s1-document">
+    <label class="cms-s1-document-label">
+     <input
+      type="checkbox"
+      data-cms-s1-document="${E(type)}"
+      checked
+     >
+
+     <span>
+      <span class="cms-s1-document-title">
+       ${E(TYPES[type][0])}
+      </span>
+
+      <span class="cms-s1-document-state">
+       ${E(stateText)}
+      </span>
+     </span>
+    </label>
+
+    ${errors.length ? `
+     <div class="cms-s1-document-errors">
+      ${errors.map(error =>
+       "• " + E(error)
+      ).join("<br>")}
+     </div>
+    ` : ""}
+
+    <details class="cms-s1-document-details">
+     <summary>查看內容摘要</summary>
+     <pre>${E(
+      T(summaryText) || "尚未有內容摘要"
+     )}</pre>
+    </details>
+   </section>
+  `;
+ }
+
+ function refreshIssueSelection(){
+  if(
+   !issueContext ||
+   modalMode !== "cmsStage1Issue" ||
+   !validCurrent()
+  ){
+   return;
+  }
+
+  const e = current();
+  const types = selectedIssueTypes();
+
+  const revised = types.filter(
+   type => !!effective(e, type)
+  );
+
+  const reasonLabel = $("cmsStage1ReasonLabel");
+  const reason = $("cmsStage1IssueReason");
+
+  if(reasonLabel){
+   reasonLabel.textContent = revised.length
+    ? "修訂原因（已選文件包含修訂版本，必填）"
+    : "出具備註（選填）";
+  }
+
+  if(reason){
+   reason.required = revised.length > 0;
+  }
+
+  const allergyBox = $("cmsStage1AllergyBox");
+
+  const unknownAllergy = !!(
+   types.includes("rx") &&
+   (
+    !e.patient.allergyStatus ||
+    e.patient.allergyStatus === "unknown"
+   )
+  );
+
+  if(allergyBox){
+   allergyBox.hidden = !unknownAllergy;
+  }
+
+  const confirmButton = $("cmsStage1ConfirmIssue");
+
+  if(confirmButton){
+   confirmButton.textContent =
+    "確認出具" +
+    (types.length ? " " + types.length + " 份文件" : "");
+
+   confirmButton.disabled =
+    !types.length ||
+    busy ||
+    printing ||
+    conflict;
+  }
+ }
+
+ function openIssueDialog(){
+  assert(
+   canIssue(),
+   "請先返回未完成的本次診症，並確認沒有儲存衝突"
+  );
+
+  const e = current();
+  const types = pendingTypes(e);
+
+  if(!types.length){
+   message("目前沒有待出具或待修訂的文件。");
+   return;
+  }
+
+  /*
+   記住核對時各文件的完整比較內容，
+   寫入前再驗證，避免核對後內容已改變。
+  */
+  issueContext = {
+   encounterId:e.id,
+   patientId:e.patientId,
+   types:C(types),
+
+   fingerprints:Object.fromEntries(
+    types.map(type => [
+     type,
+     C(fingerprint(e, type, db.settings))
+    ])
+   )
+  };
+
+  const p = master(e);
+
+  showModal(
+   "核對並出具文件",
+   `
+    <div class="cms-s1-summary">
+     <strong>${E(pname(e.patient) || "未填姓名")}</strong>
+     ${E(p?.mrn || "")}
+     · 診症日期：${E(e.date)}
+
+     <div class="small">
+      只出具以下有勾選的文件。
+      未選文件維持草稿或保留原有效版本。
+     </div>
+    </div>
+
+    ${types.map(type =>
+     issueRow(e, type)
+    ).join("")}
+
+    <div class="cms-s1-reason">
+     <label
+      id="cmsStage1ReasonLabel"
+      for="cmsStage1IssueReason"
+     >出具備註</label>
+
+     <textarea
+      id="cmsStage1IssueReason"
+      placeholder="如修訂既有文件，請說明修訂原因。"
+     ></textarea>
+    </div>
+
+    <div
+     id="cmsStage1AllergyBox"
+     class="cms-s1-allergy"
+     hidden
+    >
+     <strong>處方的藥物敏感狀態尚未確認</strong>
+
+     <p class="small" style="margin:6px 0">
+      建議先返回本次診症核對及記錄。
+      如仍要繼續，須明確確認以下選項。
+     </p>
+
+     <label class="check">
+      <input
+       id="cmsStage1UnknownAllergyAcknowledged"
+       type="checkbox"
+      >
+      <span>
+       我知悉敏感狀態仍未確認，仍決定出具此處方。
+       此確認不會將敏感狀態改成「無敏感」，
+       亦不代表已完成敏感覆核。
+      </span>
+     </label>
+    </div>
+
+    <div
+     id="cmsStage1IssueErrors"
+     class="notice error"
+     role="alert"
+     hidden
+    ></div>
+
+    <p class="cms-s1-footnote">
+     出具會保存有效文件版本；舊版本保留。
+     此操作不會自動完成診症、列印、記錄交付或標記收款。
+     內容摘要不代替完整文件預覽。
+    </p>
+
+    <div class="cms-s1-footer">
+     <button
+      type="button"
+      data-act="${ACTION_CANCEL}"
+     >取消出具</button>
+
+     <button
+      id="cmsStage1ConfirmIssue"
+      type="button"
+      class="primary"
+      data-act="${ACTION_CONFIRM}"
+     >確認出具</button>
+    </div>
+   `,
+   "cmsStage1Issue"
+  );
+
+  refreshIssueSelection();
+ }
+
+ async function confirmIssue(){
+  assert(
+   issueContext &&
+   modalMode === "cmsStage1Issue",
+   "沒有等待確認的文件"
+  );
+
+  assert(
+   canIssue(),
+   "目前不能出具文件；請確認診症及儲存狀態"
+  );
+
+  const context = issueContext;
+  const e = current();
+
+  assert(
+   e.id === context.encounterId &&
+   e.patientId === context.patientId,
+   "目前診症已切換，請重新核對"
+  );
+
+  const types = selectedIssueTypes();
+
+  const reasonText = T(
+   $("cmsStage1IssueReason")?.value
+  );
+
+  const acknowledged = !!$(
+   "cmsStage1UnknownAllergyAcknowledged"
+  )?.checked;
+
+  const errors = [];
+
+  if(!types.length){
+   errors.push("請至少選擇一份文件");
+  }
+
+  for(const type of types){
+   assert(
+    context.types.includes(type),
+    "文件選擇無效"
+   );
+
+   errors.push(
+    ...warnings(e, type, db.settings).map(
+     error => TYPES[type][0] + "：" + error
+    )
+   );
+  }
+
+  const revised = types.filter(
+   type => !!effective(e, type)
+  );
+
+  if(revised.length && !reasonText){
+   errors.push("請填寫修訂原因");
+  }
+
+  const unknownAllergy = !!(
+   types.includes("rx") &&
+   (
+    !e.patient.allergyStatus ||
+    e.patient.allergyStatus === "unknown"
+   )
+  );
+
+  if(unknownAllergy && !acknowledged){
+   errors.push(
+    "請先記錄藥物敏感狀態，" +
+    "或明確確認仍要在未確認狀態下出具處方"
+   );
+  }
+
+  if(errors.length){
+   setIssueErrors(errors);
+   return;
+  }
+
+  setIssueErrors([]);
+
+  const reason = reasonText ||
+   "使用獨立出具功能首次出具文件";
+
+  /*
+   沿用目前系統的登入檢查。
+   此版本 reauth() 並不是第二次身份驗證。
+  */
+  if(e.signature === "image"){
+   if(!await reauth()) return;
+  }
+
+  await run(async () => {
+   await commit(candidate => {
+    assert(
+     selected === context.encounterId &&
+     !view,
+     "目前診症已切換，已停止出具"
+    );
+
+    const target = candidate.encounters.find(
+     item => item.id === context.encounterId
+    );
+
+    assert(
+     target &&
+     target.patientId === context.patientId &&
+     target.status === "draft",
+     "診症狀態或病人連結已改變，已停止出具"
+    );
+
+    const stillPending = pendingTypes(
+     target,
+     candidate.settings
+    );
+
+    for(const type of types){
+     assert(
+      stillPending.includes(type),
+      TYPES[type][0] +
+      "的版本狀態已改變，請重新核對"
+     );
+
+     assert(
+      equal(
+       fingerprint(
+        target,
+        type,
+        candidate.settings
+       ),
+       context.fingerprints[type]
+      ),
+      TYPES[type][0] +
+      "的內容或設定已改變，請重新核對"
+     );
+
+     const finalErrors = warnings(
+      target,
+      type,
+      candidate.settings
+     );
+
+     assert(
+      !finalErrors.length,
+      TYPES[type][0] + "：" +
+      finalErrors.join("；")
+     );
+    }
+
+    target.updated = now();
+
+    for(const type of types){
+     issuedVersion(
+      target,
+      type,
+      candidate.settings,
+      reason
+     );
+    }
+
+    audit(
+     target,
+     "核對後出具文件",
+     types.map(type =>
+      TYPES[type][0]
+     ).join("、") +
+     "；未自動列印、交付、完成診症或標記收款"
+    );
+
+    if(unknownAllergy){
+     audit(
+      target,
+      "確認在敏感狀態未確認下出具處方",
+      "使用者明確確認；" +
+      "敏感狀態及本次覆核狀態未因此更改"
+     );
+    }
+   });
+
+   issueContext = null;
+
+   $("modal").close();
+  });
+
+  showErrors([]);
+
+  status(
+   "已儲存至 Supabase · 已出具 " +
+   types.length + " 份文件"
+  );
+
+  message(
+   "已出具：" +
+   types.map(type =>
+    TYPES[type][0]
+   ).join("、") +
+   "。未選文件維持原狀；" +
+   "尚未自動列印、記錄交付、完成診症或標記收款。"
+  );
+ }
+
+ /*
+  修正預覽說明。
+
+  不改寫任何舊文件資料；
+  只修正頁面產生時的草稿說明文字。
+ */
+ const previousPage = page;
+
+ page = function(type, displayed){
+  let html = previousPage.apply(this, arguments);
+
+  if(
+   type === "note" &&
+   displayed.kind === "live" &&
+   displayed.data.status === "draft"
+  ){
+   html = html.replace(
+    "草稿預覽 · 正式輸出請使用系統「立即儲存」按鈕",
+    "未完成診症草稿 · 儲存草稿不代表完成診症"
+   );
+  }
+
+  if(
+   type !== "note" &&
+   displayed.kind !== "document"
+  ){
+   html = html.replace(
+    "草稿預覽 · 正式輸出請使用系統「列印」按鈕",
+    "編輯草稿預覽 · " +
+    "請使用「出具文件」或「出具並列印／PDF」確認版本"
+   );
+  }
+
+  return html;
+ };
+
+ function syncWorkflowText(){
+  if(!validCurrent()) return;
+
+  const e = current();
+
+  if(conflict){
+   $("workflow").textContent =
+    "版本衝突：本頁已停止寫入。" +
+    "請先建立本頁加密備份，再處理衝突。";
+
+   return;
+  }
+
+  if(view){
+   $("workflow").textContent =
+    "目前查看歷史快照／版本，內容唯讀。" +
+    "重印不會恢復其有效狀態，也不代表已交付。";
+
+   return;
+  }
+
+  if(e.status === "completed"){
+   $("workflow").textContent =
+    "診症已完成。" +
+    "修改前請重新開啟；既有完成快照及文件版本會保留。";
+
+   return;
+  }
+
+  if(tab === "note"){
+   $("workflow").textContent =
+    "草稿會自動儲存至 Supabase。" +
+    "「儲存草稿」不出具文件；" +
+    "「完成診症」才建立完成快照。";
+
+   return;
+  }
+
+  const version = effective(e, tab);
+
+  $("workflow").textContent = !version
+   ? "目前為文件草稿。" +
+     "可先儲存，再使用「出具文件」；" +
+     "或使用「出具並列印／PDF」。"
+   : different(e, tab)
+    ? "目前草稿與有效版本不同。" +
+      "出具修訂版時須填寫原因；" +
+      "原有效版本在確認出具前維持不變。"
+    : "目前內容與有效版本相同。" +
+      "列印會重用有效版本，不建立相同的新版本。";
+ }
+
+ /*
+  攔截手動儲存及新增的出具動作。
+  其他動作仍交回原有處理，
+  包括主檔同步、完成、列印及歷史操作。
+ */
+ const previousAction = action;
+
+ action = async function(node){
+  const act = node.dataset.act;
+
+  if(act === "save"){
+   if(busy || printing) return;
+   return saveDraftOnly();
+  }
+
+  if(act === ACTION_OPEN){
+   if(busy || printing) return;
+   return openIssueDialog();
+  }
+
+  if(act === ACTION_CONFIRM){
+   if(busy || printing) return;
+   return confirmIssue();
+  }
+
+  if(act === ACTION_CANCEL){
+   if(busy || printing) return;
+
+   issueContext = null;
+   closeModal();
+
+   return;
+  }
+
+  return previousAction.apply(this, arguments);
+ };
+
+ /*
+  正常輸入後會呼叫 renderTabs()。
+  在同一時機更新待出具數量及列印文字，
+  避免要等完整 render() 才更新。
+ */
+ const previousRenderTabs = renderTabs;
+
+ renderTabs = function(){
+  const result = previousRenderTabs.apply(this, arguments);
+
+  syncControls();
+
+  return result;
+ };
+
+ const previousPreview = preview;
+
+ preview = function(){
+  const result = previousPreview.apply(this, arguments);
+
+  syncWorkflowText();
+  syncControls();
+
+  return result;
+ };
+
+ const previousRender = render;
+
+ render = function(){
+  const result = previousRender.apply(this, arguments);
+
+  syncWorkflowText();
+  syncControls();
+
+  return result;
+ };
+
+ const previousUpdateButtons = updateButtons;
+
+ updateButtons = function(){
+  const result = previousUpdateButtons.apply(this, arguments);
+
+  syncControls();
+
+  return result;
+ };
+
+ /*
+  改變勾選文件後，
+  即時更新修訂原因要求及敏感提示。
+ */
+ $("modalBody").addEventListener("change", event => {
+  if(
+   event.target.matches(
+    "[data-cms-s1-document]"
+   )
+  ){
+   refreshIssueSelection();
+   setIssueErrors([]);
+  }
+ });
+
+ $("modal").addEventListener("close", () => {
+  issueContext = null;
+ });
+
+ /*
+  初始化不會呼叫儲存、不會出具文件，
+  亦不會更改任何病歷。
+ */
+ if(db){
+  render();
+ }else{
+  saveButton.textContent = "儲存草稿";
+  issueButton.disabled = true;
+ }
+
+})();
+</script>
+
+<!-- ===== CMS 第 1 階段完成 ===== -->
 </body>
 </html>
