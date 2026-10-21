@@ -9263,5 +9263,316 @@ body.cms-split-dragging *{
 })();
 </script>
 <!-- ===== 分頁及立即儲存調整完成 ===== -->
+ <!-- ===== 修正：病人主檔與本次診症身份不同步 ===== -->
+<script>
+(function installCurrentPatientMasterSync(){
+ "use strict";
+
+ const app = $("app");
+ const workbar = $("cmsVisitWorkbar");
+
+ if(
+  !app ||
+  !workbar ||
+  app.dataset.currentPatientMasterSync === "1"
+ ){
+  return;
+ }
+
+ app.dataset.currentPatientMasterSync = "1";
+
+ /*
+  只同步人口身份及聯絡資料。
+  不同步藥物敏感，避免覆蓋本次臨床覆核。
+ */
+ const keys = [...IDFIELDS, ...CONTACTS];
+
+ const labels = {
+  surname:"英文姓氏",
+  given:"英文名字",
+  cn:"中文姓名",
+  hkid:"HKID／證件",
+  dob:"出生日期",
+  sex:"性別",
+  phone:"電話",
+  email:"電郵",
+  address:"地址",
+  contact1Name:"聯絡人 1 姓名",
+  contact1Phone:"聯絡人 1 電話",
+  contact2Name:"聯絡人 2 姓名",
+  contact2Phone:"聯絡人 2 電話"
+ };
+
+ function values(data, fields = keys){
+  return Object.fromEntries(
+   fields.map(key => [key, S(data?.[key])])
+  );
+ }
+
+ function changedKeys(e, p){
+  return keys.filter(
+   key => S(e.patient[key]) !== S(p.data[key])
+  );
+ }
+
+ /* 已有問題的診症可用此按鈕修復 */
+ const button = document.createElement("button");
+ button.type = "button";
+ button.dataset.act = "cmsSyncPatientMaster";
+ button.textContent = "同步主檔至本次診症";
+ button.title =
+  "確認後，將目前主檔的身份及聯絡資料同步至本次未完成診症。" +
+  "不改寫歷史快照、文件或藥物敏感。";
+
+ button.style.cssText =
+  "margin-top:8px;font-size:12px;color:var(--accent)";
+
+ const target = $("cmsOperationTarget");
+
+ if(target){
+  target.before(button);
+ }else{
+  workbar.append(button);
+ }
+
+ function updateSyncButton(){
+  const e = db && current();
+  const p = e && master(e);
+  const differs = !!(e && p && changedKeys(e, p).length);
+
+  button.hidden = !differs;
+
+  button.disabled =
+   !differs ||
+   !editable();
+
+  if(differs && (view || e.status !== "draft")){
+   button.title =
+    "歷史快照及已完成診症不可直接同步。" +
+    "請先返回本次診症；如已完成，先重新開啟診症。";
+  }else{
+   button.title =
+    "同步身份及聯絡資料至本次未完成診症；" +
+    "不更改藥物敏感、舊文件或完成快照。";
+  }
+ }
+
+ async function syncCurrentPatientMaster(){
+  assert(
+   editable(),
+   "請先返回本次診症；如診症已完成，先按「重新開啟診症」"
+  );
+
+  const e = current();
+  const p = master(e);
+
+  assert(p, "找不到本次診症所連結的病人主檔");
+  assert(pname(p.data), "病人主檔仍未填寫姓名");
+
+  const changes = changedKeys(e, p);
+
+  if(!changes.length){
+   message("病人主檔與本次診症的身份及聯絡資料已一致。");
+   return;
+  }
+
+  if(p.data.dob){
+   assert(
+    dateOK(p.data.dob) &&
+    dateOK(e.date) &&
+    p.data.dob <= e.date,
+    "主檔出生日期無效，或遲於本次診症日期，請先核對"
+   );
+  }
+
+  const encounterId = e.id;
+  const patientId = e.patientId;
+  const before = values(e.patient);
+  const after = values(p.data);
+
+  const display = value =>
+   T(value) ? S(value) : "（空白）";
+
+  const detail = changes.map(key =>
+   labels[key] + "：\n" +
+   display(before[key]) + "\n→ " +
+   display(after[key])
+  ).join("\n\n");
+
+  if(!confirm(
+   "請核實以下主檔確實屬於本次診症病人：\n" +
+   p.mrn + " · " + pname(p.data) +
+   "\n\n將同步以下資料：\n\n" +
+   detail +
+   "\n\n注意：主檔中的空白值亦會同步。" +
+   "\n只更新本次未完成診症；" +
+   "不改寫已出具文件、完成快照或藥物敏感。" +
+   "\n\n確認同步？"
+  )){
+   return;
+  }
+
+  const reason = "經使用者確認，同步病人主檔至本次診症";
+
+  await run(() => commit(d => {
+   assert(
+    selected === encounterId && !view,
+    "目前診症已切換，已停止同步"
+   );
+
+   const encounter = d.encounters.find(
+    item => item.id === encounterId
+   );
+
+   const patientMaster = d.patients.find(
+    item => item.id === patientId
+   );
+
+   assert(
+    encounter &&
+    encounter.patientId === patientId &&
+    encounter.status === "draft",
+    "診症狀態或病人連結已改變，已停止同步"
+   );
+
+   assert(
+    patientMaster &&
+    equal(values(patientMaster.data), after),
+    "病人主檔已改變，請重新核對後同步"
+   );
+
+   assert(
+    equal(values(encounter.patient), before),
+    "本次病人資料已改變，請重新核對後同步"
+   );
+
+   const identityBefore = values(
+    encounter.patient, IDFIELDS
+   );
+
+   for(const key of keys){
+    encounter.patient[key] = after[key];
+   }
+
+   const identityAfter = values(
+    encounter.patient, IDFIELDS
+   );
+
+   if(!equal(identityBefore, identityAfter)){
+    encounter.identityChanges.push({
+     at:now(),
+     actor,
+     sessionId,
+     reason,
+     before:identityBefore,
+     after:identityAfter
+    });
+   }
+
+   encounter.updated = now();
+
+   audit(
+    encounter,
+    "同步主檔至本次診症",
+    reason + "；欄位：" +
+    changes.map(key => labels[key]).join("、") +
+    "；已出具文件及完成快照未改寫"
+   );
+  }));
+
+  showErrors([]);
+
+  message(
+   "已將主檔身份及聯絡資料同步至本次診症，並儲存。" +
+   "藥物敏感、舊文件及完成快照維持原狀。" +
+   "如需更新已出具文件，請另外保存修訂版本。"
+  );
+ }
+
+ /* 畫面重繪後更新按鈕 */
+ const previousRender = render;
+
+ render = function(){
+  const result = previousRender.apply(this, arguments);
+  updateSyncButton();
+  return result;
+ };
+
+ const previousUpdateButtons = updateButtons;
+
+ updateButtons = function(){
+  const result = previousUpdateButtons.apply(this, arguments);
+  updateSyncButton();
+  return result;
+ };
+
+ /*
+  沿用現有主檔保存流程。
+  主檔確實保存並改變後，才提示同步目前未完成診症。
+  不攔截或重寫原本 savePatient() 的內部實作。
+ */
+ const previousAction = action;
+
+ action = async function(node){
+  const act = node.dataset.act;
+
+  if(act === "cmsSyncPatientMaster"){
+   if(busy || printing) return;
+   return syncCurrentPatientMaster();
+  }
+
+  const patientId = node.dataset.patient || "";
+
+  const watchMasterSave =
+   act === "pfSave" &&
+   !!patientId &&
+   !!db;
+
+  const oldMaster = watchMasterSave
+   ? db.patients.find(item => item.id === patientId)
+   : null;
+
+  const oldValues = oldMaster
+   ? values(oldMaster.data)
+   : null;
+
+  const encounterId = db && current()?.id;
+
+  const result = await previousAction.apply(this, arguments);
+
+  if(
+   watchMasterSave &&
+   oldValues &&
+   db &&
+   !busy &&
+   !printing &&
+   !conflict &&
+   !view &&
+   current()?.id === encounterId &&
+   current()?.patientId === patientId &&
+   current()?.status === "draft"
+  ){
+   const updatedMaster = db.patients.find(
+    item => item.id === patientId
+   );
+
+   if(
+    updatedMaster &&
+    !equal(oldValues, values(updatedMaster.data)) &&
+    changedKeys(current(), updatedMaster).length
+   ){
+    await syncCurrentPatientMaster();
+   }
+  }
+
+  updateSyncButton();
+
+  return result;
+ };
+
+ updateSyncButton();
+})();
+</script>
+<!-- ===== 病人主檔同步修正完成 ===== -->
 </body>
 </html>
