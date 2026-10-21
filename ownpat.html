@@ -7569,5 +7569,1191 @@ masterHistory = function(id){
 })();
 </script>
 <!-- ===== 病人主檔調整完成 ===== -->
+ <!-- ===== 本次編輯／過往診症雙欄 ===== -->
+<style id="cms-consultation-split-style">
+/* 共用操作列：移到左右欄上方，操作目標仍是本次診症 */
+#cmsVisitWorkbar{
+ flex:0 0 auto;
+ position:relative;
+ top:auto;
+ z-index:12;
+ margin:0;
+ padding:10px 16px;
+ border-bottom:1px solid var(--line);
+ background:#f8fafb;
+ box-shadow:none;
+}
+
+#cmsVisitWorkbar .cms-workbar-heading{
+ margin-bottom:8px;
+}
+
+#cmsVisitWorkbar .cms-workbar-actions{
+ gap:8px 14px;
+}
+
+#cmsVisitWorkbar .cms-action-group + .cms-action-group{
+ padding-left:14px;
+}
+
+#cmsVisitWorkbar #previewTitle{
+ white-space:normal;
+ overflow:visible;
+}
+
+#cmsVisitWorkbar #cmsVisitStatusRow{
+ margin-top:3px;
+}
+
+#cmsOperationTarget{
+ margin:7px 0 0;
+ color:var(--accent);
+ font-size:12px;
+ font-weight:bold;
+ line-height:1.6;
+}
+
+/* 桌面：左編輯、中間分隔線、右參閱 */
+#app > .layout.cms-consultation-split{
+ display:grid;
+ grid-template-columns:
+  minmax(0,var(--cms-edit-width,50%))
+  10px
+  minmax(0,1fr);
+ min-height:0;
+ overflow:hidden;
+}
+
+#app > .layout.cms-consultation-split > .editor{
+ min-width:0;
+ min-height:0;
+ overflow:auto;
+ overscroll-behavior:contain;
+ border-right:0;
+}
+
+#cmsSplitHandle{
+ position:relative;
+ min-width:0;
+ background:#dce6e9;
+ cursor:col-resize;
+ touch-action:none;
+ user-select:none;
+ outline-offset:-3px;
+}
+
+#cmsSplitHandle::after{
+ content:"";
+ position:absolute;
+ left:3px;
+ top:50%;
+ width:4px;
+ height:46px;
+ border-radius:4px;
+ background:#8fa7ae;
+ transform:translateY(-50%);
+}
+
+#cmsSplitHandle:hover,
+#cmsSplitHandle:focus-visible{
+ background:#bdd7cd;
+}
+
+body.cms-split-dragging,
+body.cms-split-dragging *{
+ cursor:col-resize !important;
+ user-select:none !important;
+}
+
+#app > .layout.cms-consultation-split > .preview{
+ min-width:0;
+ min-height:0;
+ overflow:auto;
+ overscroll-behavior:contain;
+ padding:0 16px 28px;
+ background:var(--bg);
+}
+
+/* 右側分頁 */
+#cmsReferenceTabs{
+ position:sticky;
+ top:0;
+ z-index:6;
+ display:flex;
+ gap:7px;
+ margin:0 -16px 14px;
+ padding:11px 16px;
+ border-bottom:1px solid var(--line);
+ background:#edf2f4;
+}
+
+#cmsReferenceTabs button{
+ flex:1;
+ min-width:0;
+ min-height:40px;
+ padding:8px;
+ font-size:13px;
+ font-weight:bold;
+}
+
+#cmsReferenceTabs button[aria-selected="true"]{
+ background:var(--accent);
+ border-color:var(--accent);
+ color:#fff;
+}
+
+#cmsPastPanel[hidden],
+#cmsCurrentPreviewPanel[hidden]{
+ display:none !important;
+}
+
+/* 過往紀錄 */
+.cms-past-nav{
+ display:grid;
+ grid-template-columns:auto minmax(0,1fr) auto;
+ align-items:end;
+ gap:8px;
+ margin-bottom:12px;
+}
+
+.cms-past-nav .field{
+ margin:0;
+}
+
+.cms-past-nav button{
+ min-height:41px;
+ white-space:nowrap;
+}
+
+.cms-past-help{
+ margin-bottom:12px;
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.8;
+}
+
+.cms-past-heading{
+ margin-bottom:7px;
+ font-size:17px;
+ line-height:1.6;
+ overflow-wrap:anywhere;
+}
+
+.cms-past-meta{
+ margin:0;
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.8;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+.cms-past-card{
+ padding:16px;
+ margin-bottom:13px;
+ border:1px solid var(--line);
+ border-radius:11px;
+ background:#fff;
+}
+
+.cms-past-card > h3{
+ margin:0 0 12px;
+ color:var(--accent);
+ font-size:15px;
+}
+
+.cms-past-block + .cms-past-block{
+ margin-top:16px;
+ padding-top:13px;
+ border-top:1px solid var(--line);
+}
+
+.cms-past-block h4{
+ margin:0 0 6px;
+ color:#425d67;
+ font-size:12px;
+ line-height:1.7;
+}
+
+.cms-past-text{
+ margin:0;
+ font-size:14px;
+ line-height:1.85;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+.cms-past-muted{
+ color:var(--muted);
+}
+
+.cms-past-allergy{
+ margin-top:12px;
+ padding:10px 12px;
+ border:1px solid var(--line);
+ border-radius:8px;
+ background:#f8fafb;
+ white-space:pre-wrap;
+ line-height:1.8;
+}
+
+.cms-past-allergy.is-known{
+ border-color:#e2b3b8;
+ background:var(--badbg);
+ color:var(--bad);
+}
+
+.cms-past-rx-scroll{
+ overflow:auto;
+}
+
+.cms-past-rx{
+ width:100%;
+ min-width:560px;
+ border-collapse:collapse;
+ font-size:13px;
+}
+
+.cms-past-rx th,
+.cms-past-rx td{
+ padding:10px 8px;
+ border-bottom:1px solid var(--line);
+ text-align:left;
+ vertical-align:top;
+ line-height:1.7;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+.cms-past-rx th{
+ background:#f8fafb;
+ color:var(--muted);
+ font-size:12px;
+}
+
+.cms-past-rx th:first-child,
+.cms-past-rx td:first-child{
+ width:32%;
+}
+
+.cms-past-empty{
+ padding:24px 16px;
+ border:1px dashed #bdced3;
+ border-radius:10px;
+ background:#f8fafb;
+ color:var(--muted);
+ line-height:1.8;
+}
+
+/* 窄畫面上下排列 */
+@media(max-width:820px){
+ #cmsVisitWorkbar{
+  padding:12px;
+ }
+
+ #cmsVisitWorkbar .cms-workbar-actions{
+  display:grid;
+  grid-template-columns:1fr;
+ }
+
+ #cmsVisitWorkbar .cms-action-group + .cms-action-group{
+  padding-left:0;
+ }
+
+ #app > .layout.cms-consultation-split{
+  display:block;
+  overflow:visible;
+ }
+
+ #cmsSplitHandle{
+  display:none;
+ }
+
+ #app > .layout.cms-consultation-split > .editor{
+  overflow:visible;
+ }
+
+ #app > .layout.cms-consultation-split > .preview{
+  overflow:visible;
+  padding:0 12px 24px;
+  border-top:1px solid var(--line);
+ }
+
+ #cmsReferenceTabs{
+  position:relative;
+  margin:0 -12px 12px;
+  padding:11px 12px;
+ }
+
+ .cms-past-nav{
+  grid-template-columns:1fr 1fr;
+ }
+
+ .cms-past-nav .field{
+  grid-column:1 / -1;
+  grid-row:1;
+ }
+}
+
+@media print{
+ #cmsVisitWorkbar,
+ #cmsReferenceTabs,
+ #cmsSplitHandle,
+ #cmsPastPanel{
+  display:none !important;
+ }
+}
+</style>
+
+<script>
+(function installConsultationSplitView(){
+ "use strict";
+
+ const app = $("app");
+ const layout = app?.querySelector(":scope > .layout");
+ const editor = layout?.querySelector(":scope > .editor");
+ const reference = layout?.querySelector(":scope > .preview");
+ const toolbar = reference?.querySelector(":scope > .toolbar");
+ const workflow = $("workflow");
+ const paperViewport = $("paperViewport");
+
+ if(
+  !app || !layout || !editor || !reference ||
+  !toolbar || !workflow || !paperViewport ||
+  app.dataset.consultationSplit === "1"
+ ){
+  return;
+ }
+
+ app.dataset.consultationSplit = "1";
+ layout.classList.add("cms-consultation-split");
+
+ /*
+  只新增獨立的參閱狀態。
+  不使用 selected、tab、view 作為過往紀錄選擇器。
+ */
+ const state = {
+  context:"",
+  pane:"preview",
+  pastId:"",
+  list:[],
+  scroll:{past:0,preview:0},
+  renderedEncounter:null,
+  renderedKey:"",
+  ratio:0.5,
+  drag:null
+ };
+
+ const WIDTH_KEY = "ray-cms-consultation-split-width-v1";
+
+ try{
+  const value = Number(localStorage.getItem(WIDTH_KEY));
+  if(Number.isFinite(value) && value >= 0.25 && value <= 0.75){
+   state.ratio = value;
+  }
+ }catch{}
+
+ function make(tag, className = "", text = ""){
+  const node = document.createElement(tag);
+  if(className) node.className = className;
+  if(text) node.textContent = text;
+  return node;
+ }
+
+ /* 1. 共用工具列放在左右欄上方 */
+ toolbar.id = "cmsVisitWorkbar";
+ layout.before(toolbar);
+
+ const target = make("p", "", "");
+ target.id = "cmsOperationTarget";
+ toolbar.append(target);
+
+ /*
+  避免用戶以為列印會輸出右邊正翻閱的舊紀錄。
+  原 data-act 及事件處理保留。
+ */
+ const printButton = toolbar.querySelector(
+  'button[data-act="print"]'
+ );
+
+ const batchButton = toolbar.querySelector(
+  'button[data-act="batch"]'
+ );
+
+ if(printButton) printButton.textContent = "本次列印／PDF";
+ if(batchButton) batchButton.textContent = "本次多份列印";
+
+ /* 2. 中間可調闊度分隔線 */
+ const handle = make("div");
+ handle.id = "cmsSplitHandle";
+ handle.tabIndex = 0;
+ handle.setAttribute("role", "separator");
+ handle.setAttribute("aria-orientation", "vertical");
+ handle.setAttribute("aria-label", "調整診症編輯與參閱區闊度");
+ handle.setAttribute("aria-controls", "editorFields cmsReferenceArea");
+ handle.setAttribute("aria-valuemin", "25");
+ handle.setAttribute("aria-valuemax", "75");
+ handle.title = "拖拉調整闊度；方向鍵微調；雙擊還原";
+
+ reference.id = "cmsReferenceArea";
+ editor.after(handle);
+
+ /* 3. 右側兩個分頁 */
+ const tabs = make("div");
+ tabs.id = "cmsReferenceTabs";
+ tabs.setAttribute("role", "tablist");
+ tabs.setAttribute("aria-label", "診症參閱資料");
+
+ function paneButton(id, label, panelId){
+  const button = make("button", "", label);
+  button.id = id;
+  button.type = "button";
+  button.setAttribute("role", "tab");
+  button.setAttribute("aria-controls", panelId);
+  button.setAttribute("aria-selected", "false");
+  return button;
+ }
+
+ const pastTab = paneButton(
+  "cmsPastTab", "過往診症", "cmsPastPanel"
+ );
+
+ const previewTab = paneButton(
+  "cmsCurrentPreviewTab",
+  "本次文件預覽",
+  "cmsCurrentPreviewPanel"
+ );
+
+ tabs.append(pastTab, previewTab);
+
+ const pastPanel = make("section");
+ pastPanel.id = "cmsPastPanel";
+ pastPanel.setAttribute("role", "tabpanel");
+ pastPanel.setAttribute("aria-labelledby", pastTab.id);
+
+ const previewPanel = make("section");
+ previewPanel.id = "cmsCurrentPreviewPanel";
+ previewPanel.setAttribute("role", "tabpanel");
+ previewPanel.setAttribute("aria-labelledby", previewTab.id);
+
+ /*
+  搬移同一個預覽容器，不另建 paper 或重複 id。
+  列印仍由原有 printDocuments() 處理。
+ */
+ previewPanel.append(workflow, paperViewport);
+ reference.prepend(tabs, pastPanel, previewPanel);
+
+ /* 4. 過往診症的獨立日期選擇器 */
+ const navigation = make("div", "cms-past-nav");
+
+ const olderButton = make("button", "", "← 較舊");
+ olderButton.type = "button";
+
+ const newerButton = make("button", "", "較新 →");
+ newerButton.type = "button";
+
+ const pickerField = make("div", "field");
+ const pickerLabel = make("label", "", "過往求診日期");
+ pickerLabel.htmlFor = "cmsPastEncounterPicker";
+
+ const picker = make("select");
+ picker.id = "cmsPastEncounterPicker";
+
+ pickerField.append(pickerLabel, picker);
+ navigation.append(olderButton, pickerField, newerButton);
+
+ const help = make(
+  "p",
+  "cms-past-help",
+  "唯讀參閱：只顯示同一 patientId 的較早診症。" +
+  "切換日期不會改變左邊診症，亦不會改變儲存、完成或列印目標。"
+ );
+
+ const pastContent = make("div");
+ pastContent.id = "cmsPastContent";
+
+ pastPanel.append(navigation, help, pastContent);
+
+ function timeValue(value){
+  const n = Date.parse(value || "");
+  return Number.isFinite(n) ? n : 0;
+ }
+
+ /*
+  日期由新至舊；同日按建立時間由新至舊。
+  不按 updated 排序，避免修改舊病歷後改變求診順序。
+ */
+ function previousEncounters(){
+  const active = current();
+  if(!active || !dateOK(active.date)) return [];
+
+  return db.encounters.filter(e => {
+   if(
+    e.id === active.id ||
+    e.patientId !== active.patientId ||
+    !dateOK(e.date)
+   ){
+    return false;
+   }
+
+   if(e.date < active.date) return true;
+   if(e.date > active.date) return false;
+
+   return timeValue(e.created) <= timeValue(active.created);
+  }).slice().sort((a,b) =>
+   b.date.localeCompare(a.date) ||
+   timeValue(b.created) - timeValue(a.created) ||
+   a.id.localeCompare(b.id)
+  );
+ }
+
+ function block(label, value){
+  return `
+   <section class="cms-past-block">
+    <h4>${E(label)}</h4>
+    <div class="cms-past-text ${
+     T(value) ? "" : "cms-past-muted"
+    }">${E(T(value) ? value : "未填寫")}</div>
+   </section>`;
+ }
+
+ /*
+  有完成快照時，病歷優先顯示最後一次完成快照，
+  不把重開後尚未完成的修改當作完成紀錄。
+ */
+ function historySource(e){
+  const revision = e.revisions?.at(-1);
+
+  return revision
+   ? {
+      data:revision.data,
+      revision,
+      label:"最後一次完成快照",
+      at:revision.savedAt
+     }
+   : {
+      data:e,
+      revision:null,
+      label:e.status === "completed"
+       ? "現存已完成紀錄（沒有完成快照）"
+       : "未完成診症草稿",
+      at:e.updated
+     };
+ }
+
+ /*
+  完成快照的處方：
+  依該快照 summary 記錄的版本 ID 取回，
+  不用其後出具的新版本冒充當時處方。
+ */
+ function prescriptionSource(e, history){
+  if(history.revision){
+   const entry = history.revision.summary?.find(
+    row => row.type === "rx"
+   );
+
+   if(entry?.issued){
+    const version = e.versions.find(
+     v => v.id === entry.issued.id && v.type === "rx"
+    );
+
+    if(version){
+     return {
+      data:version.data,
+      label:"完成時記錄的處方版本",
+      version
+     };
+    }
+
+    return {
+     data:null,
+     label:"完成摘要所引用的處方版本不存在，請核對備份。"
+    };
+   }
+
+   if(entry?.draft || drugs(history.data).length){
+    return {
+     data:history.data,
+     label:"完成時保存的處方草稿 · 不代表已出具"
+    };
+   }
+
+   return {
+    data:null,
+    label:"此完成快照未記錄已出具處方。"
+   };
+  }
+
+  const issued = effective(e, "rx");
+
+  if(issued){
+   return {
+    data:issued.data,
+    label:"目前有效處方版本",
+    version:issued
+   };
+  }
+
+  if(drugs(e).length){
+   return {
+    data:e,
+    label:"現存處方草稿 · 未出具"
+   };
+  }
+
+  return {
+   data:null,
+   label:"未記錄處方。"
+  };
+ }
+
+ function prescriptionHTML(e, history){
+  const rx = prescriptionSource(e, history);
+  const rows = rx.data ? drugs(rx.data) : [];
+
+  let meta = rx.label;
+
+  if(rx.version){
+   meta += "\n版本時間：" + stamp(rx.version.savedAt);
+   meta += "\n此版本目前狀態：" +
+    (VSTATE[rx.version.state] || rx.version.state);
+
+   if(rx.version.voidReason){
+    meta += "\n作廢原因：" + rx.version.voidReason;
+   }
+  }
+
+  return `
+   <section class="cms-past-card">
+    <h3>處方</h3>
+    <p class="cms-past-meta" style="margin-bottom:12px">${
+     E(meta)
+    }</p>
+
+    ${rows.length ? `
+     <div class="cms-past-rx-scroll">
+      <table class="cms-past-rx">
+       <thead>
+        <tr>
+         <th>藥物／強度</th>
+         <th>劑量</th>
+         <th>頻次</th>
+         <th>途徑</th>
+         <th>療程／數量</th>
+        </tr>
+       </thead>
+       <tbody>
+        ${rows.map((i,n) => `
+         <tr>
+          <td>${E((n+1) + ". " + i.name)}</td>
+          <td>${E(i.dose || "—")}</td>
+          <td>${E(i.frequency || "—")}</td>
+          <td>${E(i.route || "—")}</td>
+          <td>${E(i.duration || "—")}</td>
+         </tr>
+        `).join("")}
+       </tbody>
+      </table>
+     </div>
+    ` : `
+     <p class="cms-past-text cms-past-muted">
+      沒有可顯示的藥物項目。
+     </p>
+    `}
+
+    ${rx.data && T(rx.data.rx.remarks)
+     ? `<div style="margin-top:14px">${
+        block("注意事項／備註", rx.data.rx.remarks)
+       }</div>`
+     : ""
+    }
+   </section>`;
+ }
+
+ function investigationsHTML(data){
+  return INVS.filter(t => data[t]?.items?.length)
+   .map(t => `
+    <section class="cms-past-card">
+     <h3>${E(TYPES[t][0])}及跟進紀錄</h3>
+
+     ${data[t].items.map(i => {
+      const text = [
+       T(i.details) ? "申請詳情：" + i.details : "",
+       ISTATE[i.status]
+        ? "檢查狀態：" + ISTATE[i.status]
+        : "",
+       i.performedDate
+        ? "檢查日期：" + i.performedDate
+        : "",
+       i.resultDate
+        ? "收報告日期：" + i.resultDate
+        : "",
+       T(i.result) ? "結果摘要：\n" + i.result : "",
+       "報告覆核：" + (i.reviewed ? "已覆核" : "未覆核"),
+       i.reviewedBy ? "覆核人：" + i.reviewedBy : "",
+       i.due ? "跟進日期：" + i.due : "",
+       i.owner ? "負責人：" + i.owner : "",
+       T(i.next) ? "下一步安排：\n" + i.next : "",
+       i.contacted
+        ? "已記錄聯絡：" + stamp(i.contactAt)
+        : "",
+       T(i.contactNote)
+        ? "聯絡摘要：\n" + i.contactNote
+        : "",
+       i.closed
+        ? "結案：" + (i.closureReason || "已結案")
+        : "未結案"
+      ].filter(Boolean).join("\n");
+
+      return block(i.name || "未填檢查名稱", text);
+     }).join("")}
+    </section>
+   `).join("");
+ }
+
+ function renderPastRecord(){
+  const e = state.list.find(item => item.id === state.pastId);
+
+  if(!e){
+   state.renderedEncounter = null;
+   state.renderedKey = "";
+
+   pastContent.innerHTML = `
+    <div class="cms-past-empty">
+     沒有較早的同一病人診症紀錄。<br>
+     新病人或本次係最早一次診症時，預設顯示本次文件預覽。
+    </div>`;
+
+   return;
+  }
+
+  const history = historySource(e);
+
+  const key = [
+   e.id,
+   e.updated,
+   e.status,
+   history.revision?.id || "",
+   e.versions.map(v => v.id + ":" + v.state).join(",")
+  ].join("|");
+
+  if(
+   state.renderedEncounter === e &&
+   state.renderedKey === key
+  ){
+   return;
+  }
+
+  state.renderedEncounter = e;
+  state.renderedKey = key;
+
+  const data = history.data;
+  const patientData = data.patient || {};
+  const patientMaster = db.patients.find(
+   p => p.id === e.patientId
+  );
+
+  const warning = history.revision && e.status === "draft"
+   ? `
+    <div class="notice" style="margin-bottom:13px">
+     呢次舊診症目前已重開。以下顯示最後一次完成快照，
+     不包含重開後尚未完成的修改。
+    </div>`
+   : !history.revision && e.status === "draft"
+    ? `
+     <div class="notice" style="margin-bottom:13px">
+      以下係未完成草稿，不代表已完成病歷或已出具文件。
+     </div>`
+    : "";
+
+  pastContent.innerHTML = `
+   ${warning}
+
+   <section class="cms-past-card">
+    <h2 class="cms-past-heading">
+     ${E(e.date)} · ${E(pname(patientData) || "未填姓名")}
+    </h2>
+
+    <p class="cms-past-meta">${E([
+     patientMaster?.mrn || "",
+     history.label,
+     "保存時間：" + stamp(history.at),
+     "舊診症目前狀態：" +
+      (e.status === "completed" ? "已完成" : "未完成／已重開")
+    ].filter(Boolean).join("\n"))}</p>
+
+    <div class="cms-past-allergy ${
+     patientData.allergyStatus === "known" ? "is-known" : ""
+    }">${E(
+     "當時藥物敏感：\n" +
+     allergy(patientData) +
+     "\n當次覆核：" +
+     (data.allergyReviewed ? "已覆核" : "未記錄")
+    )}</div>
+   </section>
+
+   <section class="cms-past-card">
+    <h3>病歷</h3>
+    ${block("Diagnosis 診斷", data.diagnosis)}
+    ${block("S · 主訴及病史", data.soap?.s)}
+    ${block("O · 檢查及結果", data.soap?.o)}
+    ${block("A · 評估補充", data.soap?.a)}
+    ${block("P · 治療計劃", data.soap?.p)}
+   </section>
+
+   ${prescriptionHTML(e, history)}
+   ${investigationsHTML(data)}
+  `;
+ }
+
+ function updateControls(){
+  const index = state.list.findIndex(
+   e => e.id === state.pastId
+  );
+
+  const blocked = !db || busy || printing;
+
+  pastTab.disabled = blocked;
+  previewTab.disabled = blocked;
+  picker.disabled = blocked || !state.list.length;
+
+  olderButton.disabled =
+   blocked || index < 0 || index >= state.list.length - 1;
+
+  newerButton.disabled = blocked || index <= 0;
+
+  handle.setAttribute("aria-disabled", String(blocked));
+ }
+
+ function applyPane(){
+  const isPast = state.pane === "past";
+
+  pastPanel.hidden = !isPast;
+  previewPanel.hidden = isPast;
+
+  pastTab.setAttribute("aria-selected", String(isPast));
+  previewTab.setAttribute("aria-selected", String(!isPast));
+
+  pastTab.tabIndex = isPast ? 0 : -1;
+  previewTab.tabIndex = isPast ? -1 : 0;
+ }
+
+ function switchPane(pane, focus = false){
+  if(!db || busy || printing) return;
+
+  if(pane !== state.pane){
+   state.scroll[state.pane] = reference.scrollTop;
+   state.pane = pane;
+   applyPane();
+   reference.scrollTop = state.scroll[pane] || 0;
+  }
+
+  if(focus){
+   (pane === "past" ? pastTab : previewTab).focus();
+  }
+
+  if(pane === "preview"){
+   requestAnimationFrame(scale);
+  }
+ }
+
+ function choosePast(id){
+  if(!db || busy || printing) return;
+  if(!state.list.some(e => e.id === id)) return;
+
+  state.pastId = id;
+  picker.value = id;
+  state.renderedEncounter = null;
+
+  renderPastRecord();
+  updateControls();
+
+  reference.scrollTop = 0;
+  state.scroll.past = 0;
+ }
+
+ function sync(){
+  if(!db || !current()) return;
+
+  /*
+   正常開啟診症：預設最近一次過往診症。
+   明確開啟歷史文件／完成版本：保留原本預覽用途，
+   避免點「查看版本」卻先看到另一份病歷。
+   */
+  const context = [
+   selected,
+   view?.kind || "",
+   view?.id || ""
+  ].join("|");
+
+  const changedContext = context !== state.context;
+  const previousScroll = reference.scrollTop;
+
+  state.list = previousEncounters();
+
+  if(changedContext){
+   state.context = context;
+   state.pastId = state.list[0]?.id || "";
+   state.pane = !view && state.list.length ? "past" : "preview";
+   state.scroll = {past:0,preview:0};
+   state.renderedEncounter = null;
+  }else if(!state.list.some(e => e.id === state.pastId)){
+   state.pastId = state.list[0]?.id || "";
+   state.renderedEncounter = null;
+
+   if(!state.list.length){
+    state.pane = "preview";
+   }
+  }
+
+  const optionsKey = state.list.map(e =>
+   [e.id,e.date,e.created,e.status,e.diagnosis].join("|")
+  ).join("\n");
+
+  if(picker.dataset.optionsKey !== optionsKey){
+   picker.replaceChildren();
+
+   if(!state.list.length){
+    const option = make("option", "", "沒有過往診症");
+    option.value = "";
+    picker.append(option);
+   }else{
+    for(const e of state.list){
+     const option = make("option");
+
+     option.value = e.id;
+     option.textContent = [
+      e.date,
+      e.created ? stamp(e.created) : "",
+      e.status === "completed" ? "已完成" : "未完成／已重開",
+      T(e.diagnosis).replace(/\s+/g," ").slice(0,70)
+     ].filter(Boolean).join(" · ");
+
+     picker.append(option);
+    }
+   }
+
+   picker.dataset.optionsKey = optionsKey;
+  }
+
+  picker.value = state.pastId;
+
+  pastTab.textContent = "過往診症（" + state.list.length + "）";
+
+  target.textContent = view
+   ? "目前正開啟歷史快照／版本；上方操作沿用原有歷史查看模式。"
+   : "操作目標：左邊本次診症 " +
+      (current().date || "—") +
+      "。右邊過往紀錄只供參閱。";
+
+  applyPane();
+  renderPastRecord();
+  updateControls();
+
+  reference.scrollTop = changedContext ? 0 : previousScroll;
+
+  if(state.pane === "preview"){
+   requestAnimationFrame(scale);
+  }
+ }
+
+ pastTab.addEventListener("click", () => switchPane("past"));
+ previewTab.addEventListener("click", () => switchPane("preview"));
+
+ tabs.addEventListener("keydown", event => {
+  if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key)){
+   return;
+  }
+
+  event.preventDefault();
+
+  const pane = event.key === "Home" ? "past"
+   : event.key === "End" ? "preview"
+   : state.pane === "past" ? "preview" : "past";
+
+  switchPane(pane, true);
+ });
+
+ picker.addEventListener("change", () => choosePast(picker.value));
+
+ olderButton.addEventListener("click", () => {
+  const index = state.list.findIndex(e => e.id === state.pastId);
+  const next = state.list[index + 1];
+  if(next) choosePast(next.id);
+ });
+
+ newerButton.addEventListener("click", () => {
+  const index = state.list.findIndex(e => e.id === state.pastId);
+  const next = state.list[index - 1];
+  if(next) choosePast(next.id);
+ });
+
+ /* 5. 拖拉／鍵盤調整闊度，只保存比例，不保存病歷 */
+ function applyWidth(){
+  if(window.innerWidth <= 820) return;
+
+  const usable = layout.clientWidth - 10;
+  if(usable <= 0) return;
+
+  const minimum = Math.min(320, usable * 0.4);
+  const width = Math.max(
+   minimum,
+   Math.min(usable - minimum, usable * state.ratio)
+  );
+
+  layout.style.setProperty(
+   "--cms-edit-width",
+   Math.round(width) + "px"
+  );
+
+  handle.setAttribute(
+   "aria-valuenow",
+   String(Math.round(width / usable * 100))
+  );
+
+  requestAnimationFrame(scale);
+ }
+
+ function saveWidth(){
+  try{
+   localStorage.setItem(WIDTH_KEY, String(state.ratio));
+  }catch{}
+ }
+
+ handle.addEventListener("pointerdown", event => {
+  if(
+   !db || busy || printing ||
+   event.button !== 0 ||
+   window.innerWidth <= 820
+  ){
+   return;
+  }
+
+  event.preventDefault();
+
+  state.drag = event.pointerId;
+  handle.setPointerCapture(event.pointerId);
+  document.body.classList.add("cms-split-dragging");
+ });
+
+ handle.addEventListener("pointermove", event => {
+  if(state.drag !== event.pointerId) return;
+
+  const rect = layout.getBoundingClientRect();
+  const usable = rect.width - 10;
+  if(usable <= 0) return;
+
+  state.ratio = Math.max(
+   0.25,
+   Math.min(0.75, (event.clientX - rect.left) / usable)
+  );
+
+  applyWidth();
+ });
+
+ function endDrag(event){
+  if(state.drag === null) return;
+  if(event && event.pointerId !== state.drag) return;
+
+  state.drag = null;
+  document.body.classList.remove("cms-split-dragging");
+  saveWidth();
+ }
+
+ handle.addEventListener("pointerup", endDrag);
+ handle.addEventListener("pointercancel", endDrag);
+ handle.addEventListener("lostpointercapture", endDrag);
+
+ handle.addEventListener("keydown", event => {
+  if(!db || busy || printing) return;
+
+  if(!["ArrowLeft","ArrowRight","Home"].includes(event.key)){
+   return;
+  }
+
+  event.preventDefault();
+
+  state.ratio = event.key === "Home" ? 0.5 : Math.max(
+   0.25,
+   Math.min(
+    0.75,
+    state.ratio + (event.key === "ArrowLeft" ? -0.025 : 0.025)
+   )
+  );
+
+  applyWidth();
+  saveWidth();
+ });
+
+ handle.addEventListener("dblclick", () => {
+  if(!db || busy || printing) return;
+  state.ratio = 0.5;
+  applyWidth();
+  saveWidth();
+ });
+
+ window.addEventListener("resize", applyWidth);
+
+ /* 6. 接在所有既有畫面補丁之後 */
+ const previousPreview = preview;
+
+ preview = function(){
+  const result = previousPreview.apply(this, arguments);
+  sync();
+  return result;
+ };
+
+ const previousRender = render;
+
+ render = function(){
+  const result = previousRender.apply(this, arguments);
+  sync();
+  applyWidth();
+  return result;
+ };
+
+ const previousUpdateButtons = updateButtons;
+
+ updateButtons = function(){
+  const result = previousUpdateButtons.apply(this, arguments);
+  updateControls();
+  return result;
+ };
+
+ /*
+  成功登出後清除新增的歷史明文畫面。
+  登出失敗而 db 仍保留時，不清走待儲存內容。
+ */
+ const previousLock = lockWorkspace;
+
+ lockWorkspace = async function(){
+  const result = await previousLock.apply(this, arguments);
+
+  if(!db){
+   pastContent.replaceChildren();
+   picker.replaceChildren();
+   target.textContent = "";
+
+   state.list = [];
+   state.context = "";
+   state.pastId = "";
+   state.renderedEncounter = null;
+   state.renderedKey = "";
+
+   document.body.classList.remove("cms-split-dragging");
+  }
+
+  return result;
+ };
+
+ applyPane();
+ applyWidth();
+
+ if(db){
+  sync();
+ }
+})();
+</script>
+<!-- ===== 本次編輯／過往診症雙欄完成 ===== -->
 </body>
 </html>
