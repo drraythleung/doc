@@ -10633,5 +10633,1254 @@ body.cms-split-dragging *{
 </script>
 
 <!-- ===== CMS 第 1 階段完成 ===== -->
+ <!-- ===== CMS 第 2 階段：先選病人，再開始診症 ===== -->
+
+<style id="cms-stage2-patient-flow-style">
+.cms-s2-help{
+ margin:0 0 14px;
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.8;
+}
+
+.cms-s2-search{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ margin-bottom:12px;
+}
+
+.cms-s2-search input{
+ flex:1;
+ min-width:0;
+}
+
+.cms-s2-search button{
+ flex:0 0 auto;
+ white-space:nowrap;
+}
+
+.cms-s2-patient{
+ margin:10px 0;
+ padding:14px;
+ border:1px solid var(--line);
+ border-radius:10px;
+ background:#fff;
+}
+
+.cms-s2-patient-name{
+ margin:0 0 6px;
+ font-size:16px;
+ line-height:1.6;
+ overflow-wrap:anywhere;
+}
+
+.cms-s2-patient-meta{
+ margin:0;
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.8;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+.cms-s2-patient-actions{
+ display:flex;
+ flex-wrap:wrap;
+ gap:8px;
+ margin-top:11px;
+}
+
+.cms-s2-footer{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:flex-end;
+ gap:8px;
+ margin-top:18px;
+ padding-top:14px;
+ border-top:1px solid var(--line);
+}
+
+.cms-s2-section{
+ margin:16px 0;
+ padding:14px;
+ border:1px solid var(--line);
+ border-radius:10px;
+ background:#fff;
+}
+
+.cms-s2-section h3{
+ margin-bottom:12px;
+}
+
+.cms-s2-section .field:last-child{
+ margin-bottom:0;
+}
+
+.cms-s2-empty{
+ padding:20px 14px;
+ border:1px dashed #bfced5;
+ border-radius:9px;
+ color:var(--muted);
+ background:#f8fafb;
+ line-height:1.8;
+}
+
+.cms-s2-error{
+ margin:12px 0;
+}
+
+.cms-s2-error[hidden]{
+ display:none !important;
+}
+
+.cms-s2-required{
+ color:var(--bad);
+}
+
+.cms-s2-choice-summary{
+ padding:14px;
+ margin-bottom:14px;
+ border:1px solid #cee0d7;
+ border-radius:10px;
+ background:var(--soft);
+ line-height:1.8;
+}
+
+.cms-s2-choice-summary strong{
+ display:block;
+ font-size:16px;
+}
+
+.cms-s2-unfinished{
+ padding:13px;
+ margin:10px 0;
+ border:1px solid var(--line);
+ border-radius:9px;
+ background:#fff;
+}
+
+@media(max-width:600px){
+ .cms-s2-search{
+  flex-wrap:wrap;
+ }
+
+ .cms-s2-search input{
+  flex-basis:100%;
+ }
+
+ .cms-s2-footer{
+  display:grid;
+  grid-template-columns:1fr;
+ }
+
+ .cms-s2-footer button{
+  width:100%;
+ }
+}
+</style>
+
+<script>
+(function installStage2PatientFlow(){
+ "use strict";
+
+ const app = $("app");
+
+ if(
+  !app ||
+  app.dataset.stage2PatientFlow === "1"
+ ){
+  return;
+ }
+
+ app.dataset.stage2PatientFlow = "1";
+
+ const ACT = {
+  choose:"cmsS2ChoosePatient",
+  search:"cmsS2SearchPatients",
+  register:"cmsS2RegisterPatient",
+  save:"cmsS2SaveRegistration",
+  back:"cmsS2BackToSearch",
+  select:"cmsS2SelectPatient",
+  create:"cmsS2CreateEncounter",
+  resume:"cmsS2ResumeEncounter"
+ };
+
+ const fieldLabels = {
+  cn:"中文姓名",
+  surname:"英文姓氏",
+  given:"英文名字",
+  hkid:"HKID／證件號碼",
+  dob:"出生日期",
+  sex:"性別",
+  phone:"電話",
+  email:"電郵",
+  address:"地址",
+  contact1Name:"聯絡人 1 姓名",
+  contact1Phone:"聯絡人 1 電話",
+  contact2Name:"聯絡人 2 姓名",
+  contact2Phone:"聯絡人 2 電話"
+ };
+
+ const registrationFields = [
+  ...IDFIELDS,
+  ...CONTACTS
+ ];
+
+ let registration = null;
+ let lookupTimer = null;
+
+ /*
+  registration 只係未保存表單狀態。
+  開啟表單、搜尋、取消都唔會寫入 db。
+ */
+ function readRegistration(){
+  if(
+   !registration ||
+   modalMode !== "cmsS2Registration"
+  ){
+   return null;
+  }
+
+  const data = patient();
+
+  $("modalBody").querySelectorAll(
+   "[data-cms-s2-field]"
+  ).forEach(input => {
+   data[input.dataset.cmsS2Field] = T(input.value);
+  });
+
+  data.hkid = normID(data.hkid);
+
+  return {
+   data,
+   startVisit:!!$("cmsS2StartVisit")?.checked
+  };
+ }
+
+ function registrationChanged(){
+  const value = readRegistration();
+
+  return !!(
+   value &&
+   !equal(value, registration.initial)
+  );
+ }
+
+ function permitDiscard(){
+  if(!registration) return true;
+
+  if(
+   registrationChanged() &&
+   !confirm(
+    "病人登記資料尚未保存。\n\n" +
+    "離開會捨棄本次輸入；" +
+    "不會建立病人主檔或診症。\n\n" +
+    "確定離開？"
+   )
+  ){
+   return false;
+  }
+
+  registration = null;
+  return true;
+ }
+
+ function getPatient(id, d = db){
+  const result = d?.patients.find(
+   item => item.id === id
+  );
+
+  assert(result, "找不到病人主檔");
+
+  return result;
+ }
+
+ function countEncounters(id){
+  return db.encounters.filter(
+   encounter => encounter.patientId === id
+  ).length;
+ }
+
+ function unfinishedEncounters(id){
+  return db.encounters.filter(
+   encounter =>
+    encounter.patientId === id &&
+    encounter.status === "draft"
+  ).slice().sort((a,b) =>
+   S(b.date).localeCompare(S(a.date)) ||
+   S(b.created).localeCompare(S(a.created))
+  );
+ }
+
+ function patientMeta(p){
+  return [
+   "病歷編號：" + p.mrn,
+   "出生日期：" +
+    (dateOK(p.data.dob) ? fmt(p.data.dob) : "未填寫"),
+   "性別：" + (T(p.data.sex) || "未填寫"),
+   "證件：" + mask(p.data.hkid),
+   "電話：" + (T(p.data.phone) || "未填寫")
+  ].join("\n");
+ }
+
+ function showFormErrors(errors){
+  const box = $("cmsS2RegistrationErrors");
+
+  if(!box) return;
+
+  box.hidden = errors.length === 0;
+
+  box.textContent = errors.length
+   ? "請先處理：\n• " + errors.join("\n• ")
+   : "";
+
+  if(errors.length){
+   box.scrollIntoView({
+    block:"nearest"
+   });
+  }
+ }
+
+ /*
+  搜尋只重新產生結果區，
+  唔重建正在輸入的搜尋欄。
+ */
+ function drawSearchResults(){
+  const results = $("cmsS2PatientResults");
+  const input = $("cmsS2PatientSearch");
+
+  if(
+   !db ||
+   !results ||
+   !input ||
+   modalMode !== "cmsS2PatientChooser"
+  ){
+   return;
+  }
+
+  const query = T(input.value).toLowerCase();
+
+  const compactQuery = query.replace(
+   /[\s()（）-]/g,
+   ""
+  );
+
+  const all = db.patients.filter(p => {
+   if(!query) return true;
+
+   const normal = [
+    p.mrn,
+    pname(p.data),
+    p.data.phone,
+    p.data.email,
+    p.data.hkid
+   ].join(" ").toLowerCase();
+
+   const compact = normal.replace(
+    /[\s()（）-]/g,
+    ""
+   );
+
+   return normal.includes(query) ||
+    compact.includes(compactQuery);
+  }).slice().sort((a,b) =>
+   a.mrn.localeCompare(b.mrn)
+  );
+
+  const visible = all.slice(0,50);
+
+  results.innerHTML = `
+   <p class="small">
+    找到 ${all.length} 位病人。
+    ${all.length > 50
+     ? "目前顯示首 50 位，請縮窄搜尋。"
+     : ""}
+   </p>
+
+   ${visible.map(p => {
+    const unfinished = unfinishedEncounters(p.id);
+
+    return `
+     <section class="cms-s2-patient">
+      <h3 class="cms-s2-patient-name">
+       ${E(pname(p.data) || "未填姓名")}
+      </h3>
+
+      <p class="cms-s2-patient-meta">${E(
+       patientMeta(p)
+      )}</p>
+
+      <p class="small" style="margin:7px 0 0">
+       ${countEncounters(p.id)} 次診症
+       ${unfinished.length
+        ? " · " + unfinished.length + " 次未完成"
+        : ""}
+      </p>
+
+      <div class="cms-s2-patient-actions">
+       <button
+        type="button"
+        class="primary"
+        data-act="${ACT.select}"
+        data-patient="${E(p.id)}"
+       >選擇此病人</button>
+
+       <button
+        type="button"
+        data-act="pfOpen"
+        data-patient="${E(p.id)}"
+       >查看病人資料</button>
+      </div>
+     </section>
+    `;
+   }).join("") || `
+    <div class="cms-s2-empty">
+     沒有符合的病人。<br>
+     請先核對搜尋條件；如確實係新病人，
+     再按「登記新病人」。
+    </div>
+   `}
+  `;
+ }
+
+ function openPatientChooser(){
+  assert(db, "請先登入");
+
+  showModal(
+   "開始診症 · 先選擇病人",
+   `
+    <p class="cms-s2-help">
+     先搜尋已登記病人。
+     選擇病人後會再核對身份，唔會立即建立診症。
+    </p>
+
+    <label for="cmsS2PatientSearch">
+     搜尋姓名、病歷編號、證件、電話或電郵
+    </label>
+
+    <div class="cms-s2-search">
+     <input
+      id="cmsS2PatientSearch"
+      type="search"
+      autocomplete="off"
+      placeholder="輸入姓名、P-編號、證件或電話"
+     >
+
+     <button
+      type="button"
+      data-act="${ACT.search}"
+     >搜尋</button>
+
+     <button
+      type="button"
+      data-act="${ACT.register}"
+      data-start="true"
+     >＋ 登記新病人</button>
+    </div>
+
+    <div id="cmsS2PatientResults"></div>
+   `,
+   "cmsS2PatientChooser"
+  );
+
+  drawSearchResults();
+
+  setTimeout(() => {
+   $("cmsS2PatientSearch")?.focus();
+  },0);
+ }
+
+ function registrationInput(key){
+  const type = key === "dob"
+   ? "date"
+   : key === "email"
+    ? "email"
+    : [
+       "phone",
+       "contact1Phone",
+       "contact2Phone"
+      ].includes(key)
+     ? "tel"
+     : "text";
+
+  return `
+   <div
+    class="field"
+    ${key === "address"
+     ? 'style="grid-column:1/-1"'
+     : ""}
+   >
+    <label for="cmsS2Field-${E(key)}">
+     ${E(fieldLabels[key])}
+    </label>
+
+    <input
+     id="cmsS2Field-${E(key)}"
+     data-cms-s2-field="${E(key)}"
+     type="${type}"
+     ${key === "dob"
+      ? `max="${E(today())}"`
+      : ""}
+     autocomplete="off"
+    >
+   </div>
+  `;
+ }
+
+ function openRegistration(startVisit = false){
+  assert(db, "請先登入");
+  assert(!conflict, "有版本衝突，暫時不能登記病人");
+
+  const blank = patient();
+
+  registration = {
+   initial:{
+    data:C(blank),
+    startVisit:!!startVisit
+   }
+  };
+
+  showModal(
+   "登記新病人",
+   `
+    <p class="cms-s2-help">
+     保存前唔會建立任何主檔或診症。
+     至少填寫中文姓名，或英文姓氏／名字其中一項。
+     請先核實病人身份，避免重複登記。
+    </p>
+
+    <section class="cms-s2-section">
+     <h3>身份資料</h3>
+
+     <div class="grid">
+      ${[
+       "cn",
+       "surname",
+       "given",
+       "hkid",
+       "dob",
+       "sex"
+      ].map(registrationInput).join("")}
+     </div>
+    </section>
+
+    <section class="cms-s2-section">
+     <h3>聯絡資料</h3>
+
+     <div class="grid">
+      ${[
+       "phone",
+       "email",
+       "address"
+      ].map(registrationInput).join("")}
+     </div>
+    </section>
+
+    <details class="cms-s2-section">
+     <summary>其他聯絡人（選填）</summary>
+
+     <div class="grid">
+      ${[
+       "contact1Name",
+       "contact1Phone",
+       "contact2Name",
+       "contact2Phone"
+      ].map(registrationInput).join("")}
+     </div>
+    </details>
+
+    <section class="cms-s2-section">
+     <label class="check" style="margin:0">
+      <input
+       id="cmsS2StartVisit"
+       type="checkbox"
+       ${startVisit ? "checked" : ""}
+      >
+
+      <span>
+       <strong>保存後立即開始今日診症</strong><br>
+       <small>
+        不勾選只登記主檔；
+        勾選則同時建立一次未完成診症。
+        藥物敏感初始為未確認，須於診症內另行核對。
+       </small>
+      </span>
+     </label>
+    </section>
+
+    <div
+     id="cmsS2RegistrationErrors"
+     class="notice error cms-s2-error"
+     role="alert"
+     hidden
+    ></div>
+
+    <div class="cms-s2-footer">
+     <button
+      type="button"
+      data-act="${ACT.back}"
+     >返回搜尋</button>
+
+     <button
+      id="cmsS2RegistrationSave"
+      type="button"
+      class="primary"
+      data-act="${ACT.save}"
+     >${startVisit
+      ? "登記並開始診症"
+      : "只登記病人"}</button>
+    </div>
+   `,
+   "cmsS2Registration"
+  );
+
+  setTimeout(() => {
+   $("cmsS2Field-cn")?.focus();
+  },0);
+ }
+
+ function syncRegistrationSaveLabel(){
+  const node = $("cmsS2RegistrationSave");
+
+  if(!node) return;
+
+  node.textContent = $("cmsS2StartVisit")?.checked
+   ? "登記並開始診症"
+   : "只登記病人";
+ }
+
+ /*
+  如已有未完成診症，提供繼續入口。
+  即使沒有未完成紀錄，亦先核對病人，
+  唔會一選中就自動寫入。
+ */
+ function selectPatient(id){
+  const p = getPatient(id);
+  const unfinished = unfinishedEncounters(id);
+
+  showModal(
+   "核對病人及診症",
+   `
+    <div class="cms-s2-choice-summary">
+     <strong>${E(pname(p.data) || "未填姓名")}</strong>
+     <div class="cms-s2-patient-meta">${E(
+      patientMeta(p)
+     )}</div>
+    </div>
+
+    ${unfinished.length ? `
+     <h3>此病人已有未完成診症</h3>
+
+     <p class="cms-s2-help">
+      如果係繼續同一次求診，請開啟原有診症，
+      唔需要再建立一次。
+     </p>
+
+     ${unfinished.map(e => `
+      <section class="cms-s2-unfinished">
+       <strong>${E(e.date || "未填日期")}</strong>
+
+       <p class="small" style="margin:6px 0 10px">
+        ${E(T(e.diagnosis) || "未填診斷")}<br>
+        建立時間：${E(stamp(e.created))}
+       </p>
+
+       <button
+        type="button"
+        class="primary"
+        data-act="${ACT.resume}"
+        data-id="${E(e.id)}"
+       >繼續此診症</button>
+      </section>
+     `).join("")}
+    ` : `
+     <p class="cms-s2-help">
+      未發現此病人的未完成診症。
+      確認身份後，可開始今日診症。
+     </p>
+    `}
+
+    <div class="cms-s2-footer">
+     <button
+      type="button"
+      data-act="${ACT.choose}"
+     >重新選擇病人</button>
+
+     <button
+      type="button"
+      ${unfinished.length ? "" : 'class="primary"'}
+      data-act="${ACT.create}"
+      data-patient="${E(id)}"
+     >${unfinished.length
+      ? "另開一次今日診症"
+      : "確認並開始今日診症"}</button>
+    </div>
+   `,
+   "cmsS2PatientConfirmation"
+  );
+ }
+
+ /*
+  明確選好既有病人後才建立。
+
+  使用 addEncounter(d, patientId)，
+  沿用相同 patientId 及主檔快照，
+  不會另建病人主檔。
+ */
+ async function createEncounterForPatient(id){
+  assert(db, "請先登入");
+  assert(!conflict, "有版本衝突，不能建立診症");
+
+  const p = getPatient(id);
+
+  assert(
+   pname(p.data),
+   "此主檔仍未填姓名，請先編輯病人主檔"
+  );
+
+  const unfinished = unfinishedEncounters(id);
+
+  if(unfinished.length){
+   if(!confirm(
+    pname(p.data) + "已有 " +
+    unfinished.length + " 次未完成診症。\n\n" +
+    "你已決定另開一次今日診症，" +
+    "而唔係繼續原有診症？"
+   )){
+    return;
+   }
+  }
+
+  let encounterId = "";
+
+  await run(async () => {
+   await commit(candidate => {
+    const patientMaster = getPatient(id, candidate);
+
+    assert(
+     pname(patientMaster.data),
+     "主檔姓名未完整，已停止建立"
+    );
+
+    encounterId = addEncounter(
+     candidate,
+     id
+    ).id;
+
+    const e = candidate.encounters.find(
+     item => item.id === encounterId
+    );
+
+    audit(
+     e,
+     "經選擇病人流程開始診症",
+     "使用既有主檔；未建立另一個病人主檔"
+    );
+   });
+
+   selected = encounterId;
+   db.currentId = encounterId;
+   tab = "note";
+   view = null;
+
+   /*
+    原 commit() 會保存進入操作前的 selected。
+    另外保存目前選取診症，確保重新登入後位置一致。
+   */
+   dirty++;
+
+   $("modal").close();
+   showErrors([]);
+
+   await save();
+  });
+
+  message(
+   "已為 " + pname(current().patient) +
+   " 開始今日診症。" +
+   "本次藥物敏感覆核尚未完成，請另行核對。"
+  );
+ }
+
+ /*
+  新病人主檔及首個診症，
+  在同一個 commit 候選資料內建立。
+
+  按取消、返回搜尋或關閉表單，
+  都不會走到這段寫入流程。
+ */
+ async function saveRegistration(){
+  assert(db, "請先登入");
+  assert(!conflict, "有版本衝突，不能保存登記");
+  assert(
+   registration &&
+   modalMode === "cmsS2Registration",
+   "沒有正在編輯的新病人登記"
+  );
+
+  const entered = readRegistration();
+
+  assert(entered, "無法讀取登記資料");
+
+  const data = entered.data;
+  const startVisit = entered.startVisit;
+  const errors = [];
+
+  if(!pname(data)){
+   errors.push(
+    "請至少填寫中文姓名，或英文姓氏／名字其中一項"
+   );
+  }
+
+  if(
+   data.dob &&
+   (
+    !dateOK(data.dob) ||
+    data.dob > today()
+   )
+  ){
+   errors.push("出生日期無效或遲於今日");
+  }
+
+  const emailInput = $("cmsS2Field-email");
+
+  if(
+   T(data.email) &&
+   emailInput &&
+   !emailInput.validity.valid
+  ){
+   errors.push("電郵格式無效");
+  }
+
+  showFormErrors(errors);
+
+  if(errors.length) return;
+
+  const duplicates = duplicatePatients(data, "");
+
+  if(duplicates.length){
+   if(!confirm(
+    "發現可能重複病人：\n\n" +
+    duplicates.map(p =>
+     p.mrn + " · " + pname(p.data) +
+     "\n出生日期：" +
+     (dateOK(p.data.dob) ? fmt(p.data.dob) : "未填寫") +
+     "\n證件：" + mask(p.data.hkid)
+    ).join("\n\n") +
+    "\n\n建議取消並返回搜尋核對。" +
+    "\n系統不會自動合併。" +
+    "\n\n你已核實係另一位病人，仍要新增？"
+   )){
+    return;
+   }
+  }
+
+  let patientId = "";
+  let encounterId = "";
+
+  await run(async () => {
+   await commit(candidate => {
+    patientId = uid();
+
+    const p = addMaster(
+     candidate,
+     patientId,
+     data
+    );
+
+    candidate.meta.security.push({
+     at:now(),
+     actor,
+     sessionId,
+     action:"登記新病人",
+     patientId,
+     mrn:p.mrn,
+     startedEncounter:startVisit
+    });
+
+    if(startVisit){
+     encounterId = addEncounter(
+      candidate,
+      patientId
+     ).id;
+    }
+   });
+
+   /*
+    commit 已成功，先清除未保存表單狀態。
+    如後續畫面選取儲存失敗，
+    不應誤導使用者重複登記同一病人。
+   */
+   registration = null;
+
+   if(startVisit){
+    selected = encounterId;
+    db.currentId = encounterId;
+    tab = "note";
+    view = null;
+
+    dirty++;
+
+    $("modal").close();
+    showErrors([]);
+
+    await save();
+   }
+  });
+
+  const savedPatient = getPatient(patientId);
+
+  if(startVisit){
+   message(
+    "已登記 " + savedPatient.mrn + " · " +
+    pname(savedPatient.data) +
+    "，並開始今日診症。" +
+    "藥物敏感仍為未確認，請於本次診症核對。"
+   );
+  }else{
+   masterHistory(patientId);
+
+   message(
+    "已登記 " + savedPatient.mrn + " · " +
+    pname(savedPatient.data) +
+    "。沒有建立診症或收據。"
+   );
+  }
+ }
+
+ /*
+  修正主檔聯絡資料來源。
+
+  不修改資料；
+  只將目前主檔頁的聯絡區，
+  固定顯示 p.data 內的聯絡資料。
+ */
+ const previousMasterHistory = masterHistory;
+
+ masterHistory = function(id){
+  const result = previousMasterHistory.apply(
+   this,
+   arguments
+  );
+
+  if(!db) return result;
+
+  const p = db.patients.find(
+   item => item.id === id
+  );
+
+  const profile = $("modalBody").querySelector(
+   ".patient-profile"
+  );
+
+  if(!p || !profile) return result;
+
+  const contactSection = [
+   ...profile.querySelectorAll(".profile-section")
+  ].find(section => {
+   const title = T(
+    section.querySelector(
+     ".profile-section-head h3"
+    )?.textContent
+   );
+
+   return [
+    "最新聯絡資料",
+    "主檔聯絡資料"
+   ].includes(title);
+  });
+
+  if(!contactSection) return result;
+
+  const title = contactSection.querySelector(
+   ".profile-section-head h3"
+  );
+
+  if(title){
+   title.textContent = "主檔聯絡資料";
+  }
+
+  const pill = contactSection.querySelector(
+   ".profile-section-head .pill"
+  );
+
+  if(pill){
+   pill.textContent = "目前主檔";
+  }
+
+  const source = contactSection.querySelector(
+   ".profile-source"
+  );
+
+  if(source){
+   source.textContent =
+    "資料來源：目前病人主檔\n" +
+    "主檔最後更新：" + stamp(p.updated) +
+    "\n修改診症病歷不會改變此區的資料來源。";
+  }
+
+  const labelToKey = Object.fromEntries(
+   CONTACTS.map(key => [
+    fieldLabels[key],
+    key
+   ])
+  );
+
+  contactSection.querySelectorAll(
+   ".profile-field"
+  ).forEach(field => {
+   const label = T(
+    field.querySelector(".profile-label")?.textContent
+   );
+
+   const key = labelToKey[label];
+
+   if(!key) return;
+
+   const value = field.querySelector(
+    ".profile-value"
+   );
+
+   if(!value) return;
+
+   const text = T(p.data[key]);
+
+   value.textContent = text || "未填寫";
+
+   value.classList.toggle(
+    "profile-empty",
+    !text
+   );
+  });
+
+  return result;
+ };
+
+ function syncNavigationLabels(){
+  const startButton = app.querySelector(
+   'button[data-act="new"]'
+  );
+
+  if(startButton){
+   startButton.textContent = "＋ 開始診症";
+   startButton.title =
+    "先搜尋病人，再選擇繼續原有診症或建立新診症。";
+  }
+
+  app.querySelectorAll(
+   '.cms-main-nav > button[data-act="pfRegistry"]'
+  ).forEach(button => {
+   button.textContent = "病人名單";
+  });
+
+  const currentPatientButton = $(
+   "cmsPatientHeaderActions"
+  )?.querySelector(
+   'button[data-act="pfOpen"]'
+  );
+
+  if(currentPatientButton){
+   currentPatientButton.textContent = "本病人資料";
+
+   currentPatientButton.title =
+    "查看目前病人的主檔及家人關係。";
+  }
+
+  const registerButton = app.querySelector(
+   ".cms-main-nav > .pf-register"
+  );
+
+  if(registerButton){
+   registerButton.textContent = "＋ 登記病人";
+
+   registerButton.title =
+    "只登記主檔；亦可選擇保存後開始今日診症。";
+  }
+ }
+
+ /*
+  保留上一階段及主檔同步 action。
+  只取代病人新增／開始診症入口。
+ */
+ const previousAction = action;
+
+ action = async function(node){
+  const act = node.dataset.act;
+
+  if(busy || printing){
+   return previousAction.apply(this, arguments);
+  }
+
+  const handled = new Set([
+   "new",
+   "pfNew",
+   "newForPatient",
+   ...Object.values(ACT)
+  ]);
+
+  const savingRegistration =
+   act === ACT.save;
+
+  /*
+   在登記表單輸入後，
+   任何其他 data-act 導航都先確認捨棄。
+   保存本身不觸發捨棄提示。
+   */
+  if(
+   registration &&
+   !savingRegistration &&
+   !permitDiscard()
+  ){
+   return;
+  }
+
+  if(!handled.has(act)){
+   return previousAction.apply(this, arguments);
+  }
+
+  assert(db, "請先登入");
+
+  switch(act){
+   case "new":
+   case ACT.choose:
+   case ACT.back:
+    openPatientChooser();
+    break;
+
+   case "pfNew":
+    openRegistration(false);
+    break;
+
+   case ACT.register:
+    openRegistration(
+     node.dataset.start === "true"
+    );
+    break;
+
+   case "newForPatient":
+   case ACT.select:
+    selectPatient(node.dataset.patient);
+    break;
+
+   case ACT.create:
+    await createEncounterForPatient(
+     node.dataset.patient
+    );
+    break;
+
+   case ACT.resume:
+    await openEncounter(node.dataset.id);
+    break;
+
+   case ACT.search:
+    drawSearchResults();
+    break;
+
+   case ACT.save:
+    await saveRegistration();
+    break;
+  }
+ };
+
+ /*
+  關閉按鈕透過 closeModal()；
+  Escape 則由 dialog cancel 事件處理。
+ */
+ const previousCloseModal = closeModal;
+
+ closeModal = function(){
+  if(busy || printing) return;
+
+  if(!permitDiscard()) return;
+
+  return previousCloseModal.apply(this, arguments);
+ };
+
+ $("modal").addEventListener("cancel", event => {
+  if(busy || printing) return;
+
+  if(
+   registration &&
+   !permitDiscard()
+  ){
+   event.preventDefault();
+  }
+ });
+
+ $("modal").addEventListener("close", () => {
+  clearTimeout(lookupTimer);
+  registration = null;
+ });
+
+ $("modalBody").addEventListener("input", event => {
+  if(
+   event.target.id !== "cmsS2PatientSearch" ||
+   busy ||
+   printing
+  ){
+   return;
+  }
+
+  clearTimeout(lookupTimer);
+
+  lookupTimer = setTimeout(() => {
+   if(!busy && !printing){
+    drawSearchResults();
+   }
+  },180);
+ });
+
+ $("modalBody").addEventListener("keydown", event => {
+  if(
+   event.target.id === "cmsS2PatientSearch" &&
+   event.key === "Enter"
+  ){
+   event.preventDefault();
+
+   clearTimeout(lookupTimer);
+   drawSearchResults();
+  }
+ });
+
+ $("modalBody").addEventListener("change", event => {
+  if(event.target.id === "cmsS2StartVisit"){
+   syncRegistrationSaveLabel();
+  }
+ });
+
+ /*
+  原有 beforeunload 只處理 db 草稿。
+  補上仍未保存的新病人表單。
+ */
+ window.addEventListener("beforeunload", event => {
+  if(
+   registration &&
+   registrationChanged()
+  ){
+   event.preventDefault();
+   event.returnValue = "";
+  }
+ });
+
+ const previousRender = render;
+
+ render = function(){
+  const result = previousRender.apply(this, arguments);
+
+  syncNavigationLabels();
+
+  return result;
+ };
+
+ /*
+  初始化只改按鈕名稱，沒有讀寫網絡或建立病人。
+ */
+ syncNavigationLabels();
+
+})();
+</script>
+
+<!-- ===== CMS 第 2 階段完成 ===== -->
 </body>
 </html>
