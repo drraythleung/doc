@@ -6839,5 +6839,243 @@ masterHistory = function(id){
 })();
 </script>
 <!-- ===== Allergy button 位置調整完成 ===== -->
+ <!-- ===== 病人摘要位置調整：放在所有現有補丁之後 ===== -->
+<style id="cms-patient-summary-relocation">
+/*
+ 保留底層元素供舊程式更新，
+ 只隱藏左欄不再需要顯示的內容。
+*/
+#cmsPatientCard .cms-card-caption,
+#cmsPatientCard #patientBanner,
+#cmsPatientCard #cmsPatientManage{
+ display:none !important;
+}
+
+/* 左邊姓名，右邊主檔及敏感按鈕 */
+#cmsPatientCard .cms-patient-card-head{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ flex-wrap:wrap;
+ gap:10px 12px;
+ margin-bottom:0;
+}
+
+#cmsPatientCard .cms-patient-card-head > :first-child{
+ flex:1 1 180px;
+ min-width:0;
+}
+
+#cmsPatientCard .cms-patient-card-head #patientHeading{
+ margin:0;
+ font-size:17px;
+ line-height:1.5;
+ overflow-wrap:anywhere;
+}
+
+/* 病人主檔及 Allergy 按鈕放在同一組 */
+#cmsPatientCard #cmsPatientHeaderActions{
+ display:flex;
+ align-items:center;
+ justify-content:flex-end;
+ flex:0 0 auto;
+ gap:8px;
+ margin-left:auto;
+}
+
+#cmsPatientCard #cmsPatientHeaderActions > button{
+ flex:0 0 auto;
+ min-height:40px;
+ margin:0;
+ white-space:nowrap;
+}
+
+#cmsPatientCard #cmsPatientHeaderActions > button[data-act="pfOpen"]{
+ padding:8px 13px;
+ font-size:13px;
+ font-weight:bold;
+ background:#fff;
+ border:1px solid var(--line);
+ color:var(--accent);
+}
+
+#cmsPatientCard #cmsPatientHeaderActions > button[data-act="pfOpen"]:hover:not(:disabled){
+ background:var(--soft);
+}
+
+#cmsPatientCard #cmsPatientHeaderActions #cmsAllergyToggle{
+ min-width:86px;
+ margin:0;
+ padding:8px 14px;
+}
+
+/* 右上：完整身份資料與儲存狀態之間 */
+#cmsVisitContext{
+ display:block;
+ margin:6px 0 5px;
+ color:var(--muted);
+ font-size:12px;
+ font-weight:normal;
+ line-height:1.8;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+#cmsVisitContext[hidden]{
+ display:none !important;
+}
+
+@media(max-width:480px){
+ #cmsPatientCard .cms-patient-card-head{
+  gap:9px;
+ }
+
+ #cmsPatientCard #cmsPatientHeaderActions{
+  gap:6px;
+ }
+}
+</style>
+
+<script>
+(function relocatePatientSummary(){
+ "use strict";
+
+ const app = document.getElementById("app");
+ const card = document.getElementById("cmsPatientCard");
+ const title = document.getElementById("previewTitle");
+ const saveNode = document.getElementById("saveState");
+ const allergyButton = document.getElementById("cmsAllergyToggle");
+
+ const head = card?.querySelector(".cms-patient-card-head");
+ const manage = document.getElementById("cmsPatientManage");
+
+ if(
+  !app ||
+  !card ||
+  !title ||
+  !saveNode ||
+  !allergyButton ||
+  !head ||
+  app.dataset.patientSummaryRelocated === "1"
+ ){
+  return;
+ }
+
+ const masterButton = manage?.querySelector(
+  'button[data-act="pfOpen"]'
+ );
+
+ if(!masterButton) return;
+
+ app.dataset.patientSummaryRelocated = "1";
+
+ /*
+  搬移原有按鈕，保留 data-act 及事件處理。
+  排列：病人主檔 → NKDA／Alert。
+ */
+ const actions = document.createElement("div");
+ actions.id = "cmsPatientHeaderActions";
+
+ masterButton.textContent = "病人主檔";
+
+ actions.append(masterButton, allergyButton);
+ head.append(actions);
+
+ /*
+  主檔按鈕已搬出，可隱藏原管理收合區。
+  不刪除原表單或舊程式持有引用的元素。
+ */
+ if(manage){
+  manage.open = false;
+  manage.hidden = true;
+ }
+
+ /*
+  新增右上診症摘要。
+  原 previewTitle 及 saveState 保留原位及功能。
+ */
+ const context = document.createElement("div");
+ context.id = "cmsVisitContext";
+ context.hidden = true;
+
+ title.after(context);
+
+ function updateVisitContext(){
+  if(!db || !current()){
+   context.textContent = "";
+   context.hidden = true;
+   return;
+  }
+
+  const displayed = source();
+  const e = displayed.data;
+  const p = e.patient || {};
+
+  /* 主檔入口跟隨畫面正在顯示的病人 */
+  masterButton.dataset.patient = e.patientId;
+
+  /*
+   使用來源快照當時保存的狀態，
+   不以目前診症狀態冒充歷史狀態。
+  */
+  const state = e.status === "completed"
+   ? "已完成"
+   : "未完成";
+
+  const label = displayed.kind === "document"
+   ? "文件版本診症"
+   : displayed.kind === "revision"
+    ? "完成快照診症"
+    : "本次診症";
+
+  const lines = [
+   label + "：" + (e.date || "—") + " · " + state
+  ];
+
+  /*
+   文件快照沒有電話時，不拿目前主檔電話補上，
+   避免將目前電話顯示成歷史電話。
+  */
+  if(displayed.kind === "document"){
+   lines.push("本次電話：此文件快照未保存聯絡資料");
+  }else{
+   lines.push("本次電話：" + (T(p.phone) || "未填寫"));
+  }
+
+  context.textContent = lines.join("\n");
+  context.hidden = false;
+ }
+
+ /*
+  原有輸入流程可能只呼叫 banner()，
+  因此在原摘要更新後同步右上資料。
+ */
+ const previousBanner = banner;
+
+ banner = function(){
+  const result = previousBanner.apply(this, arguments);
+  updateVisitContext();
+  return result;
+ };
+
+ /*
+  切換頁籤、診症或歷史版本時，
+  原 preview() 完成後再更新右上摘要。
+ */
+ const previousPreview = preview;
+
+ preview = function(){
+  const result = previousPreview.apply(this, arguments);
+  updateVisitContext();
+  return result;
+ };
+
+ if(db){
+  updateVisitContext();
+ }
+
+})();
+</script>
+<!-- ===== 病人摘要位置調整完成 ===== -->
 </body>
 </html>
