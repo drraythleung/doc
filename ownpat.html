@@ -11882,5 +11882,771 @@ body.cms-split-dragging *{
 </script>
 
 <!-- ===== CMS 第 2 階段完成 ===== -->
+ <!-- ===== CMS 第 3 階段：整理操作列、所有診症包含目前診症 ===== -->
+
+<style id="cms-stage3-style">
+.cms-s3-history-section{
+ margin:16px 0;
+ padding:16px;
+ border:1px solid var(--line,#d9e1e5);
+ border-radius:12px;
+ background:#fff;
+}
+
+.cms-s3-history-heading{
+ display:flex;
+ align-items:flex-start;
+ justify-content:space-between;
+ flex-wrap:wrap;
+ gap:10px;
+ margin-bottom:12px;
+}
+
+.cms-s3-history-heading h3{
+ margin:0 0 5px;
+}
+
+.cms-s3-help{
+ margin:0;
+ color:var(--muted,#64748b);
+ font-size:12px;
+ line-height:1.8;
+}
+
+.cms-s3-history-list{
+ display:grid;
+ gap:10px;
+}
+
+.cms-s3-encounter{
+ padding:14px;
+ border:1px solid var(--line,#d9e1e5);
+ border-radius:10px;
+ background:#fff;
+}
+
+.cms-s3-encounter.is-current{
+ border-color:#43886d;
+ background:#f3faf6;
+}
+
+.cms-s3-encounter-top{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ flex-wrap:wrap;
+ gap:8px;
+}
+
+.cms-s3-date{
+ font-size:15px;
+ font-weight:700;
+}
+
+.cms-s3-badges{
+ display:flex;
+ flex-wrap:wrap;
+ gap:6px;
+}
+
+.cms-s3-badge{
+ display:inline-flex;
+ align-items:center;
+ padding:3px 8px;
+ border:1px solid #d8e1e6;
+ border-radius:999px;
+ background:#f5f7f9;
+ color:#475569;
+ font-size:11px;
+ line-height:1.5;
+}
+
+.cms-s3-badge.current{
+ border-color:#b9d6c6;
+ background:#e6f4eb;
+ color:#226044;
+}
+
+.cms-s3-badge.draft{
+ border-color:#ead5a7;
+ background:#fff7e5;
+ color:#7b5b1c;
+}
+
+.cms-s3-diagnosis{
+ margin:10px 0 6px;
+ line-height:1.7;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+.cms-s3-meta{
+ margin:0;
+ color:var(--muted,#64748b);
+ font-size:12px;
+ line-height:1.8;
+ overflow-wrap:anywhere;
+}
+
+.cms-s3-encounter-actions{
+ display:flex;
+ flex-wrap:wrap;
+ gap:8px;
+ margin-top:12px;
+}
+
+.cms-s3-empty{
+ padding:20px 14px;
+ border:1px dashed #c7d2da;
+ border-radius:10px;
+ background:#f8fafb;
+ color:var(--muted,#64748b);
+ line-height:1.8;
+}
+
+.cms-s3-print-menu{
+ position:relative;
+ display:inline-block;
+ align-self:center;
+}
+
+.cms-s3-print-menu > summary{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:8px;
+ padding:8px 12px;
+ border:1px solid var(--line,#d9e1e5);
+ border-radius:8px;
+ background:#fff;
+ color:inherit;
+ font:inherit;
+ cursor:pointer;
+ list-style:none;
+ user-select:none;
+}
+
+.cms-s3-print-menu > summary::-webkit-details-marker{
+ display:none;
+}
+
+.cms-s3-print-menu > summary::after{
+ content:"▾";
+ font-size:11px;
+}
+
+.cms-s3-print-menu[open] > summary::after{
+ content:"▴";
+}
+
+.cms-s3-print-items{
+ position:absolute;
+ top:calc(100% + 6px);
+ right:0;
+ z-index:80;
+ display:grid;
+ gap:7px;
+ min-width:210px;
+ max-width:min(320px,85vw);
+ padding:10px;
+ border:1px solid var(--line,#d9e1e5);
+ border-radius:10px;
+ background:#fff;
+ box-shadow:0 12px 30px rgba(15,23,42,.14);
+}
+
+.cms-s3-print-items > button{
+ width:100%;
+ margin:0 !important;
+ text-align:left;
+ white-space:normal;
+}
+
+.cms-s3-footer{
+ display:flex;
+ justify-content:flex-end;
+ flex-wrap:wrap;
+ gap:8px;
+ margin-top:16px;
+ padding-top:14px;
+ border-top:1px solid var(--line,#d9e1e5);
+}
+
+@media(max-width:600px){
+ .cms-s3-history-section{
+  padding:12px;
+ }
+
+ .cms-s3-print-items{
+  right:auto;
+  left:0;
+ }
+
+ .cms-s3-encounter-actions > button{
+  flex:1 1 auto;
+ }
+}
+
+@media print{
+ .cms-s3-print-menu,
+ .cms-s3-history-section{
+  display:none !important;
+ }
+}
+</style>
+
+<script>
+(function installStage3(){
+ "use strict";
+
+ const app = $("app");
+
+ if(!app || app.dataset.stage3Installed === "1"){
+  return;
+ }
+
+ app.dataset.stage3Installed = "1";
+
+ const ACT = {
+  history:"cmsS3AllEncounters",
+  open:"cmsS3OpenEncounter"
+ };
+
+ /*
+  本階段只整理介面及讀取診症清單。
+  不會寫入、刪除、合併病人或診症。
+ */
+
+ function findPatient(patientId){
+  return db?.patients.find(
+   p => p.id === patientId
+  ) || null;
+ }
+
+ function findEncounter(encounterId){
+  return db?.encounters.find(
+   e => e.id === encounterId
+  ) || null;
+ }
+
+ function activeEncounter(){
+  return findEncounter(selected);
+ }
+
+ function displayDate(value){
+  return dateOK(value)
+   ? fmt(value)
+   : T(value) || "未填日期";
+ }
+
+ function displayStamp(value){
+  return T(value)
+   ? stamp(value)
+   : "未記錄";
+ }
+
+ /*
+  關鍵：
+  只按 patientId 篩選。
+
+  不排除 selected；
+  不排除 db.currentId；
+  不按 draft / completed 狀態篩走診症。
+ */
+ function allEncounters(patientId){
+  return (db?.encounters || [])
+   .filter(e => e.patientId === patientId)
+   .slice()
+   .sort((a,b) =>
+    S(b.date).localeCompare(S(a.date)) ||
+    S(b.created).localeCompare(S(a.created)) ||
+    S(b.id).localeCompare(S(a.id))
+   );
+ }
+
+ function diagnosisText(encounter){
+  /*
+   diagnosis 沿用前兩階段既有欄位。
+   未填寫時仍會顯示該次診症。
+  */
+  return T(encounter.diagnosis) || "未填診斷";
+ }
+
+ function statusBadge(encounter){
+  if(encounter.status === "draft"){
+   return `
+    <span class="cms-s3-badge draft">
+     未完成
+    </span>
+   `;
+  }
+
+  const status = T(encounter.status);
+
+  return status
+   ? `
+    <span class="cms-s3-badge">
+     ${E(status)}
+    </span>
+   `
+   : "";
+ }
+
+ function encounterCard(encounter){
+  const isCurrent = encounter.id === selected;
+
+  return `
+   <article
+    class="cms-s3-encounter${isCurrent ? " is-current" : ""}"
+   >
+    <div class="cms-s3-encounter-top">
+     <div class="cms-s3-date">
+      ${E(displayDate(encounter.date))}
+     </div>
+
+     <div class="cms-s3-badges">
+      ${isCurrent ? `
+       <span class="cms-s3-badge current">
+        目前開啟
+       </span>
+      ` : ""}
+
+      ${statusBadge(encounter)}
+     </div>
+    </div>
+
+    <p class="cms-s3-diagnosis">${E(
+     diagnosisText(encounter)
+    )}</p>
+
+    <p class="cms-s3-meta">
+     建立時間：${E(displayStamp(encounter.created))}
+    </p>
+
+    <div class="cms-s3-encounter-actions">
+     <button
+      type="button"
+      ${isCurrent ? 'class="primary"' : ""}
+      data-act="${ACT.open}"
+      data-id="${E(encounter.id)}"
+     >${isCurrent
+      ? "返回目前診症"
+      : "開啟此診症"}</button>
+    </div>
+   </article>
+  `;
+ }
+
+ function historyContent(patientId, embedded = false){
+  const p = findPatient(patientId);
+
+  assert(p, "找不到病人主檔");
+
+  const encounters = allEncounters(patientId);
+
+  const includesCurrent = encounters.some(
+   e => e.id === selected
+  );
+
+  return `
+   <section
+    class="cms-s3-history-section"
+    data-cms-s3-history="${E(patientId)}"
+   >
+    <div class="cms-s3-history-heading">
+     <div>
+      <h3>所有診症（${encounters.length}）</h3>
+
+      <p class="cms-s3-help">
+       ${E(p.mrn)} · ${E(
+        pname(p.data) || "未填姓名"
+       )}<br>
+       包括此病人主檔下的全部診症及未完成診症。
+       ${includesCurrent
+        ? "今次打開的診症亦已包括，並標示「目前開啟」。"
+        : ""}
+       按診症日期由新至舊排列。
+      </p>
+     </div>
+
+     ${embedded ? `
+      <button
+       type="button"
+       data-act="${ACT.history}"
+       data-patient="${E(patientId)}"
+      >獨立查看清單</button>
+     ` : ""}
+    </div>
+
+    <div class="cms-s3-history-list">
+     ${encounters.length
+      ? encounters.map(encounterCard).join("")
+      : `
+       <div class="cms-s3-empty">
+        此病人尚未建立診症。<br>
+        只登記主檔而未開始診症的病人，
+        此處顯示 0 次屬正常。
+       </div>
+      `}
+    </div>
+   </section>
+  `;
+ }
+
+ function openAllEncounters(patientId){
+  assert(db, "請先登入");
+
+  const p = findPatient(patientId);
+
+  assert(p, "找不到病人主檔");
+
+  showModal(
+   "所有診症",
+   historyContent(patientId) + `
+    <div class="cms-s3-footer">
+     <button
+      type="button"
+      data-act="pfOpen"
+      data-patient="${E(patientId)}"
+     >查看病人資料</button>
+    </div>
+   `,
+   "cmsS3AllEncounters"
+  );
+ }
+
+ /*
+  判斷原有診症歷史入口。
+
+  只配對明確名稱，避免誤改
+  「文件歷史」、「修改紀錄」等其他功能。
+ */
+ function isHistoryLabel(node){
+  const text = T(node.textContent)
+   .replace(/\s+/g," ")
+   .replace(/[（(]\s*\d+\s*[）)]$/,"")
+   .trim();
+
+  return [
+   "過往診症",
+   "過往診症紀錄",
+   "診症紀錄",
+   "診症歷史",
+   "所有診症"
+  ].includes(text);
+ }
+
+ function isNavigationHistoryButton(node){
+  return !!(
+   node?.matches?.("button[data-act]") &&
+   isHistoryLabel(node) &&
+   node.closest(
+    ".cms-main-nav, #cmsPatientHeaderActions"
+   )
+  );
+ }
+
+ /*
+  病人主檔頁亦使用相同完整清單。
+
+  如原有頁面已經有「過往診症／診症紀錄」
+  區塊，只隱藏該個舊清單的顯示；
+  不刪除其資料或其他主檔內容。
+ */
+ const previousMasterHistory = masterHistory;
+
+ masterHistory = function(patientId){
+  const result = previousMasterHistory.apply(
+   this,
+   arguments
+  );
+
+  if(!db) return result;
+
+  const p = findPatient(patientId);
+
+  const profile = $("modalBody")?.querySelector(
+   ".patient-profile"
+  );
+
+  if(!p || !profile) return result;
+
+  profile.querySelectorAll(
+   "[data-cms-s3-history]"
+  ).forEach(node => node.remove());
+
+  profile.querySelectorAll(
+   ".profile-section"
+  ).forEach(section => {
+   const heading = section.querySelector(
+    ".profile-section-head h3"
+   );
+
+   if(!heading) return;
+
+   const title = T(heading.textContent)
+    .replace(/[（(]\s*\d+\s*[）)]$/,"")
+    .trim();
+
+   if([
+    "過往診症",
+    "過往診症紀錄",
+    "診症紀錄",
+    "診症歷史",
+    "所有診症"
+   ].includes(title)){
+    section.hidden = true;
+   }
+  });
+
+  profile.insertAdjacentHTML(
+   "beforeend",
+   historyContent(patientId, true)
+  );
+
+  return result;
+ };
+
+ /*
+  列印選單只收納現有頂部按鈕，
+  不創造新的列印 action。
+
+  沿用原按鈕本身：
+  data-act、權限、disabled 狀態及原有流程均保留。
+ */
+ function isPrintButton(button){
+  if(!button.matches("button[data-act]")){
+   return false;
+  }
+
+  const actionName = S(button.dataset.act);
+
+  if([
+   ACT.history,
+   ACT.open
+  ].includes(actionName)){
+   return false;
+  }
+
+  const text = T(button.textContent);
+
+  return /^(?:列印|打印)/.test(text) ||
+   /^(?:print)/i.test(actionName);
+ }
+
+ function organisePrintMenu(container){
+  if(!container) return;
+
+  let menu = Array.from(container.children).find(
+   node => node.matches?.(
+    "details.cms-s3-print-menu"
+   )
+  );
+
+  const buttons = Array.from(
+   container.children
+  ).filter(node =>
+   node.matches?.("button[data-act]") &&
+   isPrintButton(node)
+  );
+
+  if(!buttons.length && !menu) return;
+
+  if(!menu){
+   menu = document.createElement("details");
+
+   menu.className = "cms-s3-print-menu";
+
+   menu.innerHTML = `
+    <summary>列印／文件</summary>
+    <div class="cms-s3-print-items"></div>
+   `;
+
+   container.insertBefore(
+    menu,
+    buttons[0]
+   );
+  }
+
+  const items = menu.querySelector(
+   ".cms-s3-print-items"
+  );
+
+  buttons.forEach(button => {
+   items.appendChild(button);
+  });
+
+  if(!items.children.length){
+   menu.remove();
+  }
+ }
+
+ function updateNavigation(){
+  const encounter = db ? activeEncounter() : null;
+
+  const header = $("cmsPatientHeaderActions");
+
+  /*
+   原有歷史入口改名；
+   點擊由下方 action 包裝統一處理。
+  */
+  app.querySelectorAll(
+   ".cms-main-nav button[data-act], " +
+   "#cmsPatientHeaderActions button[data-act]"
+  ).forEach(button => {
+   if(isNavigationHistoryButton(button)){
+    button.textContent = "所有診症";
+    button.title =
+     "包括目前開啟的診症及所有未完成診症。";
+   }
+  });
+
+  /*
+   目前病人操作區固定提供完整診症清單。
+   已有歷史入口則沿用，不重複新增。
+  */
+  if(header){
+   const ownButton = header.querySelector(
+    `[data-act="${ACT.history}"]`
+   );
+
+   const existingHistory = Array.from(
+    header.querySelectorAll("button[data-act]")
+   ).find(button =>
+    button !== ownButton &&
+    isHistoryLabel(button)
+   );
+
+   if(!encounter){
+    ownButton?.remove();
+   }else if(existingHistory){
+    ownButton?.remove();
+   }else if(ownButton){
+    ownButton.dataset.patient = encounter.patientId;
+   }else{
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.dataset.act = ACT.history;
+    button.dataset.patient = encounter.patientId;
+    button.textContent = "所有診症";
+    button.title =
+     "包括目前開啟的診症及所有未完成診症。";
+
+    header.appendChild(button);
+   }
+  }
+
+  app.querySelectorAll(
+   ".cms-main-nav, #cmsPatientHeaderActions"
+  ).forEach(organisePrintMenu);
+ }
+
+ /*
+  保留前兩階段 action 鏈。
+  開啟診症仍交由原有 openEncounter()，
+  不自行略過原系統的保存及切換流程。
+ */
+ const previousAction = action;
+
+ action = async function(node){
+  if(busy || printing){
+   return previousAction.apply(this, arguments);
+  }
+
+  const act = node.dataset.act;
+
+  if(act === ACT.open){
+   assert(db, "請先登入");
+
+   const encounter = findEncounter(
+    node.dataset.id
+   );
+
+   assert(encounter, "找不到此診症");
+
+   await openEncounter(encounter.id);
+   return;
+  }
+
+  if(
+   act === ACT.history ||
+   isNavigationHistoryButton(node)
+  ){
+   assert(db, "請先登入");
+
+   const patientId =
+    node.dataset.patient ||
+    activeEncounter()?.patientId;
+
+   assert(patientId, "請先選擇病人或開啟診症");
+
+   openAllEncounters(patientId);
+   return;
+  }
+
+  /*
+   點選列印項目後收起選單，
+   實際操作仍交由原有 action。
+  */
+  const printMenu = node.closest(
+   ".cms-s3-print-menu"
+  );
+
+  if(printMenu){
+   printMenu.open = false;
+  }
+
+  return previousAction.apply(this, arguments);
+ };
+
+ /*
+  原畫面 render 後重新整理頂部。
+  不使用 MutationObserver，避免重複搬動節點。
+ */
+ const previousRender = render;
+
+ render = function(){
+  const result = previousRender.apply(
+   this,
+   arguments
+  );
+
+  updateNavigation();
+
+  return result;
+ };
+
+ document.addEventListener("click", event => {
+  if(
+   event.target instanceof Element &&
+   event.target.closest(".cms-s3-print-menu")
+  ){
+   return;
+  }
+
+  app.querySelectorAll(
+   ".cms-s3-print-menu[open]"
+  ).forEach(menu => {
+   menu.open = false;
+  });
+ });
+
+ document.addEventListener("keydown", event => {
+  if(event.key !== "Escape") return;
+
+  app.querySelectorAll(
+   ".cms-s3-print-menu[open]"
+  ).forEach(menu => {
+   menu.open = false;
+  });
+ });
+
+ updateNavigation();
+
+})();
+</script>
+
+<!-- ===== CMS 第 3 階段完成 ===== -->
 </body>
 </html>
