@@ -8755,5 +8755,513 @@ body.cms-split-dragging *{
 })();
 </script>
 <!-- ===== 本次編輯／過往診症雙欄完成 ===== -->
+ <!-- ===== 分頁／病人操作位置 + 立即儲存出具文件 ===== -->
+<style id="cms-top-tabs-and-issue-style">
+/* 頂部病人資料：左資料，右主檔及敏感按鈕 */
+#cmsVisitWorkbar .cms-workbar-heading{
+ display:flex;
+ align-items:center;
+ flex-wrap:nowrap;
+ gap:12px 18px;
+}
+
+#cmsVisitWorkbar .cms-workbar-title{
+ flex:1 1 auto;
+ min-width:0;
+}
+
+#cmsVisitWorkbar #cmsPatientHeaderActions{
+ display:flex;
+ align-items:center;
+ justify-content:flex-end;
+ flex:0 0 auto;
+ gap:8px;
+ margin-left:auto;
+}
+
+#cmsVisitWorkbar #cmsPatientHeaderActions > button{
+ flex:0 0 auto;
+ min-height:40px;
+ margin:0;
+ white-space:nowrap;
+}
+
+#cmsVisitWorkbar #cmsPatientHeaderActions > button[data-act="pfOpen"]{
+ padding:8px 13px;
+ border:1px solid var(--line);
+ border-radius:8px;
+ background:#fff;
+ color:var(--accent);
+ font-size:13px;
+ font-weight:bold;
+}
+
+#cmsVisitWorkbar #cmsPatientHeaderActions > button[data-act="pfOpen"]:hover:not(:disabled){
+ background:var(--soft);
+}
+
+/* 敏感按鈕已離開左欄，重新指定同一套三色 */
+#cmsVisitWorkbar #cmsAllergyToggle{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ min-width:86px;
+ min-height:40px;
+ padding:8px 14px;
+ border:1px solid transparent;
+ border-radius:9px;
+ font-size:14px;
+ font-weight:bold;
+ line-height:1.4;
+}
+
+#cmsVisitWorkbar #cmsAllergyToggle[data-status="none"]{
+ background:#237348;
+ border-color:#237348;
+ color:#fff;
+}
+
+#cmsVisitWorkbar #cmsAllergyToggle[data-status="none"]:hover:not(:disabled){
+ background:#195c38;
+}
+
+#cmsVisitWorkbar #cmsAllergyToggle[data-status="known"]{
+ background:#b52e3a;
+ border-color:#b52e3a;
+ color:#fff;
+}
+
+#cmsVisitWorkbar #cmsAllergyToggle[data-status="known"]:hover:not(:disabled){
+ background:#96232e;
+}
+
+#cmsVisitWorkbar #cmsAllergyToggle[data-status="unknown"]{
+ background:#e1e5e9;
+ border-color:#c4ccd3;
+ color:#34434e;
+}
+
+#cmsVisitWorkbar #cmsAllergyToggle[data-status="unknown"]:hover:not(:disabled){
+ background:#d2d9df;
+}
+
+/* 展開敏感資料亦放於頂部，不留在左欄 */
+#cmsVisitWorkbar #cmsAllergyPanel{
+ margin:10px 0 12px;
+ padding:14px;
+ border:1px solid var(--line);
+ border-radius:10px;
+ background:#fff;
+}
+
+#cmsVisitWorkbar #cmsAllergyPanel[hidden]{
+ display:none !important;
+}
+
+#cmsVisitWorkbar #cmsAllergyPanelTitle{
+ margin:0 0 12px;
+ font-size:14px;
+}
+
+#cmsVisitWorkbar #cmsAllergyEditor{
+ margin:0;
+ padding:0;
+ border:0;
+ min-width:0;
+}
+
+#cmsVisitWorkbar #cmsAllergyEditor textarea{
+ min-height:90px;
+}
+
+#cmsVisitWorkbar .cms-allergy-readonly{
+ margin:0 0 12px;
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.7;
+}
+
+/* 操作區：文件分頁在最左 */
+#cmsVisitWorkbar .cms-workbar-actions{
+ display:flex;
+ align-items:flex-end;
+ flex-wrap:wrap;
+ gap:12px 16px;
+}
+
+#cmsVisitWorkbar .cms-document-tab-group{
+ flex:1 1 340px;
+ min-width:280px;
+ max-width:460px;
+ padding:0;
+ border:0;
+}
+
+#cmsVisitWorkbar .cms-document-tab-group #tabs{
+ display:grid;
+ grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:6px;
+ width:100%;
+ margin:0;
+}
+
+#cmsVisitWorkbar #tabs button{
+ min-width:0;
+ min-height:48px !important;
+ padding:6px 4px;
+ font-size:12px;
+ white-space:normal;
+}
+
+#cmsVisitWorkbar #tabs button small{
+ display:block;
+ margin-top:2px;
+ font-size:10px;
+}
+
+#cmsVisitWorkbar #tabs button.active{
+ background:var(--accent);
+ border-color:var(--accent);
+ color:#fff;
+}
+
+#cmsVisitWorkbar .cms-document-tab-group + .cms-action-group{
+ padding-left:16px;
+ border-left:1px solid var(--line);
+}
+
+#cmsVisitWorkbar .cms-preview-group{
+ margin-left:0;
+}
+
+#cmsVisitWorkbar #cmsOperationTarget{
+ margin-top:10px;
+}
+
+/* 窄畫面容許換行，但兩個病人操作按鈕保持平排 */
+@media(max-width:820px){
+ #cmsVisitWorkbar .cms-workbar-heading{
+  flex-wrap:wrap;
+ }
+
+ #cmsVisitWorkbar .cms-workbar-title{
+  flex-basis:100%;
+ }
+
+ #cmsVisitWorkbar #cmsPatientHeaderActions{
+  margin-left:auto;
+ }
+
+ #cmsVisitWorkbar .cms-workbar-actions{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+ }
+
+ #cmsVisitWorkbar .cms-document-tab-group{
+  flex:0 0 auto;
+  width:100%;
+  min-width:0;
+  max-width:none;
+ }
+
+ #cmsVisitWorkbar .cms-action-group + .cms-action-group{
+  padding-left:0;
+  padding-top:10px;
+  border-left:0;
+  border-top:1px solid var(--line);
+ }
+}
+</style>
+
+<script>
+(function installTopTabsAndImmediateIssue(){
+ "use strict";
+
+ const app = $("app");
+ const workbar = $("cmsVisitWorkbar");
+ const actionBar = workbar?.querySelector(".cms-workbar-actions");
+ const heading = workbar?.querySelector(".cms-workbar-heading");
+ const tabs = $("tabs");
+ const patientActions = $("cmsPatientHeaderActions");
+ const allergyPanel = $("cmsAllergyPanel");
+
+ if(
+  !app || !workbar || !actionBar || !heading ||
+  !tabs || !patientActions
+ ){
+  console.warn("請先保留雙欄及病人摘要位置補丁。");
+  return;
+ }
+
+ if(app.dataset.topTabsImmediateIssue === "1") return;
+ app.dataset.topTabsImmediateIssue = "1";
+
+ /*
+  1. 搬移同一個 tabs。
+  原 renderTabs()、data-act 及目前分頁狀態不變。
+ */
+ const tabGroup = document.createElement("div");
+ tabGroup.className = "cms-action-group cms-document-tab-group";
+
+ const tabLabel = document.createElement("div");
+ tabLabel.className = "cms-action-label";
+ tabLabel.textContent = "診症／文件";
+
+ tabGroup.append(tabLabel, tabs);
+ actionBar.prepend(tabGroup);
+
+ /*
+  2. 搬移同一組主檔／敏感按鈕。
+  不複製按鈕，不重建事件。
+ */
+ heading.append(patientActions);
+
+ /*
+  敏感編輯區跟隨按鈕搬到頂部，
+  保留原有事件、欄位引用及唯讀控制。
+ */
+ if(allergyPanel){
+  heading.after(allergyPanel);
+ }
+
+ const saveButton = workbar.querySelector(
+  'button[data-act="save"]'
+ );
+
+ if(saveButton){
+  saveButton.title =
+   "儲存本次診症，並出具本次已選用或已修改、且通過檢查的對外文件。" +
+   "SOAP 完成快照仍須按「完成診症」。";
+ }
+
+ /*
+  3. 只攔截手動「立即儲存」。
+  不改 save()，避免自動儲存時出具文件。
+ */
+ const previousAction = action;
+
+ /*
+  本次需要出具的文件：
+  - 已選用，但沒有有效版本；
+  - 已有有效版本，但目前內容有修改。
+
+  沒有使用的空白表格不會被出具。
+  已作廢且沒有重新選用的文件不會自動恢復。
+ */
+ function pendingDocumentTypes(e, settings){
+  return DOCS.filter(t => {
+   const version = effective(e, t);
+
+   if(version){
+    return different(e, t, settings);
+   }
+
+   return e.used[t] === true;
+  });
+ }
+
+ function errorsForDocuments(e, types, settings){
+  return types.flatMap(t =>
+   warnings(e, t, settings).map(
+    text => TYPES[t][0] + "：" + text
+   )
+  );
+ }
+
+ async function saveAndIssueCurrent(){
+  assert(db && cloud.session, "請先登入");
+  assert(!conflict, "目前有版本衝突，請先建立本頁加密備份");
+  assert(!view, "目前正在查看歷史快照／版本，請先返回本次診症");
+
+  const original = current();
+  assert(original, "找不到本次診症");
+
+  /*
+   已完成診症不在此處偷偷重開或建立新版。
+   要修改文件，先使用「重新開啟診症」。
+ */
+  if(original.status !== "draft"){
+   await run(() => save());
+
+   message(
+    "本次診症已完成，沒有出具新版本。" +
+    "如需修改文件，請先按「重新開啟診症」。"
+   );
+   return;
+  }
+
+  const encounterId = original.id;
+  const types = pendingDocumentTypes(original, db.settings);
+
+  if(!types.length){
+   await run(() => save());
+
+   status("已儲存至 Supabase · 沒有待出具的文件修改");
+   message(
+    "本次診症已儲存，沒有待出具的對外文件修改。" +
+    "SOAP 完成快照仍須按「完成診症」。"
+   );
+   return;
+  }
+
+  /*
+   一次檢查全部待出具文件。
+   任何一份有問題，整批不出具。
+   正常自動儲存仍可保存其草稿。
+ */
+  const errors = errorsForDocuments(
+   original, types, db.settings
+  );
+
+  if(showErrors(errors)){
+   message(
+    "尚未出具任何新版本：請先處理列出的文件問題，" +
+    "再按「立即儲存」。草稿仍沿用原有自動儲存。",
+    true
+   );
+   return;
+  }
+
+  const revised = types.filter(t => effective(original, t));
+  let reason = "使用立即儲存出具文件";
+
+  if(revised.length){
+   const entered = prompt(
+    "以下有效文件將保存修訂版本：\n" +
+    revised.map(t => "• " + TYPES[t][0]).join("\n") +
+    "\n\n請填寫修訂原因（必填）："
+   );
+
+   if(!T(entered)){
+    message(
+     "已取消出具修訂版本；現有有效版本不變。" +
+     "草稿仍沿用原有自動儲存。"
+    );
+    return;
+   }
+
+   reason = T(entered);
+  }
+
+  /*
+   沿用原版處方的未確認敏感狀態提示。
+   不把儲存文件視為已完成臨床核實。
+ */
+  if(
+   types.includes("rx") &&
+   (
+    !original.patient.allergyStatus ||
+    original.patient.allergyStatus === "unknown"
+   )
+  ){
+   if(!confirm(
+    "處方的藥物敏感狀態尚未確認。\n" +
+    "請先作臨床核實；仍要保存為有效處方版本？"
+   )){
+    return;
+   }
+  }
+
+  /*
+   清楚確認：這次操作會出具版本，但不代表列印或交付。
+ */
+  if(!confirm(
+   "立即儲存會將以下文件保存為有效版本：\n" +
+   types.map(t => "• " + TYPES[t][0]).join("\n") +
+   "\n\n舊版本保留；不會自動列印或記錄交付。" +
+   "\nSOAP 不會自動標記完成。\n\n確認繼續？"
+  )){
+   return;
+  }
+
+  /*
+   沿用現有敏感操作檢查。
+   單次登入版本的 reauth() 只驗證 session，
+   不會額外要求工作區密碼。
+ */
+  if(original.signature === "image"){
+   if(!await reauth()) return;
+  }
+
+  await run(async () => {
+   await commit(d => {
+    assert(
+     selected === encounterId,
+     "目前診症已切換，已停止出具"
+    );
+
+    const e = d.encounters.find(
+     item => item.id === encounterId
+    );
+
+    assert(e && e.status === "draft", "診症狀態已改變");
+
+    /*
+     真正寫入前再核對一次：
+     候選資料整批建立版本，再由 commit() 一次寫入。
+    */
+    const actualTypes = pendingDocumentTypes(e, d.settings);
+
+    assert(
+     equal(actualTypes, types),
+     "待出具文件已改變，請重新按「立即儲存」核對"
+    );
+
+    const finalErrors = errorsForDocuments(
+     e, actualTypes, d.settings
+    );
+
+    assert(!finalErrors.length, finalErrors.join("\n"));
+
+    e.updated = now();
+
+    for(const t of actualTypes){
+     issuedVersion(e, t, d.settings, reason);
+    }
+
+    audit(
+     e,
+     "立即儲存並出具文件",
+     actualTypes.map(t => TYPES[t][0]).join("、") +
+     "；不代表成功列印或交付"
+    );
+   });
+  });
+
+  showErrors([]);
+
+  status(
+   "已儲存至 Supabase · " +
+   types.length + " 份文件已成為有效版本"
+  );
+
+  message(
+   "本次已保存有效版本：" +
+   types.map(t => TYPES[t][0]).join("、") +
+   "。舊版本保留；尚未自動列印或確認交付。" +
+   "SOAP 完成快照仍須按「完成診症」。"
+  );
+ }
+
+ action = async function(button){
+  if(button.dataset.act !== "save"){
+   return previousAction.apply(this, arguments);
+  }
+
+  if(busy || printing) return;
+
+  return saveAndIssueCurrent();
+ };
+
+ /*
+  只重新計算版面，不儲存或出具任何文件。
+ */
+ requestAnimationFrame(() => {
+  window.dispatchEvent(new Event("resize"));
+ });
+})();
+</script>
+<!-- ===== 分頁及立即儲存調整完成 ===== -->
 </body>
 </html>
