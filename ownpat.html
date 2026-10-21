@@ -7077,5 +7077,66 @@ masterHistory = function(id){
 })();
 </script>
 <!-- ===== 病人摘要位置調整完成 ===== -->
+ <!-- ===== 診症、電話及儲存資訊改為單行 ===== -->
+<style>
+#cmsVisitStatusRow{
+ display:flex;
+ align-items:center;
+ flex-wrap:nowrap;
+ gap:0 14px;
+ width:100%;
+ min-width:0;
+ margin-top:6px;
+ overflow-x:auto;
+ white-space:nowrap;
+ font-size:12px;
+ color:var(--muted);
+ line-height:1.8;
+}
+
+#cmsVisitStatusRow > *{
+ flex:0 0 auto;
+}
+
+#cmsVisitStatusRow #cmsVisitContext,
+#cmsVisitStatusRow #saveState,
+#cmsVisitStatusRow #backupState{
+ display:block;
+ margin:0;
+ font-size:12px;
+ line-height:1.8;
+ white-space:nowrap;
+}
+
+#cmsVisitStatusRow #cmsVisitContext[hidden]{
+ display:none !important;
+}
+</style>
+
+<script>
+(function makeVisitStatusSingleLine(){
+ "use strict";
+
+ const context = document.getElementById("cmsVisitContext");
+ const save = document.getElementById("saveState");
+ const backup = document.getElementById("backupState");
+
+ if(
+  !context ||
+  !save ||
+  !backup ||
+  document.getElementById("cmsVisitStatusRow")
+ ){
+  return;
+ }
+
+ const row = document.createElement("div");
+ row.id = "cmsVisitStatusRow";
+
+ context.before(row);
+ row.append(context, save, backup);
+})();
+</script>
+<!-- ===== 單行資訊完成 ===== -->
 </body>
 </html>
