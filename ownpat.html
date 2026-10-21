@@ -7138,5 +7138,436 @@ masterHistory = function(id){
 })();
 </script>
 <!-- ===== 單行資訊完成 ===== -->
+ <!-- ===== 病人主檔：排序、出生日期／年齡、診症紀錄 ===== -->
+<style id="cms-profile-layout-v2">
+/* 只隱藏病人主檔彈窗標題，保留關閉按鈕 */
+#modal.cms-profile-layout-v2 #modalTitle{
+ display:none;
+}
+
+#modal.cms-profile-layout-v2 > .dialoghead{
+ justify-content:flex-end;
+ margin-bottom:10px;
+}
+
+/* 姓名卡下面的操作區 */
+#modal.cms-profile-layout-v2 .cms-profile-actions{
+ margin:0;
+ padding:13px 16px;
+ border:1px solid var(--line);
+ border-radius:12px;
+ background:#fff;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-actions .pf-tools{
+ margin:0;
+}
+
+/* 藥物敏感保留文字，但移除獨立框及底色 */
+#modal.cms-profile-layout-v2 .patient-profile .profile-allergy,
+#modal.cms-profile-layout-v2 .patient-profile .profile-allergy.is-known{
+ margin-top:16px;
+ padding:0;
+ border:0;
+ border-radius:0;
+ background:transparent;
+ box-shadow:none;
+}
+
+/* 診症紀錄 */
+#modal.cms-profile-layout-v2 .cms-profile-visits-note{
+ margin:0 0 12px;
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.7;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visits-scroll{
+ overflow:auto;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visits-table{
+ width:100%;
+ border-collapse:collapse;
+ font-size:13px;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visits-table th,
+#modal.cms-profile-layout-v2 .cms-profile-visits-table td{
+ padding:11px 10px;
+ border-bottom:1px solid var(--line);
+ text-align:left;
+ vertical-align:top;
+ line-height:1.7;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visits-table th{
+ color:var(--muted);
+ background:#f8fafb;
+ font-size:12px;
+ font-weight:bold;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visits-table th:first-child,
+#modal.cms-profile-layout-v2 .cms-profile-visits-table td:first-child{
+ padding-left:0;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visits-table th:last-child,
+#modal.cms-profile-layout-v2 .cms-profile-visits-table td:last-child{
+ padding-right:0;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visit-date{
+ min-width:110px;
+ white-space:nowrap;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visit-diagnosis{
+ min-width:180px;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visit-fee{
+ min-width:140px;
+ white-space:nowrap;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visit-open{
+ padding:0;
+ min-height:0 !important;
+ border:0;
+ border-radius:0;
+ background:none;
+ color:var(--accent);
+ font-weight:bold;
+ text-align:left;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visit-open:hover:not(:disabled){
+ background:none;
+ text-decoration:underline;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visit-status{
+ display:block;
+ margin-top:3px;
+ color:var(--muted);
+ font-size:11px;
+}
+
+#modal.cms-profile-layout-v2 .cms-profile-visits-empty{
+ padding:16px 0;
+ color:var(--muted);
+ font-size:13px;
+}
+
+@media(max-width:600px){
+ #modal.cms-profile-layout-v2 .cms-profile-actions{
+  padding:12px;
+ }
+
+ #modal.cms-profile-layout-v2 .cms-profile-actions .pf-tools{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+
+ #modal.cms-profile-layout-v2 .cms-profile-actions button{
+  width:100%;
+  min-width:0;
+  white-space:normal;
+ }
+}
+</style>
+
+<script>
+(function installProfileLayoutV2(){
+ "use strict";
+
+ const modal = $("modal");
+
+ if(!modal ||
+    document.documentElement.dataset.profileLayoutV2 === "1"){
+  return;
+ }
+
+ document.documentElement.dataset.profileLayoutV2 = "1";
+
+ /*
+  彈窗切換至其他功能時，移除專用樣式。
+  不影響診症紀錄、設定或其他彈窗標題。
+ */
+ const previousShowModal = showModal;
+
+ showModal = function(title, html, mode = ""){
+  const result = previousShowModal.apply(this, arguments);
+
+  modal.classList.toggle(
+   "cms-profile-layout-v2",
+   mode === "masterHistory"
+  );
+
+  if(mode === "masterHistory"){
+   $("modalTitle").textContent = "";
+  }
+
+  return result;
+ };
+
+ function ageYearsMonths(dob, referenceDate){
+  if(!dateOK(dob) ||
+     !dateOK(referenceDate) ||
+     dob > referenceDate){
+   return "";
+  }
+
+  let months =
+   (+referenceDate.slice(0,4) - +dob.slice(0,4)) * 12 +
+   +referenceDate.slice(5,7) - +dob.slice(5,7);
+
+  if(+referenceDate.slice(8,10) < +dob.slice(8,10)){
+   months--;
+  }
+
+  if(months < 0) return "";
+
+  return Math.floor(months / 12) +
+   "y" + (months % 12) + "m";
+ }
+
+ function timestampValue(value){
+  const n = Date.parse(value || "");
+  return Number.isFinite(n) ? n : 0;
+ }
+
+ /*
+  優先顯示目前有效收據的總額。
+  沒有有效收據時，顯示目前收費草稿並清楚標示。
+
+  不以「有收據」推定已付款。
+  不把已作廢或已取代的收據當成目前有效收費。
+ */
+ function feeHTML(encounter){
+  const issued = effective(encounter, "receipt");
+  const feeSource = issued ? issued.data : encounter;
+
+  const rows = items(feeSource);
+
+  if(!rows.length){
+   return `
+    <span>未記錄</span>
+    <small class="cms-profile-visit-status">${
+     issued ? "有效收據沒有收費項目" : "沒有有效收據或收費項目"
+    }</small>`;
+  }
+
+  const valid = rows.every(row =>
+   T(row.desc) && Number.isFinite(cents(row.amount))
+  );
+
+  const amount = total(feeSource);
+
+  if(!valid || !Number.isSafeInteger(amount)){
+   return `
+    <span>金額未完整</span>
+    <small class="cms-profile-visit-status">${
+     issued ? "請核對有效收據" : "收費草稿未完整"
+    }</small>`;
+  }
+
+  return `
+   <strong>HKD ${E(cash(amount / 100))}</strong>
+   <small class="cms-profile-visit-status">${
+    issued ? "有效收據總額" : "收費草稿 · 未出具"
+   }</small>`;
+ }
+
+ function visitsSection(patientId){
+  /*
+   同一 patientId 的所有診症。
+   先按診症日期倒序；同日再按建立時間倒序。
+   不按 updated 排序，避免修改舊病歷後跳到最上。
+  */
+  const encounters = db.encounters
+   .filter(e => e.patientId === patientId)
+   .slice()
+   .sort((a,b) =>
+    S(b.date).localeCompare(S(a.date)) ||
+    timestampValue(b.created) - timestampValue(a.created)
+   );
+
+  const section = document.createElement("section");
+  section.className = "profile-section cms-profile-visits";
+
+  section.innerHTML = `
+   <div class="profile-section-head">
+    <h3>診症紀錄</h3>
+    <span class="pill">${encounters.length} 次診症</span>
+   </div>
+
+   <div class="profile-section-body">
+    <p class="cms-profile-visits-note">
+     最新求診日期排最上；按日期可開啟該次診症。
+     診金顯示收據總額，可能包含其他收費，並不代表已收款。
+    </p>
+
+    ${encounters.length ? `
+     <div class="cms-profile-visits-scroll">
+      <table class="cms-profile-visits-table">
+       <thead>
+        <tr>
+         <th>求診日期</th>
+         <th>診斷</th>
+         <th>診金</th>
+        </tr>
+       </thead>
+
+       <tbody>
+        ${encounters.map(e => `
+         <tr>
+          <td class="cms-profile-visit-date">
+           <button
+            type="button"
+            class="cms-profile-visit-open"
+            data-act="open"
+            data-id="${E(e.id)}"
+           >${E(e.date || "未填日期")}</button>
+
+           <small class="cms-profile-visit-status">
+            ${e.status === "completed" ? "已完成" : "未完成"}
+           </small>
+          </td>
+
+          <td class="cms-profile-visit-diagnosis">${
+           E(T(e.diagnosis) || "未填寫")
+          }</td>
+
+          <td class="cms-profile-visit-fee">
+           ${feeHTML(e)}
+          </td>
+         </tr>
+        `).join("")}
+       </tbody>
+      </table>
+     </div>
+    ` : `
+     <div class="cms-profile-visits-empty">
+      暫時未有診症紀錄。
+     </div>
+    `}
+   </div>
+  `;
+
+  return section;
+ }
+
+ const previousMasterHistory = masterHistory;
+
+ masterHistory = function(id){
+  const result = previousMasterHistory.apply(this, arguments);
+
+  const body = $("modalBody");
+  const profile = body.querySelector(".patient-profile");
+  const patientMaster = db.patients.find(p => p.id === id);
+
+  if(!profile || !patientMaster) return result;
+
+  modal.classList.add("cms-profile-layout-v2");
+  $("modalTitle").textContent = "";
+
+  /*
+   1. 找出原本放在姓名卡上面的操作 box。
+   2. 刪去該 box 的「診症紀錄／年紀」摘要。
+   3. 把同一個 box 搬到姓名卡下方。
+  */
+  const actionBox = [...body.children].find(node =>
+   node.matches("section.item") &&
+   node.querySelector('button[data-act="pfEdit"]')
+  );
+
+  if(actionBox){
+   actionBox.querySelectorAll(".pf-meta").forEach(node => {
+    node.remove();
+   });
+
+   actionBox.classList.add("cms-profile-actions");
+
+   const hero = profile.querySelector(".profile-hero");
+
+   if(hero){
+    hero.after(actionBox);
+   }else{
+    profile.prepend(actionBox);
+   }
+  }
+
+  /*
+   只改「目前主檔」的出生日期欄，
+   不改聯絡人、家人或對外文件日期格式。
+   主檔年齡按今日計算。
+  */
+  const currentProfile = [...profile.children].find(node =>
+   node.classList.contains("profile-section") &&
+   T(node.querySelector(".profile-section-head h3")?.textContent)
+    === "目前主檔"
+  );
+
+  if(currentProfile){
+   const dobField = [...currentProfile.querySelectorAll(
+    ".profile-field"
+   )].find(node => {
+    const label = T(node.querySelector(".profile-label")?.textContent);
+    return label === "出生日期" || label === "出生日期／年齡";
+   });
+
+   if(dobField){
+    const label = dobField.querySelector(".profile-label");
+    const value = dobField.querySelector(".profile-value");
+    const dob = patientMaster.data.dob;
+    const ageText = ageYearsMonths(dob, today());
+
+    if(label){
+     label.textContent = "出生日期／年齡";
+    }
+
+    if(value){
+     value.textContent = dateOK(dob)
+      ? fmt(dob) + (ageText ? " ／ " + ageText : "")
+      : "未填寫";
+
+     value.classList.toggle("profile-empty", !dateOK(dob));
+    }
+   }
+  }
+
+  /*
+   診症紀錄放在：
+   已登記家人之下、主檔更正紀錄之上。
+  */
+  profile.querySelector(".cms-profile-visits")?.remove();
+
+  const visits = visitsSection(id);
+  const history = profile.querySelector(
+   "details.cms-profile-history"
+  );
+
+  const family = profile.querySelector(
+   ".cms-profile-family"
+  );
+
+  if(history){
+   history.before(visits);
+  }else if(family){
+   family.after(visits);
+  }else{
+   profile.append(visits);
+  }
+
+  return result;
+ };
+})();
+</script>
+<!-- ===== 病人主檔調整完成 ===== -->
 </body>
 </html>
