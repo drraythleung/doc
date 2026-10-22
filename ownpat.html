@@ -162,6 +162,70 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7}
  #printRoot>.paper{width:auto;min-height:0;padding:0;margin:0;box-shadow:none;transform:none}
  #printRoot>.paper+.paper{break-before:page;page-break-before:always}
 }
+ /* 病人主檔：家人及診症清單使用緊湊表格，不影響其他表單 */
+#modal table.ui.profile-compact{
+ width:100%;
+ font-size:12px;
+}
+
+#modal table.ui.profile-compact th,
+#modal table.ui.profile-compact td{
+ padding:6px 8px;
+ line-height:1.45;
+ white-space:normal;
+ vertical-align:middle;
+}
+
+#modal table.ui.profile-compact th{
+ background:#f5f8f9;
+}
+
+#modal table.ui.profile-compact button{
+ min-height:28px;
+ padding:3px 7px;
+ border-radius:5px;
+ font-size:12px;
+ line-height:1.4;
+}
+
+#modal table.ui.profile-compact .nowrap{
+ white-space:nowrap;
+}
+
+#modal table.ui.profile-compact .table-link{
+ min-height:0;
+ padding:0;
+ border:0;
+ border-radius:0;
+ background:transparent;
+ color:var(--accent);
+ text-align:left;
+}
+
+#modal table.ui.profile-compact .table-link:hover:not(:disabled){
+ background:transparent;
+ text-decoration:underline;
+}
+
+#modal table.ui.profile-compact .inline-meta{
+ margin-left:5px;
+ font-size:11px;
+ color:var(--muted);
+}
+
+#modal table.ui.profile-compact .current-mark{
+ margin-left:4px;
+ font-size:11px;
+ color:var(--accent);
+}
+
+#modal table.ui.profile-compact.family-table{
+ min-width:680px;
+}
+
+#modal table.ui.profile-compact.encounter-table{
+ min-width:620px;
+}
 </style>
 </head>
 <body>
@@ -1542,10 +1606,55 @@ function feeInfo(e){
 }
 function encountersHTML(pid){
  const list=sortedEncounters(pid);
- return `<div class="scrolltable"><table class="ui"><thead><tr><th>求診日期／狀態</th><th>診斷</th><th>收費總額</th><th>付款狀態</th></tr></thead><tbody>${list.map(e=>{
-  const f=feeInfo(e);
-  return `<tr><td><button data-act="openEncounter" data-id="${E(e.id)}">${E(e.date)}</button><br>${e.id===selected?"目前開啟 · ":""}${e.status==="completed"?"已完成":"未完成"}</td><td>${E(e.diagnosis||"未填寫")}</td><td><strong>${E(f.amount)}</strong><br><small>${E(f.source)}</small></td><td>${E(f.payment)}<br><small>本次內部付款紀錄</small></td></tr>`
- }).join("")||'<tr><td colspan="4">暫時沒有診症</td></tr>'}</tbody></table></div>`
+
+ return `
+ <div class="scrolltable">
+  <table class="ui profile-compact encounter-table">
+   <thead>
+    <tr>
+     <th>求診日期</th>
+     <th>狀態</th>
+     <th>診斷</th>
+     <th>收費總額</th>
+     <th>付款狀態</th>
+    </tr>
+   </thead>
+   <tbody>
+    ${list.map(e=>{
+     const f=feeInfo(e);
+
+     return `
+     <tr>
+      <td class="nowrap">
+       <button
+        class="table-link"
+        data-act="openEncounter"
+        data-id="${E(e.id)}"
+       >${E(e.date)}</button>
+       ${e.id===selected
+        ? '<span class="current-mark">目前</span>'
+        : ''}
+      </td>
+      <td class="nowrap">
+       ${e.status==="completed"?"已完成":"未完成"}
+      </td>
+      <td>${E(e.diagnosis||"未填寫")}</td>
+      <td>
+       <span>${E(f.amount)}</span>
+       <span class="inline-meta">
+        ${effective(e,"receipt")?"有效收據":"草稿"}
+       </span>
+      </td>
+      <td class="nowrap">${E(f.payment)}</td>
+     </tr>`;
+    }).join("") || `
+     <tr>
+      <td colspan="5">暫時沒有診症</td>
+     </tr>
+    `}
+   </tbody>
+  </table>
+ </div>`;
 }
 function relatives(id){return (db.patientRelations||[]).filter(r=>r.active&&(r.a===id||r.b===id)).map(r=>({r,p:db.patients.find(p=>p.id===(r.a===id?r.b:r.a)),label:r.a===id?r.labelA:r.labelB}))}
 function patientProfile(id=current()?.patientId){
@@ -1558,9 +1667,64 @@ function patientProfile(id=current()?.patientId){
  ${IDFIELDS.map(k=>fieldValue(LABELS[k],k==="dob"?fmt(p.data[k])+" ／ "+age(p.data[k],today()):p.data[k])).join("")}</div>
  <p class="small" style="margin-top:15px">主檔敏感紀錄（唔代表本次已覆核）</p><pre>${E(allergy(p.data))}</pre></section>
  <section class="card"><h3>主檔聯絡資料</h3><p class="small">固定取自目前主檔；唔會按 SOAP 修改時間推斷最新電話。</p><div class="profile-grid">${CONTACTS.map(k=>fieldValue(LABELS[k],p.data[k])).join("")}</div></section>
- <section class="card"><div class="section-head"><h3>已登記家人</h3><button data-act="linkFamily" data-patient="${E(id)}">＋ 連結家人</button></div>
- ${relatives(id).map(({r,p:relative,label})=>`<section class="item"><button data-act="patientProfile" data-patient="${E(relative.id)}">${E(pname(relative.data))}</button> · ${E(label)}<p class="small">${E(age(relative.data.dob,today()))} · ${E(relative.data.sex)} · ${E(fmt(relative.data.dob))} · ${E(relative.data.phone)}</p><button data-act="unlinkFamily" data-relation="${E(r.id)}" data-patient="${E(id)}" class="danger">解除關係</button></section>`).join("")||"<p class='small'>未連結家人。</p>"}</section>
- <section class="card"><h3>所有診症（${sortedEncounters(id).length}）</h3><p class="small">收費總額可能包含多個項目；有效收據唔等於已付款。付款狀態另外取自本次內部紀錄。</p>${encountersHTML(id)}</section>
+<section class="card">
+  <div class="section-head">
+   <h3>已登記家人</h3>
+   <button
+    data-act="linkFamily"
+    data-patient="${E(id)}"
+   >＋ 連結家人</button>
+  </div>
+
+  <div class="scrolltable">
+   <table class="ui profile-compact family-table">
+    <thead>
+     <tr>
+      <th>姓名</th>
+      <th>關係</th>
+      <th>年齡</th>
+      <th>性別</th>
+      <th>出生日期</th>
+      <th>電話</th>
+      <th>操作</th>
+     </tr>
+    </thead>
+    <tbody>
+     ${relatives(id).map(({r,p:relative,label})=>`
+      <tr>
+       <td>
+        <button
+         class="table-link"
+         data-act="patientProfile"
+         data-patient="${E(relative.id)}"
+        >${E(pname(relative.data))}</button>
+       </td>
+       <td class="nowrap">${E(label)}</td>
+       <td class="nowrap">
+        ${E(age(relative.data.dob,today())||"—")}
+       </td>
+       <td class="nowrap">${E(relative.data.sex||"—")}</td>
+       <td class="nowrap">${E(fmt(relative.data.dob))}</td>
+       <td class="nowrap">${E(relative.data.phone||"—")}</td>
+       <td class="nowrap">
+        <button
+         class="danger"
+         data-act="unlinkFamily"
+         data-relation="${E(r.id)}"
+         data-patient="${E(id)}"
+        >解除關係</button>
+       </td>
+      </tr>
+     `).join("") || `
+      <tr>
+       <td colspan="7">未連結家人。</td>
+      </tr>
+     `}
+    </tbody>
+   </table>
+  </div>
+ </section>
+ <section class="card"><h3>所有診症（${sortedEncounters(id).length}）</h3><p class="small" style="margin-bottom:8px">有效收據不代表已付款。</p>${encountersHTML(id)}</section>
  <details class="card"><summary>主檔更正紀錄（${p.changes.length}）</summary><p class="small">非防竄改審計；舊診症、文件與快照不會因此改寫。</p>
  ${p.changes.slice().reverse().map(c=>`<details class="item"><summary>${E(stamp(c.at))} · ${E(c.actor||"未記錄")}</summary><p>${E(c.reason)}</p>${diffTable(c.before,c.after)}</details>`).join("")}</details>
  `,"profile")
