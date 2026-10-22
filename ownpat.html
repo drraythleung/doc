@@ -102,7 +102,12 @@ header.appbar{flex:none;display:flex;justify-content:space-between;align-items:c
  color:var(--muted);
 }
 #workbar{flex:none;background:#f8fafb;padding:10px 16px;border-bottom:1px solid var(--line)}
-#identity{font-size:15px;font-weight:bold;line-height:1.65;overflow-wrap:anywhere}
+#identity{
+ font-size:18px;
+ font-weight:bold;
+ line-height:1.65;
+ overflow-wrap:anywhere;
+}
 #visitState{line-height:1.8;white-space:pre-wrap}
 #saveState{font-size:12px;line-height:1.7;font-weight:bold;overflow-wrap:anywhere}
 #workActions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:10px}
@@ -115,10 +120,33 @@ header.appbar{flex:none;display:flex;justify-content:space-between;align-items:c
 #completeButton{
  min-width:104px;
 }
-#tabs{display:flex;gap:5px;flex-wrap:wrap}
-#tabs button{padding:6px 10px;font-size:12px}
-#tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-#tabs small{font-size:10px;display:block;color:inherit}
+#tabs{
+ display:flex;
+ gap:7px;
+ flex-wrap:wrap;
+}
+
+#tabs button{
+ min-width:64px;
+ min-height:58px;
+ padding:9px 14px;
+ font-size:15px;
+ font-weight:bold;
+ line-height:1.4;
+}
+
+#tabs button.active{
+ background:var(--accent);
+ color:#fff;
+ border-color:var(--accent);
+}
+
+#tabs small{
+ display:block;
+ margin-top:3px;
+ font-size:12px;
+ color:inherit;
+}
 .layout{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,var(--edit-width,50%)) 10px minmax(0,1fr)}
 .editor,.reference{min-height:0;min-width:0;overflow:auto;padding:14px;overscroll-behavior:contain;overflow-anchor:none}
 .editor{background:#f8fafb}
