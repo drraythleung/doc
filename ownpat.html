@@ -330,10 +330,10 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7}
 
 <div id="app" class="hidden">
  <header class="appbar">
-  <div class="brand">梁子恒醫生 CMS <small id="sessionLabel"></small></div>
+  <div class="brand">梁子恒醫生診所管理系統 Dr. Ray's Clinical Management System<small id="sessionLabel"></small></div>
   <nav class="row" aria-label="全診所功能">
    <button data-act="choosePatient" class="primary">開始診症</button>
-   <button data-act="registerPatient">登記病人</button>
+   <button data-act="registerPatient">登記新病人</button>
    <button data-act="registry">病人名單</button>
    <button data-act="followups">檢查跟進</button>
    <details class="menu">
@@ -359,8 +359,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7}
     <div id="saveState" role="status" aria-live="polite"></div>
    </div>
    <div class="row">
-    <button data-act="patientProfile" id="profileButton">本病人資料</button>
-    <button data-act="allEncounters" id="allEncountersButton">所有診症</button>
+    <button data-act="patientProfile" id="profileButton">病人詳細資料</button>
+    <button data-act="allEncounters" id="allEncountersButton">所有診症記錄</button>
     <button data-act="toggleAllergy" id="allergyButton" aria-expanded="false">？N/KDA</button>
     <button data-act="return" id="returnButton" hidden>返回本次診症</button>
    </div>
@@ -1872,7 +1872,7 @@ function patientProfile(id=current()?.patientId){
 }
 function allEncounters(id=current()?.patientId){
  const p=db.patients.find(p=>p.id===id);assert(p,"主檔不存在");
- openModal("所有診症 · "+pname(p.data),`<p class="small">包含目前開啟、未完成及已完成診症。按求診日期由新至舊。</p>${encountersHTML(id)}`,"allEncounters")
+ openModal("所有求診記錄 · "+pname(p.data),`${encountersHTML(id)}`,"allEncounters")
 }
 function linkFamily(id){
  const excluded=new Set(relatives(id).map(x=>x.p.id));
