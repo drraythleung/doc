@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
@@ -1090,7 +1090,7 @@ function focusPath(path){
  if(r.top<b.top+12||r.bottom>b.bottom-12)i.scrollIntoView({block:"nearest",behavior:"auto"})
 }
 function templateEntry(type){
- return `<button type="button" data-act="templatePicker" data-type="${type}" ${!editable()||(type==="receipt"&&financialLocked(current()))?"disabled":""}>套用${type==="note"?" SOAP":type==="receipt"?"收費":"轉介"}範本</button>`
+ return `<button type="button" data-act="templatePicker" data-type="${type}" ${!editable()||(type==="receipt"&&financialLocked(current()))?"disabled":""}>套用${type==="note"?"診症":type==="receipt"?"收費":"轉介"}範本</button>`
 }
 function itemHTML(list,n,e){
  const i=e[list].items[n],p=list+".items."+n,locked=list==="receipt"&&financialLocked(current());
@@ -1124,12 +1124,12 @@ function investigationHTML(raw,n,type){
 function formDocument(e){
  const t=tab;
  if(t==="note")return `<section class="card">
- <div class="section-head"><h3>診症紀錄 SOAP</h3>${templateEntry("note")}</div>
+ <div class="section-head"><h3>診症紀錄</h3>${templateEntry("note")}</div>
  ${field("診症日期","date","date")}
- <section class="soap-section"><h3>S · 主訴及病史</h3>${area("Chief Complaint & History","soap.s")}</section>
- <section class="soap-section"><h3>O · 檢查及結果</h3>${area("Examination & Investigations","soap.o")}</section>
- <section class="soap-section"><h3>A · 診斷及評估</h3>${area("Diagnosis 診斷（其他文件共用）","diagnosis")}${area("Assessment 評估補充","soap.a")}</section>
- <section class="soap-section"><h3>P · 治療計劃</h3>${area("Plan","soap.p")}</section></section>`;
+ <section class="soap-section"><h3>主訴及病史 Chief Complaint & History</h3>${area("","soap.s")}</section>
+ <section class="soap-section"><h3>檢查及結果 Examination & Investigations</h3>${area("","soap.o")}</section>
+ <section class="soap-section"><h3>診斷及評估 Diagnosis & Assessment</h3>${area("Diagnosis","diagnosis")}${area("Assessment","soap.a")}</section>
+ <section class="soap-section"><h3>治療計劃 Plan of Management</h3>${area("","soap.p")}</section></section>`;
  let h=`<details id="sharedContext" class="shared-context"><summary>共用診症資料：${E(e.date)} · 診斷：<span id="compactDiagnosis">${E(T(e.diagnosis)||"未填寫")}</span>（展開修改）</summary>
  ${field("文件／診症日期","date","date")}${area("共用診斷","diagnosis")}<p class="small">修改只影響目前草稿；已簽發版本不會自動改寫。</p></details>`;
  h+=`<section class="card"><div class="section-head"><h3>${E(TYPES[t][0])}資料</h3>${["referral","receipt"].includes(t)?templateEntry(t):""}</div>`;
@@ -2281,10 +2281,10 @@ ${E(allergy(data.patient))}
   <section class="card">
    <h3>診症紀錄</h3>
    ${block("Diagnosis 診斷",data.diagnosis)}
-   ${block("S · 主訴及病史",data.soap.s)}
-   ${block("O · 檢查及結果",data.soap.o)}
-   ${block("A · 臨床評估",data.soap.a)}
-   ${block("P · 治療計劃",data.soap.p)}
+   ${block("Chief Complaint & History 主訴及病史",data.soap.s)}
+   ${block("Examination & Investigations 檢查及結果",data.soap.o)}
+   ${block("Assessment 臨床評估",data.soap.a)}
+   ${block("Plan 治療計劃",data.soap.p)}
   </section>
 
   <section class="card">
