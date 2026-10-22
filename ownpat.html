@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light">
 <meta http-equiv="Content-Security-Policy"
 content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src https://*.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>Dr Ray CMS — 第4階段</title>
+<title>Dr Ray CMS｜診所管理系統</title>
 <style>
 :root{
  --bg:#edf2f4;--panel:#fff;--ink:#172a30;--muted:#5b6e76;
@@ -17,10 +17,40 @@ content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inlin
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-size:14px}
 button,input,select,textarea{font:inherit;color:inherit}
-button{min-height:38px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
-button:hover:not(:disabled){background:var(--soft)}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-button.danger{color:var(--bad)}
+button{
+ min-height:38px;
+ padding:8px 12px;
+ border:1px solid var(--line);
+ border-radius:7px;
+ background:#fff;
+ font-weight:500;
+ line-height:1.4;
+ cursor:pointer;
+}
+
+button:hover:not(:disabled){
+ background:var(--soft);
+}
+
+button.primary{
+ background:var(--accent);
+ border-color:var(--accent);
+ color:#fff;
+}
+
+button.primary:hover:not(:disabled){
+ background:#1c4e45;
+ border-color:#1c4e45;
+}
+
+button.danger{
+ color:var(--bad);
+}
+
+button.danger:hover:not(:disabled){
+ background:var(--badbg);
+ border-color:#e2b3b8;
+}
 button:disabled{opacity:.45;cursor:not-allowed}
 input,select,textarea{width:100%;padding:9px;border:1px solid #bfced5;border-radius:7px;background:#fff}
 input[type=checkbox]{width:auto;accent-color:var(--accent)}
@@ -59,12 +89,32 @@ details[open]>summary{margin-bottom:12px}
 header.appbar{flex:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .brand{font-size:15px;font-weight:bold}
 .brand small{display:block;font-weight:normal}
-#notice{flex:none;border-radius:0;padding:7px 16px;font-size:12px}
+#notice{
+ flex:none;
+ border-radius:0;
+ padding:7px 16px;
+ font-size:12px;
+}
+
+#notice.app-notice:not(.error){
+ background:#f1f6f8;
+ border-color:var(--line);
+ color:var(--muted);
+}
 #workbar{flex:none;background:#f8fafb;padding:10px 16px;border-bottom:1px solid var(--line)}
 #identity{font-size:15px;font-weight:bold;line-height:1.65;overflow-wrap:anywhere}
 #visitState{line-height:1.8;white-space:pre-wrap}
 #saveState{font-size:12px;line-height:1.7;font-weight:bold;overflow-wrap:anywhere}
 #workActions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:10px}
+ #workActions>.row{
+ gap:8px;
+}
+
+#saveButton,
+#issueButton,
+#completeButton{
+ min-width:104px;
+}
 #tabs{display:flex;gap:5px;flex-wrap:wrap}
 #tabs button{padding:6px 10px;font-size:12px}
 #tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -232,17 +282,18 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7}
 <section id="login">
  <div class="card">
   <h1>Dr Ray's Clinical Management System</h1>
-  <p class="small">第 4 階段 · Supabase 帳戶登入 · Schema 5</p>
+  <p class="small">診所管理系統｜請登入以繼續</p>
   <form id="loginForm">
    <div class="field"><label for="email">電郵帳戶</label><input id="email" type="email" autocomplete="username" required></div>
    <div class="field"><label for="password">密碼</label><input id="password" type="password" autocomplete="current-password" required></div>
    <details>
     <summary>連接設定／測試專案</summary>
-    <div class="notice">預設係原專案。另一瀏覽器設定檔唔會令同一 Supabase 專案變成測試資料。測試專案須具備相同資料表、RPC 及對應成員帳戶。</div>
-    <div class="field"><label for="projectUrl">Project URL</label><input id="projectUrl" type="url"></div>
-    <div class="field"><label for="projectKey">Publishable／anon key（禁止 service_role／secret）</label><input id="projectKey" autocomplete="off"></div>
-    <div class="field"><label for="clinicId">Clinic ID</label><input id="clinicId"></div>
-    <div class="field"><label for="doctorId">Doctor user ID</label><input id="doctorId"></div>
+<div hidden>
+ <input id="projectUrl" type="url">
+ <input id="projectKey" autocomplete="off">
+ <input id="clinicId">
+ <input id="doctorId">
+</div>
    </details>
    <button id="loginButton" class="primary" style="margin-top:12px">登入</button>
    <p id="loginMessage" class="small" role="status"></p>
@@ -254,25 +305,25 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7}
  <header class="appbar">
   <div class="brand">梁子恒醫生 CMS <small id="sessionLabel"></small></div>
   <nav class="row" aria-label="全診所功能">
-   <button data-act="choosePatient" class="primary">＋ 開始診症</button>
-   <button data-act="registerPatient">＋ 登記病人</button>
+   <button data-act="choosePatient" class="primary">開始診症</button>
+   <button data-act="registerPatient">登記病人</button>
    <button data-act="registry">病人名單</button>
    <button data-act="followups">檢查跟進</button>
    <details class="menu">
     <summary>管理及設定</summary>
     <div class="menu-panel">
-     <button data-act="history">診症／文件版本</button>
+     <button data-act="history">診症及文件紀錄</button>
      <button data-act="catalogue">檢查目錄</button>
      <button data-act="templates">範本管理</button>
      <button data-act="backup">備份及還原</button>
      <button data-act="settings">設定</button>
-     <button data-act="quality">工作區狀態／驗收</button>
+     <button data-act="quality">系統狀態及檢查</button>
      <button data-act="logout" class="danger">登出</button>
     </div>
    </details>
   </nav>
  </header>
- <div id="notice" class="notice" role="status">尚未載入。</div>
+<div id="notice" class="notice app-notice" role="status">正在啟動系統…</div>
  <section id="workbar">
   <div class="row between">
    <div style="flex:1;min-width:0">
@@ -300,15 +351,15 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7}
    <div id="tabs" aria-label="診症及文件"></div>
    <div class="row">
     <button data-act="save" id="saveButton">儲存草稿</button>
-    <button data-act="issue" id="issueButton" class="primary">出具文件</button>
+    <button data-act="issue" id="issueButton" class="primary">簽發文件</button>
     <button data-act="complete" id="completeButton">完成診症</button>
     <details class="menu">
-     <summary>列印／更多</summary>
+     <summary>列印／更多操作</summary>
      <div class="menu-panel">
-      <button data-act="print" id="printButton">列印目前文件／PDF</button>
+      <button data-act="print" id="printButton">列印目前文件／儲存 PDF</button>
       <button data-act="batch">選擇多份列印</button>
       <button data-act="diff" id="diffButton">比較版本</button>
-      <button data-act="history">文件版本／作廢／交付</button>
+      <button data-act="history">文件紀錄及交付</button>
      </div>
     </details>
    </div>
@@ -328,16 +379,16 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7}
   <div id="split" tabindex="0" role="separator" aria-label="調整左右欄闊度" aria-orientation="vertical" aria-valuemin="25" aria-valuemax="75"></div>
   <main class="reference" id="reference">
    <div id="referenceTabs">
-    <button data-act="pastPane" id="pastTab">過往診症</button>
-    <button data-act="previewPane" id="previewTab">本次文件預覽</button>
+   <button data-act="pastPane" id="pastTab">所有診症</button>
+   <button data-act="previewPane" id="previewTab">目前文件預覽</button>
    </div>
    <section id="pastPanel" hidden>
     <div class="row" style="margin-bottom:12px">
      <button data-act="older">← 較舊</button>
-     <select id="pastPicker" style="flex:1;min-width:130px" aria-label="過往求診日期"></select>
+     <select id="pastPicker" style="flex:1;min-width:130px" aria-label="選擇診症紀錄"></select>
      <button data-act="newer">較新 →</button>
     </div>
-    <p class="small">唯讀參閱；切換右側日期唔會改變左側診症，或儲存、完成、列印目標。</p>
+    <p class="small">此處僅供參閱。切換日期不會更改左側正在處理的診症，亦不會更改儲存、完成診症或列印的對象。</p>
     <div id="pastBody"></div>
    </section>
    <section id="previewPanel">
@@ -368,11 +419,11 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7}
 </dialog>
 <dialog id="leaveDialog">
  <h2>表單尚未保存</h2>
- <p>你可以返回繼續輸入，或明確捨棄。選擇「保存後繼續」時，如保存失敗，會留喺原表單。</p>
+ <p>此表單尚有未儲存的修改。請選擇繼續編輯、儲存後離開，或捨棄修改。如未能儲存，系統將保留原有表單及輸入內容。</p>
  <div class="row">
-  <button id="leaveStay" type="button" class="primary">返回繼續輸入</button>
-  <button id="leaveSave" type="button">保存後繼續</button>
-  <button id="leaveDiscard" type="button" class="danger">捨棄並繼續</button>
+  <button id="leaveStay" type="button" class="primary">繼續編輯</button>
+  <button id="leaveSave" type="button">儲存後離開</button>
+  <button id="leaveDiscard" type="button" class="danger">捨棄修改</button>
  </div>
 </dialog>
 <input id="backupFile" type="file" accept=".json,application/json" hidden>
@@ -433,7 +484,7 @@ const CHECKS=[
  ["stage4modal","主檔、設定、目錄、範本未保存時，關閉／離開處理正確"],
  ["autosave","草稿儲存並重新登入核對"],
  ["sync","主檔同步不修改敏感、舊文件及完成快照"],
- ["version","文件出具、修訂、作廢及歷史重印"],
+ ["version","文件簽發、修訂、作廢及歷史重印"],
  ["complete","完成、重開、再完成，舊快照不變"],
  ["finance","收費鎖定、檢查連動及付款狀態"],
  ["conflict","兩頁版本衝突，第二頁不覆蓋新版"],
@@ -753,8 +804,8 @@ function storageFailure(e,candidate=null){
  if(e.code==="40001"||e.name==="ConflictError")conflict=true;
  if(e.unknownResult)uncertain=true;
  if(candidate)recoveryCandidate=C(candidate);
- status("未確認儲存 · 請保留本頁並下載備份",true);
- message(e.message+"\n"+(uncertain?"寫入結果不明，已暫停寫入；不要重複執行出具、登記或還原。先下載本頁備份，再重新登入核對雲端。":"請勿關閉未保存資料；可下載本頁加密備份。"),true);
+ status("未能確認儲存結果，請保留本頁並下載備份",true);
+ message(e.message+"\n"+(uncertain?"寫入結果不明，已暫停寫入；不要重複執行簽發、登記或還原。先下載本頁備份，再重新登入核對雲端。":"請勿關閉未保存資料；可下載本頁加密備份。"),true);
  updateButtons()
 }
 async function persistSnapshot(snapshot){
@@ -766,7 +817,7 @@ async function persistSnapshot(snapshot){
  const next=Number(value);
  if(!Number.isSafeInteger(next)||next!==expected+1){const e=new Error("雲端回應版本不符；結果未確認");e.unknownResult=true;throw e}
  rev=next;try{channel?.postMessage({revision:rev})}catch{}
- $("sessionLabel").textContent=actor+" · 第4階段 · 雲端版本 "+rev;
+$("sessionLabel").textContent="登入帳戶："+actor;
  return next
 }
 async function save(){
@@ -779,8 +830,8 @@ async function save(){
  const generation=dirty,snapshot=C(db);snapshot.currentId=selected;
  saving=(async()=>{
   try{
-   status("正在儲存至 Supabase…");await persistSnapshot(snapshot);saved=generation;
-   status(dirty===saved?"已儲存至 Supabase · "+new Date().toLocaleTimeString():"仍有修改待儲存")
+   status("正在儲存…");await persistSnapshot(snapshot);saved=generation;
+   status(dirty===saved?"已儲存 · "+new Date().toLocaleTimeString():"尚有修改未儲存")
   }catch(e){storageFailure(e);throw e}
  })();
  try{await saving}finally{saving=null}
@@ -788,11 +839,19 @@ async function save(){
 }
 function changed(){
  const e=current();if(e)e.updated=now();
- dirty++;status(composing?"中文組字中 · 完成後儲存":"有修改，等待儲存");
+ dirty++;status(composing?"正在輸入中文…":"尚未儲存");
  clearTimeout(saveTimer);
- if(!composing)saveTimer=setTimeout(()=>save().catch(()=>{}),700);
- clearTimeout(previewTimer);
- if(!composing)previewTimer=setTimeout(()=>{refreshHeader();refreshTabs();preview();},240)
+if(!composing)previewTimer=setTimeout(()=>{
+ refreshHeader();
+ refreshTabs();
+ preview();
+
+ if(pane==="past"&&pastId===selected){
+  const scroll=$("reference").scrollTop;
+  drawPast();
+  $("reference").scrollTop=scroll;
+ }
+},240);
 }
 async function commit(fn,{nextId}={}){
  await save();
@@ -822,7 +881,7 @@ function attachChannel(){
    if(!db||!Number.isSafeInteger(r)||r<=rev)return;
    conflict=true;clearTimeout(saveTimer);clearTimeout(previewTimer);
    message("另一頁已更新雲端；本頁停止寫入。先下載本頁加密備份，再重新登入核對。",true);
-   status("版本衝突 · 未保存內容仍留喺本頁",true);updateButtons()
+   status("資料已在其他頁面更新；本頁尚未儲存的內容仍然保留",true);updateButtons()
   }
  }catch{channel=null}
 }
@@ -1027,7 +1086,7 @@ function formDocument(e){
  <section class="soap-section"><h3>A · 診斷及評估</h3>${area("Diagnosis 診斷（其他文件共用）","diagnosis")}${area("Assessment 評估補充","soap.a")}</section>
  <section class="soap-section"><h3>P · 治療計劃</h3>${area("Plan","soap.p")}</section></section>`;
  let h=`<details id="sharedContext" class="shared-context"><summary>共用診症資料：${E(e.date)} · 診斷：<span id="compactDiagnosis">${E(T(e.diagnosis)||"未填寫")}</span>（展開修改）</summary>
- ${field("文件／診症日期","date","date")}${area("共用診斷","diagnosis")}<p class="small">修改只影響目前草稿；已出具版本不會自動改寫。</p></details>`;
+ ${field("文件／診症日期","date","date")}${area("共用診斷","diagnosis")}<p class="small">修改只影響目前草稿；已簽發版本不會自動改寫。</p></details>`;
  h+=`<section class="card"><div class="section-head"><h3>${E(TYPES[t][0])}資料</h3>${["referral","receipt"].includes(t)?templateEntry(t):""}</div>`;
  if(!INVS.includes(t))h+=checkField("本次需要此文件","used."+t);
  if(t==="referral")h+=field("轉介對象／醫生","referral.target")+field("機構／專科","referral.institution")+area("收件人／地址","referral.to")+field("稱呼","referral.salutation")+area("轉介正文","referral.body");
@@ -1086,7 +1145,7 @@ function refreshTabs(){
   b.disabled=busy||printing||!!view||composing
  });
  const pending=pendingTypes(e);
- $("issueButton").textContent="出具文件"+(pending.length?"（"+pending.length+"）":"");
+ $("issueButton").textContent="簽發文件"+(pending.length?"（"+pending.length+"）":"");
  updateButtons()
 }
 function refreshHeader(){
@@ -1255,7 +1314,7 @@ async function removeItem(list,n){
  assert(editable(),"目前不能移除");choice(list,["rx","receipt"],"項目類別");
  const e=current(),i=e[list].items[n];assert(i,"找不到項目");
  if(list==="receipt")assert(!financialLocked(e)&&!i.investigationId,"此項目已鎖定或為檢查連動");
- if(!confirm("移除此項目？已出具版本及完成快照不會改寫。"))return;
+ if(!confirm("移除此項目？已簽發版本及完成快照不會改寫。"))return;
  const scroll=$("editor").scrollTop,rs=$("reference").scrollTop;
  e[list].items.splice(n,1);
  const host=$(list==="rx"?"rxItems":"receiptItems");
@@ -1344,20 +1403,20 @@ function issuedVersion(e,t,s,reason){
  e.versions.push(v);e.used[t]=true;audit(e,"保存文件版本",reason,v.id);return v
 }
 function openIssue(types=null,printTypes=null){
- const e=current();assert(e&&!conflict&&!uncertain,"目前不能出具");
+ const e=current();assert(e&&!conflict&&!uncertain,"目前不能簽發");
  if(!types)types=pendingTypes(e);
- assert(types.length,"沒有待出具文件");
+ assert(types.length,"沒有待簽發文件");
  assert(!view&&e.status==="draft","請先返回未完成診症");
  issueContext={id:e.id,types:C(types),printTypes:printTypes?C(printTypes):null,fingerprints:Object.fromEntries(types.map(t=>[t,C(fingerprint(e,t,db.settings))]))};
- openModal(printTypes?"核對出具並列印":"核對並出具文件",`
+ openModal(printTypes?"核對簽發並列印":"核對並簽發文件",`
  <div class="notice">${E(pname(e.patient))} · ${E(master(e)?.mrn)} · ${E(e.date)}
-出具不代表完成診症、列印成功、交付或收款。取消不會改變有效版本。</div>
+簽發不代表完成診症、列印成功、交付或收款。取消不會更改已簽發文件。</div>
  ${types.map(t=>`<section class="item"><label class="check"><input type="checkbox" data-issue="${t}" checked ${printTypes?"disabled":""}><span><strong>${E(TYPES[t][0])}</strong><br><small>${effective(e,t)?"建立修訂版，原版保留":"建立首個有效版本"}</small></span></label>
  ${warnings(e,t).length?`<p style="color:var(--bad)">${warnings(e,t).map(E).join("<br>")}</p>`:""}
  <details><summary>內容摘要</summary><pre>${E(shortSummary(e,t))}</pre></details></section>`).join("")}
- <div class="field"><label for="issueReason">出具備註／修訂原因（含修訂文件時必填）</label><textarea id="issueReason"></textarea></div>
- ${types.includes("rx")&&e.patient.allergyStatus==="unknown"?`<div class="notice"><label class="check"><input id="issueUnknown" type="checkbox"><span>我知悉處方敏感狀態仍未確認，仍決定出具。此確認不會改成無敏感，亦不會完成敏感覆核。</span></label></div>`:""}
- <div class="modal-footer"><button data-act="closeModal">取消</button><button data-act="confirmIssue" class="primary">${printTypes?"確認出具並開啟列印":"確認出具"}</button></div>
+ <div class="field"><label for="issueReason">簽發備註／修訂原因（含修訂文件時必填）</label><textarea id="issueReason"></textarea></div>
+ ${types.includes("rx")&&e.patient.allergyStatus==="unknown"?`<div class="notice"><label class="check"><input id="issueUnknown" type="checkbox"><span>我知悉處方敏感狀態仍未確認，仍決定簽發。此確認不會改成無敏感，亦不會完成敏感覆核。</span></label></div>`:""}
+ <div class="modal-footer"><button data-act="closeModal">取消</button><button data-act="confirmIssue" class="primary">${printTypes?"確認簽發並開啟列印":"確認簽發"}</button></div>
  `,"issue");
 }
 async function confirmIssue(){
@@ -1370,20 +1429,20 @@ async function confirmIssue(){
  assert(!errors.length,errors.join("\n"));
  assert(!types.some(t=>effective(e,t))||reason,"請填寫修訂原因");
  const unknown=types.includes("rx")&&e.patient.allergyStatus==="unknown";
- assert(!unknown||$("issueUnknown")?.checked,"請先核對敏感狀態，或明確確認未確認狀態下仍出具");
+ assert(!unknown||$("issueUnknown")?.checked,"請先核對敏感狀態，或明確確認未確認狀態下仍簽發");
  await ensureSession();
  await run(()=>commit(d=>{
   const e=d.encounters.find(e=>e.id===context.id);assert(e.status==="draft"&&!view&&selected===context.id,"診症狀態已改變");
   for(const t of types){
    assert(equal(fingerprint(e,t,d.settings),context.fingerprints[t]),"文件內容已變動，請重新核對");
    assert(!warnings(e,t,d.settings).length,"文件驗證失敗");
-   issuedVersion(e,t,d.settings,reason||"首次出具文件")
+   issuedVersion(e,t,d.settings,reason||"首次簽發文件")
   }
-  if(unknown)audit(e,"確認在敏感未確認狀態下出具處方","未改變敏感或覆核狀態");
+  if(unknown)audit(e,"確認在敏感未確認狀態下簽發處方","未改變敏感或覆核狀態");
   e.updated=now()
  }));
  const prints=context.printTypes;closeModalNow();showErrors([]);
- message("已出具："+types.map(t=>TYPES[t][0]).join("、")+"。未自動完成診症、確認交付或收款。");
+ message("已簽發："+types.map(t=>TYPES[t][0]).join("、")+"。未自動完成診症、確認交付或收款。");
  if(prints)await printDocuments(prints,true)
 }
 async function completeEncounter(){
@@ -1395,7 +1454,7 @@ async function completeEncounter(){
  if(showErrors(warnings(e)))return;
  const missing=["s","o","a","p"].filter(k=>!T(e.soap[k])&&!(k==="a"&&T(e.diagnosis)));
  const drafts=summary(e).filter(x=>x.draft).map(x=>TYPES[x.type][0]);
- if(!confirm("保存完成快照並完成診症？\n"+(missing.length?"未填 SOAP："+missing.join("、")+"\n":"")+(drafts.length?"尚未出具／修改草稿："+drafts.join("、")+"；不會自動出具。\n":"")+(!e.allergyReviewed?"本次未記錄敏感覆核。\n":"")+"檢查跟進不會自動結案。"))return;
+ if(!confirm("保存完成快照並完成診症？\n"+(missing.length?"未填 SOAP："+missing.join("、")+"\n":"")+(drafts.length?"尚未簽發／修改草稿："+drafts.join("、")+"；不會自動簽發。\n":"")+(!e.allergyReviewed?"本次未記錄敏感覆核。\n":"")+"檢查跟進不會自動結案。"))return;
  await run(()=>commit(d=>{
   const x=d.encounters.find(x=>x.id===e.id),sum=summary(x,d.settings);
   x.status="completed";x.updated=now();x.revisions.push({id:uid(),savedAt:x.updated,actor,sessionId,data:core(x),settings:doctor(d.settings,"manual"),summary:sum});
@@ -1417,9 +1476,16 @@ function summaryHTML(rows){
  (drafts.length?`<section class="section"><h2>未完成之修改草稿</h2>${drafts.map(x=>`<div class="sub"><h3>${E(TYPES[x.type][0])}・草稿</h3><div class="txt">${E(x.draft.text)}</div></div>`).join("")}</section>`:"")
 }
 function noteBody(e,s){
- let h=section("S · Chief Complaint & History 主訴及病史",e.soap.s)+section("O · Examination & Investigations 檢查及結果",e.soap.o)+
- section("A · Diagnosis 診斷",e.diagnosis)+section("A · Assessment 評估補充",e.soap.a)+section("P · Plan 治療計劃",e.soap.p)+
- section("Drug Allergies 藥物敏感",allergy(e.patient)+"\n當次覆核："+(e.allergyReviewed?"已覆核":"未記錄"));
+ let h=
+ section("Diagnosis 診斷",e.diagnosis)+
+ section("S · Chief Complaint & History 主訴及病史",e.soap.s)+
+ section("O · Examination & Investigations 檢查及結果",e.soap.o)+
+ section("A · Assessment 臨床評估",e.soap.a)+
+ section("P · Plan 治療計劃",e.soap.p)+
+ section(
+  "Drug Allergies 藥物敏感",
+  allergy(e.patient)+"\n本次覆核："+(e.allergyReviewed?"已覆核":"未記錄")
+ );
  for(const t of INVS)if(e[t]?.items.length)h+=section(TYPES[t][0]+"及跟進",e[t].items.map(i=>[
  i.name,i.details,ISTATE[i.status],i.performedDate?"檢查日期："+i.performedDate:"",i.resultDate?"報告日期："+i.resultDate:"",i.result,
  "報告覆核："+(i.reviewed?"已覆核":"未覆核"),i.reviewedBy?"覆核人："+i.reviewedBy:"",i.due?"跟進日期："+i.due:"",i.owner?"負責人："+i.owner:"",i.next,
@@ -1445,7 +1511,7 @@ function docBody(e,t){
 function page(t,s){
  const e=s.data;let mark="";
  if(t==="note")mark=s.kind==="revision"?"已完成診症紀錄／完成時快照 · "+stamp(s.savedAt):e.status==="completed"?"舊版完成紀錄，沒有當時完成快照":"未完成診症草稿 · 儲存草稿不代表完成診症";
- else if(s.kind!=="document")mark="編輯草稿預覽 · 正式版本須經出具確認";
+ else if(s.kind!=="document")mark="編輯草稿預覽 · 正式版本須經簽發確認";
  else if(s.entry.state!=="issued")mark="歷史存檔副本 · "+VSTATE[s.entry.state]+" · 非目前有效文件"+(s.entry.voidReason?"\n作廢原因："+s.entry.voidReason:"");
  return paperHead(s.settings)+`<div class="title">${E(TYPES[t][1])}<br>${E(TYPES[t][2])}</div>`+(mark?`<div class="state">${E(mark)}</div>`:"")+patientBox(e,t)+(t==="note"?noteBody(e,s):docBody(e,t)+signature(e,s.settings)+(e.timestamp?`<footer class="footer">Document Version 文件版本：${E(stamp(s.savedAt))}</footer>`:""))
 }
@@ -1453,7 +1519,17 @@ function preview(){
  const e=current();if(!e){$("paper").replaceChildren();return}
  if(composing)return;
  const s=source(),referenceScroll=$("reference").scrollTop;
- $("workflow").textContent=view?"歷史快照唯讀；重印不代表目前有效或已交付。":e.status==="completed"?"已完成。修改前須重開；舊快照保留。":tab==="note"?"儲存草稿不出具文件；完成診症才建立完成快照。":effective(e,tab)?different(e,tab)?"目前草稿與有效版本不同；出具修訂版須填原因。":"與有效版本相同；列印重用有效版本。":"目前為草稿；確認出具後才保存有效版本。";
+ $("workflow").textContent=view
+  ?"正在檢視歷史紀錄；文件效力以其目前狀態為準。"
+  :e.status==="completed"
+   ?"此診症已完成。如需修改，請先重新開啟；原有紀錄將予保留。"
+   :tab==="note"
+    ?"診症紀錄會自動儲存。完成診症與出具文件須分別確認。"
+    :effective(e,tab)
+     ?different(e,tab)
+      ?"目前內容與已出具文件不同。如需出具修訂版，請填寫修訂原因。"
+      :"目前內容與已出具文件相同，可直接列印。"
+     :"此文件尚未出具。核對內容後，請選擇「出具文件」。";
  const html=page(tab,s);if($("paper").innerHTML!==html)$("paper").innerHTML=html;
  $("reference").scrollTop=referenceScroll;
  requestAnimationFrame(scale)
@@ -1465,7 +1541,7 @@ function scale(){
 }
 function batchModal(){
  assert(current()&&!view,"歷史模式不能批量製作");
- openModal("選擇多份列印",`<p class="small">如包含未出具或有修改的文件，會先顯示出具確認。取消瀏覽器列印不撤銷已出具版本。</p>
+ openModal("選擇多份列印",`<p class="small">如包含未簽發或有修改的文件，會先顯示簽發確認。取消瀏覽器列印不撤銷已簽發版本。</p>
  ${Object.entries(TYPES).map(([t,n])=>`<label class="check"><input type="checkbox" data-batch="${t}" ${t==="note"||current().used[t]||effective(current(),t)?"checked":""}><span>${E(n[0])}</span></label>`).join("")}
  <div class="modal-footer"><button data-act="batchStart" class="primary">核對並開啟列印</button></div>`,"batch")
 }
@@ -1512,11 +1588,11 @@ async function printDocuments(types,alreadyIssued=false){
 }
 function finishPrinting(){
  if(!printing)return;printing=false;$("printRoot").replaceChildren();updateButtons();
- message("列印視窗已關閉；系統不知道是否列印或保存 PDF。已出具版本保留；交付須另行人手記錄。")
+ message("列印視窗已關閉；系統不知道是否列印或保存 PDF。已簽發版本保留；交付須另行人手記錄。")
 }
 window.addEventListener("afterprint",finishPrinting);
 window.addEventListener("beforeprint",()=>{
- if(!printing)$("printRoot").innerHTML='<article class="paper"><h2>請使用系統內的列印／PDF</h2><p>直接瀏覽器列印不會出具正式版本。</p></article>'
+ if(!printing)$("printRoot").innerHTML='<article class="paper"><h2>請使用系統內的列印／PDF</h2><p>直接瀏覽器列印不會簽發正式版本。</p></article>'
 });
 
 /* 病人名單、登記、主檔、家人與同步。 */
@@ -1525,7 +1601,7 @@ function duplicates(data,id=""){return db.patients.filter(p=>p.id!==id&&((T(data
 function registry(choose=false){
  openModal(choose?"開始診症 · 先選病人":"病人名單",`
  <div class="row"><input id="patientSearch" type="search" autocomplete="off" placeholder="搜尋姓名、病歷編號、證件、電話或電郵" style="flex:1;min-width:160px"><button data-act="registerPatient" data-start="${choose}">＋ 登記新病人</button></div>
- <p class="small">選擇既有病人唔會建立另一個主檔。只登記病人唔會產生診症或收據。</p><div id="patientResults"></div>`,choose?"chooser":"registry");
+ <p class="small">選擇既有病人不會建立另一個主檔。只登記病人不會產生診症或收據。</p><div id="patientResults"></div>`,choose?"chooser":"registry");
  drawPatients(choose);$("patientSearch").focus()
 }
 function drawPatients(choose){
@@ -1582,7 +1658,7 @@ function selectPatient(id){
 }
 async function createEncounter(id){
  const p=db.patients.find(p=>p.id===id);assert(p&&pname(p.data),"主檔姓名未完整");
- if(sortedEncounters(id).some(e=>e.status==="draft")&&!confirm("此病人已有未完成診症。確認另開一次，而唔係繼續原有診症？"))return;
+ if(sortedEncounters(id).some(e=>e.status==="draft")&&!confirm("此病人已有未完成診症。確認另開一次，而並非繼續原有診症？"))return;
  let eid;
  await run(()=>commit(d=>{eid=addEncounter(d,id).id},{nextId:()=>eid}));
  selected=eid;db.currentId=eid;tab="note";view=null;closeModalNow();pastContext="";render(false);$("editor").scrollTop=0
@@ -1602,7 +1678,7 @@ async function openEncounter(id,v=null,t="note"){
 function feeInfo(e){
  const v=effective(e,"receipt"),data=v?v.data:e,rows=items(data);
  const valid=rows.length&&rows.every(i=>T(i.desc)&&Number.isFinite(cents(i.amount)))&&Number.isSafeInteger(total(data));
- return {amount:valid?"HKD "+cash(total(data)/100):rows.length?"金額未完整":"未記錄",source:v?"有效收據總額":"收費草稿 · 未出具",payment:PAYMENT[e.receipt.paymentStatus||"unknown"]||"未記錄"}
+ return {amount:valid?"HKD "+cash(total(data)/100):rows.length?"金額未完整":"未記錄",source:v?"有效收據總額":"收費草稿 · 未簽發",payment:PAYMENT[e.receipt.paymentStatus||"unknown"]||"未記錄"}
 }
 function encountersHTML(pid){
  const list=sortedEncounters(pid);
@@ -1665,8 +1741,8 @@ function patientProfile(id=current()?.patientId){
  <div class="row"><button data-act="editPatient" data-patient="${E(id)}">編輯主檔</button><button data-act="selectPatient" data-patient="${E(id)}">開始／繼續診症</button><button data-act="registry">病人名單</button></div></section>
  <section class="card"><h3>目前主檔</h3><div class="profile-grid">
  ${IDFIELDS.map(k=>fieldValue(LABELS[k],k==="dob"?fmt(p.data[k])+" ／ "+age(p.data[k],today()):p.data[k])).join("")}</div>
- <p class="small" style="margin-top:15px">主檔敏感紀錄（唔代表本次已覆核）</p><pre>${E(allergy(p.data))}</pre></section>
- <section class="card"><h3>主檔聯絡資料</h3><p class="small">固定取自目前主檔；唔會按 SOAP 修改時間推斷最新電話。</p><div class="profile-grid">${CONTACTS.map(k=>fieldValue(LABELS[k],p.data[k])).join("")}</div></section>
+ <p class="small" style="margin-top:15px">主檔敏感紀錄（不代表本次已覆核）</p><pre>${E(allergy(p.data))}</pre></section>
+ <section class="card"><h3>主檔聯絡資料</h3><p class="small">固定取自目前主檔；不會按 SOAP 修改時間推斷最新電話。</p><div class="profile-grid">${CONTACTS.map(k=>fieldValue(LABELS[k],p.data[k])).join("")}</div></section>
 <section class="card">
   <div class="section-head">
    <h3>已登記家人</h3>
@@ -1738,9 +1814,9 @@ function linkFamily(id){
  openModal("連結家人",`
  <input id="familyPatient" type="hidden" value="${E(id)}">
  <div class="field"><label for="familyTarget">已登記家人</label><select id="familyTarget"><option value="">請選擇</option>${db.patients.filter(p=>p.id!==id&&!excluded.has(p.id)).map(p=>`<option value="${E(p.id)}">${E(p.mrn)} · ${E(pname(p.data))} · ${E(fmt(p.data.dob))}</option>`).join("")}</select></div>
- <div class="field"><label for="familyA">對方係本病人嘅……</label><input id="familyA" maxlength="100" placeholder="例如：父親"></div>
- <div class="field"><label for="familyB">本病人係對方嘅……</label><input id="familyB" maxlength="100" placeholder="例如：女兒"></div>
- <p class="small">雙向關係由你核實，不按性別或姓名推斷。不會互相同步病歷。</p>
+ <div class="field"><label for="familyA">對方是本病人之……</label><input id="familyA" maxlength="100" placeholder="例如：父親"></div>
+ <div class="field"><label for="familyB">本病人是對方之……</label><input id="familyB" maxlength="100" placeholder="例如：女兒"></div>
+ <p class="small">請核實雙方的親屬關係。系統不會按姓名或性別推斷關係，亦不會在家人之間同步病歷。</p>
  <div class="modal-footer"><button data-act="saveFamily" class="primary">保存雙向連結</button></div>
  `,"familyEdit",{editable:true,saveAction:"saveFamily"})
 }
@@ -1768,7 +1844,7 @@ async function syncMaster(){
  if(!changes.length)return;
  if(p.data.dob)assert(dateOK(p.data.dob)&&p.data.dob<=e.date,"主檔出生日期無效或遲於診症日期");
  const before=Object.fromEntries(keys.map(k=>[k,S(e.patient[k])])),after=Object.fromEntries(keys.map(k=>[k,S(p.data[k])]));
- openModal("核對主檔同步",`<p>${E(p.mrn)} · ${E(pname(p.data))}</p><div class="notice">空白值亦會同步。只修改本次未完成診症，不改敏感、已出具文件或完成快照。</div>${diffTable(before,after)}
+ openModal("核對主檔同步",`<p>${E(p.mrn)} · ${E(pname(p.data))}</p><div class="notice">空白值亦會同步。只修改本次未完成診症，不改敏感、已簽發文件或完成快照。</div>${diffTable(before,after)}
  <div class="modal-footer"><button data-act="closeModal">取消</button><button data-act="confirmSync" class="primary">確認同步</button></div>`,"sync");
  modalState.sync={id:e.id,pid:p.id,before,after,keys}
 }
@@ -1791,7 +1867,7 @@ function templatesModal(type="",applyOnly=false){
  choice(type||"note",["note","referral","receipt"],"範本類別");
  const list=db.templates.filter(t=>!type||t.type===type);
  openModal(applyOnly?"選擇"+TYPES[type][0]+"範本":"範本管理",`
- <div class="notice">範本只供整理結構，唔代表已問、已檢查或已確認。套用後仍須逐項核對。敏感紀錄不會自動改變。</div>
+ <div class="notice">範本只供整理結構，不代表已問、已檢查或已確認。套用後仍須逐項核對。敏感紀錄不會自動改變。</div>
  ${applyOnly?"":`<div class="row" style="margin:12px 0">${["note","referral","receipt"].map(t=>`<button data-act="newTemplate" data-type="${t}">＋ ${E(TYPES[t][0])}範本</button>`).join("")}</div>`}
  ${list.map(t=>`<section class="item"><h3>${E(t.name)}</h3><p class="small">${E(TYPES[t.type][0])}</p><div class="row"><button data-act="applyTemplate" data-template="${E(t.id)}" ${!editable()||(t.type==="receipt"&&financialLocked(current()))?"disabled":""}>附加至本次診症</button>${applyOnly?"":`<button data-act="editTemplate" data-template="${E(t.id)}">編輯</button><button data-act="deleteTemplate" data-template="${E(t.id)}" class="danger">刪除</button>`}</div></section>`).join("")||"<p>尚未有對應範本。</p>"}
  `,"templates")
@@ -1829,7 +1905,7 @@ async function applyTemplate(id){
  else if(t.type==="referral"){e.referral.body=append(e.referral.body,t.content.body);e.used.referral=true}
  else{e.receipt.items.push(...C(t.content.items));e.used.receipt=true}
  audit(e,"套用範本",t.name);changed();closeModalNow();tab=t.type;render(false);
- message("範本已附加至草稿，請核對內容。未出具文件。")
+ message("範本已附加至草稿，請核對內容。未簽發文件。")
 }
 async function deleteTemplate(id){
  const t=db.templates.find(t=>t.id===id);assert(t,"範本不存在");
@@ -1859,7 +1935,7 @@ function orders(e){return INVS.flatMap(type=>e[type].items.map(item=>({type,item
 function charges(e){return orders(e).filter(x=>x.item.billing==="clinic").map(({type,item:i})=>{assert(Number.isFinite(cents(i.price)),"檢查缺少價錢");return {desc:(type==="lab"?"LAB: ":"Imaging: ")+i.name,amount:(cents(i.price)/100).toFixed(2),investigationId:i.id,investigationType:type}})}
 function syncCharges(e){
  const before=e.receipt.items.filter(i=>i.investigationId),after=charges(e);
- assert(equal(before,after)||!financialLocked(e),"收據已出具或已收款，不能修改連動收費；未收款請先作廢有效收據");
+ assert(equal(before,after)||!financialLocked(e),"收據已簽發或已收款，不能修改連動收費；未收款請先作廢有效收據");
  if(!equal(before,after)){e.receipt.items=[...e.receipt.items.filter(i=>!i.investigationId),...after];e.used.receipt=items(e).length>0}
 }
 async function addInvestigation(){
@@ -1876,7 +1952,7 @@ async function addInvestigation(){
 async function removeInvestigation(n){
  assert(editable(),"目前不能修改");const t=tab,i=current()[t].items[n];assert(i,"檢查不存在");
  assert(i.status==="ordered"&&!T(i.result)&&!i.performedDate&&!i.resultDate&&!i.reviewed&&!i.contacted&&!i.closed,"已有檢查／報告／聯絡紀錄，不能直接移除");
- if(!confirm("移除「"+i.name+"」？已出具申請表不會自動撤回，須另行通知。"))return;
+ if(!confirm("移除「"+i.name+"」？已簽發申請表不會自動撤回，須另行通知。"))return;
  await run(()=>commit(d=>{const e=d.encounters.find(e=>e.id===selected);e[t].items.splice(n,1);syncCharges(e);e.used[t]=!!e[t].items.length;e.updated=now();audit(e,"移除待完成檢查","檢查 ID："+i.id)}))
 }
 async function orderBilling(n,value){
@@ -1930,7 +2006,7 @@ function compareModal(){
  }
 }
 function historyModal(){
- openModal("診症／文件版本",`<input id="historySearch" type="search" placeholder="搜尋姓名、病歷編號、日期、診斷或 SOAP"><p class="small">有效版本不代表已交付。最多顯示80次診症。操作紀錄不是防竄改審計。</p><div id="historyResults"></div>`,"history");drawHistory()
+ openModal("診症及文件紀錄",`<input id="historySearch" type="search" placeholder="搜尋姓名、病歷編號、日期、診斷或 SOAP"><p class="small">有效版本不代表已交付。最多顯示80次診症。操作紀錄不是防竄改審計。</p><div id="historyResults"></div>`,"history");drawHistory()
 }
 function drawHistory(){
  const q=T($("historySearch").value).toLowerCase();
@@ -1947,7 +2023,7 @@ async function versionAction(eid,vid,kind){
   assert(v.state==="issued","只可記錄有效版本交付");
   const method=prompt("交付方式（必填）：");if(!T(method))return;
   const note=prompt("交付備註（可留空）：");if(note===null)return;
-  if(!confirm("確認你已實際交付？唔係瀏覽器自動判斷。"))return;
+  if(!confirm("確認你已實際交付？並非瀏覽器自動判斷。"))return;
   await run(()=>commit(d=>{const e=d.encounters.find(e=>e.id===eid),v=e.versions.find(v=>v.id===vid);assert(v.state==="issued","版本已改變");v.deliveries??=[];v.deliveries.push({at:now(),actor,sessionId,method:T(method),note:T(note)});audit(e,"自行確認文件交付",T(method),vid)}))
  }else{
   assert(e.status==="draft","請先重開該診症");
@@ -1964,21 +2040,59 @@ async function versionAction(eid,vid,kind){
 }
 
 /* 右側參閱獨立於 selected、tab、view。 */
-function previousEncounters(){
- const e=current();if(!e)return [];
- return sortedEncounters(e.patientId).filter(x=>x.id!==e.id&&dateOK(x.date)&&(x.date<e.date||x.date===e.date&&S(x.created)<=S(e.created)))
+function referenceEncounters(){
+ const e=current();
+ if(!e)return [];
+ return sortedEncounters(e.patientId);
 }
 function syncPast(){
- const e=current();if(!e){pastList=[];$("pastBody").replaceChildren();return}
+ const e=current();
+
+ if(!e){
+  pastList=[];
+  pastId="";
+  pastSignature="";
+  $("pastTab").textContent="所有診症";
+  $("pastPicker").innerHTML='<option value="">沒有診症紀錄</option>';
+  $("pastBody").replaceChildren();
+  return;
+ }
+
  const context=selected+"|"+(view?.id||"");
  const changedContext=pastContext!==context;
- pastList=previousEncounters();
- if(changedContext){pastContext=context;pastId=pastList[0]?.id||"";pane=!view&&pastList.length?"past":"preview";paneScroll={past:0,preview:0};pastSignature=""}
- if(!pastList.some(e=>e.id===pastId))pastId=pastList[0]?.id||"";
- $("pastTab").textContent="過往診症（"+pastList.length+"）";
- const options=pastList.map(e=>`<option value="${E(e.id)}">${E(e.date)} · ${e.status==="completed"?"已完成":"未完成／已重開"} · ${E(T(e.diagnosis).slice(0,60))}</option>`).join("")||'<option value="">沒有過往診症</option>';
- if($("pastPicker").innerHTML!==options)$("pastPicker").innerHTML=options;
- $("pastPicker").value=pastId;applyPane();drawPast()
+
+ pastList=referenceEncounters();
+
+ if(changedContext){
+  pastContext=context;
+  pastId=e.id;
+  pane=view?"preview":"past";
+  paneScroll={past:0,preview:0};
+  pastSignature="";
+ }
+
+ if(!pastList.some(x=>x.id===pastId)){
+  pastId=e.id;
+ }
+
+ $("pastTab").textContent="所有診症（"+pastList.length+"）";
+
+ const options=pastList.map(x=>{
+  const currentLabel=x.id===selected?"本次 · ":"";
+  const state=x.status==="completed"?"已完成":"未完成";
+  const diagnosis=T(x.diagnosis).slice(0,60)||"未填寫診斷";
+
+  return `<option value="${E(x.id)}">${E(currentLabel+x.date+" · "+state+" · "+diagnosis)}</option>`;
+ }).join("")||'<option value="">沒有診症紀錄</option>';
+
+ if($("pastPicker").innerHTML!==options){
+  $("pastPicker").innerHTML=options;
+ }
+
+ $("pastPicker").value=pastId;
+
+ applyPane();
+ drawPast();
 }
 function applyPane(){
  $("pastPanel").hidden=pane!=="past";$("previewPanel").hidden=pane!=="preview";
@@ -1989,34 +2103,160 @@ function switchPane(next){
  if(pane==="preview")requestAnimationFrame(scale)
 }
 function drawPast(){
- const e=pastList.find(e=>e.id===pastId);
- if(!e){$("pastBody").innerHTML='<div class="card">沒有較早的同一病人診症。</div>';return}
- const key=serial([e.id,e.updated,e.status,e.revisions.at(-1)?.id,e.versions.map(v=>[v.id,v.state])]);if(key===pastSignature)return;
+ const e=pastList.find(x=>x.id===pastId);
+
+ if(!e){
+  $("pastBody").innerHTML='<div class="card">沒有可供參閱的診症紀錄。</div>';
+  return;
+ }
+
+ const isCurrent=e.id===selected;
+
+ const key=serial([
+  e.id,
+  e.updated,
+  e.status,
+  isCurrent,
+  e.revisions.at(-1)?.id,
+  e.versions.map(v=>[v.id,v.state])
+ ]);
+
+ if(key===pastSignature)return;
  pastSignature=key;
- const r=e.revisions.at(-1),data=r?r.data:e;
- let rxdata=null,rxlabel="",version=null;
+
+ // 本次未完成診症顯示目前內容；
+ // 其他情況優先顯示最後一次完成時保存的紀錄。
+ const r=isCurrent&&e.status==="draft"
+  ?null
+  :e.revisions.at(-1);
+
+ const data=r?r.data:e;
+
+ let rxdata=null;
+ let rxlabel="";
+ let version=null;
+
  if(r){
   const entry=r.summary.find(x=>x.type==="rx");
-  if(entry?.issued){version=e.versions.find(v=>v.id===entry.issued.id);rxdata=version?.data;rxlabel="完成時記錄的處方版本"}
-  else if(drugs(data).length){rxdata=data;rxlabel="完成時保存的處方草稿 · 不代表已出具"}
- }else{version=effective(e,"rx");rxdata=version?version.data:e;rxlabel=version?"目前有效處方版本":"現存處方草稿 · 未出具"}
- const block=(label,value)=>`<section style="margin-top:14px"><h4>${E(label)}</h4><div class="past-text">${E(T(value)||"未填寫")}</div></section>`;
+
+  if(entry?.issued){
+   version=e.versions.find(v=>v.id===entry.issued.id);
+   rxdata=version?.data;
+   rxlabel="完成診症時記錄的處方";
+  }else if(drugs(data).length){
+   rxdata=data;
+   rxlabel="完成診症時保存的處方草稿，尚未簽發";
+  }
+ }else if(isCurrent&&e.status==="draft"){
+  rxdata=e;
+  version=effective(e,"rx");
+
+  rxlabel=version
+   ?different(e,"rx")
+    ?"目前處方草稿；內容與已簽發處方不同"
+    :"目前處方內容；與已簽發處方相同"
+   :"目前處方草稿，尚未簽發";
+ }else{
+  version=effective(e,"rx");
+  rxdata=version?version.data:e;
+  rxlabel=version
+   ?"目前有效的處方"
+   :"處方草稿，尚未簽發";
+ }
+
+ const block=(label,value)=>`
+  <section style="margin-top:14px">
+   <h4>${E(label)}</h4>
+   <div class="past-text">${E(T(value)||"未填寫")}</div>
+  </section>
+ `;
+
+ let notice="";
+
+ if(isCurrent&&e.status==="draft"){
+  notice=`
+   <div class="notice">
+    正在參閱本次未完成診症，內容可能尚未儲存。
+   </div>
+  `;
+ }else if(r&&e.status==="draft"){
+  notice=`
+   <div class="notice">
+    此診症已重新開啟。以下顯示最後一次完成時保存的紀錄，不包括其後尚未完成的修改。
+   </div>
+  `;
+ }else if(!r&&e.status==="draft"){
+  notice=`
+   <div class="notice">
+    以下為未完成的診症紀錄。
+   </div>
+  `;
+ }
+
  $("pastBody").innerHTML=`
- ${r&&e.status==="draft"?'<div class="notice">舊診症已重開；以下顯示最後完成快照，不含重開後未完成修改。</div>':!r&&e.status==="draft"?'<div class="notice">以下為未完成草稿。</div>':""}
- <section class="card"><h3>${E(e.date)} · ${E(pname(data.patient))}</h3><p class="small">${r?"最後完成快照："+E(stamp(r.savedAt)):"現存紀錄："+E(stamp(e.updated))}</p><pre>當時敏感紀錄：
+  ${notice}
+
+  <section class="card">
+   <h3>
+    ${isCurrent?"本次診症 · ":""}${E(data.date)}
+    · ${E(pname(data.patient))}
+   </h3>
+
+   <p class="small">
+    ${r
+     ?"完成時間："+E(stamp(r.savedAt))
+     :"最後修改："+E(stamp(e.updated))}
+   </p>
+
+   <pre>藥物敏感紀錄：
 ${E(allergy(data.patient))}
-當次覆核：${data.allergyReviewed?"已覆核":"未記錄"}</pre></section>
- <section class="card"><h3>病歷 SOAP</h3>${block("S · 主訴及病史",data.soap.s)}${block("O · 檢查及結果",data.soap.o)}${block("A · 診斷",data.diagnosis)}${block("A · 評估補充",data.soap.a)}${block("P · 治療計劃",data.soap.p)}</section>
- <section class="card"><h3>處方</h3><p class="small">${E(rxlabel||"未記錄處方")}${version?"<br>此版本目前狀態："+E(VSTATE[version.state]):""}</p><pre>${E(rxdata?shortSummary(rxdata,"rx"):"未記錄藥物")}</pre></section>
- ${INVS.filter(t=>data[t].items.length).map(t=>`<section class="card"><h3>${E(TYPES[t][0])}及跟進</h3>${data[t].items.map(i=>block(i.name,[i.details,ISTATE[i.status],i.result,"覆核："+(i.reviewed?"已覆核":"未覆核"),i.next,i.closed?"結案："+i.closureReason:"未結案"].filter(Boolean).join("\n"))).join("")}</section>`).join("")}
- `
+本次覆核：${data.allergyReviewed?"已覆核":"未記錄"}</pre>
+  </section>
+
+  <section class="card">
+   <h3>診症紀錄</h3>
+   ${block("Diagnosis 診斷",data.diagnosis)}
+   ${block("S · 主訴及病史",data.soap.s)}
+   ${block("O · 檢查及結果",data.soap.o)}
+   ${block("A · 臨床評估",data.soap.a)}
+   ${block("P · 治療計劃",data.soap.p)}
+  </section>
+
+  <section class="card">
+   <h3>處方</h3>
+   <p class="small">
+    ${E(rxlabel||"未記錄處方")}
+    ${version
+     ?"<br>已簽發版本的目前狀態："+E(VSTATE[version.state])
+     :""}
+   </p>
+   <pre>${E(rxdata?shortSummary(rxdata,"rx"):"未記錄藥物")}</pre>
+  </section>
+
+  ${INVS.filter(t=>data[t].items.length).map(t=>`
+   <section class="card">
+    <h3>${E(TYPES[t][0])}及跟進</h3>
+    ${data[t].items.map(i=>block(
+     i.name,
+     [
+      i.details,
+      ISTATE[i.status],
+      i.result,
+      "報告覆核："+(i.reviewed?"已覆核":"未覆核"),
+      i.next,
+      i.closed?"已結案："+i.closureReason:"未結案"
+     ].filter(Boolean).join("\n")
+    )).join("")}
+   </section>
+  `).join("")}
+ `;
 }
 
 /* 設定及簽名。 */
 function settingsModal(){
  signatureDraft=image(db.settings.signature);const s=db.settings;
  openModal("工作區設定",`
- <div class="notice">圖片簽名只係可複製圖片，不是數碼簽署。此版本敏感操作只核對登入 session，不是第二次身份驗證。設定不改寫舊文件版本及完成快照。</div>
+ <div class="notice">圖片簽名只係可複製圖片，不是數碼簽署。此版本敏感操作只核對登入 session，不是第二次身份驗證。更改設定不會影響已簽發文件及已完成的診症紀錄。</div>
  <div class="grid" style="margin-top:14px">${["nameCn","nameEn","phone","email","reg"].map(k=>`<div class="field"><label>${E({nameCn:"中文姓名",nameEn:"英文姓名",phone:"電話",email:"電郵",reg:"醫生註冊編號"}[k])}</label><input data-setting="${k}" value="${E(s[k])}"></div>`).join("")}</div>
  ${["qualCn","qualEn","address"].map(k=>`<div class="field"><label>${E({qualCn:"中文資歷",qualEn:"英文資歷",address:"診所地址"}[k])}</label><textarea data-setting="${k}">${E(s[k])}</textarea></div>`).join("")}
  <div class="field"><label for="idleMinutes">閒置登出分鐘（1–120）</label><input id="idleMinutes" type="number" min="1" max="120" step="1" value="${s.idleMinutes}"></div>
@@ -2055,7 +2295,7 @@ function countsHTML(d){return `<table class="ui"><tbody>${Object.entries(counts(
 function backupModal(){
  openModal("備份及還原",`<div class="notice">下載備份會另設密碼。啟動下載不證明檔案已保存，請自行確認並在獨立環境測試還原。
 備份保留本頁工作區資料；尚未按保存的彈窗表單不包括在內。
-雲端採帳戶式資料格式，唔係工作區端對端加密。</div>
+雲端採帳戶式資料格式，並非工作區端對端加密。</div>
  ${countsHTML(db)}<div class="row" style="margin-top:14px"><button data-act="export" class="primary">下載本頁加密備份</button>${recoveryCandidate?'<button data-act="exportCandidate">下載未確認操作候選備份</button>':""}<button data-act="import" ${conflict||uncertain?"disabled":""}>選取備份還原</button></div>
  <p class="small">舊版記錄的啟動匯出：${E(stamp(db.meta.lastExport))}<br>最近還原：${E(stamp(db.meta.lastRestore?.at))}</p>
  <p class="small">還原會整體取代雲端工作區，不係病人合併。舊 HTML 不會撤銷雲端寫入。</p>`,"backup")
@@ -2076,7 +2316,7 @@ async function stageBackup(file){
  const sourceSchema=data.schema;data=migrate(data);
  pendingRestore={data,filename:file.name,digest:await hash(data),sourceSchema};
  openModal("還原預覽 · 尚未修改雲端",`<p>${E(file.name)} · ${encrypted?"已解密":"明文原檔"}</p>${countsHTML(data)}
- <div class="notice">結構驗證唔代表病歷內容正確。確認還原前會要求下載現有工作區加密備份。必須自行確認檔案已保存。</div>
+ <div class="notice">結構驗證不代表病歷內容正確。確認還原前會要求下載現有工作區加密備份。必須自行確認檔案已保存。</div>
  <div class="field" style="margin-top:14px"><label for="restoreText">輸入 RESTORE 確認整體取代</label><input id="restoreText" autocomplete="off"></div>
  <div class="modal-footer"><button data-act="closeModal">取消</button><button data-act="confirmRestore" class="danger">備份目前資料後還原</button></div>`,"restore")
 }
@@ -2131,7 +2371,7 @@ async function dispatch(act,node=null){
  case "return":view=null;showErrors([]);pastContext="";render(false);break;
  case "tab":
   assert(!view,"請返回本次診症");tab=node.dataset.type;choice(tab,Object.keys(TYPES),"分頁");showErrors([]);render(false);$("editor").scrollTop=0;break;
- case "save":await run(()=>save(),{redraw:false});message("草稿已儲存；沒有出具文件、完成診症或列印。");break;
+ case "save":await run(()=>save(),{redraw:false});message("草稿已儲存；沒有簽發文件、完成診症或列印。");break;
  case "issue":openIssue();break;
  case "confirmIssue":await confirmIssue();break;
  case "complete":await completeEncounter();break;
@@ -2334,8 +2574,8 @@ $("loginForm").addEventListener("submit",async event=>{
   $("login").classList.add("hidden");$("app").classList.remove("hidden");
   $("sessionLabel").textContent=actor+" · 第4階段 · 雲端版本 "+rev;
   attachChannel();busy=false;render(false);applyWidth();lastActivity=Date.now();
-  status("已載入雲端版本 "+rev);
-  message("第4階段：請先用測試病人驗收。儲存草稿不會出具文件。雲端採帳戶式資料格式；下載備份另行加密。")
+  status("資料已載入，參考編號："+rev));
+  message("登入成功。請選擇病人，或繼續處理已開啟的診症。")
  }catch(e){
   if(!db){cloud.session=null;actor="";sessionId=""}
   $("loginMessage").textContent=e.message||"登入失敗"
