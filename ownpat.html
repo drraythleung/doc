@@ -837,20 +837,38 @@ async function save(){
  if(dirty!==saved)return save()
 }
 function changed(){
- const e=current();if(e)e.updated=now();
- dirty++;status(composing?"正在輸入中文…":"尚未儲存");
- clearTimeout(saveTimer);
-if(!composing)previewTimer=setTimeout(()=>{
- refreshHeader();
- refreshTabs();
- preview();
+ const e=current();
+ if(e)e.updated=now();
 
- if(pane==="past"&&pastId===selected){
-  const scroll=$("reference").scrollTop;
-  drawPast();
-  $("reference").scrollTop=scroll;
+ dirty++;
+ status(composing?"正在輸入中文…":"尚未儲存");
+
+ // 完成輸入後，自動儲存。
+ clearTimeout(saveTimer);
+
+ if(!composing){
+  saveTimer=setTimeout(()=>{
+   save().catch(()=>{});
+  },700);
  }
-},240);
+
+ // 延遲更新預覽，避免每次輸入都立即重建。
+ clearTimeout(previewTimer);
+
+ if(!composing){
+  previewTimer=setTimeout(()=>{
+   refreshHeader();
+   refreshTabs();
+   preview();
+
+   // 正在參閱本次診症時，同步更新右側內容。
+   if(pane==="past"&&pastId===selected){
+    const scroll=$("reference").scrollTop;
+    drawPast();
+    $("reference").scrollTop=scroll;
+   }
+  },240);
+ }
 }
 async function commit(fn,{nextId}={}){
  await save();
@@ -860,7 +878,7 @@ async function commit(fn,{nextId}={}){
  checkDB(candidate);
  try{await persistSnapshot(candidate)}catch(e){storageFailure(e,candidate);throw e}
  db=candidate;dirty++;saved=dirty;recoveryCandidate=null;
- status("已儲存至 Supabase · "+new Date().toLocaleTimeString())
+ status("已儲存 · "+new Date().toLocaleTimeString())
 }
 async function run(fn,{redraw=true}={}){
  assert(!busy&&!printing,"請等待目前操作完成");
@@ -2571,9 +2589,9 @@ $("loginForm").addEventListener("submit",async event=>{
   db=candidate;selected=db.encounters.some(e=>e.id===db.currentId)?db.currentId:db.encounters[0]?.id||"";
   tab="note";view=null;dirty=0;saved=0;pastContext="";recoveryCandidate=null;
   $("login").classList.add("hidden");$("app").classList.remove("hidden");
-  $("sessionLabel").textContent=actor+" · 第4階段 · 雲端版本 "+rev;
+  $("sessionLabel").textContent="登入帳戶："+actor;
   attachChannel();busy=false;render(false);applyWidth();lastActivity=Date.now();
-  status("資料已載入，參考編號："+rev));
+  status("資料已載入，參考編號："+rev);
   message("登入成功。請選擇病人，或繼續處理已開啟的診症。")
  }catch(e){
   if(!db){cloud.session=null;actor="";sessionId=""}
