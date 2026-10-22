@@ -1759,7 +1759,27 @@ function patientProfile(id=current()?.patientId){
  <section class="card"><h3>目前主檔</h3><div class="profile-grid">
  ${IDFIELDS.map(k=>fieldValue(LABELS[k],k==="dob"?fmt(p.data[k])+" ／ "+age(p.data[k],today()):p.data[k])).join("")}</div>
  <p class="small" style="margin-top:15px">主檔敏感紀錄（不代表本次已覆核）</p><pre>${E(allergy(p.data))}</pre></section>
- <section class="card"><h3>主檔聯絡資料</h3><p class="small">固定取自目前主檔；不會按 SOAP 修改時間推斷最新電話。</p><div class="profile-grid">${CONTACTS.map(k=>fieldValue(LABELS[k],p.data[k])).join("")}</div></section>
+ <section class="card">
+   <h3>主檔聯絡資料</h3>
+   <p class="small">
+    固定取自目前主檔；不會按 SOAP 修改時間推斷最新電話。
+   </p>
+
+   <div class="profile-grid">
+    ${fieldValue(LABELS.phone, p.data.phone)}
+    ${fieldValue(LABELS.email, p.data.email)}
+
+    <div style="grid-column:1 / -1">
+     ${fieldValue(LABELS.address, p.data.address)}
+    </div>
+
+    ${fieldValue(LABELS.contact1Name, p.data.contact1Name)}
+    ${fieldValue(LABELS.contact1Phone, p.data.contact1Phone)}
+
+    ${fieldValue(LABELS.contact2Name, p.data.contact2Name)}
+    ${fieldValue(LABELS.contact2Phone, p.data.contact2Phone)}
+   </div>
+  </section>
 <section class="card">
   <div class="section-head">
    <h3>已登記家人</h3>
