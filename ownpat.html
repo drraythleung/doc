@@ -1523,10 +1523,10 @@ function summaryHTML(rows){
 function noteBody(e,s){
  let h=
  section("Diagnosis 診斷",e.diagnosis)+
- section("S · Chief Complaint & History 主訴及病史",e.soap.s)+
- section("O · Examination & Investigations 檢查及結果",e.soap.o)+
- section("A · Assessment 臨床評估",e.soap.a)+
- section("P · Plan 治療計劃",e.soap.p)+
+ section("Chief Complaint & History 主訴及病史",e.soap.s)+
+ section("Examination & Investigations 檢查及結果",e.soap.o)+
+ section("Assessment 臨床評估",e.soap.a)+
+ section("Plan of Management 治療計劃",e.soap.p)+
  section(
   "Drug Allergies 藥物敏感",
   allergy(e.patient)+"\n本次覆核："+(e.allergyReviewed?"已覆核":"未記錄")
@@ -1541,12 +1541,12 @@ function docBody(e,t){
  if(t==="referral")return `<div class="recipient">${E(T(e.referral.to)||[e.referral.target,e.referral.institution].filter(Boolean).join("\n"))}</div><p>${E(e.referral.salutation)}</p>`+diagnosis(e)+`<div class="txt">${E(e.referral.body)}</div>`;
  if(t==="sick"){
   const x=e.sick;
-  return `<div class="recipient">致有關人士：\nTo Whom It May Concern,</div><p>茲證明上述病人經診症後獲建議休假，詳情如下。</p><p>This is to certify that the above-named patient has been advised to take sick leave as detailed below.</p>`+(x.showDiagnosis?diagnosis(e):"")+
-  `<section class="leave"><div><strong>病假日數 / Days</strong><span>${E(x.days)} 日 / day(s)</span></div><div><strong>由 / From</strong><span>${E(cnDate(x.from))}${x.fromPeriod==="AM"?"上午":"下午"}</span><span>${E(fmt(x.from))} · ${x.fromPeriod}</span></div><div><strong>至（包括）/ To (inclusive)</strong><span>${E(cnDate(x.to))}${x.toPeriod==="AM"?"上午":"下午"}</span><span>${E(fmt(x.to))} · ${x.toPeriod}</span></div></section>`+optional("Remarks / 備註",x.remarks)
+  return `<div class="recipient">To Whom It May Concern,\n致有關人士：</div><p>This is to certify that the above-named patient has been advised to take sick leave as detailed below.</p><p>茲證明上述病人經診症後獲建議休假，詳情如下。</p>`+(x.showDiagnosis?diagnosis(e):"")+
+  `<section class="leave"><div><strong>Day(s) of leave / 病假日數 </strong><span>${E(x.days)} day(s) / 日</span></div><div><strong>From / 由 </strong><span>${E(fmt(x.from))} · ${x.fromPeriod}</span><span>${E(cnDate(x.from))}${x.fromPeriod==="AM"?"上午":"下午"}</span></div><div><strong>To (inclusive) / 至（包括</strong><span>${E(fmt(x.to))} · ${x.toPeriod}</span><span>${E(cnDate(x.to))}${x.toPeriod==="AM"?"上午":"下午"}</span></div></section>`+optional("Remarks / 備註",x.remarks)
  }
  if(t==="attendance"){
   const x=e.attendance;
-  return `<div class="recipient">致有關人士：\nTo Whom It May Concern,</div><p>茲證明上述病人已於 ${E(cnDate(x.date))}${x.period==="AM"?"上午":"下午"} 到本處診治。</p><p>This is to certify that the above-named patient attended this practice on <strong>${E(fmt(x.date))} (${x.period})</strong>.</p>`+(x.showDiagnosis?diagnosis(e):"")+optional("Remarks / 備註",x.remarks)
+  return `<div class="recipient">致有關人士：\nTo Whom It May Concern,</div><p>茲證明上述病人已於<strong>${E(cnDate(x.date))}${x.period==="AM"?"上午":"下午"}</strong>到本處診治。</p><p>This is to certify that the above-named patient attended this practice on <strong>${E(fmt(x.date))} (${x.period})</strong>.</p>`+(x.showDiagnosis?diagnosis(e):"")+optional("Remarks / 備註",x.remarks)
  }
  if(t==="receipt")return `<p>Receipt No. <strong>${E(e.receipt.no)}</strong></p>`+(e.receipt.showDiagnosis?diagnosis(e):"")+table(["Description\n收費項目","Amount (HKD)\n金額（港元）"],items(e).map(i=>[i.desc,"$"+cash(i.amount)]),[72,28])+`<div class="total">Total / 總額 (HKD)　$${cash(total(e)/100)}</div><p style="margin-top:5mm">Payment Method 支付方式：${E(e.receipt.payment)}</p>`+optional("Remarks / 備註",e.receipt.remarks);
  if(t==="rx")return `<div class="allergy"><strong>Drug Allergies / 藥物敏感</strong>\n${E(allergy(e.patient))}</div>`+(e.rx.showDiagnosis?diagnosis(e):"")+table(["Medication\n藥物","Dose\n劑量","Frequency\n頻次","Route\n途徑","Duration / Qty\n療程／數量"],drugs(e).map((i,n)=>[(n+1)+". "+i.name,i.dose,i.frequency,i.route,i.duration]),[35,14,19,13,19])+optional("Instructions / Remarks 注意事項／備註",e.rx.remarks)+`<div class="end">—— End of Prescription 處方完 ——</div>`;
