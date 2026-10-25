@@ -304,6 +304,129 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7}
 #modal table.ui.profile-compact.encounter-table{
  min-width:620px;
 }
+ /* 醫生排班及酬金：只影響此模組 */
+#modal:has(.dw-root){
+ width:min(1180px,96vw);
+}
+
+.dw-root .dw-tabs{
+ display:flex;
+ gap:7px;
+ flex-wrap:wrap;
+ margin:14px 0;
+}
+
+.dw-root .dw-tabs button.active{
+ background:var(--accent);
+ border-color:var(--accent);
+ color:#fff;
+}
+
+.dw-root .dw-filters{
+ display:flex;
+ align-items:flex-end;
+ gap:8px;
+ flex-wrap:wrap;
+}
+
+.dw-root .dw-filters .field{
+ margin:0;
+ min-width:160px;
+ flex:1;
+}
+
+.dw-root .dw-calendar{
+ display:grid;
+ grid-template-columns:repeat(7,minmax(0,1fr));
+ gap:5px;
+ min-width:760px;
+}
+
+.dw-root .dw-weekday{
+ text-align:center;
+ padding:8px;
+ font-weight:bold;
+ background:#eaf0f2;
+ border-radius:6px;
+}
+
+.dw-root .dw-day{
+ min-height:125px;
+ padding:7px;
+ background:#fff;
+ border:1px solid var(--line);
+ border-radius:7px;
+}
+
+.dw-root .dw-day.outside{
+ background:#f2f5f6;
+ opacity:.65;
+}
+
+.dw-root .dw-day.today{
+ border:2px solid var(--accent);
+}
+
+.dw-root .dw-date{
+ min-height:26px;
+ padding:2px 6px;
+ font-size:12px;
+}
+
+.dw-root .dw-shift{
+ display:block;
+ width:100%;
+ margin-top:6px;
+ padding:6px;
+ text-align:left;
+ white-space:normal;
+ font-size:12px;
+ border-left:5px solid var(--dw-color,var(--accent));
+}
+
+.dw-root .dw-shift.cancelled{
+ opacity:.55;
+ text-decoration:line-through;
+}
+
+.dw-root .dw-stat{
+ padding:12px;
+ border:1px solid var(--line);
+ border-radius:8px;
+ background:#f7faf9;
+}
+
+.dw-root .dw-stat strong{
+ display:block;
+ font-size:18px;
+ margin-top:5px;
+}
+
+.dw-root .dw-muted{
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.7;
+}
+
+.dw-root .dw-amount{
+ white-space:nowrap;
+ font-variant-numeric:tabular-nums;
+}
+
+.dw-root table.ui{
+ min-width:720px;
+}
+
+.dw-root table.ui button{
+ min-height:30px;
+ padding:4px 8px;
+}
+
+@media(max-width:820px){
+ .dw-root .dw-filters .field{
+  min-width:130px;
+ }
+}
 </style>
 </head>
 <body>
@@ -335,6 +458,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7}
    <button data-act="registerPatient">登記新病人</button>
    <button data-act="registry">病人名單</button>
    <button data-act="followups">檢查跟進</button>
+   <button data-act="dwOpen">醫生排班</button>
    <details class="menu">
     <summary>管理及設定</summary>
     <div class="menu-panel">
@@ -759,7 +883,12 @@ function checkDB(d){
    if(r.active){const pair=JSON.stringify([r.a,r.b].sort());assert(!pairs.has(pair),"關係重複");pairs.add(pair)}
   }
  }
- assert(O(d.meta)&&O(d.meta.checks)&&Array.isArray(d.meta.security),"管理資料格式錯誤");
+assert(O(d.meta)&&O(d.meta.checks)&&Array.isArray(d.meta.security),"管理資料格式錯誤");
+
+ if(d.doctorWork!==undefined){
+  checkDoctorWork(d.doctorWork);
+ }
+
  return d
 }
 function migrate(raw){
@@ -2354,7 +2483,21 @@ async function saveSettings(){
 }
 
 /* 還原：先下載現有工作區備份；取消下載密碼即中止還原。 */
-function counts(d){return {病人主檔:d.patients.length,診症:d.encounters.length,文件版本:d.encounters.reduce((n,e)=>n+e.versions.length,0),完成快照:d.encounters.reduce((n,e)=>n+e.revisions.length,0),檢查:d.encounters.reduce((n,e)=>n+orders(e).length,0),範本:d.templates.length,家人關係:(d.patientRelations||[]).length}}
+function counts(d){
+ return {
+  病人主檔:d.patients.length,
+  診症:d.encounters.length,
+  文件版本:d.encounters.reduce((n,e)=>n+e.versions.length,0),
+  完成快照:d.encounters.reduce((n,e)=>n+e.revisions.length,0),
+  檢查:d.encounters.reduce((n,e)=>n+orders(e).length,0),
+  範本:d.templates.length,
+  家人關係:(d.patientRelations||[]).length,
+  醫生工作地點:d.doctorWork?.clinics.length||0,
+  醫生更次:d.doctorWork?.shifts.length||0,
+  醫生月結:d.doctorWork?.settlements.length||0,
+  醫生收款紀錄:d.doctorWork?.payments.length||0
+ };
+}
 function countsHTML(d){return `<table class="ui"><tbody>${Object.entries(counts(d)).map(([k,n])=>`<tr><th>${E(k)}</th><td>${n}</td></tr>`).join("")}</tbody></table>`}
 function backupModal(){
  openModal("備份及還原",`<div class="notice">下載備份會另設密碼。啟動下載不證明檔案已保存，請自行確認並在獨立環境測試還原。
@@ -2410,12 +2553,1465 @@ function qualityModal(){
  <div class="row"><button data-act="export">下載加密備份</button>${db.meta.lastRestore?'<button data-act="verifyRestore">記錄已核對還原內容</button>':""}</div>
  `,"quality")
 }
+/* =========================================================
+   醫生排班及酬金 v1
+   獨立於病人收據；沿用工作區儲存、衝突保護及加密備份。
+   金額以整數分計算；計薪以半小時單位保存。
+   ========================================================= */
 
+const DW_CLINICS=[
+ {
+  id:"dw-hks-mk",
+  name:"香港專科 — 旺角雅蘭",
+  color:"#376aaf",
+  mode:"max",
+  hourly:80000,
+  surgery:60,
+  consult:70,
+  breakMinutes:60
+ },
+ {
+  id:"dw-ham-cwb",
+  name:"港安醫療 — 銅鑼灣",
+  color:"#39846a",
+  mode:"hourly",
+  hourly:85000,
+  surgery:0,
+  consult:0,
+  breakMinutes:60
+ },
+ {
+  id:"dw-ham-tqb",
+  name:"港安醫療 — 太古坊",
+  color:"#9263b0",
+  mode:"hourly",
+  hourly:85000,
+  surgery:0,
+  consult:0,
+  breakMinutes:60
+ },
+ {
+  id:"dw-hah-sr",
+  name:"港安醫院 — 司徒拔道",
+  color:"#bc7830",
+  mode:"plus",
+  hourly:90000,
+  surgery:0,
+  consult:20,
+  breakMinutes:60
+ }
+];
+
+const DW_STATUS={
+ tentative:"暫定",
+ confirmed:"已確認",
+ completed:"已完成",
+ cancelled:"已取消"
+};
+
+const DW_PAGES={
+ calendar:"月曆排班",
+ shifts:"更次清單",
+ money:"月結酬金",
+ clinics:"診所設定"
+};
+
+let dwState={
+ month:today().slice(0,7),
+ clinic:"",
+ page:"calendar"
+};
+
+function dwEmpty(){
+ return {
+  version:1,
+  clinics:C(DW_CLINICS),
+  shifts:[],
+  settlements:[],
+  payments:[],
+  audit:[]
+ };
+}
+
+function dwRead(d=db){
+ return d?.doctorWork||dwEmpty();
+}
+
+function dwWrite(d){
+ d.doctorWork??=dwEmpty();
+ return d.doctorWork;
+}
+
+function dwLog(w,action,details){
+ w.audit.push({
+  at:now(),
+  actor,
+  sessionId,
+  action,
+  details
+ });
+}
+
+function dwMonthOK(v){
+ return /^\d{4}-\d{2}$/.test(S(v))&&dateOK(v+"-01");
+}
+
+function dwMonthKey(clinicId,month){
+ return clinicId+"|"+month;
+}
+
+function dwClinic(w,id){
+ const c=w.clinics.find(c=>c.id===id);
+ assert(c,"找不到工作地點");
+ return c;
+}
+
+function dwTerms(c){
+ return {
+  mode:c.mode,
+  hourly:c.hourly,
+  surgery:c.surgery,
+  consult:c.consult
+ };
+}
+
+function dwRule(t){
+ if(t.mode==="max"){
+  return "全月時數 × $"+cash(t.hourly/100)+
+   "，或手術費 × "+t.surgery+"% ＋ 診金 × "+
+   t.consult+"%，全月合計取較高";
+ }
+
+ if(t.mode==="plus"){
+  return "全月時數 × $"+cash(t.hourly/100)+
+   " ＋ 診金 × "+t.consult+"%";
+ }
+
+ return "全月時數 × $"+cash(t.hourly/100);
+}
+
+function dwDT(v){
+ if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(S(v))){
+  return NaN;
+ }
+
+ if(!dateOK(v.slice(0,10)))return NaN;
+
+ const h=+v.slice(11,13);
+ const m=+v.slice(14,16);
+
+ if(h>23||m>59)return NaN;
+
+ return Date.parse(v.slice(0,10)+"T00:00:00Z")+
+  (h*60+m)*60000;
+}
+
+function dwDayAdd(day,n){
+ const d=new Date(day+"T12:00:00Z");
+ d.setUTCDate(d.getUTCDate()+n);
+ return d.toISOString().slice(0,10);
+}
+
+function dwNextMonth(month,n){
+ const d=new Date(month+"-01T12:00:00Z");
+ d.setUTCMonth(d.getUTCMonth()+n);
+ return d.toISOString().slice(0,7);
+}
+
+function dwAmount(value,required=false){
+ if(!T(value)){
+  assert(!required,"請填寫金額；沒有收入請明確填 0");
+  return null;
+ }
+
+ const n=cents(value);
+
+ assert(
+  Number.isSafeInteger(n)&&n>=0&&n<=100000000000,
+  "金額無效或超出此模組上限"
+ );
+
+ return n;
+}
+
+function dwMoney(n){
+ return n===null||n===undefined?"待補資料":"HKD "+cash(n/100);
+}
+
+function dwSettlement(w,clinicId,month){
+ return w.settlements.find(
+  m=>m.id===dwMonthKey(clinicId,month)
+ );
+}
+
+function dwRows(w,clinicId,month){
+ return w.shifts.filter(
+  s=>s.clinicId===clinicId&&s.start.slice(0,7)===month
+ ).slice().sort(
+  (a,b)=>a.start.localeCompare(b.start)||a.id.localeCompare(b.id)
+ );
+}
+
+function dwPaid(w,settlementId){
+ const amount=w.payments
+  .filter(p=>p.settlementId===settlementId&&!p.void)
+  .reduce((sum,p)=>sum+dwAmount(p.amount,true),0);
+
+ assert(Number.isSafeInteger(amount),"收款合計超出上限");
+ return amount;
+}
+
+function dwUnlocked(w,clinicId,month){
+ assert(
+  dwSettlement(w,clinicId,month)?.state!=="confirmed",
+  "此工作地點的月份已確認月結。請先處理收款並重開月結，才可修改排班。"
+ );
+}
+
+function dwDuration(s){
+ const start=s.actualStart||s.start;
+ const end=s.actualEnd||s.end;
+ const minutes=(dwDT(end)-dwDT(start))/60000;
+
+ assert(
+  Number.isFinite(minutes)&&minutes>0&&minutes<=1440,
+  "開始及結束時間無效；每更最多支援 24 小時"
+ );
+
+ assert(
+  Number.isInteger(s.breakMinutes)&&
+  s.breakMinutes>=0&&s.breakMinutes<=minutes,
+  "無薪休息時間不可超過該更時長"
+ );
+
+ return minutes-s.breakMinutes;
+}
+
+function dwCalc(w,clinicId,month,input={}){
+ const c=dwClinic(w,clinicId);
+ const rows=dwRows(w,clinicId,month);
+ const done=rows.filter(s=>s.status==="completed");
+ const pending=rows.filter(
+  s=>s.status!=="completed"&&s.status!=="cancelled"
+ );
+
+ const terms=done.length?done[0].terms:dwTerms(c);
+
+ assert(
+  done.every(s=>
+   s.terms.mode===terms.mode&&
+   s.terms.surgery===terms.surgery&&
+   s.terms.consult===terms.consult
+  ),
+  "同月分成條款不一致，不能直接合併自動結算"
+ );
+
+ const units=done.reduce((n,s)=>n+s.paidUnits,0);
+ const base=done.reduce(
+  (n,s)=>n+Math.round(s.terms.hourly*s.paidUnits/2),0
+ );
+
+ assert(Number.isSafeInteger(base),"時薪合計超出上限");
+
+ const basis=input.basis||"monthly";
+ const missing=[];
+
+ function getBase(field,needed,label){
+  if(!needed)return 0;
+
+  if(basis==="shifts"){
+   let sum=0;
+
+   for(const s of done){
+    const amount=dwAmount(s[field]);
+
+    if(amount===null){
+     missing.push(s.start.slice(0,10)+" "+label);
+    }else{
+     sum+=amount;
+    }
+   }
+
+   assert(
+    Number.isSafeInteger(sum)&&sum<=100000000000,
+    "分成計算基數合計超出上限"
+   );
+
+   return sum;
+  }
+
+  const amount=dwAmount(input[field]);
+
+  if(amount===null){
+   missing.push("全月"+label);
+   return 0;
+  }
+
+  return amount;
+ }
+
+ const surgery=getBase("surgeryBase",terms.mode==="max","手術費基數");
+ const consult=getBase("consultBase",terms.mode!=="hourly","診金基數");
+
+ const share=Math.round(
+  (surgery*terms.surgery+consult*terms.consult)/100
+ );
+
+ const expected=missing.length?null:
+  terms.mode==="max"?Math.max(base,share):
+  terms.mode==="plus"?base+share:
+  base;
+
+ assert(
+  expected===null||Number.isSafeInteger(expected),
+  "應收金額超出上限"
+ );
+
+ return {
+  hours:units/2,
+  completed:done.length,
+  pending:pending.length,
+  baseCents:base,
+  surgeryCents:surgery,
+  consultCents:consult,
+  shareCents:share,
+  expectedCents:expected,
+  missing,
+  source:serial({
+   rows,
+   basis,
+   surgeryBase:basis==="monthly"?S(input.surgeryBase):"",
+   consultBase:basis==="monthly"?S(input.consultBase):""
+  })
+ };
+}
+
+/* 結構檢查：舊工作區沒有 doctorWork 仍可開啟。 */
+function checkDoctorWork(w){
+ assert(O(w)&&w.version===1,"醫生排班資料版本不支援");
+
+ ["clinics","shifts","settlements","payments","audit"].forEach(
+  k=>arr(w[k],"醫生排班."+k)
+ );
+
+ unique(w.clinics.map(c=>c.id),"工作地點 ID");
+ unique(w.shifts.map(s=>s.id),"更次 ID");
+ unique(w.settlements.map(m=>m.id),"月結 ID");
+ unique(w.payments.map(p=>p.id),"收款 ID");
+
+ function checkTerms(t){
+  assert(O(t),"酬金條款缺失");
+  choice(t.mode,["max","hourly","plus"],"酬金方式");
+
+  assert(
+   Number.isSafeInteger(t.hourly)&&
+   t.hourly>=0&&t.hourly<=100000000,
+   "時薪設定無效"
+  );
+
+  ["surgery","consult"].forEach(k=>{
+   assert(
+    Number.isInteger(t[k])&&t[k]>=0&&t[k]<=100,
+    "分成百分比無效"
+   );
+  });
+ }
+
+ for(const c of w.clinics){
+  str(c.name,"工作地點名稱");
+  assert(T(c.name),"工作地點名稱不可空白");
+  assert(/^#[0-9a-f]{6}$/i.test(c.color),"工作地點顏色無效");
+  checkTerms(c);
+
+  assert(
+   Number.isInteger(c.breakMinutes)&&
+   c.breakMinutes>=0&&c.breakMinutes<=1440,
+   "預設休息時間無效"
+  );
+ }
+
+ for(const s of w.shifts){
+  dwClinic(w,s.clinicId);
+  choice(s.status,Object.keys(DW_STATUS),"排班狀態");
+  checkTerms(s.terms);
+
+  ["start","end","actualStart","actualEnd","note",
+   "overrideReason","surgeryBase","consultBase",
+   "createdAt","updatedAt"].forEach(k=>str(s[k],"更次."+k));
+
+  assert(
+   Number.isFinite(dwDT(s.start))&&
+   Number.isFinite(dwDT(s.end))&&
+   dwDT(s.end)>dwDT(s.start)&&
+   dwDT(s.end)-dwDT(s.start)<=86400000,
+   "排班時間無效"
+  );
+
+  assert(
+   !!s.actualStart===!!s.actualEnd,
+   "實際開始及結束時間須一併填寫"
+  );
+
+  if(s.actualStart){
+   assert(
+    Number.isFinite(dwDT(s.actualStart))&&
+    Number.isFinite(dwDT(s.actualEnd))&&
+    s.actualStart.slice(0,10)===s.start.slice(0,10),
+    "實際時間無效，或實際開始日與排班日期不符"
+   );
+  }
+
+  if(s.status==="completed"){
+   assert(s.actualStart&&s.actualEnd,"已完成更次須有實際時間");
+  }
+
+  assert(
+   Number.isInteger(s.paidUnits)&&
+   s.paidUnits>=0&&s.paidUnits<=48,
+   "計薪時數須為半小時單位"
+  );
+
+  const minutes=dwDuration(s);
+
+  if(s.paidUnits*30!==minutes){
+   assert(T(s.overrideReason),"修正計薪時數須填原因");
+  }
+
+  dwAmount(s.surgeryBase);
+  dwAmount(s.consultBase);
+ }
+
+ for(const m of w.settlements){
+  dwClinic(w,m.clinicId);
+
+  assert(
+   dwMonthOK(m.month)&&m.id===dwMonthKey(m.clinicId,m.month),
+   "月結月份或 ID 無效"
+  );
+
+  choice(m.state,["draft","confirmed"],"月結狀態");
+  choice(m.basis,["monthly","shifts"],"分成資料來源");
+
+  ["surgeryBase","consultBase","agreed","differenceReason",
+   "note","updatedAt","confirmedAt","confirmedBy"].forEach(
+   k=>str(m[k],"月結."+k)
+  );
+
+  dwAmount(m.surgeryBase);
+  dwAmount(m.consultBase);
+  dwAmount(m.agreed);
+
+  if(m.state==="confirmed"){
+   const calc=dwCalc(w,m.clinicId,m.month,m);
+   const agreed=dwAmount(m.agreed,true);
+
+   assert(
+    calc.completed>0&&calc.pending===0&&
+    calc.expectedCents!==null,
+    "已確認月結仍有未完成更次或缺少分成資料"
+   );
+
+   assert(equal(m.calculation,calc),"已確認月結的來源或計算不符");
+
+   if(agreed!==calc.expectedCents){
+    assert(T(m.differenceReason),"月結差額須有原因");
+   }
+  }else{
+   assert(m.calculation===null,"未確認月結不應有確認快照");
+  }
+ }
+
+ for(const p of w.payments){
+  const m=w.settlements.find(m=>m.id===p.settlementId);
+  assert(m,"收款缺少對應月結");
+
+  ["amount","date","note","createdAt","createdBy"].forEach(
+   k=>str(p[k],"收款."+k)
+  );
+
+  assert(dwAmount(p.amount,true)>0,"收款金額須大於零");
+  assert(dateOK(p.date),"收款日期無效");
+  bool(p.void,"收款作廢狀態");
+
+  if(p.void){
+   str(p.voidReason,"收款作廢原因");
+   assert(T(p.voidReason),"收款作廢須有原因");
+  }else{
+   assert(m.state==="confirmed","有效收款的月結必須已確認");
+  }
+ }
+
+ for(const m of w.settlements){
+  const paid=dwPaid(w,m.id);
+
+  if(paid){
+   assert(
+    m.state==="confirmed"&&paid<=dwAmount(m.agreed,true),
+    "有效收款不可超過確認應收"
+   );
+  }
+ }
+}
+
+function dwField(label,id,value="",type="text",extra=""){
+ return `<div class="field">
+  <label for="${id}">${E(label)}</label>
+  <input id="${id}" type="${type}" value="${E(value)}" ${extra}>
+ </div>`;
+}
+
+function dwSelect(label,id,value,options){
+ return `<div class="field">
+  <label for="${id}">${E(label)}</label>
+  <select id="${id}">
+   ${Object.entries(options).map(([k,v])=>`
+    <option value="${E(k)}" ${k===value?"selected":""}>${E(v)}</option>
+   `).join("")}
+  </select>
+ </div>`;
+}
+
+function dwReadFilters(){
+ if(!$("dwFilterMonth"))return;
+
+ const month=$("dwFilterMonth").value;
+ assert(dwMonthOK(month),"請選擇有效月份");
+
+ dwState.month=month;
+ dwState.clinic=$("dwFilterClinic").value;
+}
+
+function dwScreen(page=dwState.page,readFilters=false){
+ if(readFilters)dwReadFilters();
+
+ choice(page,Object.keys(DW_PAGES),"排班頁面");
+ dwState.page=page;
+
+ const w=dwRead();
+ const month=dwState.month;
+ const clinics=w.clinics.filter(
+  c=>!dwState.clinic||c.id===dwState.clinic
+ );
+
+ const rows=w.shifts.filter(
+  s=>s.start.slice(0,7)===month&&
+   (!dwState.clinic||s.clinicId===dwState.clinic)
+ ).slice().sort((a,b)=>a.start.localeCompare(b.start));
+
+ let body="";
+
+ if(page==="calendar"){
+  const first=month+"-01";
+  const weekday=new Date(first+"T12:00:00Z").getUTCDay();
+  const begin=dwDayAdd(first,-((weekday+6)%7));
+
+  body=`<div class="scrolltable">
+   <div class="dw-calendar">
+    ${["一","二","三","四","五","六","日"].map(
+     d=>`<div class="dw-weekday">星期${d}</div>`
+    ).join("")}
+
+    ${Array.from({length:42},(_,n)=>{
+     const day=dwDayAdd(begin,n);
+     const shifts=rows.filter(s=>s.start.slice(0,10)===day);
+
+     return `<section class="dw-day
+      ${day.slice(0,7)!==month?"outside":""}
+      ${day===today()?"today":""}">
+
+      <button class="dw-date" data-act="dwNew"
+       data-date="${day}" title="新增此日更次">
+       ${+day.slice(8,10)} ＋
+      </button>
+
+      ${shifts.map(s=>{
+       const c=dwClinic(w,s.clinicId);
+
+       return `<button
+        class="dw-shift ${s.status==="cancelled"?"cancelled":""}"
+        style="--dw-color:${c.color}"
+        data-act="dwEdit" data-id="${E(s.id)}">
+        <strong>${E(s.start.slice(11))}–${E(s.end.slice(11))}</strong><br>
+        ${E(c.name)}<br>
+        ${E(DW_STATUS[s.status])} · ${s.paidUnits/2} 小時
+       </button>`;
+      }).join("")}
+     </section>`;
+    }).join("")}
+   </div>
+  </div>`;
+ }
+
+ if(page==="shifts"){
+  body=`<div class="scrolltable"><table class="ui">
+   <thead><tr>
+    <th>日期／排班時間</th><th>工作地點</th>
+    <th>狀態</th><th>計薪時數</th><th>備註／操作</th>
+   </tr></thead>
+   <tbody>
+    ${rows.map(s=>`<tr>
+     <td>${E(s.start.replace("T"," "))}<br>至 ${E(s.end.replace("T"," "))}</td>
+     <td>${E(dwClinic(w,s.clinicId).name)}</td>
+     <td>${E(DW_STATUS[s.status])}</td>
+     <td>${s.paidUnits/2} 小時<br>無薪休息 ${s.breakMinutes} 分鐘</td>
+     <td>${E(s.note)}<br>
+      <button data-act="dwEdit" data-id="${E(s.id)}">查看／修改</button>
+      ${s.status!=="cancelled"?`
+       <button data-act="dwCancel" data-id="${E(s.id)}" class="danger">
+        取消此更
+       </button>`:""}
+     </td>
+    </tr>`).join("")||'<tr><td colspan="5">此月份沒有更次。</td></tr>'}
+   </tbody>
+  </table></div>`;
+ }
+
+ if(page==="money"){
+  body=`<p class="dw-muted">
+   試算只計已完成更次；未確認試算不列入確認應收。
+   月份依更次開始日期歸屬，收款日期則另行記錄。
+  </p>
+  <div class="scrolltable"><table class="ui">
+   <thead><tr>
+    <th>工作地點</th><th>已完成／待完成</th>
+    <th>計薪時數</th><th>系統試算</th>
+    <th>確認應收</th><th>已收／尚欠</th><th>操作</th>
+   </tr></thead>
+   <tbody>
+    ${clinics.map(c=>{
+     const m=dwSettlement(w,c.id,month);
+     const calc=dwCalc(w,c.id,month,m||{});
+     const confirmed=m?.state==="confirmed";
+     const agreed=confirmed?dwAmount(m.agreed,true):null;
+     const paid=m?dwPaid(w,m.id):0;
+
+     return `<tr>
+      <td>${E(c.name)}</td>
+      <td>${calc.completed}／${calc.pending}</td>
+      <td>${calc.hours} 小時</td>
+      <td class="dw-amount">${dwMoney(calc.expectedCents)}</td>
+      <td class="dw-amount">${confirmed?dwMoney(agreed):"未確認"}</td>
+      <td>${dwMoney(paid)}<br>
+       尚欠：${confirmed?dwMoney(agreed-paid):"未確認"}
+      </td>
+      <td><button data-act="dwMonth"
+       data-clinic="${c.id}" data-month="${month}">
+       ${confirmed?"查看月結／收款":"填寫／核對月結"}
+      </button></td>
+     </tr>`;
+    }).join("")}
+   </tbody>
+  </table></div>`;
+ }
+
+ if(page==="clinics"){
+  body=clinics.map(c=>`
+   <section class="card" style="border-left:5px solid ${c.color}">
+    <h3>${E(c.name)}</h3>
+    <p>${E(dwRule(c))}</p>
+    <p class="dw-muted">
+     付款安排：月結。無薪食飯時間預設 ${c.breakMinutes} 分鐘，
+     可於每更修改或設為 0。<br>
+     目前先固定使用已確認條款；每更另保存當時條款。
+    </p>
+   </section>
+  `).join("");
+ }
+
+ openModal("醫生排班及酬金",`
+  <div class="dw-root">
+   <div class="notice">此模組獨立記錄工作及酬金，不讀取病人收據收入。
+所有金額以港元記錄；「月結」不代表已收款。</div>
+
+   <div class="dw-tabs">
+    ${Object.entries(DW_PAGES).map(([k,v])=>`
+     <button data-act="dwView" data-page="${k}"
+      class="${page===k?"active":""}">${E(v)}</button>
+    `).join("")}
+   </div>
+
+   <div class="dw-filters">
+    ${dwField("月份","dwFilterMonth",month,"month")}
+    ${dwSelect("工作地點","dwFilterClinic",dwState.clinic,{
+     "":"全部地點",
+     ...Object.fromEntries(w.clinics.map(c=>[c.id,c.name]))
+    })}
+    <button data-act="dwPrev">← 上月</button>
+    <button data-act="dwNext">下月 →</button>
+    <button data-act="dwRefresh">套用篩選</button>
+    <button data-act="dwNew" class="primary">＋ 新增更次</button>
+   </div>
+
+   <div style="margin-top:16px">${body}</div>
+  </div>
+ `,"dwScreen");
+}
+
+function dwEdit(id="",day=""){
+ dwReadFilters();
+
+ const w=dwRead();
+ const old=id?w.shifts.find(s=>s.id===id):null;
+ assert(!id||old,"找不到更次");
+
+ const date=day||(
+  dwState.month===today().slice(0,7)?
+   today():dwState.month+"-01"
+ );
+
+ const clinic=old?.clinicId||dwState.clinic||w.clinics[0].id;
+ const c=dwClinic(w,clinic);
+
+ const s=old||{
+  id:"",
+  clinicId:clinic,
+  start:date+"T09:00",
+  end:date+"T18:00",
+  actualStart:"",
+  actualEnd:"",
+  breakMinutes:c.breakMinutes,
+  paidUnits:16,
+  status:"confirmed",
+  surgeryBase:"",
+  consultBase:"",
+  note:"",
+  overrideReason:""
+ };
+
+ const locked=dwSettlement(
+  w,s.clinicId,s.start.slice(0,7)
+ )?.state==="confirmed";
+
+ openModal(id?"更次資料":"新增更次",`
+  <div class="dw-root">
+   ${locked?'<div class="notice">此月份已確認月結，只供查看。</div>':""}
+   <input id="dwShiftId" type="hidden" value="${E(s.id)}">
+
+   <fieldset ${locked?"disabled":""}>
+    ${dwSelect("工作地點","dwShiftClinic",s.clinicId,
+     Object.fromEntries(w.clinics.map(c=>[c.id,c.name]))
+    )}
+
+    <div class="grid">
+     ${dwField("排班開始","dwStart",s.start,"datetime-local")}
+     ${dwField("排班結束","dwEnd",s.end,"datetime-local")}
+    </div>
+
+    ${dwSelect("排班狀態","dwShiftStatus",s.status,DW_STATUS)}
+
+    <p class="dw-muted">
+     標記已完成時，請填寫實際時間。跨夜更次請選擇正確結束日期。
+    </p>
+
+    <div class="grid">
+     ${dwField("實際開始","dwActualStart",s.actualStart,"datetime-local")}
+     ${dwField("實際結束","dwActualEnd",s.actualEnd,"datetime-local")}
+    </div>
+
+    <div class="row" style="margin-bottom:14px">
+     <button data-act="dwCopyActual">將排班時間填入實際時間</button>
+    </div>
+
+    <div class="grid">
+     ${dwField("無薪食飯／休息（分鐘）","dwBreak",
+      s.breakMinutes,"number",'min="0" max="1440" step="1"')}
+     ${dwField("確認計薪時數（每 0.5 小時）","dwHours",
+      s.paidUnits/2,"number",'min="0" max="24" step="0.5"')}
+    </div>
+
+    <button data-act="dwCalculateHours">按時間重新計算時數</button>
+
+    <div class="field" style="margin-top:14px">
+     <label for="dwOverride">時數修正原因（與扣除休息後的時間不同時必填）</label>
+     <textarea id="dwOverride">${E(s.overrideReason)}</textarea>
+    </div>
+
+    <details class="card">
+     <summary>逐更分成基數（選用；不連動收據）</summary>
+     <p class="dw-muted">
+      只有月結選擇「逐更加總」才採用。
+      如選「直接填月總數」，以下數字不會再加入月總數。
+      沒有相關收入時請填 0，未收到數字則留空。
+     </p>
+     <div class="grid">
+      ${dwField("手術費基數 HKD","dwShiftSurgery",
+       s.surgeryBase,"number",'min="0" step="0.01"')}
+      ${dwField("診金基數 HKD","dwShiftConsult",
+       s.consultBase,"number",'min="0" step="0.01"')}
+     </div>
+    </details>
+
+    <div class="field">
+     <label for="dwShiftNote">備註</label>
+     <textarea id="dwShiftNote">${E(s.note)}</textarea>
+    </div>
+   </fieldset>
+
+   <div class="modal-footer">
+    <button data-act="dwView" data-page="shifts">返回清單</button>
+    ${locked?"":'<button data-act="dwSaveShift" class="primary">保存更次</button>'}
+   </div>
+  </div>
+ `,"dwShift",{
+  editable:!locked,
+  saveAction:locked?"":"dwSaveShift"
+ });
+}
+
+function dwCalculateHours(copyActual=false){
+ if(copyActual){
+  $("dwActualStart").value=$("dwStart").value;
+  $("dwActualEnd").value=$("dwEnd").value;
+ }
+
+ const a=$("dwActualStart").value;
+ const b=$("dwActualEnd").value;
+
+ assert(!!a===!!b,"實際開始及結束時間須一併填寫");
+
+ const minutes=dwDuration({
+  start:$("dwStart").value,
+  end:$("dwEnd").value,
+  actualStart:a,
+  actualEnd:b,
+  breakMinutes:Number($("dwBreak").value)
+ });
+
+ assert(
+  Number.isInteger(minutes/30),
+  "扣除休息後為 "+minutes+" 分鐘，並非半小時整數。"+
+  "請自行確認計薪時數，並填寫時數修正原因；系統不會自動進位。"
+ );
+
+ $("dwHours").value=minutes/60;
+ modalError("");
+}
+
+async function dwSaveShift(){
+ const w=dwRead();
+ const id=$("dwShiftId").value;
+ const old=id?w.shifts.find(s=>s.id===id):null;
+
+ assert(!id||old,"找不到原有更次");
+
+ const clinicId=$("dwShiftClinic").value;
+ const c=dwClinic(w,clinicId);
+ const hoursText=T($("dwHours").value);
+
+ assert(hoursText!=="","請填寫確認計薪時數");
+
+ const hours=Number(hoursText);
+
+ assert(
+  Number.isFinite(hours)&&hours>=0&&hours<=24&&
+  Number.isInteger(hours*2),
+  "計薪時數須為 0 至 24 小時，並以 0.5 小時為單位"
+ );
+
+ assert(T($("dwBreak").value)!=="","請填寫休息分鐘；沒有休息請填 0");
+
+ const s={
+  id:old?.id||uid(),
+  clinicId,
+  start:$("dwStart").value,
+  end:$("dwEnd").value,
+  actualStart:$("dwActualStart").value,
+  actualEnd:$("dwActualEnd").value,
+  breakMinutes:Number($("dwBreak").value),
+  paidUnits:hours*2,
+  status:$("dwShiftStatus").value,
+  surgeryBase:T($("dwShiftSurgery").value),
+  consultBase:T($("dwShiftConsult").value),
+  overrideReason:T($("dwOverride").value),
+  note:T($("dwShiftNote").value),
+  terms:old?.clinicId===clinicId?C(old.terms):dwTerms(c),
+  createdAt:old?.createdAt||now(),
+  updatedAt:now()
+ };
+
+ if(old)dwUnlocked(w,old.clinicId,old.start.slice(0,7));
+ dwUnlocked(w,s.clinicId,s.start.slice(0,7));
+
+ /* 先用暫存資料完整驗證，不修改現有工作區。 */
+ const test=C(w);
+ const index=test.shifts.findIndex(x=>x.id===s.id);
+
+ if(index<0)test.shifts.push(s);
+ else test.shifts[index]=s;
+
+ checkDoctorWork(test);
+
+ const interval=x=>[
+  dwDT(x.actualStart||x.start),
+  dwDT(x.actualEnd||x.end)
+ ];
+
+ const [start,end]=interval(s);
+
+ const overlaps=s.status==="cancelled"?[]:
+  w.shifts.filter(x=>{
+   if(x.id===s.id||x.status==="cancelled")return false;
+   const [a,b]=interval(x);
+   return start<b&&end>a;
+  });
+
+ let overlapReason="";
+
+ if(overlaps.length){
+  const reason=prompt(
+   "偵測到時段重疊：\n"+
+   overlaps.map(x=>
+    dwClinic(w,x.clinicId).name+" "+x.start.replace("T"," ")
+   ).join("\n")+
+   "\n\n如已核實仍要保存，請填寫原因；取消則不保存："
+  );
+
+  if(!T(reason))return;
+  overlapReason=T(reason);
+ }
+
+ await run(()=>commit(d=>{
+  const work=dwWrite(d);
+
+  if(old)dwUnlocked(work,old.clinicId,old.start.slice(0,7));
+  dwUnlocked(work,s.clinicId,s.start.slice(0,7));
+
+  const n=work.shifts.findIndex(x=>x.id===s.id);
+
+  if(n<0)work.shifts.push(C(s));
+  else work.shifts[n]=C(s);
+
+  dwLog(work,old?"修改更次":"新增更次",{
+   shiftId:s.id,
+   overlapReason
+  });
+ }),{redraw:false});
+
+ dwState.month=s.start.slice(0,7);
+ dwScreen("shifts");
+}
+
+async function dwCancelShift(id){
+ const w=dwRead();
+ const old=w.shifts.find(s=>s.id===id);
+ assert(old,"找不到更次");
+
+ dwUnlocked(w,old.clinicId,old.start.slice(0,7));
+
+ const reason=prompt("取消此更原因（必填；保留紀錄）：");
+ if(!T(reason))return;
+
+ await run(()=>commit(d=>{
+  const work=dwWrite(d);
+  const s=work.shifts.find(s=>s.id===id);
+
+  assert(s,"找不到更次");
+  dwUnlocked(work,s.clinicId,s.start.slice(0,7));
+
+  s.status="cancelled";
+  s.updatedAt=now();
+
+  dwLog(work,"取消更次",{
+   shiftId:id,
+   reason:T(reason)
+  });
+ }),{redraw:false});
+
+ dwScreen("shifts");
+}
+
+function dwMonth(clinicId,month){
+ assert(dwMonthOK(month),"月結月份無效");
+
+ const w=dwRead();
+ const c=dwClinic(w,clinicId);
+
+ const m=dwSettlement(w,clinicId,month)||{
+  id:dwMonthKey(clinicId,month),
+  clinicId,
+  month,
+  basis:"monthly",
+  surgeryBase:"",
+  consultBase:"",
+  agreed:"",
+  differenceReason:"",
+  note:"",
+  state:"draft"
+ };
+
+ const calc=dwCalc(w,clinicId,month,m);
+ const locked=m.state==="confirmed";
+ const paid=dwPaid(w,m.id);
+ const agreed=locked?dwAmount(m.agreed,true):null;
+
+ const payments=w.payments
+  .filter(p=>p.settlementId===m.id)
+  .slice().reverse();
+
+ const defaultAgreed=T(m.agreed)?m.agreed:
+  calc.expectedCents===null?"":(calc.expectedCents/100).toFixed(2);
+
+ openModal("月結酬金 · "+month+" · "+c.name,`
+  <div class="dw-root">
+   <div class="notice">${E(dwRule(c))}
+只計已完成更次；尚有待完成更次時不能確認月結。
+分成採全月合計，並只使用所選資料來源。</div>
+
+   <input id="dwMonthClinic" type="hidden" value="${E(clinicId)}">
+   <input id="dwMonthValue" type="hidden" value="${month}">
+
+   <div class="grid" style="margin-top:14px">
+    <div class="dw-stat">已完成／待完成
+     <strong>${calc.completed}／${calc.pending} 更</strong>
+    </div>
+    <div class="dw-stat">已完成計薪時數
+     <strong>${calc.hours} 小時</strong>
+    </div>
+    <div class="dw-stat">時薪／保底合計
+     <strong>${dwMoney(calc.baseCents)}</strong>
+    </div>
+    <div class="dw-stat">系統試算應收
+     <strong>${dwMoney(calc.expectedCents)}</strong>
+    </div>
+   </div>
+
+   ${calc.missing.length?`
+    <p class="notice" style="margin-top:14px">
+     待補資料：${E(calc.missing.join("；"))}
+    </p>`:""}
+
+   <fieldset ${locked?"disabled":""} style="margin-top:16px">
+    ${dwSelect("分成資料來源","dwBasis",m.basis,{
+     monthly:"直接填全月總數（不再加入逐更基數）",
+     shifts:"逐更基數加總（不採用下列月總數）"
+    })}
+
+    <div class="grid">
+     ${dwField("全月手術費基數 HKD","dwMonthSurgery",
+      m.surgeryBase,"number",'min="0" step="0.01"')}
+     ${dwField("全月診金基數 HKD","dwMonthConsult",
+      m.consultBase,"number",'min="0" step="0.01"')}
+    </div>
+
+    <p class="dw-muted">
+     按「保存並更新試算」後，畫面會按目前輸入重新計算。
+     純時薪地點不需要填分成基數；沒有相關收入請明確填 0。
+    </p>
+
+    ${dwField("診所確認應收 HKD","dwAgreed",
+     defaultAgreed,"number",'min="0" step="0.01"')}
+
+    <div class="field">
+     <label for="dwDifference">與系統試算不同的原因（有差額時必填）</label>
+     <textarea id="dwDifference">${E(m.differenceReason)}</textarea>
+    </div>
+
+    <div class="field">
+     <label for="dwMonthNote">月結備註</label>
+     <textarea id="dwMonthNote">${E(m.note)}</textarea>
+    </div>
+   </fieldset>
+
+   ${locked?`
+    <section class="card">
+     <h3>已確認月結</h3>
+     <p>
+      確認應收：<strong>${dwMoney(agreed)}</strong><br>
+      已收款：${dwMoney(paid)}<br>
+      尚欠：<strong>${dwMoney(agreed-paid)}</strong><br>
+      收款狀態：${agreed===0?"無須收款":
+       paid===0?"未收款":paid===agreed?"已收齊":"部分收款"}
+     </p>
+     <p class="dw-muted">
+      ${E(stamp(m.confirmedAt))} · ${E(m.confirmedBy)}
+     </p>
+     <div class="row">
+      <button data-act="dwPay" data-id="${E(m.id)}"
+       ${paid>=agreed?"disabled":""}>＋ 記錄收款</button>
+      <button data-act="dwReopen" data-id="${E(m.id)}">
+       重開月結
+      </button>
+     </div>
+    </section>
+   `:""}
+
+   ${payments.length?`
+    <section class="card">
+     <h3>收款紀錄</h3>
+     ${payments.map(p=>`
+      <section class="item">
+       <strong>${E(p.date)} · ${dwMoney(dwAmount(p.amount,true))}</strong>
+       <p>${E(p.note||"沒有備註")}</p>
+       <p class="dw-muted">
+        ${p.void?"已作廢："+E(p.voidReason):"有效收款"}
+       </p>
+       ${p.void?"":`
+        <button data-act="dwVoidPay" data-id="${E(p.id)}" class="danger">
+         作廢錯誤收款紀錄
+        </button>
+       `}
+      </section>
+     `).join("")}
+    </section>
+   `:""}
+
+   <div class="modal-footer">
+    <button data-act="dwView" data-page="money">返回月結總覽</button>
+    ${locked?"":`
+     <button data-act="dwSaveMonth">保存並更新試算</button>
+     <button data-act="dwConfirmMonth" class="primary">
+      確認本月應收
+     </button>
+    `}
+   </div>
+  </div>
+ `,"dwMonth",{
+  editable:!locked,
+  saveAction:locked?"":"dwSaveMonth"
+ });
+}
+
+async function dwSaveMonth(confirmMonth=false){
+ const clinicId=$("dwMonthClinic").value;
+ const month=$("dwMonthValue").value;
+ const w=dwRead();
+
+ dwUnlocked(w,clinicId,month);
+
+ const m={
+  id:dwMonthKey(clinicId,month),
+  clinicId,
+  month,
+  basis:$("dwBasis").value,
+  surgeryBase:T($("dwMonthSurgery").value),
+  consultBase:T($("dwMonthConsult").value),
+  agreed:T($("dwAgreed").value),
+  differenceReason:T($("dwDifference").value),
+  note:T($("dwMonthNote").value),
+  state:confirmMonth?"confirmed":"draft",
+  calculation:null,
+  updatedAt:now(),
+  confirmedAt:"",
+  confirmedBy:""
+ };
+
+ dwAmount(m.surgeryBase);
+ dwAmount(m.consultBase);
+ dwAmount(m.agreed);
+
+ const calc=dwCalc(w,clinicId,month,m);
+
+ if(confirmMonth){
+  assert(calc.completed>0,"沒有已完成更次，不能確認月結");
+  assert(calc.pending===0,"仍有待完成更次，請先完成或取消");
+  assert(calc.expectedCents!==null,"請先補齊所選來源的分成基數");
+
+  const agreed=dwAmount(m.agreed,true);
+
+  assert(
+   agreed===calc.expectedCents||T(m.differenceReason),
+   "確認應收與系統試算不同，請填寫差額原因"
+  );
+
+  if(!confirm(
+   "確認此月結？\n\n"+
+   dwClinic(w,clinicId).name+" · "+month+"\n"+
+   "系統試算："+dwMoney(calc.expectedCents)+"\n"+
+   "確認應收："+dwMoney(agreed)+"\n\n"+
+   "確認後此地點本月份排班及月結會鎖定；不代表已收款。"
+  ))return;
+
+  m.calculation=C(calc);
+  m.confirmedAt=now();
+  m.confirmedBy=actor;
+ }
+
+ await run(()=>commit(d=>{
+  const work=dwWrite(d);
+  dwUnlocked(work,clinicId,month);
+
+  const currentCalc=dwCalc(work,clinicId,month,m);
+  assert(equal(currentCalc,calc),"排班資料已改變，請重新核對");
+
+  const n=work.settlements.findIndex(x=>x.id===m.id);
+
+  if(n<0)work.settlements.push(C(m));
+  else work.settlements[n]=C(m);
+
+  dwLog(work,confirmMonth?"確認月結":"保存月結草稿",{
+   settlementId:m.id
+  });
+ }),{redraw:false});
+
+ dwMonth(clinicId,month);
+}
+
+async function dwReopen(id){
+ const w=dwRead();
+ const m=w.settlements.find(m=>m.id===id);
+
+ assert(m?.state==="confirmed","月結未確認");
+ assert(
+  dwPaid(w,id)===0,
+  "已有有效收款，不能直接重開。若屬輸入錯誤，須先作廢錯誤收款紀錄；實際退款不應當作輸入錯誤處理。"
+ );
+
+ const reason=prompt("重開月結原因（必填）：");
+ if(!T(reason))return;
+
+ await run(()=>commit(d=>{
+  const work=dwWrite(d);
+  const x=work.settlements.find(m=>m.id===id);
+
+  assert(x?.state==="confirmed"&&dwPaid(work,id)===0,"月結或收款狀態已改變");
+
+  dwLog(work,"重開月結",{
+   settlementId:id,
+   reason:T(reason),
+   previous:C(x)
+  });
+
+  x.state="draft";
+  x.calculation=null;
+  x.confirmedAt="";
+  x.confirmedBy="";
+  x.updatedAt=now();
+ }),{redraw:false});
+
+ dwMonth(m.clinicId,m.month);
+}
+
+function dwPayEdit(id){
+ const w=dwRead();
+ const m=w.settlements.find(m=>m.id===id);
+
+ assert(m?.state==="confirmed","請先確認月結");
+
+ const remaining=dwAmount(m.agreed,true)-dwPaid(w,id);
+ assert(remaining>0,"此月結已沒有尚欠款項");
+
+ openModal("記錄實際收款",`
+  <div class="dw-root">
+   <p>${E(dwClinic(w,m.clinicId).name)} · ${E(m.month)}</p>
+   <p>尚欠：<strong>${dwMoney(remaining)}</strong></p>
+
+   <input id="dwPaymentMonth" type="hidden" value="${E(id)}">
+
+   ${dwField("實際收款日期","dwPaymentDate",today(),"date")}
+   ${dwField("本次收款 HKD","dwPaymentAmount",
+    (remaining/100).toFixed(2),"number",'min="0.01" step="0.01"')}
+
+   <div class="field">
+    <label for="dwPaymentNote">備註／過數參考</label>
+    <textarea id="dwPaymentNote"></textarea>
+   </div>
+
+   <p class="dw-muted">
+    只記錄你已實際收到的款項。這不是銀行連線或付款操作。
+   </p>
+
+   <div class="modal-footer">
+    <button data-act="dwSavePay" class="primary">保存實際收款</button>
+   </div>
+  </div>
+ `,"dwPayment",{
+  editable:true,
+  saveAction:"dwSavePay"
+ });
+}
+
+async function dwSavePay(){
+ const id=$("dwPaymentMonth").value;
+ const date=$("dwPaymentDate").value;
+ const amount=T($("dwPaymentAmount").value);
+ const note=T($("dwPaymentNote").value);
+ const value=dwAmount(amount,true);
+
+ assert(dateOK(date),"收款日期無效");
+ assert(value>0,"收款金額須大於零");
+
+ const w=dwRead();
+ const m=w.settlements.find(m=>m.id===id);
+ assert(m?.state==="confirmed","月結未確認");
+
+ assert(
+  value<=dwAmount(m.agreed,true)-dwPaid(w,id),
+  "本次收款不可超過尚欠金額"
+ );
+
+ if(!confirm("確認已實際收到 "+dwMoney(value)+"？"))return;
+
+ await run(()=>commit(d=>{
+  const work=dwWrite(d);
+  const current=work.settlements.find(m=>m.id===id);
+
+  assert(current?.state==="confirmed","月結狀態已改變");
+  assert(
+   value<=dwAmount(current.agreed,true)-dwPaid(work,id),
+   "收款餘額已改變"
+  );
+
+  const paymentId=uid();
+
+  work.payments.push({
+   id:paymentId,
+   settlementId:id,
+   date,
+   amount,
+   note,
+   void:false,
+   createdAt:now(),
+   createdBy:actor
+  });
+
+  dwLog(work,"記錄實際收款",{
+   settlementId:id,
+   paymentId
+  });
+ }),{redraw:false});
+
+ dwMonth(m.clinicId,m.month);
+}
+
+async function dwVoidPay(id){
+ const w=dwRead();
+ const p=w.payments.find(p=>p.id===id);
+ assert(p&&!p.void,"收款不存在或已作廢");
+
+ const m=w.settlements.find(m=>m.id===p.settlementId);
+ assert(m,"找不到月結");
+
+ const reason=prompt(
+  "只用於更正輸入錯誤，不代表實際退款。\n"+
+  "紀錄會保留，不會刪除。\n\n"+
+  "請填寫作廢原因："
+ );
+
+ if(!T(reason))return;
+
+ await run(()=>commit(d=>{
+  const work=dwWrite(d);
+  const x=work.payments.find(p=>p.id===id);
+  assert(x&&!x.void,"收款狀態已改變");
+
+  x.void=true;
+  x.voidReason=T(reason);
+  x.voidAt=now();
+  x.voidBy=actor;
+
+  dwLog(work,"作廢錯誤收款紀錄",{
+   paymentId:id,
+   reason:T(reason)
+  });
+ }),{redraw:false});
+
+ dwMonth(m.clinicId,m.month);
+}
 /* 統一動作；導航先處理未保存彈窗，唔透過多層補丁繞過保護。 */
-const modalSaveActions=new Set(["savePatient","saveTemplate","saveCatalogue","saveSettings","saveFamily"]);
-const localModalActions=new Set(["confirmIssue","batchStart","addCatalogue","clearSignature","confirmSync","confirmRestore","export","exportCandidate","import","verifyRestore"]);
+const modalSaveActions=new Set([
+ "savePatient",
+ "saveTemplate",
+ "saveCatalogue",
+ "saveSettings",
+ "saveFamily",
+ "dwSaveShift",
+ "dwSaveMonth",
+ "dwSavePay"
+]);
+
+const localModalActions=new Set([
+ "confirmIssue",
+ "batchStart",
+ "addCatalogue",
+ "clearSignature",
+ "confirmSync",
+ "confirmRestore",
+ "export",
+ "exportCandidate",
+ "import",
+ "verifyRestore",
+ "dwCopyActual",
+ "dwCalculateHours",
+ "dwConfirmMonth"
+]);
 async function dispatch(act,node=null){
  switch(act){
+   case "dwOpen":
+  dwScreen("calendar");
+  break;
+
+ case "dwView":
+  dwScreen(node?.dataset.page||dwState.page,true);
+  break;
+
+ case "dwRefresh":
+  dwScreen(dwState.page,true);
+  break;
+
+ case "dwPrev":
+  dwReadFilters();
+  dwState.month=dwNextMonth(dwState.month,-1);
+  dwScreen();
+  break;
+
+ case "dwNext":
+  dwReadFilters();
+  dwState.month=dwNextMonth(dwState.month,1);
+  dwScreen();
+  break;
+
+ case "dwNew":
+  dwEdit("",node?.dataset.date||"");
+  break;
+
+ case "dwEdit":
+  dwEdit(node.dataset.id);
+  break;
+
+ case "dwCopyActual":
+  dwCalculateHours(true);
+  break;
+
+ case "dwCalculateHours":
+  dwCalculateHours();
+  break;
+
+ case "dwSaveShift":
+  await dwSaveShift();
+  break;
+
+ case "dwCancel":
+  await dwCancelShift(node.dataset.id);
+  break;
+
+ case "dwMonth":
+  dwReadFilters();
+  dwMonth(node.dataset.clinic,node.dataset.month);
+  break;
+
+ case "dwSaveMonth":
+  await dwSaveMonth(false);
+  break;
+
+ case "dwConfirmMonth":
+  await dwSaveMonth(true);
+  break;
+
+ case "dwReopen":
+  await dwReopen(node.dataset.id);
+  break;
+
+ case "dwPay":
+  dwPayEdit(node.dataset.id);
+  break;
+
+ case "dwSavePay":
+  await dwSavePay();
+  break;
+
+ case "dwVoidPay":
+  await dwVoidPay(node.dataset.id);
+  break;
  case "choosePatient":registry(true);break;
  case "registry":registry(false);break;
  case "registerPatient":patientEditor("",node?.dataset.start==="true");break;
