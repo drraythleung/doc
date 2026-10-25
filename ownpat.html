@@ -3080,7 +3080,565 @@ function dwReadFilters(){
  dwState.month=month;
  dwState.clinic=$("dwFilterClinic").value;
 }
+/* =========================================================
+   醫生排班增強：
+   - 每週重複排班，整批驗證及保存
+   - 每個產生更次獨立保存，修改／取消不連帶其他更次
+   - 排班時間及實際時間跨診所重疊核對
+   - 月份統計及已安排最低時薪保底預算
+   ========================================================= */
 
+const DW_WEEKDAYS=[
+ [1,"星期一"],
+ [2,"星期二"],
+ [3,"星期三"],
+ [4,"星期四"],
+ [5,"星期五"],
+ [6,"星期六"],
+ [0,"星期日"]
+];
+
+const DW_REPEAT_LIMIT=200;
+let dwPreviewTimer=null;
+
+/* 所有月份仍依原有規則，以更次開始日期歸屬。 */
+function dwMonthStats(w,month,clinicId=""){
+ const rows=w.shifts.filter(s=>
+  s.start.slice(0,7)===month&&
+  (!clinicId||s.clinicId===clinicId)
+ );
+
+ const active=rows.filter(s=>s.status!=="cancelled");
+ const done=active.filter(s=>s.status==="completed");
+ const pending=active.filter(s=>s.status!=="completed");
+
+ const units=list=>list.reduce((n,s)=>n+s.paidUnits,0);
+
+ const minimum=active.reduce(
+  (n,s)=>n+Math.round(s.terms.hourly*s.paidUnits/2),
+  0
+ );
+
+ assert(
+  Number.isSafeInteger(minimum),
+  "本月保底預算合計超出上限"
+ );
+
+ return {
+  count:active.length,
+  hours:units(active)/2,
+  completed:done.length,
+  completedHours:units(done)/2,
+  pending:pending.length,
+  pendingHours:units(pending)/2,
+  cancelled:rows.length-active.length,
+  minimumCents:minimum
+ };
+}
+
+function dwStatsHTML(w,month,clinicId=""){
+ const s=dwMonthStats(w,month,clinicId);
+ const scope=clinicId?dwClinic(w,clinicId).name:"全部工作地點";
+
+ return `
+  <section style="margin-top:16px">
+   <h3>${E(month)} 工作統計 · ${E(scope)}</h3>
+
+   <div class="grid">
+    <div class="dw-stat">
+     本月有效排班
+     <strong>${s.count} 更 · ${s.hours} 小時</strong>
+     <span class="dw-muted">
+      不包括已取消 ${s.cancelled} 更
+     </span>
+    </div>
+
+    <div class="dw-stat">
+     已完成
+     <strong>${s.completed} 更 · ${s.completedHours} 小時</strong>
+     <span class="dw-muted">按已保存的確認計薪時數</span>
+    </div>
+
+    <div class="dw-stat">
+     待完成／暫定
+     <strong>${s.pending} 更 · ${s.pendingHours} 小時</strong>
+     <span class="dw-muted">包括暫定及已確認、更次尚未完成</span>
+    </div>
+
+    <div class="dw-stat">
+     本月已安排最低保底預算
+     <strong>${dwMoney(s.minimumCents)}</strong>
+     <span class="dw-muted">不預先加入手術費及診金分成</span>
+    </div>
+   </div>
+
+   <p class="dw-muted" style="margin-top:8px">
+    時數採每更保存的計薪時數，已扣除或修正無薪休息。
+    預算包含暫定及已確認排班，取消後即不計入；
+    不是已確認應收，也不代表已收款。
+    跨月更次整更歸入開始日期所在月份。
+   </p>
+  </section>
+ `;
+}
+
+/*
+ * 一對更次會檢查：
+ * 1. 原定排班時間；
+ * 2. 如其中一更有實際時間，再檢查實際／有效時間。
+ *
+ * 結束時間恰好等於下一更開始時間，不當作重疊。
+ */
+function dwOverlapKinds(a,b){
+ if(a.status==="cancelled"||b.status==="cancelled"){
+  return [];
+ }
+
+ const overlap=(aStart,aEnd,bStart,bEnd)=>
+  dwDT(aStart)<dwDT(bEnd)&&
+  dwDT(aEnd)>dwDT(bStart);
+
+ const kinds=[];
+
+ if(overlap(a.start,a.end,b.start,b.end)){
+  kinds.push("排班時間");
+ }
+
+ if(
+  (a.actualStart||b.actualStart)&&
+  overlap(
+   a.actualStart||a.start,
+   a.actualEnd||a.end,
+   b.actualStart||b.start,
+   b.actualEnd||b.end
+  )
+ ){
+  kinds.push("實際／有效時間");
+ }
+
+ return kinds;
+}
+
+/* 全工作區核對，不套用畫面上的診所篩選。 */
+function dwFindOverlaps(w,proposed){
+ const ids=new Set(proposed.map(s=>s.id));
+ const existing=w.shifts.filter(s=>!ids.has(s.id));
+ const hits=[];
+
+ for(let i=0;i<proposed.length;i++){
+  const a=proposed[i];
+
+  if(a.status==="cancelled")continue;
+
+  for(const b of existing){
+   const kinds=dwOverlapKinds(a,b);
+
+   if(kinds.length){
+    hits.push({a,b,kinds});
+   }
+  }
+
+  /* 同時檢查這一批新更次之間有沒有互相撞期。 */
+  for(let j=i+1;j<proposed.length;j++){
+   const b=proposed[j];
+   const kinds=dwOverlapKinds(a,b);
+
+   if(kinds.length){
+    hits.push({a,b,kinds});
+   }
+  }
+ }
+
+ return hits;
+}
+
+function dwShiftLabel(w,s){
+ return dwClinic(w,s.clinicId).name+
+  "｜"+s.start.replace("T"," ")+
+  " 至 "+s.end.replace("T"," ");
+}
+
+function dwOverlapText(w,hits,limit=10){
+ const lines=hits.slice(0,limit).map((hit,n)=>
+  (n+1)+". "+hit.kinds.join("、")+"重疊\n"+
+  dwShiftLabel(w,hit.a)+"\n"+
+  "↔ "+dwShiftLabel(w,hit.b)
+ );
+
+ if(hits.length>limit){
+  lines.push("另有 "+(hits.length-limit)+" 項重疊。");
+ }
+
+ return lines.join("\n\n");
+}
+
+function dwRepeatForm(day){
+ const weekday=new Date(day+"T12:00:00Z").getUTCDay();
+
+ return `
+  <details class="card" style="margin-top:14px">
+   <summary>重複排班設定</summary>
+
+   <label class="check">
+    <input id="dwRepeatEnabled" type="checkbox">
+    <span>按以下規則一次產生多個獨立更次</span>
+   </label>
+
+   <p class="dw-muted">
+    以「排班開始」日期為起點，沿用相同開始時間、
+    跨夜時長、休息分鐘、計薪時數及備註。
+    只可產生暫定或已確認更次，不會預填實際工作時間。
+   </p>
+
+   <div class="grid">
+    ${dwField(
+     "每隔幾週",
+     "dwRepeatEvery",
+     "1",
+     "number",
+     'min="1" max="12" step="1"'
+    )}
+
+    ${dwField(
+     "截止日期（包括當日）",
+     "dwRepeatUntil",
+     dwDayAdd(day,27),
+     "date"
+    )}
+   </div>
+
+   <label>每週排班日</label>
+
+   <div class="row">
+    ${DW_WEEKDAYS.map(([value,label])=>`
+     <label class="check" style="margin-right:8px">
+      <input
+       type="checkbox"
+       data-dw-repeat-weekday="${value}"
+       ${value===weekday?"checked":""}
+      >
+      <span>${label}</span>
+     </label>
+    `).join("")}
+   </div>
+
+   <p class="dw-muted">
+    每週以星期一為起點。
+    例如「每隔 2 週」即起點所在週、隔一週、再下一週。
+    每批最多 ${DW_REPEAT_LIMIT} 更，日期範圍最多 366 日。
+   </p>
+
+   <div class="notice">
+    產生後，每一更均可獨立修改或取消。
+    本版沒有「修改整個系列」或「取消整個系列」操作。
+   </div>
+  </details>
+ `;
+}
+
+/* 只讀取表單，未修改工作區。 */
+function dwShiftDraftFromForm(w){
+ const id=$("dwShiftId").value;
+ const old=id?w.shifts.find(s=>s.id===id):null;
+
+ assert(!id||old,"找不到原有更次");
+
+ const clinicId=$("dwShiftClinic").value;
+ const c=dwClinic(w,clinicId);
+
+ const hoursText=T($("dwHours").value);
+
+ assert(hoursText!=="","請填寫確認計薪時數");
+
+ const hours=Number(hoursText);
+
+ assert(
+  Number.isFinite(hours)&&
+  hours>=0&&hours<=24&&
+  Number.isInteger(hours*2),
+  "計薪時數須為 0 至 24 小時，並以 0.5 小時為單位"
+ );
+
+ assert(
+  T($("dwBreak").value)!=="",
+  "請填寫休息分鐘；沒有休息請填 0"
+ );
+
+ const s={
+  /*
+   * 保留舊更次的系列識別等額外欄位。
+   * 修改此更不會尋找或修改同系列其他更次。
+   */
+  ...(old?C(old):{}),
+
+  id:old?.id||uid(),
+  clinicId,
+  start:$("dwStart").value,
+  end:$("dwEnd").value,
+  actualStart:$("dwActualStart").value,
+  actualEnd:$("dwActualEnd").value,
+  breakMinutes:Number($("dwBreak").value),
+  paidUnits:hours*2,
+  status:$("dwShiftStatus").value,
+  surgeryBase:T($("dwShiftSurgery").value),
+  consultBase:T($("dwShiftConsult").value),
+  overrideReason:T($("dwOverride").value),
+  note:T($("dwShiftNote").value),
+  terms:old?.clinicId===clinicId
+   ?C(old.terms)
+   :dwTerms(c),
+  createdAt:old?.createdAt||now(),
+  updatedAt:now()
+ };
+
+ return {old,shift:s};
+}
+
+/*
+ * 建立待保存候選。
+ * 驗證整批後才交由 commit 寫入，避免只產生一部分。
+ */
+function dwBuildShiftProposal(w){
+ const {old,shift:base}=dwShiftDraftFromForm(w);
+
+ const repeated=
+  !old&&!!$("dwRepeatEnabled")?.checked;
+
+ let shifts=[base];
+
+ if(repeated){
+  assert(
+   ["tentative","confirmed"].includes(base.status),
+   "重複排班只可使用「暫定」或「已確認」狀態"
+  );
+
+  assert(
+   !base.actualStart&&!base.actualEnd,
+   "重複排班請清空實際開始及結束時間；完成個別更次時再填寫"
+  );
+
+  assert(
+   !T(base.surgeryBase)&&!T(base.consultBase),
+   "重複排班請清空逐更分成基數，避免把同一收入複製到多個更次"
+  );
+
+  const start=dwDT(base.start);
+  const end=dwDT(base.end);
+
+  assert(
+   Number.isFinite(start)&&Number.isFinite(end)&&
+   end>start&&end-start<=86400000,
+   "請先填寫有效的開始及結束時間；每更最多 24 小時"
+  );
+
+  const from=base.start.slice(0,10);
+  const until=$("dwRepeatUntil").value;
+  const every=Number($("dwRepeatEvery").value);
+
+  assert(
+   Number.isInteger(every)&&every>=1&&every<=12,
+   "重複週期須為 1 至 12 週"
+  );
+
+  assert(
+   dateOK(until)&&until>=from,
+   "截止日期不可早於排班開始日期"
+  );
+
+  const days=(
+   dwDT(until+"T00:00")-
+   dwDT(from+"T00:00")
+  )/86400000;
+
+  assert(
+   Number.isInteger(days)&&days<=365,
+   "每批重複排班的日期範圍最多 366 日"
+  );
+
+  const weekdays=[
+   ...$("modalBody").querySelectorAll(
+    "[data-dw-repeat-weekday]:checked"
+   )
+  ].map(i=>Number(i.dataset.dwRepeatWeekday));
+
+  assert(weekdays.length,"請至少選擇一個排班日");
+
+  const firstWeekday=
+   new Date(from+"T12:00:00Z").getUTCDay();
+
+  const firstMonday=dwDayAdd(
+   from,
+   -((firstWeekday+6)%7)
+  );
+
+  const seriesId=uid();
+  const duration=end-start;
+
+  const repeatRule={
+   frequency:"weekly",
+   everyWeeks:every,
+   weekdays:C(weekdays),
+   from,
+   until
+  };
+
+  shifts=[];
+
+  for(let i=0;i<=days;i++){
+   const day=dwDayAdd(from,i);
+   const weekday=
+    new Date(day+"T12:00:00Z").getUTCDay();
+
+   const weekIndex=Math.floor(
+    (
+     dwDT(day+"T00:00")-
+     dwDT(firstMonday+"T00:00")
+    )/604800000
+   );
+
+   if(
+    weekIndex%every!==0||
+    !weekdays.includes(weekday)
+   ){
+    continue;
+   }
+
+   const occurrenceStart=day+"T"+base.start.slice(11);
+
+   /*
+    * dwDT 沿用本模組的牆上時間計算方式。
+    * 不用本機時區轉換，以免跨夜更次日期被改變。
+    */
+   const occurrenceEnd=new Date(
+    dwDT(occurrenceStart)+duration
+   ).toISOString().slice(0,16);
+
+   shifts.push({
+    ...C(base),
+    id:uid(),
+    start:occurrenceStart,
+    end:occurrenceEnd,
+    actualStart:"",
+    actualEnd:"",
+    surgeryBase:"",
+    consultBase:"",
+    seriesId,
+    repeatRule:C(repeatRule)
+   });
+
+   assert(
+    shifts.length<=DW_REPEAT_LIMIT,
+    "本次將產生超過 "+DW_REPEAT_LIMIT+
+    " 更，請縮短截止日期"
+   );
+  }
+
+  assert(
+   shifts.length,
+   "所選日期範圍內沒有符合規則的排班日"
+  );
+ }
+
+ if(old){
+  dwUnlocked(w,old.clinicId,old.start.slice(0,7));
+ }
+
+ for(const s of shifts){
+  dwUnlocked(w,s.clinicId,s.start.slice(0,7));
+ }
+
+ const test=C(w);
+ const ids=new Set(shifts.map(s=>s.id));
+
+ test.shifts=[
+  ...test.shifts.filter(s=>!ids.has(s.id)),
+  ...C(shifts)
+ ];
+
+ /* 沿用原有完整結構、月結鎖定及計薪驗證。 */
+ checkDoctorWork(test);
+
+ return {
+  old,
+  repeated,
+  shifts,
+  overlaps:dwFindOverlaps(w,shifts)
+ };
+}
+
+/* 只更新提示，不重建表單或清除輸入。 */
+function dwUpdateShiftPreview(){
+ const box=$("dwShiftPreview");
+ if(!box)return;
+
+ try{
+  const w=dwRead();
+  const proposal=dwBuildShiftProposal(w);
+  const {shifts,repeated,overlaps}=proposal;
+
+  const count=shifts.filter(
+   s=>s.status!=="cancelled"
+  ).length;
+
+  const hours=shifts
+   .filter(s=>s.status!=="cancelled")
+   .reduce((n,s)=>n+s.paidUnits/2,0);
+
+  const rows=repeated?`
+   <details style="margin-top:8px">
+    <summary>查看預計產生日期</summary>
+    <div class="scrolltable">
+     <table class="ui">
+      <thead><tr>
+       <th>開始</th><th>結束</th><th>計薪時數</th>
+      </tr></thead>
+      <tbody>
+       ${shifts.map(s=>`
+        <tr>
+         <td>${E(s.start.replace("T"," "))}</td>
+         <td>${E(s.end.replace("T"," "))}</td>
+         <td>${s.paidUnits/2} 小時</td>
+        </tr>
+       `).join("")}
+      </tbody>
+     </table>
+    </div>
+   </details>
+  `:"";
+
+  const warning=overlaps.length?`
+   <div class="notice error" style="margin-top:10px">
+    <strong>發現 ${overlaps.length} 項時段重疊</strong>
+    <pre>${E(dwOverlapText(w,overlaps))}</pre>
+    ${repeated
+     ?"此批重複排班不會保存。請先調整日期、時間或排班日。"
+     :"保存時必須明確填寫重疊原因；取消輸入則不保存。"}
+   </div>
+  `:`
+   <p class="dw-muted" style="margin:8px 0 0">
+    未發現與已保存更次或此批更次互相重疊。
+    已檢查全部工作地點，不受診所篩選影響。
+   </p>
+  `;
+
+  box.innerHTML=`
+   <div class="dw-stat">
+    ${repeated
+     ?"預計產生 "+shifts.length+" 個獨立更次"
+     :"目前更次核對"}
+    <strong>${count} 個有效更次 · ${hours} 小時</strong>
+   </div>
+   ${warning}
+   ${rows}
+  `;
+ }catch(error){
+  box.innerHTML=`
+   <div class="notice">
+    ${E(error.message||"請先填妥排班資料")}
+   </div>
+  `;
+ }
+}
 function dwScreen(page=dwState.page,readFilters=false){
  if(readFilters)dwReadFilters();
 
@@ -3242,6 +3800,8 @@ function dwScreen(page=dwState.page,readFilters=false){
     <button data-act="dwNew" class="primary">＋ 新增更次</button>
    </div>
 
+${dwStatsHTML(w,month,dwState.clinic)}
+
    <div style="margin-top:16px">${body}</div>
   </div>
  `,"dwScreen");
@@ -3252,14 +3812,20 @@ function dwEdit(id="",day=""){
 
  const w=dwRead();
  const old=id?w.shifts.find(s=>s.id===id):null;
+
  assert(!id||old,"找不到更次");
 
  const date=day||(
-  dwState.month===today().slice(0,7)?
-   today():dwState.month+"-01"
+  dwState.month===today().slice(0,7)
+   ?today()
+   :dwState.month+"-01"
  );
 
- const clinic=old?.clinicId||dwState.clinic||w.clinics[0].id;
+ const clinic=
+  old?.clinicId||
+  dwState.clinic||
+  w.clinics[0].id;
+
  const c=dwClinic(w,clinic);
 
  const s=old||{
@@ -3279,65 +3845,148 @@ function dwEdit(id="",day=""){
  };
 
  const locked=dwSettlement(
-  w,s.clinicId,s.start.slice(0,7)
+  w,
+  s.clinicId,
+  s.start.slice(0,7)
  )?.state==="confirmed";
 
- openModal(id?"更次資料":"新增更次",`
+ openModal(id?"更次資料":"新增／重複排班",`
   <div class="dw-root">
-   ${locked?'<div class="notice">此月份已確認月結，只供查看。</div>':""}
-   <input id="dwShiftId" type="hidden" value="${E(s.id)}">
+   ${locked?`
+    <div class="notice">
+     此月份已確認月結，只供查看。
+    </div>
+   `:""}
+
+   ${old?.seriesId?`
+    <div class="notice" style="margin-bottom:14px">
+     此更由重複排班產生。
+     修改或取消只影響目前這一更，不會改動其他更次。
+    </div>
+   `:""}
+
+   <input
+    id="dwShiftId"
+    type="hidden"
+    value="${E(s.id)}"
+   >
 
    <fieldset ${locked?"disabled":""}>
-    ${dwSelect("工作地點","dwShiftClinic",s.clinicId,
+    ${dwSelect(
+     "工作地點",
+     "dwShiftClinic",
+     s.clinicId,
      Object.fromEntries(w.clinics.map(c=>[c.id,c.name]))
     )}
 
     <div class="grid">
-     ${dwField("排班開始","dwStart",s.start,"datetime-local")}
-     ${dwField("排班結束","dwEnd",s.end,"datetime-local")}
+     ${dwField(
+      "排班開始",
+      "dwStart",
+      s.start,
+      "datetime-local"
+     )}
+
+     ${dwField(
+      "排班結束",
+      "dwEnd",
+      s.end,
+      "datetime-local"
+     )}
     </div>
 
-    ${dwSelect("排班狀態","dwShiftStatus",s.status,DW_STATUS)}
+    ${dwSelect(
+     "排班狀態",
+     "dwShiftStatus",
+     s.status,
+     DW_STATUS
+    )}
+
+    ${old?"":dwRepeatForm(s.start.slice(0,10))}
 
     <p class="dw-muted">
-     標記已完成時，請填寫實際時間。跨夜更次請選擇正確結束日期。
+     標記已完成時，請填寫實際時間。
+     跨夜更次請選擇正確結束日期。
+     重複排班請先保留實際時間空白。
     </p>
 
     <div class="grid">
-     ${dwField("實際開始","dwActualStart",s.actualStart,"datetime-local")}
-     ${dwField("實際結束","dwActualEnd",s.actualEnd,"datetime-local")}
+     ${dwField(
+      "實際開始",
+      "dwActualStart",
+      s.actualStart,
+      "datetime-local"
+     )}
+
+     ${dwField(
+      "實際結束",
+      "dwActualEnd",
+      s.actualEnd,
+      "datetime-local"
+     )}
     </div>
 
     <div class="row" style="margin-bottom:14px">
-     <button data-act="dwCopyActual">將排班時間填入實際時間</button>
+     <button data-act="dwCopyActual">
+      將排班時間填入實際時間
+     </button>
     </div>
 
     <div class="grid">
-     ${dwField("無薪食飯／休息（分鐘）","dwBreak",
-      s.breakMinutes,"number",'min="0" max="1440" step="1"')}
-     ${dwField("確認計薪時數（每 0.5 小時）","dwHours",
-      s.paidUnits/2,"number",'min="0" max="24" step="0.5"')}
+     ${dwField(
+      "無薪食飯／休息（分鐘）",
+      "dwBreak",
+      s.breakMinutes,
+      "number",
+      'min="0" max="1440" step="1"'
+     )}
+
+     ${dwField(
+      "確認計薪時數（每 0.5 小時）",
+      "dwHours",
+      s.paidUnits/2,
+      "number",
+      'min="0" max="24" step="0.5"'
+     )}
     </div>
 
-    <button data-act="dwCalculateHours">按時間重新計算時數</button>
+    <button data-act="dwCalculateHours">
+     按時間重新計算時數
+    </button>
 
     <div class="field" style="margin-top:14px">
-     <label for="dwOverride">時數修正原因（與扣除休息後的時間不同時必填）</label>
+     <label for="dwOverride">
+      時數修正原因（與扣除休息後的時間不同時必填）
+     </label>
      <textarea id="dwOverride">${E(s.overrideReason)}</textarea>
     </div>
 
     <details class="card">
      <summary>逐更分成基數（選用；不連動收據）</summary>
+
      <p class="dw-muted">
       只有月結選擇「逐更加總」才採用。
       如選「直接填月總數」，以下數字不會再加入月總數。
       沒有相關收入時請填 0，未收到數字則留空。
+      重複排班產生前請留空，避免重複複製收入。
      </p>
+
      <div class="grid">
-      ${dwField("手術費基數 HKD","dwShiftSurgery",
-       s.surgeryBase,"number",'min="0" step="0.01"')}
-      ${dwField("診金基數 HKD","dwShiftConsult",
-       s.consultBase,"number",'min="0" step="0.01"')}
+      ${dwField(
+       "手術費基數 HKD",
+       "dwShiftSurgery",
+       s.surgeryBase,
+       "number",
+       'min="0" step="0.01"'
+      )}
+
+      ${dwField(
+       "診金基數 HKD",
+       "dwShiftConsult",
+       s.consultBase,
+       "number",
+       'min="0" step="0.01"'
+      )}
      </div>
     </details>
 
@@ -3345,17 +3994,42 @@ function dwEdit(id="",day=""){
      <label for="dwShiftNote">備註</label>
      <textarea id="dwShiftNote">${E(s.note)}</textarea>
     </div>
+
+    ${locked?"":`
+     <div class="row" style="margin-bottom:12px">
+      <button data-act="dwPreviewRepeat">
+       更新預覽／檢查重疊
+      </button>
+     </div>
+
+     <div
+      id="dwShiftPreview"
+      role="status"
+      aria-live="polite"
+     ></div>
+    `}
    </fieldset>
 
    <div class="modal-footer">
-    <button data-act="dwView" data-page="shifts">返回清單</button>
-    ${locked?"":'<button data-act="dwSaveShift" class="primary">保存更次</button>'}
+    <button data-act="dwView" data-page="shifts">
+     返回清單
+    </button>
+
+    ${locked?"":`
+     <button data-act="dwSaveShift" class="primary">
+      ${old?"保存此更":"保存更次／產生重複排班"}
+     </button>
+    `}
    </div>
   </div>
  `,"dwShift",{
   editable:!locked,
   saveAction:locked?"":"dwSaveShift"
  });
+
+ if(!locked){
+  dwUpdateShiftPreview();
+ }
 }
 
 function dwCalculateHours(copyActual=false){
@@ -3389,106 +4063,169 @@ function dwCalculateHours(copyActual=false){
 
 async function dwSaveShift(){
  const w=dwRead();
- const id=$("dwShiftId").value;
- const old=id?w.shifts.find(s=>s.id===id):null;
 
- assert(!id||old,"找不到原有更次");
+ /*
+  * 先建立、驗證整批候選：
+  * 尚未修改 db，也尚未發送雲端寫入。
+  */
+ const proposal=dwBuildShiftProposal(w);
 
- const clinicId=$("dwShiftClinic").value;
- const c=dwClinic(w,clinicId);
- const hoursText=T($("dwHours").value);
+ const {
+  old,
+  repeated,
+  shifts,
+  overlaps
+ }=proposal;
 
- assert(hoursText!=="","請填寫確認計薪時數");
-
- const hours=Number(hoursText);
-
- assert(
-  Number.isFinite(hours)&&hours>=0&&hours<=24&&
-  Number.isInteger(hours*2),
-  "計薪時數須為 0 至 24 小時，並以 0.5 小時為單位"
- );
-
- assert(T($("dwBreak").value)!=="","請填寫休息分鐘；沒有休息請填 0");
-
- const s={
-  id:old?.id||uid(),
-  clinicId,
-  start:$("dwStart").value,
-  end:$("dwEnd").value,
-  actualStart:$("dwActualStart").value,
-  actualEnd:$("dwActualEnd").value,
-  breakMinutes:Number($("dwBreak").value),
-  paidUnits:hours*2,
-  status:$("dwShiftStatus").value,
-  surgeryBase:T($("dwShiftSurgery").value),
-  consultBase:T($("dwShiftConsult").value),
-  overrideReason:T($("dwOverride").value),
-  note:T($("dwShiftNote").value),
-  terms:old?.clinicId===clinicId?C(old.terms):dwTerms(c),
-  createdAt:old?.createdAt||now(),
-  updatedAt:now()
- };
-
- if(old)dwUnlocked(w,old.clinicId,old.start.slice(0,7));
- dwUnlocked(w,s.clinicId,s.start.slice(0,7));
-
- /* 先用暫存資料完整驗證，不修改現有工作區。 */
- const test=C(w);
- const index=test.shifts.findIndex(x=>x.id===s.id);
-
- if(index<0)test.shifts.push(s);
- else test.shifts[index]=s;
-
- checkDoctorWork(test);
-
- const interval=x=>[
-  dwDT(x.actualStart||x.start),
-  dwDT(x.actualEnd||x.end)
- ];
-
- const [start,end]=interval(s);
-
- const overlaps=s.status==="cancelled"?[]:
-  w.shifts.filter(x=>{
-   if(x.id===s.id||x.status==="cancelled")return false;
-   const [a,b]=interval(x);
-   return start<b&&end>a;
-  });
-
+ const expectedWork=serial(w);
  let overlapReason="";
 
  if(overlaps.length){
+  const details=dwOverlapText(w,overlaps);
+
+  if(repeated){
+   dwUpdateShiftPreview();
+
+   throw new Error(
+    "重複排班有時段重疊，整批未保存。\n\n"+
+    details+
+    "\n\n請調整時間、排班日或截止日期後再試。"
+   );
+  }
+
+  /*
+   * 單更保留原有「核實後例外保存」操作。
+   * 不會因診所篩選而漏查其他工作地點。
+   */
   const reason=prompt(
-   "偵測到時段重疊：\n"+
-   overlaps.map(x=>
-    dwClinic(w,x.clinicId).name+" "+x.start.replace("T"," ")
-   ).join("\n")+
-   "\n\n如已核實仍要保存，請填寫原因；取消則不保存："
+   "偵測到時段重疊：\n\n"+
+   details+
+   "\n\n"+
+   "如已核實仍要保存，請填寫原因。\n"+
+   "取消或留空則不保存："
   );
 
   if(!T(reason))return;
+
   overlapReason=T(reason);
+ }
+
+ if(repeated){
+  const hours=shifts.reduce(
+   (n,s)=>n+s.paidUnits/2,
+   0
+  );
+
+  const months=[
+   ...new Set(shifts.map(s=>s.start.slice(0,7)))
+  ];
+
+  const confirmed=confirm(
+   "確認產生重複排班？\n\n"+
+   dwClinic(w,shifts[0].clinicId).name+"\n"+
+   "更數："+shifts.length+" 更\n"+
+   "計薪時數："+hours+" 小時\n"+
+   "涉及月份："+months.join("、")+"\n"+
+   "首更："+shifts[0].start.replace("T"," ")+"\n"+
+   "最後一更："+shifts.at(-1).start.replace("T"," ")+"\n\n"+
+   "已核對全部工作地點，未發現時段重疊。\n"+
+   "保存後每一更可獨立修改或取消。\n"+
+   "本次會整批保存，不會只產生其中一部分。"
+  );
+
+  if(!confirmed)return;
+ }
+
+ /*
+  * 保留最近一次例外重疊原因於更次；
+  * 完整操作原因亦保存於模組 audit。
+  */
+ if(!repeated){
+  shifts[0].overlapReason=overlapReason;
  }
 
  await run(()=>commit(d=>{
   const work=dwWrite(d);
 
-  if(old)dwUnlocked(work,old.clinicId,old.start.slice(0,7));
-  dwUnlocked(work,s.clinicId,s.start.slice(0,7));
+  assert(
+   serial(work)===expectedWork,
+   "排班資料已改變，請重新預覽及核對"
+  );
 
-  const n=work.shifts.findIndex(x=>x.id===s.id);
+  if(old){
+   const current=work.shifts.find(s=>s.id===old.id);
 
-  if(n<0)work.shifts.push(C(s));
-  else work.shifts[n]=C(s);
+   assert(
+    current&&equal(current,old),
+    "原有更次已改變，請重新開啟核對"
+   );
 
-  dwLog(work,old?"修改更次":"新增更次",{
-   shiftId:s.id,
-   overlapReason
-  });
+   dwUnlocked(
+    work,
+    current.clinicId,
+    current.start.slice(0,7)
+   );
+  }
+
+  for(const s of shifts){
+   dwUnlocked(
+    work,
+    s.clinicId,
+    s.start.slice(0,7)
+   );
+  }
+
+  /* 寫入前再核對一次重疊狀態。 */
+  const currentOverlaps=dwFindOverlaps(work,shifts);
+
+  if(repeated){
+   assert(
+    currentOverlaps.length===0,
+    "排班已出現重疊，整批停止保存"
+   );
+  }else{
+   assert(
+    currentOverlaps.length===0||overlapReason,
+    "時段重疊須明確填寫原因"
+   );
+  }
+
+  const ids=new Set(shifts.map(s=>s.id));
+
+  work.shifts=[
+   ...work.shifts.filter(s=>!ids.has(s.id)),
+   ...C(shifts)
+  ];
+
+  /* 仍沿用原本完整資料驗證。 */
+  checkDoctorWork(work);
+
+  dwLog(
+   work,
+   repeated
+    ?"產生重複排班"
+    :old?"修改更次":"新增更次",
+   {
+    shiftIds:shifts.map(s=>s.id),
+    seriesId:repeated?shifts[0].seriesId:"",
+    repeatRule:repeated?C(shifts[0].repeatRule):null,
+    count:shifts.length,
+    overlapReason,
+    independentOccurrences:true
+   }
+  );
  }),{redraw:false});
 
- dwState.month=s.start.slice(0,7);
+ dwState.month=shifts[0].start.slice(0,7);
+
  dwScreen("shifts");
+
+ message(
+  repeated
+   ?"已產生 "+shifts.length+
+    " 個獨立更次。每一更可單獨修改或取消；本月統計及保底預算已更新。"
+   :"更次已保存；本月統計及保底預算已更新。"
+ );
 }
 
 async function dwCancelShift(id){
@@ -3932,6 +4669,7 @@ const localModalActions=new Set([
  "verifyRestore",
  "dwCopyActual",
  "dwCalculateHours",
+ "dwPreviewRepeat",
  "dwConfirmMonth"
 ]);
 async function dispatch(act,node=null){
@@ -3968,12 +4706,18 @@ async function dispatch(act,node=null){
   dwEdit(node.dataset.id);
   break;
 
- case "dwCopyActual":
+case "dwCopyActual":
   dwCalculateHours(true);
+  dwUpdateShiftPreview();
   break;
 
  case "dwCalculateHours":
   dwCalculateHours();
+  dwUpdateShiftPreview();
+  break;
+
+ case "dwPreviewRepeat":
+  dwUpdateShiftPreview();
   break;
 
  case "dwSaveShift":
@@ -4144,6 +4888,104 @@ $("zoom").onchange=scale;
 document.addEventListener("click",event=>{document.querySelectorAll(".menu[open]").forEach(d=>{if(!d.contains(event.target))d.open=false})});
 document.addEventListener("keydown",event=>{if(event.key==="Escape")document.querySelectorAll(".menu[open]").forEach(d=>d.open=false)});
 
+/* 排班表單局部提示：不重建表單，不改變輸入焦點。 */
+function dwQueueShiftPreview(event){
+ const i=event.target;
+
+ if(
+  composing||
+  event.isComposing||
+  modalState?.mode!=="dwShift"||
+  !$("dwShiftPreview")
+ ){
+  return;
+ }
+
+ const relevantIds=new Set([
+  "dwShiftClinic",
+  "dwStart",
+  "dwEnd",
+  "dwActualStart",
+  "dwActualEnd",
+  "dwShiftStatus",
+  "dwBreak",
+  "dwHours",
+  "dwOverride",
+  "dwShiftSurgery",
+  "dwShiftConsult",
+  "dwRepeatEnabled",
+  "dwRepeatEvery",
+  "dwRepeatUntil"
+ ]);
+
+ if(
+  !relevantIds.has(i.id)&&
+  !i.matches?.("[data-dw-repeat-weekday]")
+ ){
+  return;
+ }
+
+ clearTimeout(dwPreviewTimer);
+
+ dwPreviewTimer=setTimeout(()=>{
+  if(
+   modalState?.mode==="dwShift"&&
+   $("dwShiftPreview")&&
+   !composing
+  ){
+   dwUpdateShiftPreview();
+  }
+ },250);
+}
+
+$("modalBody").addEventListener(
+ "input",
+ dwQueueShiftPreview
+);
+
+$("modalBody").addEventListener(
+ "change",
+ dwQueueShiftPreview
+);
+
+$("modalBody").addEventListener("compositionend",event=>{
+ if(
+  modalState?.mode==="dwShift"&&
+  event.target.id==="dwOverride"
+ ){
+  clearTimeout(dwPreviewTimer);
+  dwPreviewTimer=setTimeout(dwUpdateShiftPreview,250);
+ }
+});
+
+/*
+ * 月份／診所改變後直接套用。
+ * 原有「套用篩選」按鈕仍可使用。
+ */
+$("modalBody").addEventListener("change",event=>{
+ if(
+  modalState?.mode!=="dwScreen"||
+  busy||
+  printing||
+  composing
+ ){
+  return;
+ }
+
+ if(
+  event.target.id!=="dwFilterMonth"&&
+  event.target.id!=="dwFilterClinic"
+ ){
+  return;
+ }
+
+ try{
+  dwScreen(dwState.page,true);
+ }catch(error){
+  fail(error);
+ }
+});
+ 
 /* 欄寬與頁面離開。 */
 try{const n=Number(localStorage.getItem("ray-cms-consultation-split-width-v1"));if(n>=.25&&n<=.75)splitRatio=n}catch{}
 function applyWidth(){
