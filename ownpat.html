@@ -1357,21 +1357,94 @@ function refreshTabs(){
 }
 function refreshHeader(){
  const e=current();
+
  if(!e){
-  $("identity").textContent="尚未開啟診症";$("visitState").textContent="先選病人，再開始診症。";$("syncNotice").hidden=true;return
+  $("identity").textContent="尚未開啟診症";
+  $("visitState").textContent="先選病人，再開始診症。";
+  $("syncNotice").hidden=true;
+  return;
  }
- const s=source(),p=s.data.patient,m=db.patients.find(x=>x.id===s.data.patientId);
- $("identity").textContent=[pname(p)||"未填姓名",age(p.dob,s.data.date),p.sex,fmt(p.dob),normID(p.hkid),m?.mrn].filter(Boolean).join(" · ");
- $("visitState").textContent=(view?"歷史版本／快照":"本次診症")+"："+s.data.date+" · "+(s.data.status==="completed"?"已完成":"未完成")+" · "+(s.kind==="document"?"此文件快照未保存聯絡電話":"本次電話："+(T(p.phone)||"未填寫"));
+
+ const s=source();
+ const p=s.data.patient;
+ const m=db.patients.find(
+  x=>x.id===s.data.patientId
+ );
+
+ $("identity").textContent=[
+  pname(p)||"未填姓名",
+  age(p.dob,s.data.date),
+  p.sex,
+  fmt(p.dob),
+  normID(p.hkid),
+  m?.mrn
+ ].filter(Boolean).join(" · ");
+
+ // 診症狀態取自目前診症，
+ // 唔使用文件簽發當時保存嘅 status。
+ const encounterState=
+  e.status==="completed"?"已完成":"未完成";
+
+ const sourceLabel=
+  s.kind==="document"
+   ?(view?"歷史文件版本":"已簽發文件版本")
+   :s.kind==="revision"
+    ?"完成快照"
+    :"本次診症";
+
+ const contactLabel=
+  s.kind==="document"
+   ?"此文件快照未保存聯絡電話"
+   :"紀錄電話："+(T(p.phone)||"未填寫");
+
+ $("visitState").textContent=
+  sourceLabel+"："+s.data.date+
+  " · 目前診症狀態："+encounterState+
+  " · "+contactLabel;
+
  $("returnButton").hidden=!view;
- const state=ALLERGY[p.allergyStatus]?p.allergyStatus:"unknown";
+
+ const state=
+  ALLERGY[p.allergyStatus]
+   ?p.allergyStatus
+   :"unknown";
+
  $("allergyButton").dataset.state=state;
- $("allergyButton").textContent=state==="known"?"Alert":state==="none"?"NKDA":"？N/KDA";
- $("allergyButton").title=s.kind==="document"?"文件快照敏感紀錄："+allergy(p):allergy(p)+"；本次覆核："+(s.data.allergyReviewed?"已覆核":"未記錄");
- const review=$("allergyFields").querySelector('[data-path="allergyReviewed"]');
- if(review&&review.checked!==!!s.data.allergyReviewed)review.checked=!!s.data.allergyReviewed;
- $("syncNotice").hidden=![...IDFIELDS,...CONTACTS].some(k=>S(e.patient[k])!==S(master(e)?.data[k]));
- $("completeButton").textContent=e.status==="completed"?"重新開啟診症":"完成診症"
+
+ $("allergyButton").textContent=
+  state==="known"
+   ?"Alert"
+   :state==="none"
+    ?"NKDA"
+    :"？N/KDA";
+
+ $("allergyButton").title=
+  s.kind==="document"
+   ?"文件快照敏感紀錄："+allergy(p)
+   :allergy(p)+
+    "；本次覆核："+
+    (s.data.allergyReviewed?"已覆核":"未記錄");
+
+ const review=$("allergyFields").querySelector(
+  '[data-path="allergyReviewed"]'
+ );
+
+ if(
+  review&&
+  review.checked!==!!s.data.allergyReviewed
+ ){
+  review.checked=!!s.data.allergyReviewed;
+ }
+
+ $("syncNotice").hidden=
+  ![...IDFIELDS,...CONTACTS].some(
+   k=>S(e.patient[k])!==S(master(e)?.data[k])
+  );
+
+ $("completeButton").textContent=
+  e.status==="completed"
+   ?"重新開啟診症"
+   :"完成診症";
 }
 function updateButtons(){
  if(!db)return;
@@ -3691,12 +3764,18 @@ function dwScreen(page=dwState.page,readFilters=false){
   c=>!dwState.clinic||c.id===dwState.clinic
  );
 
-const rows=w.shifts.filter(
-  s=>s.start.slice(0,7)===month&&
+const visibleRows=w.shifts.filter(
+  s=>
    (!dwState.clinic||s.clinicId===dwState.clinic)&&
    (!dwState.hideCancelled||s.status!=="cancelled")
- ).slice().sort((a,b)=>a.start.localeCompare(b.start));
+ ).slice().sort(
+  (a,b)=>a.start.localeCompare(b.start)
+ );
 
+ // 更次清單只顯示所選月份。
+ const rows=visibleRows.filter(
+  s=>s.start.slice(0,7)===month
+ );
  let body="";
 
  if(page==="calendar"){
@@ -3712,7 +3791,9 @@ const rows=w.shifts.filter(
 
     ${Array.from({length:42},(_,n)=>{
      const day=dwDayAdd(begin,n);
-     const shifts=rows.filter(s=>s.start.slice(0,10)===day);
+const shifts=visibleRows.filter(
+ s=>s.start.slice(0,10)===day
+);
 
      return `<section class="dw-day
       ${day.slice(0,7)!==month?"outside":""}
@@ -3865,7 +3946,16 @@ ${dwStatsHTML(w,month,dwState.clinic)}
 function dwEdit(id="",day=""){
  dwReadFilters();
 
- const w=dwRead();
+const w=dwRead();
+
+ if(
+  dwState.clinic&&
+  !w.clinics.some(c=>c.id===dwState.clinic)
+ ){
+  dwState.clinic="";
+ }
+
+ const month=dwState.month;
  const old=id?w.shifts.find(s=>s.id===id):null;
 
  assert(!id||old,"找不到更次");
