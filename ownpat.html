@@ -427,12 +427,46 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7}
   min-width:130px;
  }
 }
+ /* 更次清單：操作欄緊湊排列，不保留 HTML 排版空白 */
+.dw-root table.ui td.dw-shift-cell{
+ white-space:normal;
+ vertical-align:top;
+}
+
+.dw-root .dw-shift-actions{
+ display:flex;
+ align-items:center;
+ flex-wrap:nowrap;
+ gap:6px;
+}
+
+.dw-root table.ui .dw-shift-actions button{
+ flex:0 0 auto;
+ width:auto;
+ min-width:0;
+ min-height:28px;
+ height:auto;
+ margin:0;
+ padding:4px 8px;
+ font-size:12px;
+ line-height:1.4;
+ white-space:nowrap;
+}
+
+.dw-root .dw-shift-note{
+ margin-bottom:6px;
+ font-size:12px;
+ line-height:1.5;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
 </style>
 </head>
 <body>
 <section id="login">
  <div class="card">
-  <h1>梁子恒醫生診所管理系統 Dr Ray's Clinical Management System</h1>
+  <h1>梁子恒醫生診所管理系統<br>Dr Ray's Clinical Management System</h1>
+  
   <form id="loginForm">
    <div class="field"><label for="email">電郵帳戶</label><input id="email" type="email" autocomplete="username" required></div>
    <div class="field"><label for="password">密碼</label><input id="password" type="password" autocomplete="current-password" required></div>
@@ -2619,7 +2653,8 @@ const DW_PAGES={
 let dwState={
  month:today().slice(0,7),
  clinic:"",
- page:"calendar"
+ page:"calendar",
+ hideCancelled:true
 };
 
 function dwEmpty(){
@@ -3079,7 +3114,12 @@ function dwReadFilters(){
 
  dwState.month=month;
  dwState.clinic=$("dwFilterClinic").value;
+
+ if($("dwHideCancelled")){
+  dwState.hideCancelled=$("dwHideCancelled").checked;
+ }
 }
+ 
 /* =========================================================
    醫生排班增強：
    - 每週重複排班，整批驗證及保存
@@ -3651,9 +3691,10 @@ function dwScreen(page=dwState.page,readFilters=false){
   c=>!dwState.clinic||c.id===dwState.clinic
  );
 
- const rows=w.shifts.filter(
+const rows=w.shifts.filter(
   s=>s.start.slice(0,7)===month&&
-   (!dwState.clinic||s.clinicId===dwState.clinic)
+   (!dwState.clinic||s.clinicId===dwState.clinic)&&
+   (!dwState.hideCancelled||s.status!=="cancelled")
  ).slice().sort((a,b)=>a.start.localeCompare(b.start));
 
  let body="";
@@ -3796,6 +3837,14 @@ function dwScreen(page=dwState.page,readFilters=false){
     })}
     <button data-act="dwPrev">← 上月</button>
     <button data-act="dwNext">下月 →</button>
+    <label class="check" style="margin:0 4px 8px;white-space:nowrap">
+     <input
+      id="dwHideCancelled"
+      type="checkbox"
+      ${dwState.hideCancelled?"checked":""}
+     >
+     <span>隱藏已取消排班</span>
+    </label>
     <button data-act="dwRefresh">套用篩選</button>
     <button data-act="dwNew" class="primary">＋ 新增更次</button>
    </div>
@@ -4972,9 +5021,10 @@ $("modalBody").addEventListener("change",event=>{
   return;
  }
 
- if(
+if(
   event.target.id!=="dwFilterMonth"&&
-  event.target.id!=="dwFilterClinic"
+  event.target.id!=="dwFilterClinic"&&
+  event.target.id!=="dwHideCancelled"
  ){
   return;
  }
