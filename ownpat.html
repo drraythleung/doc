@@ -3753,12 +3753,18 @@ const rows=w.shifts.filter(
      <td>${E(dwClinic(w,s.clinicId).name)}</td>
      <td>${E(DW_STATUS[s.status])}</td>
      <td>${s.paidUnits/2} 小時<br>無薪休息 ${s.breakMinutes} 分鐘</td>
-     <td>${E(s.note)}<br>
-      <button data-act="dwEdit" data-id="${E(s.id)}">查看／修改</button>
-      ${s.status!=="cancelled"?`
-       <button data-act="dwCancel" data-id="${E(s.id)}" class="danger">
-        取消此更
-       </button>`:""}
+     <td class="dw-shift-cell">
+      ${T(s.note)
+       ?`<div class="dw-shift-note">${E(s.note)}</div>`
+       :""
+      }
+      <div class="dw-shift-actions">
+       <button data-act="dwEdit" data-id="${E(s.id)}">查看／修改</button>
+       ${s.status!=="cancelled"
+        ?`<button data-act="dwCancel" data-id="${E(s.id)}" class="danger">取消此更</button>`
+        :""
+       }
+      </div>
      </td>
     </tr>`).join("")||'<tr><td colspan="5">此月份沒有更次。</td></tr>'}
    </tbody>
