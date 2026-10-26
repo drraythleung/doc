@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="referrer" content="no-referrer">
+
+<meta
+ http-equiv="Content-Security-Policy"
+ content="
+  default-src 'none';
+  script-src 'unsafe-inline';
+  style-src 'unsafe-inline';
+  connect-src https://pdtiwdndcwtojqfoxrfe.supabase.co;
+  img-src data:;
+  object-src 'none';
+  base-uri 'none';
+  form-action 'none';
+ "
+>
+
+<title>梁子恒醫生｜診症月曆</title>
+
+<meta
+ name="description"
+ content="以月曆查閱梁子恒醫生已公布的診症時間、地點及診所預約資料。"
+>
+
+<style>
+:root{
+ --bg:#edf2f4;
+ --panel:#fff;
+ --ink:#172a30;
+ --muted:#5b6e76;
+ --line:#d5e0e4;
+ --accent:#235f54;
+ --soft:#eaf4ef;
+ --warn:#775516;
+ --warnbg:#fff7df;
+ --bad:#a32e35;
+
+ font-family:
+  Arial,"Microsoft JhengHei","PingFang TC",sans-serif;
+}
+
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ color:var(--ink);
+ background:var(--bg);
+ font-size:14px;
+ line-height:1.65;
+}
+
+button,input,select{font:inherit;color:inherit}
+
+button,.link-button{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:6px;
+ min-height:40px;
+ padding:8px 13px;
+ border:1px solid var(--line);
+ border-radius:8px;
+ background:#fff;
+ color:var(--accent);
+ text-decoration:none;
+ cursor:pointer;
+}
+
+button:hover:not(:disabled),
+.link-button:hover{
+ background:var(--soft);
+}
+
+button:disabled{
+ opacity:.4;
+ cursor:not-allowed;
+}
+
+:focus-visible{
+ outline:3px solid #a5cbbd;
+ outline-offset:3px;
+}
+
+.wrap{
+ width:min(1180px,100%);
+ margin:auto;
+ padding:24px 20px 36px;
+}
+
+.hero{
+ padding:22px 24px;
+ background:#fff;
+ border:1px solid var(--line);
+ border-top:5px solid var(--accent);
+ border-radius:13px;
+}
+
+.eyebrow{
+ margin:0 0 4px;
+ color:var(--accent);
+ font-size:13px;
+ font-weight:bold;
+}
+
+h1{
+ margin:0;
+ font-size:28px;
+ line-height:1.4;
+}
+
+.english{
+ margin:4px 0 0;
+ color:var(--muted);
+}
+
+.intro{margin:12px 0 0}
+
+.toolbar{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:12px;
+ margin:17px 0 12px;
+}
+
+.month-controls{
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:8px;
+}
+
+.month-title{
+ min-width:145px;
+ margin:0 5px;
+ text-align:center;
+ font-size:23px;
+ line-height:1.4;
+}
+
+.filter-controls{
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:8px;
+}
+
+.filter-controls label{
+ color:var(--muted);
+ font-size:13px;
+}
+
+select{
+ max-width:290px;
+ min-height:40px;
+ padding:8px 10px;
+ border:1px solid #bfced5;
+ border-radius:8px;
+ background:#fff;
+}
+
+.notice{
+ padding:10px 14px;
+ margin:12px 0;
+ color:var(--warn);
+ background:var(--warnbg);
+ border:1px solid #dfd0a4;
+ border-radius:9px;
+}
+
+.notice.error{
+ color:var(--bad);
+ background:#fff0f1;
+ border-color:#e2b3b8;
+}
+
+.calendar-panel{
+ padding:14px;
+ border:1px solid var(--line);
+ border-radius:12px;
+ background:#fff;
+}
+
+.calendar-meta{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ flex-wrap:wrap;
+ gap:7px 15px;
+ margin-bottom:12px;
+ color:var(--muted);
+ font-size:12px;
+}
+
+.legend{
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:7px 14px;
+ margin-bottom:12px;
+}
+
+.legend-item{
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+ color:var(--muted);
+ font-size:12px;
+}
+
+.legend-dot{
+ flex:none;
+ width:9px;
+ height:9px;
+ border-radius:50%;
+ background:var(--site-color);
+}
+
+.calendar-scroll{
+ overflow:auto;
+ overscroll-behavior-x:contain;
+}
+
+.calendar{
+ display:grid;
+ grid-template-columns:repeat(7,minmax(0,1fr));
+ gap:5px;
+ min-width:730px;
+}
+
+.weekday{
+ padding:9px 4px;
+ border-radius:6px;
+ background:#edf3f4;
+ text-align:center;
+ font-size:13px;
+ font-weight:bold;
+}
+
+.weekday.weekend{color:#8e5050}
+
+.day{
+ min-width:0;
+ min-height:148px;
+ padding:7px;
+ border:1px solid var(--line);
+ border-radius:7px;
+ background:#fff;
+}
+
+.day.outside{
+ background:#f5f7f8;
+}
+
+.day.past{
+ background:#fafbfc;
+}
+
+.day.today{
+ border:2px solid var(--accent);
+ padding:6px;
+ background:#f6fbf8;
+}
+
+.day-head{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:5px;
+ min-height:26px;
+ margin-bottom:5px;
+}
+
+.day-number{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ min-width:26px;
+ min-height:26px;
+ font-size:13px;
+ font-weight:bold;
+}
+
+.day.today .day-number{
+ border-radius:50%;
+ color:#fff;
+ background:var(--accent);
+}
+
+.day.outside .day-number{color:#8b9ba2}
+
+.today-label{
+ color:var(--accent);
+ font-size:11px;
+}
+
+.event{
+ display:block;
+ width:100%;
+ min-height:0;
+ margin:5px 0 0;
+ padding:7px 7px 7px 8px;
+ border:1px solid var(--line);
+ border-left:4px solid var(--site-color);
+ border-radius:6px;
+ background:#f8fafb;
+ color:var(--ink);
+ text-align:left;
+ line-height:1.45;
+}
+
+.event:hover:not(:disabled){
+ background:#edf5f1;
+}
+
+.event-time{
+ display:block;
+ font-size:12px;
+ font-weight:bold;
+ font-variant-numeric:tabular-nums;
+}
+
+.event-site{
+ display:block;
+ margin-top:3px;
+ overflow-wrap:anywhere;
+ font-size:12px;
+}
+
+.day-note{
+ margin:12px 0 0;
+ color:#8b9ba2;
+ font-size:11px;
+ text-align:center;
+}
+
+.mobile-hint{
+ display:none;
+ margin:0 0 10px;
+ color:var(--muted);
+ font-size:12px;
+}
+
+.empty-message{
+ margin:12px 0 0;
+ padding:12px 14px;
+ border:1px solid var(--line);
+ border-radius:8px;
+ color:var(--muted);
+ background:#f7faf9;
+}
+
+footer{
+ margin-top:22px;
+ color:var(--muted);
+ font-size:12px;
+}
+
+footer p{margin:6px 0}
+
+dialog{
+ width:min(520px,calc(100vw - 28px));
+ max-height:90dvh;
+ padding:22px;
+ overflow:auto;
+ border:1px solid var(--line);
+ border-radius:13px;
+ color:var(--ink);
+ background:#fff;
+}
+
+dialog::backdrop{background:#17333d80}
+
+.dialog-head{
+ display:flex;
+ align-items:flex-start;
+ justify-content:space-between;
+ gap:12px;
+ margin-bottom:17px;
+}
+
+.dialog-head h2{
+ margin:0;
+ font-size:20px;
+ line-height:1.5;
+}
+
+.dialog-date{
+ margin:0;
+ color:var(--muted);
+}
+
+.dialog-time{
+ margin:4px 0 18px;
+ color:var(--accent);
+ font-size:26px;
+ font-weight:bold;
+ line-height:1.4;
+}
+
+.detail-section{
+ margin:15px 0;
+}
+
+.detail-section h3{
+ margin:0 0 5px;
+ color:var(--muted);
+ font-size:12px;
+ font-weight:normal;
+}
+
+.detail-section p{
+ margin:0;
+ white-space:pre-line;
+ overflow-wrap:anywhere;
+}
+
+.dialog-actions{
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:8px;
+ margin-top:18px;
+}
+
+.dialog-note{
+ margin:18px 0 0;
+ padding-top:13px;
+ border-top:1px solid var(--line);
+ color:var(--muted);
+ font-size:12px;
+}
+
+[hidden]{display:none!important}
+
+@media(max-width:760px){
+ .wrap{padding:14px 11px 28px}
+ .hero{padding:17px}
+ h1{font-size:25px}
+
+ .toolbar{align-items:stretch}
+ .month-controls{width:100%}
+ .month-title{flex:1;min-width:0;font-size:21px}
+ .filter-controls{width:100%}
+ .filter-controls select{flex:1;max-width:none;min-width:0}
+
+ .calendar-panel{padding:10px}
+ .calendar{min-width:730px}
+ .day{min-height:140px}
+ .mobile-hint{display:block}
+}
+</style>
+</head>
+
+<body>
+<main class="wrap">
+
+ <header class="hero">
+  <p class="eyebrow">診症時間及地點</p>
+  <h1>梁子恒醫生</h1>
+  <p class="english">Dr. LEUNG Tsz Hang</p>
+  <p class="intro">
+按月曆內的診症時段，查看診所地址、預約電話及已提供的 WhatsApp 預約方式。
+  </p>
+ </header>
+
+ <div
+  id="status"
+  class="notice"
+  role="status"
+  aria-live="polite"
+ >
+  正在載入診症月曆…
+ </div>
+
+ <section id="calendarSection" hidden>
+
+  <div class="toolbar">
+
+   <div class="month-controls">
+    <button
+     id="prev"
+     type="button"
+     aria-label="上一個月"
+    >←</button>
+
+    <h2
+     id="monthTitle"
+     class="month-title"
+     aria-live="polite"
+    ></h2>
+
+    <button
+     id="next"
+     type="button"
+     aria-label="下一個月"
+    >→</button>
+
+    <button id="thisMonth" type="button">
+     本月
+    </button>
+   </div>
+
+   <div class="filter-controls">
+    <label for="site">地點</label>
+
+    <select id="site">
+     <option value="">全部地點</option>
+    </select>
+
+    <button id="refresh" type="button">
+     重新整理
+    </button>
+   </div>
+
+  </div>
+
+  <div class="calendar-panel">
+
+   <div class="calendar-meta">
+    <span id="summary"></span>
+    <span id="freshness"></span>
+   </div>
+
+   <div
+    id="legend"
+    class="legend"
+    aria-label="診所顏色標示"
+   ></div>
+
+   <p class="mobile-hint">
+    ← 可左右滑動查看完整七日月曆 →
+   </p>
+
+   <div
+    class="calendar-scroll"
+    role="region"
+    aria-label="診症月曆，可左右捲動"
+    tabindex="0"
+   >
+    <div
+     id="calendar"
+     class="calendar"
+     aria-label="診症日期及時段"
+     aria-busy="true"
+    ></div>
+   </div>
+
+   <p
+    id="emptyMessage"
+    class="empty-message"
+    hidden
+   ></p>
+
+  </div>
+ </section>
+
+ <noscript>
+  <div class="notice">
+   此頁需要 JavaScript 才能讀取診症月曆。
+  </div>
+ </noscript>
+
+ <footer>
+  <p>
+   所有時間均為香港時間（UTC+8）。
+   月曆只顯示已公布且尚未結束的原定時段，
+   過往安排不在此頁展示。
+  </p>
+  <p>
+   排班不代表尚有預約名額。診症期間可能另設休息時間；
+   預約、臨時調動及實際診症安排，請先向有關診所確認。
+  </p>
+  <p>
+   此頁只供查閱排班，不接收病歷、醫療查詢或預約表單。
+  </p>
+ </footer>
+
+</main>
+
+<dialog id="detail" aria-labelledby="detailTitle">
+ <div class="dialog-head">
+  <h2 id="detailTitle"></h2>
+  <button id="closeDetail" type="button">關閉</button>
+ </div>
+ <div id="detailBody"></div>
+</dialog>
+
+<script>
+"use strict";
+
+/* 公開排班接口；不包含登入資料或 secret key。 */
+const API=
+ "https://pdtiwdndcwtojqfoxrfe.supabase.co";
+
+const KEY=
+ "sb_publishable_MX1K8ycnd9rTcbp6pRMJpQ_xXr4kxIR";
+
+const $=id=>document.getElementById(id);
+
+const E=value=>String(value??"").replace(
+ /[&<>"']/g,
+ c=>({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  '"':"&quot;",
+  "'":"&#39;"
+ }[c])
+);
+
+/* 固定色盤，只用於區分公開地點。 */
+const COLORS=[
+ "#376aaf",
+ "#39846a",
+ "#9263b0",
+ "#bc7830",
+ "#b34f67",
+ "#33868f",
+ "#6d7840",
+ "#74659b"
+];
+
+let data=null;
+let loading=false;
+let viewMonth="";
+let visibleEvents=[];
+let returnFocus=null;
+
+/* 日期一律按香港計算，不依賴訪客所在地。 */
+function hkNow(){
+ const parts=new Intl.DateTimeFormat("en-GB",{
+  timeZone:"Asia/Hong_Kong",
+  year:"numeric",
+  month:"2-digit",
+  day:"2-digit",
+  hour:"2-digit",
+  minute:"2-digit",
+  hourCycle:"h23"
+ }).formatToParts(new Date());
+
+ const p=Object.fromEntries(
+  parts.map(x=>[x.type,x.value])
+ );
+
+ return (
+  p.year+"-"+p.month+"-"+p.day+
+  "T"+p.hour+":"+p.minute
+ );
+}
+
+function dayAdd(day,n){
+ const d=new Date(day+"T12:00:00Z");
+ d.setUTCDate(d.getUTCDate()+n);
+ return d.toISOString().slice(0,10);
+}
+
+function monthAdd(month,n){
+ const d=new Date(month+"-01T12:00:00Z");
+ d.setUTCMonth(d.getUTCMonth()+n);
+ return d.toISOString().slice(0,7);
+}
+
+function monthLabel(month){
+ return (
+  Number(month.slice(0,4))+"年"+
+  Number(month.slice(5,7))+"月"
+ );
+}
+
+function dateLabel(day){
+ return new Intl.DateTimeFormat("zh-HK",{
+  timeZone:"Asia/Hong_Kong",
+  year:"numeric",
+  month:"long",
+  day:"numeric",
+  weekday:"long"
+ }).format(new Date(day+"T12:00:00+08:00"));
+}
+
+function checkedLabel(iso){
+ return new Intl.DateTimeFormat("zh-HK",{
+  timeZone:"Asia/Hong_Kong",
+  month:"numeric",
+  day:"numeric",
+  hour:"2-digit",
+  minute:"2-digit",
+  hour12:false
+ }).format(new Date(iso));
+}
+
+function dateOK(day){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return false;
+
+ const d=new Date(day+"T12:00:00Z");
+
+ return Number.isFinite(d.getTime())&&
+  d.toISOString().slice(0,10)===day;
+}
+
+function datetimeOK(value){
+ return typeof value==="string"&&
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)&&
+  dateOK(value.slice(0,10))&&
+  Number(value.slice(11,13))<24&&
+  Number(value.slice(14,16))<60;
+}
+
+function validShift(s){
+ return s&&
+  typeof s.siteId==="string"&&
+  typeof s.siteName==="string"&&
+  datetimeOK(s.start)&&
+  datetimeOK(s.end)&&
+  s.end>s.start;
+}
+
+function setStatus(text,error=false){
+ $("status").hidden=false;
+ $("status").classList.toggle("error",error);
+ $("status").textContent=text;
+}
+
+function sites(){
+ const map=new Map();
+
+ for(const s of data?.shifts||[]){
+  map.set(s.siteId,s.siteName);
+ }
+
+ return [...map.entries()].sort(
+  (a,b)=>a[1].localeCompare(b[1],"zh-HK")
+ );
+}
+
+function siteColor(id){
+ /* 依地點 ID 決定顏色，切換月份時不變。 */
+ let hash=0;
+
+ for(const c of id){
+  hash=(hash*31+c.charCodeAt(0))>>>0;
+ }
+
+ return COLORS[hash%COLORS.length];
+}
+
+function updateSiteFilter(){
+ const selected=$("site").value;
+ const rows=sites();
+
+ $("site").innerHTML=
+  '<option value="">全部地點</option>'+
+  rows.map(([id,name])=>`
+   <option value="${E(id)}">${E(name)}</option>
+  `).join("");
+
+ $("site").value=rows.some(([id])=>id===selected)
+  ?selected
+  :"";
+}
+
+function endTime(s){
+ const from=s.start.slice(0,10);
+ const to=s.end.slice(0,10);
+
+ const prefix=to===from
+  ?""
+  :to===dayAdd(from,1)
+   ?"翌日 "
+   :Number(to.slice(5,7))+"/"+
+    Number(to.slice(8,10))+" ";
+
+ return prefix+s.end.slice(11);
+}
+
+function timeRange(s){
+ return s.start.slice(11)+"–"+endTime(s);
+}
+
+function render(){
+ if(!data?.enabled)return;
+
+ const now=hkNow();
+ const today=now.slice(0,10);
+ const thisMonth=today.slice(0,7);
+ const lastMonth=data.throughDate.slice(0,7);
+ const chosenSite=$("site").value;
+
+ if(!viewMonth)viewMonth=thisMonth;
+
+ if(viewMonth<thisMonth)viewMonth=thisMonth;
+ if(viewMonth>lastMonth)viewMonth=lastMonth;
+
+ $("monthTitle").textContent=monthLabel(viewMonth);
+
+ $("prev").disabled=viewMonth<=thisMonth;
+ $("next").disabled=viewMonth>=lastMonth;
+ $("thisMonth").disabled=viewMonth===thisMonth;
+
+ const first=viewMonth+"-01";
+
+ const weekday=new Date(
+  first+"T12:00:00Z"
+ ).getUTCDay();
+
+ /* 星期一起首，完整顯示六週。 */
+ const begin=dayAdd(first,-((weekday+6)%7));
+ const end=dayAdd(begin,41);
+
+ visibleEvents=data.shifts.filter(s=>{
+  const day=s.start.slice(0,10);
+
+  return s.end>now&&
+   day>=begin&&day<=end&&
+   (!chosenSite||s.siteId===chosenSite);
+ }).sort((a,b)=>
+  a.start.localeCompare(b.start)||
+  a.siteName.localeCompare(b.siteName,"zh-HK")
+ );
+
+ const monthEvents=visibleEvents.filter(
+  s=>s.start.slice(0,7)===viewMonth
+ );
+
+ $("summary").textContent=
+  "本月已公布 "+monthEvents.length+" 個時段"+
+  " · 香港時間";
+
+ const usedSites=new Map();
+
+ for(const s of visibleEvents){
+  usedSites.set(s.siteId,s.siteName);
+ }
+
+ $("legend").innerHTML=
+  [...usedSites.entries()].map(([id,name])=>`
+   <span class="legend-item">
+    <span
+     class="legend-dot"
+     style="--site-color:${siteColor(id)}"
+     aria-hidden="true"
+    ></span>
+    ${E(name)}
+   </span>
+  `).join("");
+
+ const byDay=new Map();
+
+ visibleEvents.forEach((s,index)=>{
+  const day=s.start.slice(0,10);
+
+  if(!byDay.has(day))byDay.set(day,[]);
+
+  byDay.get(day).push({shift:s,index});
+ });
+
+ const headers=["一","二","三","四","五","六","日"]
+  .map((name,index)=>`
+   <div class="weekday ${index>=5?"weekend":""}">
+    星期${name}
+   </div>
+  `).join("");
+
+ const days=Array.from({length:42},(_,index)=>{
+  const day=dayAdd(begin,index);
+  const outside=day.slice(0,7)!==viewMonth;
+  const isToday=day===today;
+  const past=day<today;
+  const afterRange=day>data.throughDate;
+  const rows=byDay.get(day)||[];
+
+  let note="";
+
+  if(!rows.length){
+   if(afterRange){
+    note="尚未開放查閱";
+   }else if(past){
+    note="過往時段不展示";
+   }else if(!outside){
+    note="未有公布時段";
+   }
+  }
+
+  const number=
+   day.slice(8,10)==="01"||index===0
+    ?Number(day.slice(5,7))+"/"+
+     Number(day.slice(8,10))
+    :Number(day.slice(8,10));
+
+  return `
+   <section
+    class="day
+     ${outside?"outside":""}
+     ${isToday?"today":""}
+     ${past?"past":""}
+    "
+    aria-label="${E(dateLabel(day))}"
+    ${isToday?'aria-current="date"':""}
+   >
+    <div class="day-head">
+     <span class="day-number">${E(number)}</span>
+     ${isToday?`
+      <span class="today-label">今天</span>
+     `:""}
+    </div>
+
+    ${rows.map(({shift:s,index:eventIndex})=>`
+     <button
+      class="event"
+      type="button"
+      data-event="${eventIndex}"
+      style="--site-color:${siteColor(s.siteId)}"
+      aria-label="${E(
+       dateLabel(day)+"，"+
+       timeRange(s)+"，"+
+       s.siteName+"，查看地址及預約資料"
+      )}"
+     >
+      <span class="event-time">
+       ${E(timeRange(s))}
+      </span>
+      <span class="event-site">
+       ${E(s.siteName)}
+      </span>
+     </button>
+    `).join("")}
+
+    ${note?`
+     <p class="day-note">${E(note)}</p>
+    `:""}
+   </section>
+  `;
+ }).join("");
+
+ $("calendar").innerHTML=headers+days;
+
+ $("emptyMessage").hidden=monthEvents.length>0;
+
+ if(!monthEvents.length){
+  $("emptyMessage").textContent=
+   "本月在所選地點暫未有可顯示的診症時段。"+
+   "未有公布不代表診所休診，請向診所查詢。";
+ }
+}
+
+function closeDetail(){
+ $("detail").close();
+}
+
+function openDetail(index,button){
+ const s=visibleEvents[index];
+ if(!s)return;
+
+ returnFocus=button;
+
+ const address=String(s.address||"").trim();
+ const phone=String(s.phone||"").trim();
+
+ const canCall=
+  /^[+\d\s()-]+$/.test(phone)&&
+  phone.replace(/\D/g,"").length>=8;
+
+ const dial=phone.replace(/[^\d+]/g,"");
+
+ const mapURL=address
+  ?"https://www.google.com/maps/search/?api=1&query="+
+    encodeURIComponent(address)
+  :"";
+
+ /*
+  * 只採用公開 RPC 明確回傳的 whatsapp。
+  * 不從預約電話推斷，避免診所未啟用時仍顯示按鈕。
+  *
+  * 格式：包含國碼、只有數字，例如 85298677100。
+  * 空白、缺少或格式不符時，不顯示 WhatsApp。
+  */
+ const whatsapp=typeof s.whatsapp==="string"
+  ?s.whatsapp.trim()
+  :"";
+
+ const canWhatsApp=/^[1-9]\d{7,14}$/.test(whatsapp);
+
+ /*
+  * 預填內容只包含公開排班資料，
+  * 不加入病人身份或病歷。
+  */
+ const whatsappMessage=[
+  "你好，我想查詢預約梁子恒醫生。",
+  "診所："+s.siteName,
+  "日期："+dateLabel(s.start.slice(0,10)),
+  "時段："+timeRange(s)+"（香港時間）",
+  "請問以上時段是否仍有預約名額？"
+ ].join("\n");
+
+ const whatsappURL=canWhatsApp
+  ?"https://wa.me/"+whatsapp+
+    "?text="+encodeURIComponent(whatsappMessage)
+  :"";
+
+ $("detailTitle").textContent=s.siteName;
+
+ $("detailBody").innerHTML=`
+  <p class="dialog-date">
+   ${E(dateLabel(s.start.slice(0,10)))}
+  </p>
+
+  <p class="dialog-time">
+   ${E(timeRange(s))}
+  </p>
+
+  <div class="detail-section">
+   <h3>診所地址</h3>
+   <p>${E(address||"詳細地址請向診所查詢。")}</p>
+  </div>
+
+  <div class="detail-section">
+   <h3>預約電話</h3>
+   <p>${E(phone||"預約安排請直接向診所查詢。")}</p>
+  </div>
+
+  ${canWhatsApp?`
+   <div class="detail-section">
+    <h3>WhatsApp 預約</h3>
+    <p>+${E(whatsapp)}</p>
+   </div>
+  `:""}
+
+  <div class="dialog-actions">
+   ${canCall?`
+    <a
+     class="link-button"
+     href="tel:${E(dial)}"
+    >致電預約</a>
+   `:""}
+
+   ${canWhatsApp?`
+    <a
+     class="link-button"
+     href="${E(whatsappURL)}"
+     target="_blank"
+     rel="noopener noreferrer"
+     aria-label="${E(
+      "透過 WhatsApp 向"+s.siteName+"查詢預約（另開視窗）"
+     )}"
+    >WhatsApp 預約</a>
+   `:""}
+
+   ${mapURL?`
+    <a
+     class="link-button"
+     href="${E(mapURL)}"
+     target="_blank"
+     rel="noopener noreferrer"
+    >查看地圖</a>
+   `:""}
+  </div>
+
+  <p class="dialog-note">
+   香港時間。以上為原定診症安排，不代表尚有預約名額；
+   休息時間及實際診症安排請先向診所確認。
+   ${canWhatsApp?`
+    <br>
+    WhatsApp 按鈕只會開啟預約查詢，
+    不代表已發送訊息或完成預約。
+    請勿在預填訊息中加入證件號碼或詳細病歷。
+   `:""}
+  </p>
+ `;
+
+ $("detail").showModal();
+ $("closeDetail").focus();
+}
+
+
+async function load(){
+ if(loading)return;
+
+ loading=true;
+ $("refresh").disabled=true;
+ $("calendar").setAttribute("aria-busy","true");
+
+ const controller=new AbortController();
+
+ const timer=setTimeout(
+  ()=>controller.abort(),
+  15000
+ );
+
+ try{
+  const response=await fetch(
+   API+"/rest/v1/rpc/ray_roster_public_get",
+   {
+    method:"POST",
+    headers:{
+     apikey:KEY,
+     "Content-Type":"application/json"
+    },
+    body:"{}",
+    credentials:"omit",
+    cache:"no-store",
+    signal:controller.signal
+   }
+  );
+
+  if(!response.ok){
+   throw new Error("未能讀取排班");
+  }
+
+  const result=await response.json();
+
+  if(
+   !result||
+   typeof result.enabled!=="boolean"||
+   !Array.isArray(result.shifts)
+  ){
+   throw new Error("接口回應格式無效");
+  }
+
+  if(result.enabled&&(
+   !dateOK(result.throughDate)||
+   typeof result.checkedAt!=="string"||
+   !Number.isFinite(Date.parse(result.checkedAt))||
+   !result.shifts.every(validShift)
+  )){
+   throw new Error("排班資料格式無效");
+  }
+
+  /*
+   * 背景更新後關閉已開啟的舊詳情，
+   * 避免取消更次後仍展示舊安排。
+   */
+  if($("detail").open)closeDetail();
+
+  data=result;
+
+  if(!result.enabled){
+   $("calendarSection").hidden=true;
+   $("calendar").replaceChildren();
+   visibleEvents=[];
+
+   setStatus(
+    "目前未開放網上排班查詢，請直接向診所查詢。"
+   );
+
+   return;
+  }
+
+  updateSiteFilter();
+  $("calendarSection").hidden=false;
+
+  $("freshness").textContent=
+   "最近成功讀取："+
+   checkedLabel(result.checkedAt);
+
+  setStatus(
+   "點選月曆內的時段查看預約資料。"+
+   "目前可查閱至 "+result.throughDate+"。"
+  );
+
+  render();
+
+ }catch(error){
+  data=null;
+  visibleEvents=[];
+
+  if($("detail").open)closeDetail();
+
+  /*
+   * 更新失敗不繼續展示舊時段，
+   * 以免被誤認為最新安排。
+   */
+  $("calendar").replaceChildren();
+  $("calendarSection").hidden=true;
+
+  setStatus(
+   "暫時未能讀取最新診症月曆。"+
+   "請稍後重試，或直接向診所查詢。",
+   true
+  );
+
+  installRetry();
+
+ }finally{
+  clearTimeout(timer);
+  loading=false;
+  $("refresh").disabled=false;
+  $("calendar").setAttribute("aria-busy","false");
+ }
+}
+
+function installRetry(){
+ /* 月曆隱藏時，仍保留手動重試入口。 */
+ const button=document.createElement("button");
+ button.type="button";
+ button.textContent="重新載入月曆";
+ button.style.marginLeft="10px";
+
+ button.addEventListener("click",()=>{
+  button.disabled=true;
+  load();
+ });
+
+ $("status").append(button);
+}
+
+$("prev").addEventListener("click",()=>{
+ viewMonth=monthAdd(viewMonth,-1);
+ render();
+});
+
+$("next").addEventListener("click",()=>{
+ viewMonth=monthAdd(viewMonth,1);
+ render();
+});
+
+$("thisMonth").addEventListener("click",()=>{
+ viewMonth=hkNow().slice(0,7);
+ render();
+});
+
+$("site").addEventListener("change",render);
+$("refresh").addEventListener("click",load);
+
+$("calendar").addEventListener("click",event=>{
+ const button=event.target.closest("[data-event]");
+ if(!button)return;
+
+ openDetail(Number(button.dataset.event),button);
+});
+
+$("closeDetail").addEventListener("click",closeDetail);
+
+$("detail").addEventListener("close",()=>{
+ $("detailBody").replaceChildren();
+
+ if(returnFocus?.isConnected){
+  returnFocus.focus({preventScroll:true});
+ }
+
+ returnFocus=null;
+});
+
+/* 離開分頁後返回，立即更新。 */
+document.addEventListener("visibilitychange",()=>{
+ if(!document.hidden)load();
+});
+
+/*
+ * 操作詳情期間暫緩背景重載，避免打斷查閱。
+ * 關閉詳情後立即更新，以核對最新安排。
+ */
+$("detail").addEventListener("close",()=>{
+ if(!loading&&!document.hidden)load();
+});
+
+setInterval(()=>{
+ if(!document.hidden&&!$("detail").open){
+  load();
+ }
+},60000);
+
+load();
+</script>
+</body>
+</html>
