@@ -809,8 +809,8 @@ function render(){
   first+"T12:00:00Z"
  ).getUTCDay();
 
- /* 星期一起首，完整顯示六週。 */
- const begin=dayAdd(first,-((weekday+6)%7));
+/* 星期日起首，完整顯示六週。 */
+ const begin=dayAdd(first,-weekday);
  const end=dayAdd(begin,41);
 
  visibleEvents=data.shifts.filter(s=>{
@@ -860,9 +860,9 @@ function render(){
   byDay.get(day).push({shift:s,index});
  });
 
- const headers=["一","二","三","四","五","六","日"]
+const headers=["日","一","二","三","四","五","六"]
   .map((name,index)=>`
-   <div class="weekday ${index>=5?"weekend":""}">
+   <div class="weekday ${index===0||index===6?"weekend":""}">
     星期${name}
    </div>
   `).join("");
