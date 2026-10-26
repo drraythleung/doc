@@ -1357,94 +1357,21 @@ function refreshTabs(){
 }
 function refreshHeader(){
  const e=current();
-
  if(!e){
-  $("identity").textContent="尚未開啟診症";
-  $("visitState").textContent="先選病人，再開始診症。";
-  $("syncNotice").hidden=true;
-  return;
+  $("identity").textContent="尚未開啟診症";$("visitState").textContent="先選病人，再開始診症。";$("syncNotice").hidden=true;return
  }
-
- const s=source();
- const p=s.data.patient;
- const m=db.patients.find(
-  x=>x.id===s.data.patientId
- );
-
- $("identity").textContent=[
-  pname(p)||"未填姓名",
-  age(p.dob,s.data.date),
-  p.sex,
-  fmt(p.dob),
-  normID(p.hkid),
-  m?.mrn
- ].filter(Boolean).join(" · ");
-
- // 診症狀態取自目前診症，
- // 唔使用文件簽發當時保存嘅 status。
- const encounterState=
-  e.status==="completed"?"已完成":"未完成";
-
- const sourceLabel=
-  s.kind==="document"
-   ?(view?"歷史文件版本":"已簽發文件版本")
-   :s.kind==="revision"
-    ?"完成快照"
-    :"本次診症";
-
- const contactLabel=
-  s.kind==="document"
-   ?"此文件快照未保存聯絡電話"
-   :"紀錄電話："+(T(p.phone)||"未填寫");
-
- $("visitState").textContent=
-  sourceLabel+"："+s.data.date+
-  " · 目前診症狀態："+encounterState+
-  " · "+contactLabel;
-
+ const s=source(),p=s.data.patient,m=db.patients.find(x=>x.id===s.data.patientId);
+ $("identity").textContent=[pname(p)||"未填姓名",age(p.dob,s.data.date),p.sex,fmt(p.dob),normID(p.hkid),m?.mrn].filter(Boolean).join(" · ");
+ $("visitState").textContent=(view?"歷史版本／快照":"本次診症")+"："+s.data.date+" · "+(s.data.status==="completed"?"已完成":"未完成")+" · "+(s.kind==="document"?"此文件快照未保存聯絡電話":"本次電話："+(T(p.phone)||"未填寫"));
  $("returnButton").hidden=!view;
-
- const state=
-  ALLERGY[p.allergyStatus]
-   ?p.allergyStatus
-   :"unknown";
-
+ const state=ALLERGY[p.allergyStatus]?p.allergyStatus:"unknown";
  $("allergyButton").dataset.state=state;
-
- $("allergyButton").textContent=
-  state==="known"
-   ?"Alert"
-   :state==="none"
-    ?"NKDA"
-    :"？N/KDA";
-
- $("allergyButton").title=
-  s.kind==="document"
-   ?"文件快照敏感紀錄："+allergy(p)
-   :allergy(p)+
-    "；本次覆核："+
-    (s.data.allergyReviewed?"已覆核":"未記錄");
-
- const review=$("allergyFields").querySelector(
-  '[data-path="allergyReviewed"]'
- );
-
- if(
-  review&&
-  review.checked!==!!s.data.allergyReviewed
- ){
-  review.checked=!!s.data.allergyReviewed;
- }
-
- $("syncNotice").hidden=
-  ![...IDFIELDS,...CONTACTS].some(
-   k=>S(e.patient[k])!==S(master(e)?.data[k])
-  );
-
- $("completeButton").textContent=
-  e.status==="completed"
-   ?"重新開啟診症"
-   :"完成診症";
+ $("allergyButton").textContent=state==="known"?"Alert":state==="none"?"NKDA":"？N/KDA";
+ $("allergyButton").title=s.kind==="document"?"文件快照敏感紀錄："+allergy(p):allergy(p)+"；本次覆核："+(s.data.allergyReviewed?"已覆核":"未記錄");
+ const review=$("allergyFields").querySelector('[data-path="allergyReviewed"]');
+ if(review&&review.checked!==!!s.data.allergyReviewed)review.checked=!!s.data.allergyReviewed;
+ $("syncNotice").hidden=![...IDFIELDS,...CONTACTS].some(k=>S(e.patient[k])!==S(master(e)?.data[k]));
+ $("completeButton").textContent=e.status==="completed"?"重新開啟診症":"完成診症"
 }
 function updateButtons(){
  if(!db)return;
@@ -3764,18 +3691,12 @@ function dwScreen(page=dwState.page,readFilters=false){
   c=>!dwState.clinic||c.id===dwState.clinic
  );
 
-const visibleRows=w.shifts.filter(
-  s=>
+const rows=w.shifts.filter(
+  s=>s.start.slice(0,7)===month&&
    (!dwState.clinic||s.clinicId===dwState.clinic)&&
    (!dwState.hideCancelled||s.status!=="cancelled")
- ).slice().sort(
-  (a,b)=>a.start.localeCompare(b.start)
- );
+ ).slice().sort((a,b)=>a.start.localeCompare(b.start));
 
- // 更次清單只顯示所選月份。
- const rows=visibleRows.filter(
-  s=>s.start.slice(0,7)===month
- );
  let body="";
 
  if(page==="calendar"){
@@ -3791,9 +3712,7 @@ const visibleRows=w.shifts.filter(
 
     ${Array.from({length:42},(_,n)=>{
      const day=dwDayAdd(begin,n);
-const shifts=visibleRows.filter(
- s=>s.start.slice(0,10)===day
-);
+     const shifts=rows.filter(s=>s.start.slice(0,10)===day);
 
      return `<section class="dw-day
       ${day.slice(0,7)!==month?"outside":""}
@@ -3946,16 +3865,7 @@ ${dwStatsHTML(w,month,dwState.clinic)}
 function dwEdit(id="",day=""){
  dwReadFilters();
 
-const w=dwRead();
-
- if(
-  dwState.clinic&&
-  !w.clinics.some(c=>c.id===dwState.clinic)
- ){
-  dwState.clinic="";
- }
-
- const month=dwState.month;
+ const w=dwRead();
  const old=id?w.shifts.find(s=>s.id===id):null;
 
  assert(!id||old,"找不到更次");
@@ -5232,5 +5142,3466 @@ $("loginForm").addEventListener("submit",async event=>{
  }
 });
 </script>
+<!-- =========================================================
+ Dr Ray CMS：UI／操作流程整合更新
+ 適用：題目所貼 VERSION 5.0.0-stage4、Schema 5 原檔
+
+ 安裝位置：
+ 原有主程式 </script> 之後、</body> 之前。
+
+ 不修改：
+ - Schema 版本
+ - 加密備份格式
+ - RPC 路徑及參數
+ - 原有文件版本／完成快照
+ - 原有月結計算公式
+ ========================================================= -->
+
+<style id="cms-ui-upgrade-style">
+/* ---------- 共用 ---------- */
+
+.cms-sr-only{
+ position:absolute!important;
+ width:1px!important;
+ height:1px!important;
+ padding:0!important;
+ margin:-1px!important;
+ overflow:hidden!important;
+ clip:rect(0,0,0,0)!important;
+ white-space:nowrap!important;
+ border:0!important;
+}
+
+.cms-status-row{
+ display:flex;
+ gap:6px 12px;
+ align-items:center;
+ flex-wrap:wrap;
+ margin-top:4px;
+ line-height:1.7;
+}
+
+.cms-status-chip{
+ display:inline-flex;
+ gap:5px;
+ align-items:center;
+ padding:3px 9px;
+ border:1px solid var(--line);
+ border-radius:20px;
+ background:#fff;
+ font-size:12px;
+ font-weight:normal;
+}
+
+.cms-status-chip[data-kind="completed"]{
+ color:#1e6546;
+ background:#eaf5ee;
+ border-color:#bed8c8;
+}
+
+.cms-status-chip[data-kind="draft"]{
+ color:var(--warn);
+ background:var(--warnbg);
+ border-color:#dfd0a4;
+}
+
+.cms-status-chip[data-kind="history"]{
+ color:var(--bad);
+ background:var(--badbg);
+ border-color:#e2b3b8;
+}
+
+.cms-context-note{
+ margin:7px 0 0;
+ padding:8px 11px;
+ border-left:4px solid var(--accent);
+ background:#eef5f3;
+ font-size:12px;
+ line-height:1.75;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+.cms-context-note.history{
+ border-left-color:var(--warn);
+ background:var(--warnbg);
+}
+
+.cms-field-error{
+ margin:5px 0 0;
+ color:var(--bad);
+ font-size:12px;
+ line-height:1.6;
+}
+
+[aria-invalid="true"]{
+ border-color:var(--bad)!important;
+}
+
+.cms-error-links{
+ display:flex;
+ gap:7px;
+ flex-wrap:wrap;
+ margin-top:9px;
+}
+
+.cms-error-links button{
+ min-height:30px;
+ padding:4px 8px;
+ font-size:12px;
+ background:#fff;
+ color:var(--bad);
+ border-color:#e2b3b8;
+}
+
+.cms-help{
+ margin:7px 0;
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.75;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+.cms-compact-actions{
+ display:flex;
+ gap:8px;
+ flex-wrap:wrap;
+ margin-top:10px;
+}
+
+/* ---------- 頂部 ---------- */
+
+header.appbar{
+ padding:8px 14px;
+}
+
+header.appbar .brand{
+ font-size:14px;
+}
+
+#workbar{
+ padding:9px 14px;
+}
+
+#identity{
+ font-size:17px;
+}
+
+#tabs{
+ gap:5px;
+}
+
+#tabs button{
+ min-width:58px;
+ min-height:49px;
+ padding:7px 10px;
+ font-size:14px;
+}
+
+#tabs small{
+ font-size:11px;
+}
+
+#allergyButton{
+ max-width:min(440px,85vw);
+ text-align:left;
+ white-space:normal;
+ overflow-wrap:anywhere;
+ line-height:1.5;
+}
+
+#saveState{
+ min-height:20px;
+}
+
+#cmsVersionAllergy{
+ margin-top:10px;
+}
+
+/* ---------- 排班 ---------- */
+
+.cms-hours-hint{
+ margin-top:7px;
+ padding:8px 10px;
+ background:#eef5f3;
+ border:1px solid var(--line);
+ border-radius:7px;
+ font-size:12px;
+ line-height:1.75;
+ white-space:pre-wrap;
+}
+
+.cms-hours-hint.warning{
+ background:var(--warnbg);
+ border-color:#dfd0a4;
+ color:var(--warn);
+}
+
+.cms-month-preview{
+ margin:14px 0;
+ padding:14px;
+ background:#f2f8f5;
+ border:1px solid #bfd7cb;
+ border-radius:9px;
+}
+
+.cms-month-preview h3{
+ margin-bottom:10px;
+}
+
+.cms-month-preview dl{
+ display:grid;
+ grid-template-columns:minmax(130px,1fr) minmax(120px,1fr);
+ gap:7px 14px;
+ margin:0;
+}
+
+.cms-month-preview dt{
+ color:var(--muted);
+}
+
+.cms-month-preview dd{
+ margin:0;
+ text-align:right;
+ font-variant-numeric:tabular-nums;
+ overflow-wrap:anywhere;
+}
+
+.cms-month-preview .cms-preview-total{
+ padding-top:8px;
+ border-top:1px solid #bfd7cb;
+ font-weight:bold;
+}
+
+.cms-bulk-toolbar{
+ display:flex;
+ gap:8px;
+ align-items:flex-end;
+ flex-wrap:wrap;
+ margin:12px 0;
+ padding:11px;
+ background:#f2f6f7;
+ border:1px solid var(--line);
+ border-radius:8px;
+}
+
+.cms-bulk-toolbar .field{
+ margin:0;
+ flex:1;
+ min-width:180px;
+}
+
+.cms-bulk-select{
+ width:38px;
+ text-align:center!important;
+}
+
+.cms-crossday{
+ display:inline-block;
+ padding:1px 5px;
+ border-radius:4px;
+ background:#fff1d3;
+ color:#765213;
+ font-size:11px;
+}
+
+.cms-print-summary{
+ padding:11px 13px;
+ border:1px solid var(--line);
+ border-radius:8px;
+ background:#f5f9f7;
+ line-height:1.8;
+}
+
+.cms-metrics{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:10px;
+ margin-top:12px;
+}
+
+.cms-metric{
+ padding:11px;
+ border:1px solid var(--line);
+ border-radius:8px;
+ background:#f7faf9;
+}
+
+.cms-metric strong{
+ display:block;
+ margin-top:5px;
+ font-size:17px;
+}
+
+@media(max-width:820px){
+ #identity{
+  font-size:16px;
+ }
+
+ #tabs button{
+  flex:1 0 65px;
+ }
+
+ .cms-metrics{
+  grid-template-columns:1fr;
+ }
+
+ .cms-month-preview dl{
+  grid-template-columns:minmax(100px,1fr) minmax(100px,1fr);
+ }
+}
+
+@media print{
+ #cmsSaveAnnouncer{
+  display:none!important;
+ }
+}
+</style>
+
+<script id="cms-ui-upgrade-script">
+"use strict";
+
+(function installCMSUIUpgrade(){
+ if(window.__rayCMSUIUpgradeInstalled){
+  return;
+ }
+
+ /* 確認載入順序，避免在原程式之前執行。 */
+ if(
+  typeof db==="undefined"||
+  typeof render!=="function"||
+  typeof dispatch!=="function"||
+  typeof dwScreen!=="function"
+ ){
+  console.error(
+   "CMS UI 更新未安裝：請放在原有主程式之後、body 結尾之前。"
+  );
+  return;
+ }
+
+ window.__rayCMSUIUpgradeInstalled=true;
+
+ const UI_VERSION="ui-flow-upgrade-1";
+
+ /* 保存原有入口，仍沿用原本儲存及驗證流程。 */
+ const original={
+  render,
+  refreshTabs,
+  updateButtons,
+  status,
+  area,
+  openModal,
+  closeModalNow,
+  patientProfile,
+  drawPast,
+  switchPane,
+  dispatch,
+  openIssue,
+  printDocuments,
+  dwScreen,
+  dwEdit,
+  dwCalculateHours,
+  dwUpdateShiftPreview,
+  dwMonth,
+  qualityModal,
+  persistSnapshot,
+  showErrors,
+  fail,
+  docBody
+ };
+
+ let modalReturnFocus=null;
+ let modalFocusGeneration=0;
+ let announcementTimer=null;
+ let lastAnnouncement="";
+ let referenceContext="";
+ let monthPreviewTimer=null;
+
+ const referenceChoices=new Map();
+
+ const metrics={
+  session:"",
+  attempts:0,
+  successes:0,
+  failures:0,
+  lastBytes:0,
+  lastMilliseconds:0,
+  samples:[]
+ };
+
+ /* =======================================================
+    基本 DOM
+    ======================================================= */
+
+ function installStaticDOM(){
+  $("modal").setAttribute("aria-labelledby","modalTitle");
+  $("modalTitle").tabIndex=-1;
+
+  $("secretDialog").setAttribute(
+   "aria-labelledby",
+   "secretTitle"
+  );
+
+  const leaveHeading=$("leaveDialog").querySelector("h2");
+
+  if(leaveHeading){
+   leaveHeading.id="cmsLeaveTitle";
+   $("leaveDialog").setAttribute(
+    "aria-labelledby",
+    "cmsLeaveTitle"
+   );
+  }
+
+  /*
+   * 儲存文字保留視覺更新，
+   * 另外用獨立 live region 宣告重要結果。
+   */
+  $("saveState").removeAttribute("role");
+  $("saveState").removeAttribute("aria-live");
+
+  if(!$("cmsSaveAnnouncer")){
+   const live=document.createElement("div");
+   live.id="cmsSaveAnnouncer";
+   live.className="cms-sr-only";
+   live.setAttribute("role","status");
+   live.setAttribute("aria-live","polite");
+   live.setAttribute("aria-atomic","true");
+   document.body.append(live);
+  }
+
+  /*
+   * 保留八個臨床分頁。
+   * 只將較少使用的登記、排班移入管理選單。
+   */
+  const nav=document.querySelector(
+   'header.appbar nav[aria-label="全診所功能"]'
+  );
+
+  const adminPanel=nav?.querySelector(".menu-panel");
+
+  if(nav&&adminPanel){
+   const register=nav.querySelector(
+    ':scope > button[data-act="registerPatient"]'
+   );
+
+   const doctorWork=nav.querySelector(
+    ':scope > button[data-act="dwOpen"]'
+   );
+
+   if(register){
+    adminPanel.prepend(register);
+   }
+
+   if(doctorWork){
+    const before=adminPanel.querySelector(
+     '[data-act="settings"]'
+    );
+
+    if(before){
+     adminPanel.insertBefore(doctorWork,before);
+    }else{
+     adminPanel.append(doctorWork);
+    }
+   }
+
+   const choose=nav.querySelector(
+    ':scope > button[data-act="choosePatient"]'
+   );
+
+   if(choose){
+    choose.textContent="搜尋／開始診症";
+   }
+  }
+
+  const heading=$("allergyPanel").querySelector("h3");
+
+  if(heading){
+   heading.textContent="本次診症敏感紀錄及覆核";
+  }
+ }
+
+ installStaticDOM();
+
+ /* =======================================================
+    儲存提示
+    ======================================================= */
+
+ status=function(text,error=false){
+  original.status(text,error);
+
+  clearTimeout(announcementTimer);
+
+  const important=
+   error||
+   /已儲存|已載入|未能|失敗|停止寫入|尚未儲存的內容仍然保留/.test(
+    S(text)
+   );
+
+  if(!important){
+   return;
+  }
+
+  /*
+   * 成功提示避免每次都包含不同秒數，
+   * 減少連續輸入時重複播報。
+   */
+  const announcement=error
+   ?S(text)
+   :/已儲存/.test(S(text))
+    ?"草稿已儲存"
+    :S(text);
+
+  announcementTimer=setTimeout(()=>{
+   const live=$("cmsSaveAnnouncer");
+
+   if(!live||announcement===lastAnnouncement){
+    return;
+   }
+
+   lastAnnouncement=announcement;
+   live.textContent=announcement;
+  },error?0:450);
+ };
+
+ /* =======================================================
+    SOAP 欄位標籤
+    ======================================================= */
+
+ area=function(label,path){
+  const labels={
+   "soap.s":"主訴及病史",
+   "soap.o":"檢查及結果",
+   "soap.a":"臨床評估",
+   "soap.p":"治療計劃"
+  };
+
+  return original.area(
+   T(label)||labels[path]||path,
+   path
+  );
+ };
+
+ /* =======================================================
+    彈窗標題及焦點
+    ======================================================= */
+
+ openModal=function(title,html,mode,options={}){
+  const wasOpen=$("modal").open;
+
+  if(!wasOpen){
+   modalReturnFocus=document.activeElement;
+  }
+
+  original.openModal(title,html,mode,options);
+
+  $("modal").setAttribute(
+   "aria-labelledby",
+   "modalTitle"
+  );
+
+  $("modalTitle").tabIndex=-1;
+
+  const generation=++modalFocusGeneration;
+
+  requestAnimationFrame(()=>{
+   if(
+    generation!==modalFocusGeneration||
+    !$("modal").open||
+    modalState?.mode!==mode||
+    $("secretDialog").open||
+    $("leaveDialog").open
+   ){
+    return;
+   }
+
+   const active=document.activeElement;
+
+   /*
+    * 原有 patientEditor／registry 等入口如果已自行聚焦，
+    * 不再搶走其焦點。
+    */
+   if(
+    $("modalBody").contains(active)&&
+    active.matches?.("input,select,textarea")
+   ){
+    return;
+   }
+
+   const first=$("modalBody").querySelector(
+    [
+     'input:not([type="hidden"]):not([type="file"]):not(:disabled)',
+     'select:not(:disabled)',
+     'textarea:not(:disabled)'
+    ].join(",")
+   );
+
+   if(options.editable&&first){
+    first.focus({preventScroll:true});
+   }else{
+    $("modalTitle").focus({preventScroll:true});
+   }
+  });
+ };
+
+ closeModalNow=function(){
+  const target=modalReturnFocus;
+
+  ++modalFocusGeneration;
+  clearTimeout(monthPreviewTimer);
+
+  original.closeModalNow();
+
+  modalReturnFocus=null;
+
+  requestAnimationFrame(()=>{
+   if(
+    $("modal").open||
+    $("secretDialog").open||
+    $("leaveDialog").open
+   ){
+    return;
+   }
+
+   if(
+    target?.isConnected&&
+    !target.disabled&&
+    target.getClientRects().length
+   ){
+    target.focus({preventScroll:true});
+    return;
+   }
+
+   const fallback=db
+    ?$("profileButton")
+    :$("email");
+
+   if(
+    fallback&&
+    !fallback.disabled&&
+    fallback.getClientRects().length
+   ){
+    fallback.focus({preventScroll:true});
+   }
+  });
+ };
+
+ /* =======================================================
+    固定本次診症敏感、歷史敏感分開顯示
+    ======================================================= */
+
+ function allergyShort(p){
+  const state=ALLERGY[p?.allergyStatus]
+   ?p.allergyStatus
+   :"unknown";
+
+  if(state==="known"){
+   const details=T(p.allergyDetails)
+    .replace(/\s+/g," ");
+
+   return "有藥物敏感"+
+    (details?"｜"+details.slice(0,48):"｜詳情未記錄")+
+    (details.length>48?"…":"");
+  }
+
+  if(state==="none"){
+   return "無已知藥物敏感";
+  }
+
+  return "敏感未確認";
+ }
+
+ function allergyFieldsHTML(){
+  return `
+   <p id="cmsAllergyHelp" class="cms-help">
+    以下固定取自目前所選診症，不會因收據、病假或其他文件
+    沒有保存敏感欄位而改成「未確認」。
+    修改此處只影響本次診症；如需下次沿用，請另外核對更新主檔。
+   </p>
+
+   ${selectField(
+    "本次敏感狀態",
+    "patient.allergyStatus",
+    ALLERGY
+   )}
+
+   ${area(
+    "本次敏感藥物及反應",
+    "patient.allergyDetails"
+   )}
+
+   ${checkField(
+    "本次已覆核上述敏感紀錄",
+    "allergyReviewed"
+   )}
+
+   <p id="cmsAllergyReviewInfo" class="cms-help"></p>
+
+   <div class="cms-compact-actions">
+    <button
+     type="button"
+     data-act="cmsSyncAllergy"
+    >核對並更新主檔敏感</button>
+   </div>
+  `;
+ }
+
+ function installCurrentAllergy(){
+  const e=current();
+
+  if(!e){
+   return;
+  }
+
+  const root=$("allergyFields");
+
+  if(!$("cmsAllergyHelp")){
+   root.innerHTML=allergyFieldsHTML();
+  }
+
+  fill(root,e);
+
+  const review=$("cmsAllergyReviewInfo");
+
+  if(review){
+   review.textContent=e.allergyReviewed
+    ?"本次覆核："+
+      (e.allergyReviewedBy||"舊版未記錄覆核人")+
+      " · "+stamp(e.allergyReviewedAt)
+    :"本次尚未記錄敏感覆核。";
+  }
+
+  let extra=$("cmsVersionAllergy");
+
+  if(!extra){
+   extra=document.createElement("section");
+   extra.id="cmsVersionAllergy";
+   extra.className="cms-context-note history";
+   root.after(extra);
+  }
+
+  const s=source();
+
+  if(s.kind==="document"){
+   const p=s.data.patient;
+
+   const saved=Object.hasOwn(p,"allergyStatus");
+
+   extra.hidden=false;
+   extra.textContent=
+    "目前檢視文件版本的敏感資料：\n"+
+    (
+     saved
+      ?allergy(p)
+      :"此文件未保存敏感資料；不等於病人沒有敏感，亦不等於未確認。"
+    )+
+    "\n上方可編輯／唯讀欄位仍代表目前所選診症。";
+  }else if(view?.kind==="revision"){
+   extra.hidden=false;
+   extra.textContent=
+    "目前檢視完成快照的敏感資料：\n"+
+    allergy(s.data.patient)+
+    "\n快照覆核狀態："+
+    (s.data.allergyReviewed?"已覆核":"未記錄")+
+    "\n上方欄位仍代表目前所選診症；此處快照不會被修改。";
+  }else{
+   extra.hidden=true;
+   extra.textContent="";
+  }
+
+  let masterButton=$("cmsEditMasterAllergyButton");
+
+  if(!masterButton){
+   masterButton=document.createElement("button");
+   masterButton.id="cmsEditMasterAllergyButton";
+   masterButton.type="button";
+   masterButton.dataset.act="cmsEditMasterAllergy";
+   masterButton.textContent="查看／編輯主檔敏感";
+   masterButton.style.marginTop="10px";
+   extra.after(masterButton);
+  }
+
+  root.disabled=!editable();
+ }
+
+ function documentNumber(e,v){
+  return e.versions
+   .filter(x=>x.type===v.type)
+   .findIndex(x=>x.id===v.id)+1;
+ }
+
+ refreshHeader=function(){
+  const e=current();
+
+  if(!e){
+   $("identity").textContent="尚未開啟診症";
+   $("visitState").textContent="先選擇病人，再開始診症。";
+   $("syncNotice").hidden=true;
+   $("allergyPanel").hidden=true;
+   return;
+  }
+
+  const s=source();
+
+  /*
+   * 頂部身份固定取自目前所選診症。
+   * 歷史文件保存身份如有不同，另外列明。
+   */
+  const p=e.patient;
+  const m=master(e);
+
+  $("identity").textContent=[
+   pname(p)||"未填姓名",
+   m?.mrn,
+   age(p.dob,e.date),
+   p.sex,
+   dateOK(p.dob)?"出生："+fmt(p.dob):"",
+   normID(p.hkid)
+  ].filter(Boolean).join(" · ");
+
+  let fileText="";
+  let fileKind="";
+
+  if(s.kind==="document"){
+   const number=documentNumber(e,s.entry);
+
+   fileText=
+    TYPES[s.entry.type][0]+
+    "第 "+number+" 版 · "+
+    VSTATE[s.entry.state];
+
+   fileKind=s.entry.state==="issued"
+    ?"completed"
+    :"history";
+  }else if(view?.kind==="revision"){
+   const number=e.revisions.findIndex(
+    r=>r.id===view.id
+   )+1;
+
+   fileText="完成快照第 "+number+" 版";
+   fileKind="history";
+  }else if(tab==="note"){
+   fileText=e.status==="completed"
+    ?"診症紀錄 · 最後完成快照"
+    :"診症紀錄 · 編輯草稿";
+
+   fileKind=e.status==="completed"
+    ?"completed"
+    :"draft";
+  }else{
+   const v=effective(e,tab);
+
+   fileText=v
+    ?TYPES[tab][0]+
+      " · "+
+      (
+       different(e,tab)
+        ?"草稿有修改，尚未簽發修訂"
+        :"草稿與有效版本相同"
+      )
+    :TYPES[tab][0]+" · 尚未簽發";
+
+   fileKind=v&&!different(e,tab)
+    ?"completed"
+    :"draft";
+  }
+
+  let context="";
+
+  if(view){
+   context=
+    "正在檢視歷史"+
+    (view.kind==="document"?"文件版本":"完成快照")+
+    "；儲存、完成及主檔操作仍以目前所選診症為對象。";
+
+   if(!equal(
+    publicPatient(e.patient,"note"),
+    publicPatient(s.data.patient,"note")
+   )){
+    context+=
+     "\n此歷史紀錄保存身份："+pname(s.data.patient)+
+     " · "+normID(s.data.patient.hkid);
+   }
+  }
+
+  $("visitState").innerHTML=`
+   <div class="cms-status-row">
+    <span class="cms-status-chip">
+     診症日期：${E(e.date)}
+    </span>
+
+    <span
+     class="cms-status-chip"
+     data-kind="${e.status==="completed"?"completed":"draft"}"
+    >
+     診症：${e.status==="completed"?"已完成":"未完成"}
+    </span>
+
+    <span
+     class="cms-status-chip"
+     data-kind="${E(fileKind)}"
+    >
+     文件：${E(fileText)}
+    </span>
+
+    <span class="cms-status-chip">
+     本次電話：${E(T(e.patient.phone)||"未填寫")}
+    </span>
+   </div>
+
+   ${
+    context
+     ?`<div class="cms-context-note history">${E(context)}</div>`
+     :""
+   }
+  `;
+
+  $("returnButton").hidden=!view;
+
+  const state=ALLERGY[p.allergyStatus]
+   ?p.allergyStatus
+   :"unknown";
+
+  $("allergyButton").dataset.state=state;
+  $("allergyButton").textContent=allergyShort(p);
+  $("allergyButton").title=
+   "目前所選診症："+allergy(p)+
+   "\n本次覆核："+(e.allergyReviewed?"已覆核":"未記錄");
+
+  $("allergyButton").setAttribute(
+   "aria-controls",
+   "allergyPanel"
+  );
+
+  $("allergyButton").setAttribute(
+   "aria-expanded",
+   String(!$("allergyPanel").hidden)
+  );
+
+  const identityDifferent=[
+   ...IDFIELDS,
+   ...CONTACTS
+  ].some(k=>
+   S(e.patient[k])!==S(m?.data[k])
+  );
+
+  $("syncNotice").hidden=
+   !identityDifferent||
+   e.status!=="draft"||
+   !!view;
+
+  $("completeButton").textContent=
+   e.status==="completed"
+    ?"重新開啟診症"
+    :"完成診症";
+
+  installCurrentAllergy();
+ };
+
+ render=function(preserve=false){
+  original.render(preserve);
+
+  if(db&&!composing&&current()){
+   installCurrentAllergy();
+   growAll($("allergyFields"));
+  }
+ };
+
+ refreshTabs=function(){
+  original.refreshTabs();
+
+  if(!db){
+   return;
+  }
+
+  const count=pendingTypes(current()).length;
+
+  $("issueButton").textContent=
+   "簽發待處理文件"+
+   (count?"（"+count+"）":"");
+ };
+
+ updateButtons=function(){
+  original.updateButtons();
+
+  if(!db){
+   return;
+  }
+
+  const button=$("cmsEditMasterAllergyButton");
+
+  if(button){
+   button.disabled=
+    !current()||
+    busy||
+    printing||
+    composing||
+    conflict||
+    uncertain;
+  }
+ };
+
+ /* =======================================================
+    主檔敏感：明確保存，不覆寫歷史
+    ======================================================= */
+
+ function validateAllergyData(statusValue,details){
+  choice(
+   statusValue,
+   Object.keys(ALLERGY),
+   "敏感狀態"
+  );
+
+  if(statusValue==="known"){
+   assert(T(details),"有藥物敏感時須填寫藥物及反應。");
+  }else{
+   assert(
+    !T(details),
+    "非「有藥物敏感」狀態時，請清空敏感詳情，避免狀態互相矛盾。"
+   );
+  }
+ }
+
+ function openAllergySync(){
+  assert(editable(),"請先返回本次未完成診症。");
+
+  const e=current();
+  const p=master(e);
+
+  assert(p,"找不到病人主檔。");
+
+  validateAllergyData(
+   e.patient.allergyStatus,
+   e.patient.allergyDetails
+  );
+
+  const before={
+   allergyStatus:p.data.allergyStatus||"unknown",
+   allergyDetails:S(p.data.allergyDetails)
+  };
+
+  const after={
+   allergyStatus:e.patient.allergyStatus||"unknown",
+   allergyDetails:S(e.patient.allergyDetails)
+  };
+
+  if(equal(before,after)){
+   message("主檔與本次敏感紀錄相同，沒有需要同步的內容。");
+   return;
+  }
+
+  openModal(
+   "核對並更新病人主檔敏感",
+   `
+    <div class="notice">
+     只更新病人主檔，供之後新診症帶入。
+     不修改舊診症、已簽發文件或完成快照；
+     不會把下次診症自動標記為已覆核。
+    </div>
+
+    <p style="margin-top:12px">
+     <strong>${E(pname(e.patient))}</strong>
+     · ${E(p.mrn)}
+    </p>
+
+    <div class="grid">
+     <section class="card">
+      <h3>目前主檔</h3>
+      <pre>${E(allergy(before))}</pre>
+     </section>
+
+     <section class="card">
+      <h3>將更新為本次紀錄</h3>
+      <pre>${E(allergy(after))}</pre>
+     </section>
+    </div>
+
+    <div class="field">
+     <label for="cmsAllergyReason">更新原因（必填）</label>
+     <textarea id="cmsAllergyReason"></textarea>
+    </div>
+
+    <div class="modal-footer">
+     <button data-act="closeModal">取消</button>
+     <button
+      data-act="cmsConfirmAllergySync"
+      class="primary"
+     >確認更新主檔</button>
+    </div>
+   `,
+   "cmsAllergySync",
+   {
+    editable:true,
+    saveAction:"cmsConfirmAllergySync"
+   }
+  );
+
+  modalState.cmsAllergySync={
+   encounterId:e.id,
+   patientId:p.id,
+   before,
+   after
+  };
+ }
+
+ async function confirmAllergySync(){
+  const context=modalState?.cmsAllergySync;
+
+  assert(context,"沒有待確認的主檔敏感更新。");
+  assert(editable(),"請返回本次未完成診症。");
+
+  const reason=T($("cmsAllergyReason").value);
+
+  assert(reason,"請填寫更新原因。");
+
+  await run(()=>commit(d=>{
+   const e=d.encounters.find(
+    x=>x.id===context.encounterId
+   );
+
+   const p=d.patients.find(
+    x=>x.id===context.patientId
+   );
+
+   assert(
+    e&&p&&
+    selected===e.id&&
+    e.status==="draft"&&
+    !view,
+    "診症狀態已改變，請重新核對。"
+   );
+
+   const actualBefore={
+    allergyStatus:p.data.allergyStatus||"unknown",
+    allergyDetails:S(p.data.allergyDetails)
+   };
+
+   const actualAfter={
+    allergyStatus:e.patient.allergyStatus||"unknown",
+    allergyDetails:S(e.patient.allergyDetails)
+   };
+
+   assert(
+    equal(actualBefore,context.before)&&
+    equal(actualAfter,context.after),
+    "主檔或本次敏感資料已改變，請重新核對。"
+   );
+
+   validateAllergyData(
+    context.after.allergyStatus,
+    context.after.allergyDetails
+   );
+
+   const fullBefore=C(p.data);
+
+   p.data.allergyStatus=context.after.allergyStatus;
+   p.data.allergyDetails=context.after.allergyDetails;
+   p.updated=now();
+
+   p.changes.push({
+    at:now(),
+    actor,
+    sessionId,
+    reason:"由本次診症更新主檔敏感："+reason,
+    before:fullBefore,
+    after:C(p.data)
+   });
+
+   audit(
+    e,
+    "核對並更新主檔敏感",
+    reason+"；未改寫舊診症、文件及完成快照"
+   );
+  }));
+
+  closeModalNow();
+
+  message(
+   "已更新病人主檔敏感。之後新診症會帶入此紀錄，"+
+   "但仍須另行記錄本次覆核。舊紀錄未被改寫。"
+  );
+ }
+
+ function editMasterAllergy(patientId=current()?.patientId){
+  assert(
+   db&&!conflict&&!uncertain,
+   "目前不能修改主檔，請先處理衝突或結果不明狀態。"
+  );
+
+  const p=db.patients.find(x=>x.id===patientId);
+
+  assert(p,"找不到病人主檔。");
+
+  const before={
+   allergyStatus:p.data.allergyStatus||"unknown",
+   allergyDetails:S(p.data.allergyDetails)
+  };
+
+  openModal(
+   "編輯主檔敏感 · "+pname(p.data),
+   `
+    <div class="notice">
+     此處只修改主檔，供之後新診症帶入。
+     目前及過往診症、文件版本、完成快照均不會自動同步。
+    </div>
+
+    <p style="margin-top:12px">${E(p.mrn)}</p>
+
+    ${dwSelect(
+     "主檔敏感狀態",
+     "cmsMasterAllergyStatus",
+     before.allergyStatus,
+     ALLERGY
+    )}
+
+    <div class="field">
+     <label for="cmsMasterAllergyDetails">
+      敏感藥物及反應
+     </label>
+     <textarea id="cmsMasterAllergyDetails">${E(before.allergyDetails)}</textarea>
+    </div>
+
+    <div class="field">
+     <label for="cmsMasterAllergyReason">
+      修改原因（必填）
+     </label>
+     <textarea id="cmsMasterAllergyReason"></textarea>
+    </div>
+
+    <div class="modal-footer">
+     <button data-act="closeModal">取消</button>
+     <button
+      data-act="cmsSaveMasterAllergy"
+      class="primary"
+     >保存主檔敏感</button>
+    </div>
+   `,
+   "cmsMasterAllergy",
+   {
+    editable:true,
+    saveAction:"cmsSaveMasterAllergy"
+   }
+  );
+
+  modalState.cmsMasterAllergy={
+   patientId,
+   before
+  };
+ }
+
+ async function saveMasterAllergy(){
+  const context=modalState?.cmsMasterAllergy;
+
+  assert(context,"沒有主檔敏感表單。");
+
+  const allergyStatus=$("cmsMasterAllergyStatus").value;
+  const allergyDetails=T($("cmsMasterAllergyDetails").value);
+  const reason=T($("cmsMasterAllergyReason").value);
+
+  validateAllergyData(allergyStatus,allergyDetails);
+  assert(reason,"請填寫修改原因。");
+
+  await run(()=>commit(d=>{
+   const p=d.patients.find(
+    x=>x.id===context.patientId
+   );
+
+   assert(p,"主檔不存在。");
+
+   const actual={
+    allergyStatus:p.data.allergyStatus||"unknown",
+    allergyDetails:S(p.data.allergyDetails)
+   };
+
+   assert(
+    equal(actual,context.before),
+    "主檔敏感已改變，請重新開啟核對。"
+   );
+
+   const before=C(p.data);
+
+   p.data.allergyStatus=allergyStatus;
+   p.data.allergyDetails=allergyDetails;
+   p.updated=now();
+
+   p.changes.push({
+    at:now(),
+    actor,
+    sessionId,
+    reason:"編輯主檔敏感："+reason,
+    before,
+    after:C(p.data)
+   });
+
+   d.meta.security.push({
+    at:now(),
+    actor,
+    sessionId,
+    action:"編輯主檔敏感",
+    patientId:p.id
+   });
+  }));
+
+  patientProfile(context.patientId);
+
+  message(
+   "已保存主檔敏感；目前及過往診症沒有自動改寫。"
+  );
+ }
+
+ patientProfile=function(id=current()?.patientId){
+  original.patientProfile(id);
+
+  const p=db.patients.find(x=>x.id===id);
+
+  if(!p){
+   return;
+  }
+
+  const first=$("modalBody").querySelector(
+   ".card .row"
+  );
+
+  if(first){
+   const button=document.createElement("button");
+   button.type="button";
+   button.dataset.act="cmsEditMasterAllergy";
+   button.dataset.patient=id;
+   button.textContent="編輯主檔敏感";
+   button.disabled=conflict||uncertain;
+   first.append(button);
+  }
+ };
+
+ /* =======================================================
+    右側參閱：按診症／文件分頁保留使用者選擇
+    ======================================================= */
+
+ function referenceKey(){
+  return [
+   sessionId,
+   selected,
+   view?.kind||"",
+   view?.id||"",
+   tab
+  ].join("|");
+ }
+
+ function rememberReference(){
+  if(!current()){
+   return;
+  }
+
+  referenceChoices.set(referenceKey(),{
+   pane,
+   pastId,
+   scroll:$("reference").scrollTop
+  });
+
+  if(referenceChoices.size>200){
+   const oldest=referenceChoices.keys().next().value;
+   referenceChoices.delete(oldest);
+  }
+ }
+
+ syncPast=function(){
+  const e=current();
+
+  if(!e){
+   pastList=[];
+   pastId="";
+   pastSignature="";
+   referenceContext="";
+
+   $("pastTab").textContent="所有診症";
+   $("pastPicker").innerHTML=
+    '<option value="">沒有診症紀錄</option>';
+
+   $("pastBody").replaceChildren();
+   return;
+  }
+
+  pastList=referenceEncounters();
+
+  const key=referenceKey();
+
+  if(referenceContext!==key){
+   referenceContext=key;
+
+   const remembered=referenceChoices.get(key);
+   const index=pastList.findIndex(x=>x.id===e.id);
+
+   const previousCompleted=pastList
+    .slice(index>=0?index+1:0)
+    .find(x=>x.status==="completed");
+
+   if(remembered){
+    pane=remembered.pane;
+    pastId=pastList.some(
+     x=>x.id===remembered.pastId
+    )
+     ?remembered.pastId
+     :"";
+   }else{
+    pane=view||tab!=="note"
+     ?"preview"
+     :"past";
+
+    pastId=previousCompleted?.id||"";
+   }
+
+   paneScroll={
+    past:0,
+    preview:0
+   };
+
+   if(remembered){
+    paneScroll[pane]=remembered.scroll||0;
+   }
+
+   pastSignature="";
+
+   requestAnimationFrame(()=>{
+    if(referenceContext===key){
+     $("reference").scrollTop=
+      paneScroll[pane]||0;
+    }
+   });
+  }
+
+  if(
+   pastId&&
+   !pastList.some(x=>x.id===pastId)
+  ){
+   pastId="";
+   pastSignature="";
+  }
+
+  $("pastTab").textContent=
+   "所有診症（"+pastList.length+"）";
+
+  const options=[
+   '<option value="">選擇診症紀錄</option>',
+   ...pastList.map(x=>{
+    const label=
+     (x.id===selected?"本次 · ":"")+
+     x.date+" · "+
+     (x.status==="completed"?"已完成":"未完成")+
+     " · "+
+     (T(x.diagnosis).slice(0,60)||"未填寫診斷");
+
+    return `<option value="${E(x.id)}">${E(label)}</option>`;
+   })
+  ].join("");
+
+  if($("pastPicker").innerHTML!==options){
+   $("pastPicker").innerHTML=options;
+  }
+
+  $("pastPicker").value=pastId;
+
+  applyPane();
+  drawPast();
+ };
+
+ drawPast=function(){
+  if(!pastId){
+   $("pastBody").innerHTML=`
+    <section class="card">
+     <h3>未選擇過往診症</h3>
+     <p>
+      沒有自動選取到較早的已完成診症。
+      可從上方清單選擇其他紀錄；
+      左側仍然係目前所選診症。
+     </p>
+    </section>
+   `;
+   return;
+  }
+
+  original.drawPast();
+ };
+
+ switchPane=function(next){
+  original.switchPane(next);
+  rememberReference();
+ };
+
+ $("pastPicker").onchange=function(){
+  pastId=$("pastPicker").value;
+  pastSignature="";
+  drawPast();
+  $("reference").scrollTop=0;
+  rememberReference();
+ };
+
+ /* =======================================================
+    簽發及列印核對
+    ======================================================= */
+
+ openIssue=function(types=null,printTypes=null){
+  original.openIssue(types,printTypes);
+
+  if(modalState?.mode!=="issue"){
+   return;
+  }
+
+  const e=current();
+
+  $("modalBody")
+   .querySelectorAll("[data-issue]")
+   .forEach(input=>{
+    const type=input.dataset.issue;
+    const old=effective(e,type);
+
+    const small=input.closest("label")
+     ?.querySelector("small");
+
+    if(!small){
+     return;
+    }
+
+    small.textContent=old
+     ?"修訂：目前第 "+
+       documentNumber(e,old)+
+       " 版；新版本簽發後原版保留並標示已取代"
+     :"首次簽發";
+   });
+ };
+
+ function printSignature(){
+  const e=current();
+
+  return serial({
+   id:e.id,
+   tab,
+   view,
+   core:core(e),
+   versions:e.versions,
+   revisions:e.revisions.map(r=>r.id),
+   settings:db.settings
+  });
+ }
+
+ function printRow(type){
+  const e=current();
+  let data=e;
+  let description="";
+
+  if(view){
+   const s=source();
+   data=s.data;
+
+   description=s.kind==="document"
+    ?"第 "+documentNumber(e,s.entry)+" 版 · "+
+      VSTATE[s.entry.state]+" · "+stamp(s.savedAt)
+    :"歷史完成快照 · "+stamp(s.savedAt);
+  }else if(type==="note"){
+   description=e.status==="completed"
+    ?"最後完成快照"
+    :"未完成診症草稿";
+  }else{
+   const v=effective(e,type);
+
+   if(!v||(
+    e.status==="draft"&&different(e,type)
+   )){
+    description="尚未簽發／有修改；下一步須先核對簽發";
+   }else{
+    data=v.data;
+
+    description=
+     "第 "+documentNumber(e,v)+" 版 · "+
+     VSTATE[v.state]+" · "+stamp(v.savedAt);
+   }
+  }
+
+  return [
+   TYPES[type][0],
+   pname(data.patient)||"未填姓名",
+   data.date,
+   description
+  ];
+ }
+
+ printDocuments=async function(
+  types,
+  alreadyIssued=false
+ ){
+  assert(
+   current()&&!conflict&&!uncertain,
+   "目前不能列印。"
+  );
+
+  assert(types.length,"請選擇文件。");
+  unique(types,"列印類別");
+
+  types.forEach(type=>
+   choice(type,Object.keys(TYPES),"列印類別")
+  );
+
+  /*
+   * 簽發確認後的內部列印呼叫，
+   * 不再重複開同一個列印核對視窗。
+   */
+  if(alreadyIssued){
+   return original.printDocuments(types,true);
+  }
+
+  if(view){
+   assert(
+    types.length===1&&types[0]===tab,
+    "歷史模式只可列印目前版本。"
+   );
+  }
+
+  const e=current();
+
+  const context={
+   id:e.id,
+   types:C(types),
+   signature:printSignature()
+  };
+
+  openModal(
+   "列印前核對",
+   `
+    <div class="cms-print-summary">
+     <strong>目前所選病人：${E(pname(e.patient))}</strong><br>
+     病歷編號：${E(master(e)?.mrn||"—")}<br>
+     診症日期：${E(e.date)}
+    </div>
+
+    <div class="scrolltable" style="margin-top:12px">
+     ${table(
+      ["文件","文件保存病人","文件日期","版本／性質"],
+      types.map(printRow)
+     )}
+    </div>
+
+    <div class="notice">
+     請核對每份文件的病人及版本。
+     如包含未簽發或已修改文件，下一步仍須確認簽發。
+     開啟列印不代表已成功列印、保存 PDF、交付或收款。
+    </div>
+
+    <div class="modal-footer">
+     <button data-act="closeModal">取消</button>
+     <button
+      data-act="cmsConfirmPrint"
+      class="primary"
+     >已核對，繼續</button>
+    </div>
+   `,
+   "cmsPrintCheck"
+  );
+
+  modalState.cmsPrint=context;
+ };
+
+ async function confirmPrint(){
+  const context=modalState?.cmsPrint;
+
+  assert(context,"沒有待核對列印。");
+
+  assert(
+   current()?.id===context.id&&
+   printSignature()===context.signature,
+   "病人、文件或版本已改變，請重新核對列印。"
+  );
+
+  return original.printDocuments(
+   context.types,
+   false
+  );
+ }
+
+ /* =======================================================
+    月曆：完整 42 日範圍及跨夜顯示
+    ======================================================= */
+
+ function shiftTimeLabel(s){
+  const startDay=s.start.slice(0,10);
+  const endDay=s.end.slice(0,10);
+
+  if(startDay===endDay){
+   return E(s.start.slice(11))+
+    "–"+E(s.end.slice(11));
+  }
+
+  const next=dwDayAdd(startDay,1);
+
+  return E(s.start.slice(11))+
+   "–"+
+   (
+    endDay===next
+     ?'<span class="cms-crossday">翌日</span> '
+     :E(endDay)+" "
+   )+
+   E(s.end.slice(11));
+ }
+
+ function updateCalendar(){
+  const calendar=$("modalBody").querySelector(
+   ".dw-calendar"
+  );
+
+  if(!calendar){
+   return;
+  }
+
+  const w=dwRead();
+  const month=dwState.month;
+  const first=month+"-01";
+
+  const weekday=new Date(
+   first+"T12:00:00Z"
+  ).getUTCDay();
+
+  const begin=dwDayAdd(
+   first,
+   -((weekday+6)%7)
+  );
+
+  const end=dwDayAdd(begin,41);
+
+  /*
+   * 不先按月份篩選。
+   * 月曆取完整可見日期範圍；
+   * 原本月份統計及清單不受影響。
+   */
+  const visible=w.shifts.filter(s=>{
+   const day=s.start.slice(0,10);
+
+   return day>=begin&&
+    day<=end&&
+    (
+     !dwState.clinic||
+     s.clinicId===dwState.clinic
+    )&&
+    (
+     !dwState.hideCancelled||
+     s.status!=="cancelled"
+    );
+  }).slice().sort(
+   (a,b)=>a.start.localeCompare(b.start)
+  );
+
+  calendar.innerHTML=`
+   ${["一","二","三","四","五","六","日"].map(day=>`
+    <div class="dw-weekday">星期${day}</div>
+   `).join("")}
+
+   ${Array.from({length:42},(_,index)=>{
+    const day=dwDayAdd(begin,index);
+
+    const shifts=visible.filter(
+     s=>s.start.slice(0,10)===day
+    );
+
+    return `
+     <section class="dw-day
+      ${day.slice(0,7)!==month?"outside":""}
+      ${day===today()?"today":""}
+     ">
+      <button
+       class="dw-date"
+       data-act="dwNew"
+       data-date="${E(day)}"
+       title="新增 ${E(day)} 更次"
+      >${+day.slice(8,10)} ＋</button>
+
+      ${shifts.map(s=>{
+       const c=dwClinic(w,s.clinicId);
+
+       return `
+        <button
+         class="dw-shift ${s.status==="cancelled"?"cancelled":""}"
+         style="--dw-color:${c.color}"
+         data-act="dwEdit"
+         data-id="${E(s.id)}"
+        >
+         <strong>${shiftTimeLabel(s)}</strong><br>
+         ${E(c.name)}<br>
+         ${E(DW_STATUS[s.status])}
+         · ${s.paidUnits/2} 小時
+        </button>
+       `;
+      }).join("")}
+     </section>
+    `;
+   }).join("")}
+  `;
+ }
+
+ /* =======================================================
+    更次清單：多選取消
+    ======================================================= */
+
+ function bulkEligible(w,s){
+  return (
+   s.status==="tentative"||
+   s.status==="confirmed"
+  )&&
+  dwSettlement(
+   w,
+   s.clinicId,
+   s.start.slice(0,7)
+  )?.state!=="confirmed";
+ }
+
+ function installBulkShiftUI(){
+  if(dwState.page!=="shifts"){
+   return;
+  }
+
+  const w=dwRead();
+
+  const tableElement=$("modalBody").querySelector(
+   ".dw-root table.ui"
+  );
+
+  if(!tableElement){
+   return;
+  }
+
+  const headings=tableElement.querySelector("thead tr");
+
+  if(!headings){
+   return;
+  }
+
+  headings.insertAdjacentHTML(
+   "afterbegin",
+   `
+    <th class="cms-bulk-select">
+     <input
+      id="cmsSelectAllShifts"
+      type="checkbox"
+      aria-label="選取目前可見且可取消的更次"
+     >
+    </th>
+   `
+  );
+
+  const series=new Map();
+
+  tableElement.querySelectorAll("tbody tr")
+   .forEach(row=>{
+    const edit=row.querySelector(
+     '[data-act="dwEdit"]'
+    );
+
+    if(!edit){
+     const empty=row.querySelector("td[colspan]");
+
+     if(empty){
+      empty.colSpan=6;
+     }
+
+     return;
+    }
+
+    const shift=w.shifts.find(
+     s=>s.id===edit.dataset.id
+    );
+
+    if(!shift){
+     return;
+    }
+
+    row.dataset.cmsSeries=shift.seriesId||"";
+    row.dataset.cmsShift=shift.id;
+
+    if(shift.seriesId&&!series.has(shift.seriesId)){
+     const rule=shift.repeatRule;
+
+     series.set(
+      shift.seriesId,
+      rule
+       ?rule.from+" 至 "+rule.until+
+         "｜"+shift.seriesId.slice(0,8)
+       :shift.seriesId.slice(0,12)
+     );
+    }
+
+    row.insertAdjacentHTML(
+     "afterbegin",
+     `
+      <td class="cms-bulk-select">
+       <input
+        type="checkbox"
+        data-cms-shift-select="${E(shift.id)}"
+        aria-label="選取 ${E(shift.start.replace("T"," "))} 更次"
+        ${bulkEligible(w,shift)?"":"disabled"}
+       >
+      </td>
+     `
+    );
+   });
+
+  const toolbar=document.createElement("section");
+  toolbar.className="cms-bulk-toolbar";
+
+  toolbar.innerHTML=`
+   <div class="field">
+    <label for="cmsSeriesFilter">系列篩選</label>
+    <select id="cmsSeriesFilter">
+     <option value="">全部系列及單次更次</option>
+     <option value="__single__">只顯示單次更次</option>
+
+     ${[...series.entries()].map(([id,label])=>`
+      <option value="${E(id)}">${E(label)}</option>
+     `).join("")}
+    </select>
+   </div>
+
+   <span id="cmsBulkCount" class="small">已選 0 更</span>
+
+   <button
+    data-act="cmsBulkCancel"
+    class="danger"
+   >核對並取消所選更次</button>
+
+   <div class="small" style="width:100%">
+    只可批量取消暫定／已確認、且未鎖定月結的更次。
+    已完成、已取消或已確認月結的更次不可勾選。
+   </div>
+  `;
+
+  tableElement.closest(".scrolltable").before(toolbar);
+ }
+
+ function selectedShiftIds(){
+  return [
+   ...$("modalBody").querySelectorAll(
+    "[data-cms-shift-select]:checked"
+   )
+  ].filter(input=>
+   !input.disabled&&
+   !input.closest("tr").hidden
+  ).map(input=>input.dataset.cmsShiftSelect);
+ }
+
+ function updateBulkCount(){
+  const count=$("cmsBulkCount");
+
+  if(count){
+   count.textContent=
+    "已選 "+selectedShiftIds().length+" 更";
+  }
+ }
+
+ function openBulkCancel(){
+  const ids=selectedShiftIds();
+
+  assert(ids.length,"請先勾選要取消的更次。");
+  assert(!conflict&&!uncertain,"目前已停止寫入。");
+
+  const w=dwRead();
+
+  const rows=ids.map(id=>{
+   const s=w.shifts.find(x=>x.id===id);
+   assert(s&&bulkEligible(w,s),"部分更次已不能取消。");
+   return C(s);
+  });
+
+  const hours=rows.reduce(
+   (sum,s)=>sum+s.paidUnits/2,
+   0
+  );
+
+  const minimum=rows.reduce(
+   (sum,s)=>
+    sum+Math.round(
+     s.terms.hourly*s.paidUnits/2
+    ),
+   0
+  );
+
+  openModal(
+   "核對批量取消更次",
+   `
+    <div class="notice error">
+     將取消 ${rows.length} 更，共 ${hours} 小時計薪時數。
+     已安排最低保底預算將減少 ${E(dwMoney(minimum))}。
+     只影響以下勾選更次，不會自動取消同系列其他更次。
+     紀錄會保留，不會刪除。
+    </div>
+
+    <div class="scrolltable" style="margin-top:12px">
+     ${table(
+      ["工作地點","開始","結束","計薪時數"],
+      rows.map(s=>[
+       dwClinic(w,s.clinicId).name,
+       s.start.replace("T"," "),
+       s.end.replace("T"," "),
+       s.paidUnits/2+" 小時"
+      ])
+     )}
+    </div>
+
+    <div class="field">
+     <label for="cmsBulkCancelReason">取消原因（必填）</label>
+     <textarea id="cmsBulkCancelReason"></textarea>
+    </div>
+
+    <div class="modal-footer">
+     <button data-act="closeModal">返回</button>
+     <button
+      data-act="cmsConfirmBulkCancel"
+      class="danger"
+     >確認取消以上更次</button>
+    </div>
+   `,
+   "cmsBulkCancel",
+   {
+    editable:true,
+    saveAction:"cmsConfirmBulkCancel"
+   }
+  );
+
+  modalState.cmsBulkCancel={rows};
+ }
+
+ async function confirmBulkCancel(){
+  const context=modalState?.cmsBulkCancel;
+
+  assert(context,"沒有待取消的更次。");
+
+  const reason=T($("cmsBulkCancelReason").value);
+
+  assert(reason,"請填寫取消原因。");
+
+  if(!confirm(
+   "確認取消以上 "+context.rows.length+
+   " 更？\n只影響已勾選更次，並保留紀錄。"
+  )){
+   return;
+  }
+
+  await run(()=>commit(d=>{
+   const w=dwWrite(d);
+
+   /*
+    * 全批先驗證，再開始修改。
+    * 任一更不符合條件即整批停止。
+    */
+   for(const before of context.rows){
+    const s=w.shifts.find(x=>x.id===before.id);
+
+    assert(
+     s&&equal(s,before),
+     "部分更次已改變，整批停止；請重新勾選核對。"
+    );
+
+    assert(
+     bulkEligible(w,s),
+     "部分更次已完成或被月結鎖定，整批停止。"
+    );
+
+    dwUnlocked(
+     w,
+     s.clinicId,
+     s.start.slice(0,7)
+    );
+   }
+
+   for(const before of context.rows){
+    const s=w.shifts.find(x=>x.id===before.id);
+    s.status="cancelled";
+    s.updatedAt=now();
+   }
+
+   dwLog(w,"批量取消所選更次",{
+    shiftIds:context.rows.map(s=>s.id),
+    reason,
+    independentOccurrences:true
+   });
+
+   checkDoctorWork(w);
+  }),{redraw:false});
+
+  dwScreen("shifts");
+
+  message(
+   "已取消 "+context.rows.length+
+   " 個所選更次；其他更次未改動。"
+  );
+ }
+
+ dwScreen=function(
+  page=dwState.page,
+  readFilters=false
+ ){
+  original.dwScreen(page,readFilters);
+
+  if(page==="calendar"){
+   updateCalendar();
+  }
+
+  if(page==="shifts"){
+   installBulkShiftUI();
+  }
+ };
+
+ /* =======================================================
+    計薪時數：自動／人手修正
+    ======================================================= */
+
+ function hoursHint(){
+  if(modalState?.mode!=="dwShift"){
+   return;
+  }
+
+  const input=$("dwHours");
+
+  if(!input){
+   return;
+  }
+
+  let hint=$("cmsHoursHint");
+
+  if(!hint){
+   hint=document.createElement("div");
+   hint.id="cmsHoursHint";
+   hint.className="cms-hours-hint";
+   input.closest(".field").append(hint);
+  }
+
+  try{
+   const actualStart=$("dwActualStart").value;
+   const actualEnd=$("dwActualEnd").value;
+
+   assert(
+    !!actualStart===!!actualEnd,
+    "實際開始及結束時間須一併填寫。"
+   );
+
+   assert(
+    T($("dwBreak").value)!=="",
+    "請填寫休息分鐘；沒有休息請填 0。"
+   );
+
+   const minutes=dwDuration({
+    start:$("dwStart").value,
+    end:$("dwEnd").value,
+    actualStart,
+    actualEnd,
+    breakMinutes:Number($("dwBreak").value)
+   });
+
+   const halfHour=Number.isInteger(minutes/30);
+
+   const locked=!!input.closest("fieldset:disabled");
+
+   if(
+    !locked&&
+    !modalState.cmsHoursManual&&
+    halfHour
+   ){
+    input.value=S(minutes/60);
+   }
+
+   const hours=Number(input.value);
+   const difference=hours*60-minutes;
+
+   const text=[
+    "按時間扣除休息："+Math.floor(minutes/60)+
+     " 小時 "+(minutes%60)+" 分鐘",
+    "確認計薪："+input.value+" 小時",
+    "模式："+(
+     modalState.cmsHoursManual
+      ?"保留人手設定"
+      :"自動計算"
+    )
+   ];
+
+   if(!halfHour){
+    text.push(
+     "時間不是半小時整數；系統不自動進位，"+
+     "請確認計薪時數並填寫修正原因。"
+    );
+   }
+
+   if(Number.isFinite(difference)&&difference!==0){
+    text.push(
+     "差異："+(difference>0?"+":"")+
+     Number(difference.toFixed(2))+
+     " 分鐘；保存時須有修正原因。"
+    );
+   }
+
+   hint.classList.toggle(
+    "warning",
+    !halfHour||difference!==0
+   );
+
+   hint.textContent=text.join("\n");
+  }catch(error){
+   hint.classList.add("warning");
+   hint.textContent=error.message;
+  }
+ }
+
+ dwEdit=function(id="",day=""){
+  original.dwEdit(id,day);
+
+  if(modalState?.mode!=="dwShift"){
+   return;
+  }
+
+  /*
+   * 既有更次先保留人手保存的時數。
+   * 新更次則採自動計算。
+   */
+  modalState.cmsHoursManual=!!id;
+  hoursHint();
+  original.dwUpdateShiftPreview();
+ };
+
+ dwCalculateHours=function(copyActual=false){
+  original.dwCalculateHours(copyActual);
+
+  if(modalState?.mode==="dwShift"){
+   modalState.cmsHoursManual=false;
+   hoursHint();
+  }
+ };
+
+ dwUpdateShiftPreview=function(){
+  hoursHint();
+  original.dwUpdateShiftPreview();
+ };
+
+ /* =======================================================
+    月結：即時試算，不寫入 db
+    ======================================================= */
+
+ function monthlyInput(){
+  return {
+   basis:$("dwBasis").value,
+   surgeryBase:T($("dwMonthSurgery").value),
+   consultBase:T($("dwMonthConsult").value)
+  };
+ }
+
+ function updateMonthPreview(){
+  if(
+   modalState?.mode!=="dwMonth"||
+   !$("cmsMonthPreview")
+  ){
+   return;
+  }
+
+  const box=$("cmsMonthPreview");
+
+  try{
+   const clinicId=$("dwMonthClinic").value;
+   const month=$("dwMonthValue").value;
+   const w=dwRead();
+   const savedMonth=dwSettlement(w,clinicId,month);
+
+   if(savedMonth?.state==="confirmed"){
+    box.hidden=true;
+    return;
+   }
+
+   box.hidden=false;
+
+   const input=monthlyInput();
+   const calc=dwCalc(w,clinicId,month,input);
+
+   /*
+    * 只在使用者未設定確認應收時，
+    * 才讓系統試算帶入。
+    */
+   if(
+    !modalState.cmsAgreedManual&&
+    calc.expectedCents!==null
+   ){
+    $("dwAgreed").value=
+     (calc.expectedCents/100).toFixed(2);
+   }
+
+   const agreed=dwAmount($("dwAgreed").value);
+
+   const difference=
+    agreed!==null&&calc.expectedCents!==null
+     ?agreed-calc.expectedCents
+     :null;
+
+   const done=dwRows(w,clinicId,month).filter(
+    s=>s.status==="completed"
+   );
+
+   const terms=done[0]?.terms||
+    dwTerms(dwClinic(w,clinicId));
+
+   const method=terms.mode==="max"
+    ?"全月時薪保底與分成取較高"
+    :terms.mode==="plus"
+     ?"時薪加診金分成"
+     :"純時薪";
+
+   const money=n=>E(dwMoney(n));
+
+   box.innerHTML=`
+    <h3>目前輸入即時試算</h3>
+
+    <p class="small">
+     此區只讀取表單，尚未保存或確認月結。
+    </p>
+
+    <dl>
+     <dt>已完成／待完成</dt>
+     <dd>${calc.completed}／${calc.pending} 更</dd>
+
+     <dt>計薪時數</dt>
+     <dd>${calc.hours} 小時</dd>
+
+     <dt>時薪／保底合計</dt>
+     <dd>${money(calc.baseCents)}</dd>
+
+     <dt>手術及診金分成</dt>
+     <dd>
+      ${
+       calc.missing.length
+        ?"待補資料"
+        :money(calc.shareCents)
+      }
+     </dd>
+
+     <dt>計算方式</dt>
+     <dd>${E(method)}</dd>
+
+     <dt class="cms-preview-total">系統試算應收</dt>
+     <dd class="cms-preview-total">
+      ${money(calc.expectedCents)}
+     </dd>
+
+     <dt>診所確認應收</dt>
+     <dd>${money(agreed)}</dd>
+
+     <dt>差額</dt>
+     <dd>
+      ${
+       difference===null
+        ?"尚未可比較"
+        :(difference>0?"+":"")+
+          "HKD "+cash(difference/100)
+      }
+     </dd>
+    </dl>
+
+    ${
+     calc.missing.length
+      ?`
+       <p class="notice" style="margin-top:12px">
+        待補資料：${E(calc.missing.join("；"))}
+       </p>
+      `
+      :""
+    }
+
+    ${
+     difference!==null&&difference!==0
+      ?`
+       <p class="notice" style="margin-top:12px">
+        確認應收與系統試算不同。
+        確認月結前須填寫差額原因。
+       </p>
+      `
+      :""
+    }
+   `;
+  }catch(error){
+   box.hidden=false;
+   box.innerHTML=`
+    <h3>目前輸入即時試算</h3>
+    <div class="notice">${E(error.message)}</div>
+   `;
+  }
+ }
+
+ dwMonth=function(clinicId,month){
+  original.dwMonth(clinicId,month);
+
+  if(modalState?.mode!=="dwMonth"){
+   return;
+  }
+
+  const m=dwSettlement(
+   dwRead(),
+   clinicId,
+   month
+  );
+
+  if(m?.state==="confirmed"){
+   return;
+  }
+
+  modalState.cmsAgreedManual=!!T(m?.agreed);
+
+  const fieldset=$("dwBasis")?.closest("fieldset");
+
+  if(!fieldset){
+   return;
+  }
+
+  const preview=document.createElement("section");
+  preview.id="cmsMonthPreview";
+  preview.className="cms-month-preview";
+
+  fieldset.before(preview);
+
+  const save=$("modalBody").querySelector(
+   '[data-act="dwSaveMonth"]'
+  );
+
+  if(save){
+   save.textContent="保存月結草稿";
+  }
+
+  $("modalBody").querySelectorAll(".dw-muted")
+   .forEach(element=>{
+    if(
+     element.textContent.includes("保存並更新試算")
+    ){
+     element.textContent=
+      "上方即時試算按目前表單更新，不會自動保存。"+
+      "「保存月結草稿」只保存輸入；"+
+      "「確認本月應收」才會核對並鎖定月結。"+
+      "純時薪地點不需要分成基數；沒有相關收入請明確填 0。";
+    }
+   });
+
+  const stats=$("modalBody").querySelectorAll(
+   ".dw-stat"
+  );
+
+  if(stats[3]){
+   const strong=stats[3].querySelector("strong");
+
+   stats[3].replaceChildren(
+    document.createTextNode("開啟表單時的已保存試算")
+   );
+
+   if(strong){
+    stats[3].append(strong);
+   }
+  }
+
+  updateMonthPreview();
+
+  /*
+   * 初始自動帶入值視為表單起點，
+   * 不會剛打開就誤判有未保存修改。
+   */
+  modalState.initial=formSnapshot();
+ };
+
+ /* =======================================================
+    常見欄位錯誤及跳轉
+    ======================================================= */
+
+ const errorRules=[
+  {
+   test:/出生日期/,
+   ids:["p-dob",fid("patient.dob")]
+  },
+  {
+   test:/電郵格式/,
+   ids:["p-email"]
+  },
+  {
+   test:/註冊編號/,
+   setting:"reg"
+  },
+  {
+   test:/主檔敏感|敏感狀態|有藥物敏感|有敏感|敏感詳情|敏感藥物/,
+   ids:[
+    "cmsMasterAllergyDetails",
+    fid("patient.allergyDetails")
+   ]
+  },
+  {
+   test:/更新原因/,
+   ids:["cmsAllergyReason"]
+  },
+  {
+   test:/修改原因/,
+   ids:[
+    "cmsMasterAllergyReason",
+    "patientReason"
+   ]
+  },
+  {
+   test:/取消原因/,
+   ids:["cmsBulkCancelReason"]
+  },
+  {
+   test:/差額原因/,
+   ids:["dwDifference"]
+  },
+  {
+   test:/確認應收|請填寫金額/,
+   ids:["dwAgreed","dwPaymentAmount"]
+  },
+  {
+   test:/收款日期/,
+   ids:["dwPaymentDate"]
+  },
+  {
+   test:/收款金額|尚欠金額|收款不可/,
+   ids:["dwPaymentAmount"]
+  },
+  {
+   test:/計薪時數|半小時單位|確認計薪/,
+   ids:["dwHours"]
+  },
+  {
+   test:/修正原因/,
+   ids:["dwOverride"]
+  },
+  {
+   test:/休息時間|休息分鐘/,
+   ids:["dwBreak"]
+  },
+  {
+   test:/實際開始|實際時間/,
+   ids:["dwActualStart","dwActualEnd"]
+  },
+  {
+   test:/開始及結束|排班時間/,
+   ids:["dwStart","dwEnd"]
+  },
+  {
+   test:/病假日期/,
+   ids:[fid("sick.days")]
+  },
+  {
+   test:/到診日期/,
+   ids:[fid("attendance.date")]
+  },
+  {
+   test:/診症日期/,
+   ids:[fid("date")]
+  },
+  {
+   test:/範本名稱/,
+   ids:["templateName"]
+  },
+  {
+   test:/請填寫.*姓名|姓名未完整/,
+   ids:["p-cn","p-surname","p-given"]
+  }
+ ];
+
+ let errorSequence=0;
+ const errorTargets=new Map();
+
+ function clearInlineErrors(root=document){
+  root.querySelectorAll("[data-cms-error-note]")
+   .forEach(note=>{
+    const control=$(note.dataset.cmsControl);
+
+    if(control){
+     const described=(
+      control.getAttribute("aria-describedby")||""
+     ).split(/\s+/).filter(Boolean)
+      .filter(id=>id!==note.id);
+
+     if(described.length){
+      control.setAttribute(
+       "aria-describedby",
+       described.join(" ")
+      );
+     }else{
+      control.removeAttribute("aria-describedby");
+     }
+
+     control.removeAttribute("aria-invalid");
+    }
+
+    note.remove();
+   });
+
+  root.querySelectorAll(".cms-error-links")
+   .forEach(element=>element.remove());
+ }
+
+ function candidateControls(text){
+  const root=$("modal").open
+   ?$("modalBody")
+   :$("editor");
+
+  const found=[];
+
+  for(const rule of errorRules){
+   if(!rule.test.test(text)){
+    continue;
+   }
+
+   const controls=rule.setting
+    ?[
+      root.querySelector(
+       '[data-setting="'+rule.setting+'"]'
+      )
+     ]
+    :(rule.ids||[]).map(id=>$(id));
+
+   for(const control of controls){
+    if(
+     control&&
+     root.contains(control)&&
+     !control.disabled&&
+     !control.closest("fieldset:disabled")&&
+     !found.includes(control)
+    ){
+     found.push(control);
+    }
+   }
+  }
+
+  return found;
+ }
+
+ function attachInlineError(control,text){
+  if(!control.id){
+   control.id="cms-error-control-"+(++errorSequence);
+  }
+
+  const existing=[
+   ...document.querySelectorAll(
+    "[data-cms-error-note]"
+   )
+  ].find(note=>
+   note.dataset.cmsControl===control.id
+  );
+
+  if(existing){
+   existing.textContent=text;
+   return;
+  }
+
+  const note=document.createElement("p");
+
+  note.id="cms-error-note-"+(++errorSequence);
+  note.className="cms-field-error";
+  note.dataset.cmsErrorNote="1";
+  note.dataset.cmsControl=control.id;
+  note.textContent=text;
+
+  control.setAttribute("aria-invalid","true");
+
+  const described=(
+   control.getAttribute("aria-describedby")||""
+  ).split(/\s+/).filter(Boolean);
+
+  described.push(note.id);
+
+  control.setAttribute(
+   "aria-describedby",
+   [...new Set(described)].join(" ")
+  );
+
+  const container=control.closest(".field")||
+   control.parentElement;
+
+  container.append(note);
+ }
+
+ function addErrorLinks(texts,container){
+  const links=document.createElement("div");
+  links.className="cms-error-links";
+
+  const used=new Set();
+
+  for(const text of texts){
+   const controls=candidateControls(S(text));
+
+   for(const control of controls){
+    attachInlineError(control,S(text));
+
+    if(used.has(control)){
+     continue;
+    }
+
+    used.add(control);
+
+    const key="target-"+(++errorSequence);
+    errorTargets.set(key,control);
+
+    const button=document.createElement("button");
+    button.type="button";
+    button.dataset.act="cmsFocusError";
+    button.dataset.target=key;
+
+    const label=control.labels?.[0]?.textContent||
+     control.getAttribute("aria-label")||
+     "相關欄位";
+
+    button.textContent="跳至："+T(label);
+    links.append(button);
+   }
+  }
+
+  if(links.children.length){
+   container.append(links);
+  }
+
+  /*
+   * 不儲存資料值，只暫存 DOM 參考。
+   */
+  if(errorTargets.size>100){
+   const entries=[...errorTargets.entries()].slice(-50);
+   errorTargets.clear();
+   entries.forEach(([key,value])=>
+    errorTargets.set(key,value)
+   );
+  }
+ }
+
+ function focusErrorTarget(key){
+  const control=errorTargets.get(key);
+
+  assert(control?.isConnected,"欄位已重新載入，請重新檢查。");
+
+  let node=control.parentElement;
+
+  while(node){
+   if(node instanceof HTMLDetailsElement){
+    node.open=true;
+   }
+
+   node=node.parentElement;
+  }
+
+  if($("allergyPanel").contains(control)){
+   $("allergyPanel").hidden=false;
+   $("allergyButton").setAttribute(
+    "aria-expanded",
+    "true"
+   );
+  }
+
+  control.scrollIntoView({
+   block:"center",
+   behavior:"auto"
+  });
+
+  control.focus({preventScroll:true});
+ }
+
+ showErrors=function(errors){
+  clearInlineErrors($("editor"));
+
+  const result=original.showErrors(errors);
+
+  if(errors.length){
+   addErrorLinks(errors,$("validation"));
+  }
+
+  return result;
+ };
+
+ fail=function(error){
+  original.fail(error);
+
+  if(!db){
+   return;
+  }
+
+  const root=$("modal").open
+   ?$("modalBody")
+   :$("editor");
+
+  clearInlineErrors(root);
+
+  const container=$("modal").open
+   ?$("modalError")
+   :$("validation");
+
+  if(!$("modal").open){
+   container.hidden=false;
+   container.textContent=error?.message||"操作失敗";
+  }
+
+  addErrorLinks(
+   [error?.message||"操作失敗"],
+   container
+  );
+ };
+
+ /* =======================================================
+    儲存效能統計：只保留本頁數字，不保存病歷內容
+    ======================================================= */
+
+ function resetMetricsIfNeeded(){
+  if(metrics.session===sessionId){
+   return;
+  }
+
+  metrics.session=sessionId;
+  metrics.attempts=0;
+  metrics.successes=0;
+  metrics.failures=0;
+  metrics.lastBytes=0;
+  metrics.lastMilliseconds=0;
+  metrics.samples=[];
+ }
+
+ persistSnapshot=async function(snapshot){
+  resetMetricsIfNeeded();
+
+  metrics.attempts++;
+
+  try{
+   metrics.lastBytes=enc.encode(
+    JSON.stringify({
+     format:"ray-clinic-auth-workspace",
+     version:1,
+     data:snapshot
+    })
+   ).byteLength;
+  }catch{
+   metrics.lastBytes=0;
+  }
+
+  const start=performance.now();
+  let success=false;
+
+  try{
+   const result=await original.persistSnapshot(snapshot);
+   success=true;
+   metrics.successes++;
+   return result;
+  }catch(error){
+   metrics.failures++;
+   throw error;
+  }finally{
+   metrics.lastMilliseconds=
+    Math.round(performance.now()-start);
+
+   metrics.samples.push({
+    milliseconds:metrics.lastMilliseconds,
+    bytes:metrics.lastBytes,
+    success
+   });
+
+   if(metrics.samples.length>20){
+    metrics.samples.shift();
+   }
+  }
+ };
+
+ qualityModal=function(){
+  original.qualityModal();
+
+  resetMetricsIfNeeded();
+
+  const successful=metrics.samples.filter(
+   sample=>sample.success
+  );
+
+  const average=successful.length
+   ?Math.round(
+     successful.reduce(
+      (sum,sample)=>sum+sample.milliseconds,
+      0
+     )/successful.length
+    )
+   :0;
+
+  const sectionElement=document.createElement("section");
+  sectionElement.className="card";
+  sectionElement.style.marginTop="16px";
+
+  sectionElement.innerHTML=`
+   <h3>本頁儲存效能</h3>
+
+   <p class="small">
+    UI 更新：${E(UI_VERSION)}。
+    統計只在本頁記憶體保存，不包含病人姓名或病歷文字。
+    檔案大小為工作區 envelope 的估算大小，
+    不含完整 HTTP 標頭及 RPC 包裝。
+   </p>
+
+   <div class="cms-metrics">
+    <div class="cms-metric">
+     最近一次工作區大小
+     <strong>
+      ${(metrics.lastBytes/1024/1024).toFixed(2)} MB
+     </strong>
+    </div>
+
+    <div class="cms-metric">
+     最近一次儲存耗時
+     <strong>${metrics.lastMilliseconds} ms</strong>
+    </div>
+
+    <div class="cms-metric">
+     最近成功樣本平均耗時
+     <strong>${average} ms</strong>
+    </div>
+
+    <div class="cms-metric">
+     本頁成功／失敗寫入
+     <strong>
+      ${metrics.successes}／${metrics.failures}
+     </strong>
+    </div>
+   </div>
+
+   <p class="notice" style="margin-top:12px">
+    本更新沒有拆分資料表，也沒有更改 RLS 或 RPC。
+    以上統計不是安全審計、後端權限驗收或還原驗證。
+   </p>
+  `;
+
+  $("modalBody").append(sectionElement);
+ };
+
+ /* =======================================================
+    修正兩個文件 HTML 排版問題
+    ======================================================= */
+
+ docBody=function(e,type){
+  if(type==="attendance"){
+   const x=e.attendance;
+
+   return `
+    <div class="recipient">To Whom It May Concern,
+致有關人士：</div>
+
+    <p>
+     This is to certify that the above-named patient
+     attended this practice on
+     <strong>${E(fmt(x.date))} (${E(x.period)})</strong>.
+    </p>
+
+    <p>
+     茲證明上述病人已於
+     <strong>
+      ${E(cnDate(x.date))}
+      ${x.period==="AM"?"上午":"下午"}
+     </strong>
+     到本處診治。
+    </p>
+
+    ${x.showDiagnosis?diagnosis(e):""}
+    ${optional("Remarks / 備註",x.remarks)}
+   `;
+  }
+
+  const html=original.docBody(e,type);
+
+  if(type==="sick"){
+   return html.replace(
+    "To (inclusive) / 至（包括</strong>",
+    "To (inclusive) / 至（包括當日）</strong>"
+   );
+  }
+
+  return html;
+ };
+
+ /* =======================================================
+    新動作：接入原本的未保存表單保護
+    ======================================================= */
+
+ [
+  "cmsConfirmAllergySync",
+  "cmsSaveMasterAllergy",
+  "cmsConfirmBulkCancel"
+ ].forEach(actionName=>
+  modalSaveActions.add(actionName)
+ );
+
+ [
+  "cmsFocusError",
+  "cmsConfirmPrint"
+ ].forEach(actionName=>
+  localModalActions.add(actionName)
+ );
+
+ dispatch=async function(act,node=null){
+  switch(act){
+   case "cmsSyncAllergy":
+    openAllergySync();
+    return;
+
+   case "cmsConfirmAllergySync":
+    await confirmAllergySync();
+    return;
+
+   case "cmsEditMasterAllergy":
+    editMasterAllergy(
+     node?.dataset.patient||
+     current()?.patientId
+    );
+    return;
+
+   case "cmsSaveMasterAllergy":
+    await saveMasterAllergy();
+    return;
+
+   case "cmsConfirmPrint":
+    await confirmPrint();
+    return;
+
+   case "cmsBulkCancel":
+    openBulkCancel();
+    return;
+
+   case "cmsConfirmBulkCancel":
+    await confirmBulkCancel();
+    return;
+
+   case "cmsFocusError":
+    focusErrorTarget(node?.dataset.target);
+    return;
+
+   case "older":
+   case "newer":{
+    const index=pastList.findIndex(
+     e=>e.id===pastId
+    );
+
+    let next;
+
+    if(index<0){
+     next=act==="older"
+      ?0
+      :pastList.length-1;
+    }else{
+     next=index+(act==="older"?1:-1);
+    }
+
+    if(pastList[next]){
+     pastId=pastList[next].id;
+     $("pastPicker").value=pastId;
+     pastSignature="";
+     drawPast();
+     $("reference").scrollTop=0;
+     rememberReference();
+    }
+
+    return;
+   }
+
+   default:
+    return original.dispatch(act,node);
+  }
+ };
+
+ /* =======================================================
+    局部輸入事件：不重建正在輸入的表單
+    ======================================================= */
+
+ $("modalBody").addEventListener("input",event=>{
+  const input=event.target;
+
+  if(composing||event.isComposing){
+   return;
+  }
+
+  if(modalState?.mode==="dwShift"){
+   if(input.id==="dwHours"){
+    modalState.cmsHoursManual=true;
+   }
+
+   if([
+    "dwStart",
+    "dwEnd",
+    "dwActualStart",
+    "dwActualEnd",
+    "dwBreak",
+    "dwHours"
+   ].includes(input.id)){
+    hoursHint();
+   }
+  }
+
+  if(modalState?.mode==="dwMonth"){
+   if(input.id==="dwAgreed"){
+    modalState.cmsAgreedManual=true;
+   }
+
+   if([
+    "dwMonthSurgery",
+    "dwMonthConsult",
+    "dwAgreed",
+    "dwDifference"
+   ].includes(input.id)){
+    clearTimeout(monthPreviewTimer);
+
+    monthPreviewTimer=setTimeout(
+     updateMonthPreview,
+     250
+    );
+   }
+  }
+ });
+
+ $("modalBody").addEventListener("change",event=>{
+  const input=event.target;
+
+  if(
+   composing||
+   event.isComposing||
+   busy||
+   printing
+  ){
+   return;
+  }
+
+  if(
+   modalState?.mode==="dwMonth"&&
+   input.id==="dwBasis"
+  ){
+   updateMonthPreview();
+  }
+
+  if(
+   modalState?.mode==="dwShift"&&
+   [
+    "dwStart",
+    "dwEnd",
+    "dwActualStart",
+    "dwActualEnd",
+    "dwBreak",
+    "dwHours"
+   ].includes(input.id)
+  ){
+   if(input.id==="dwHours"){
+    modalState.cmsHoursManual=true;
+   }
+
+   hoursHint();
+  }
+
+  if(input.id==="cmsSelectAllShifts"){
+   $("modalBody")
+    .querySelectorAll(
+     "[data-cms-shift-select]:not(:disabled)"
+    )
+    .forEach(checkbox=>{
+     if(!checkbox.closest("tr").hidden){
+      checkbox.checked=input.checked;
+     }
+    });
+
+   updateBulkCount();
+  }
+
+  if(input.matches?.("[data-cms-shift-select]")){
+   updateBulkCount();
+  }
+
+  if(input.id==="cmsSeriesFilter"){
+   const value=input.value;
+
+   $("modalBody")
+    .querySelectorAll("tr[data-cms-shift]")
+    .forEach(row=>{
+     const series=row.dataset.cmsSeries;
+
+     row.hidden=value==="__single__"
+      ?!!series
+      :!!value&&series!==value;
+
+     if(row.hidden){
+      const checkbox=row.querySelector(
+       "[data-cms-shift-select]"
+      );
+
+      if(checkbox){
+       checkbox.checked=false;
+      }
+     }
+    });
+
+   const all=$("cmsSelectAllShifts");
+
+   if(all){
+    all.checked=false;
+   }
+
+   updateBulkCount();
+  }
+ });
+
+ /*
+  * 使用者重新輸入已標記錯誤的欄位時，
+  * 清除該欄位的舊提示；下一次提交仍會重新驗證。
+  */
+ document.addEventListener("input",event=>{
+  const control=event.target;
+
+  if(
+   !control.matches?.('[aria-invalid="true"]')||
+   composing||
+   event.isComposing
+  ){
+   return;
+  }
+
+  const notes=[
+   ...document.querySelectorAll(
+    "[data-cms-error-note]"
+   )
+  ].filter(note=>
+   note.dataset.cmsControl===control.id
+  );
+
+  const removeIds=new Set(
+   notes.map(note=>note.id)
+  );
+
+  notes.forEach(note=>note.remove());
+
+  const described=(
+   control.getAttribute("aria-describedby")||""
+  ).split(/\s+/).filter(Boolean)
+   .filter(id=>!removeIds.has(id));
+
+  if(described.length){
+   control.setAttribute(
+    "aria-describedby",
+    described.join(" ")
+   );
+  }else{
+   control.removeAttribute("aria-describedby");
+  }
+
+  control.removeAttribute("aria-invalid");
+ });
+
+ /*
+  * 只記錄右側捲動位置，不重建內容。
+  */
+ $("reference").addEventListener("scroll",()=>{
+  if(db&&current()){
+   rememberReference();
+  }
+ },{passive:true});
+
+ /*
+  * 若更新區塊在已登入畫面動態載入，
+  * 亦可重新整理現有 UI；一般開檔時 db 尚未載入。
+  */
+ if(db){
+  render(true);
+  applyWidth();
+ }
+
+})();
+</script>
+<style id="cms-compact-layout-fix">
+/* 只影響畫面，不改列印版面。 */
+@media screen {
+
+ /* ========================================
+    1. 頂部取消被撐高的固定／最小高度
+    ======================================== */
+
+ #workbar {
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 10px 14px !important;
+  row-gap: 8px !important;
+  align-content: start !important;
+ }
+
+ #workbar > * {
+  min-height: 0;
+ }
+
+ /* 病人身份 */
+ #identity {
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 17px !important;
+  line-height: 1.45 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+ }
+
+ /* ========================================
+    2. 狀態區：不要顯示 HTML 縮排空白
+    ======================================== */
+
+ #visitState {
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 4px 0 0 !important;
+  padding: 0 !important;
+  line-height: 1.5 !important;
+  white-space: normal !important;
+ }
+
+ #visitState .cms-status-row {
+  display: flex !important;
+  flex-flow: row wrap !important;
+  align-items: center !important;
+  align-content: flex-start !important;
+  justify-content: flex-start !important;
+
+  height: auto !important;
+  min-height: 0 !important;
+  gap: 5px 8px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  line-height: 1.5 !important;
+  white-space: normal !important;
+ }
+
+ #visitState .cms-status-chip {
+  display: inline-flex !important;
+  flex: 0 1 auto !important;
+  align-self: center !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  margin: 0 !important;
+  padding: 3px 9px !important;
+  border-radius: 6px !important;
+
+  font-size: 12px !important;
+  font-weight: normal !important;
+  line-height: 1.5 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+ }
+
+ /* 歷史版本說明仍保留換行，但取消 HTML 縮排空白。 */
+ #visitState .cms-context-note {
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 6px 0 0 !important;
+  padding: 6px 9px !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  white-space: pre-line !important;
+ }
+
+ /* ========================================
+    3. 儲存提示及分頁
+    ======================================== */
+
+ #saveState {
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 2px 0 !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  white-space: normal !important;
+ }
+
+ #tabs {
+  height: auto !important;
+  min-height: 0 !important;
+  gap: 5px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  align-items: center !important;
+  align-content: flex-start !important;
+ }
+
+ #tabs button {
+  flex: 0 0 auto;
+  height: auto !important;
+  min-height: 46px !important;
+  min-width: 58px !important;
+  margin: 0 !important;
+  padding: 6px 10px !important;
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+ }
+
+ #tabs button small {
+  display: block;
+  margin-top: 3px !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+ }
+
+ /* 頂部操作按鈕，不包括分頁 */
+ #workbar button:not(#tabs button) {
+  height: auto !important;
+  min-height: 36px;
+  padding: 7px 11px;
+  line-height: 1.4;
+ }
+
+ /* ========================================
+    4. 右側單行警告：按內容高度顯示
+    ======================================== */
+
+ #reference .notice {
+  box-sizing: border-box;
+  flex: 0 0 auto !important;
+  align-self: stretch;
+
+  height: auto !important;
+  min-height: 0 !important;
+
+  margin: 0 0 10px !important;
+  padding: 9px 12px !important;
+
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+
+  /* 保留真正的文字換行，不保留縮排空白。 */
+  white-space: pre-line !important;
+  overflow-wrap: anywhere;
+ }
+
+ #reference .notice > p {
+  margin: 0 !important;
+  padding: 0 !important;
+ }
+
+ /* ========================================
+    5. 窄畫面仍可自然換行
+    ======================================== */
+
+ @media (max-width: 820px) {
+  #workbar {
+   padding: 8px 10px !important;
+  }
+
+  #identity {
+   font-size: 15px !important;
+  }
+
+  #visitState .cms-status-row {
+   gap: 5px !important;
+  }
+
+  #tabs {
+   flex-wrap: wrap !important;
+  }
+
+  #tabs button {
+   min-width: 54px !important;
+   padding: 6px 8px !important;
+  }
+ }
+}
+</style>
 </body>
 </html>
