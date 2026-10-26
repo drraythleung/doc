@@ -8603,5 +8603,206 @@ header.appbar .brand{
  }
 }
 </style>
+ <script id="ray-public-roster-admin">
+"use strict";
+
+(function(){
+ if(window.__rayPublicRosterAdminInstalled)return;
+ window.__rayPublicRosterAdminInstalled=true;
+
+ const oldDispatch=dispatch;
+
+ const menu=document.querySelector(
+  "header.appbar .menu-panel"
+ );
+
+ if(menu){
+  const button=document.createElement("button");
+  button.type="button";
+  button.dataset.act="rpOpen";
+  button.textContent="公開排班設定";
+  menu.append(button);
+ }
+
+ async function rpOpen(){
+  assert(
+   db&&!conflict&&!uncertain,
+   "請先登入並處理工作區儲存問題。"
+  );
+
+  let config;
+
+  await run(async()=>{
+   // 公開接口讀取雲端已保存資料，不讀取本頁未保存內容。
+   await save();
+
+   config=await cloudHTTP(
+    "/rest/v1/rpc/ray_roster_admin_get",
+    {method:"POST",body:{}}
+   );
+  },{redraw:false});
+
+  const work=dwRead();
+  const existing=Array.isArray(config?.sites)
+   ?config.sites
+   :[];
+
+  openModal(
+   "公開排班設定",
+   `
+    <div class="notice">
+     只公開勾選工作地點的「已確認／已完成」原定排班。
+     不公開暫定、已取消更次、酬金、內部備註或病人資料。
+     公開時段不會自動扣除食飯／休息分鐘；
+     如中間不接受預約，請把對外診症時段分開安排。
+    </div>
+
+    <label class="check">
+     <input
+      id="rpEnabled"
+      type="checkbox"
+      ${config?.enabled?"checked":""}
+     >
+     <span><strong>啟用公開排班頁</strong></span>
+    </label>
+
+    <p class="small">
+     地址及電話請填寫診所允許公開的預約資料。
+     不會自動沿用 CMS 的私人聯絡資料。
+    </p>
+
+    ${work.clinics.map(c=>{
+     const saved=existing.find(s=>s.id===c.id);
+
+     return `
+      <section
+       class="card"
+       data-rp-site="${E(c.id)}"
+      >
+       <label class="check">
+        <input
+         type="checkbox"
+         data-rp="enabled"
+         ${saved?"checked":""}
+        >
+        <span><strong>${E(c.name)}</strong></span>
+       </label>
+
+       <div class="field">
+        <label>公開地址</label>
+        <textarea
+         data-rp="address"
+         maxlength="1000"
+        >${E(saved?.address||"")}</textarea>
+       </div>
+
+       <div class="field">
+        <label>公開預約電話</label>
+        <input
+         data-rp="phone"
+         maxlength="100"
+         value="${E(saved?.phone||"")}"
+         placeholder="例如：診所預約電話"
+        >
+       </div>
+      </section>
+     `;
+    }).join("")}
+
+    <div class="notice">
+     公開頁會讀取未來約 90 日內的已保存排班，
+     開啟期間每分鐘重新讀取一次。
+     修改或取消更次後，請先確認 CMS 顯示已儲存。
+     <br>
+     此公開設定獨立存於資料庫，
+     不包含在現有 CMS 工作區加密備份。
+    </div>
+
+    <div class="modal-footer">
+     <button data-act="closeModal">取消</button>
+     <button
+      data-act="rpSave"
+      class="primary"
+     >保存公開設定</button>
+    </div>
+   `,
+   "rpSettings",
+   {editable:true,saveAction:"rpSave"}
+  );
+ }
+
+ async function rpSave(){
+  const enabled=$("rpEnabled").checked;
+
+  const sites=[
+   ...$("modalBody").querySelectorAll("[data-rp-site]")
+  ].filter(row=>
+   row.querySelector('[data-rp="enabled"]').checked
+  ).map(row=>({
+   id:row.dataset.rpSite,
+   address:T(
+    row.querySelector('[data-rp="address"]').value
+   ),
+   phone:T(
+    row.querySelector('[data-rp="phone"]').value
+   )
+  }));
+
+  assert(
+   !enabled||sites.length,
+   "請至少選擇一個公開工作地點。"
+  );
+
+  if(enabled&&!confirm(
+   "確認公開以下工作地點的已確認排班？\n\n"+
+   sites.map(s=>
+    dwRead().clinics.find(c=>c.id===s.id)?.name||s.id
+   ).join("\n")+
+   "\n\n地址及電話將可供任何人查閱。"
+  )){
+   return;
+  }
+
+  await run(async()=>{
+   await save();
+
+   await cloudHTTP(
+    "/rest/v1/rpc/ray_roster_admin_save",
+    {
+     method:"POST",
+     body:{
+      p_enabled:enabled,
+      p_sites:sites
+     }
+    }
+   );
+  },{redraw:false});
+
+  closeModalNow();
+
+  message(
+   enabled
+    ?"公開排班已啟用。請用未登入的瀏覽器核對公開頁。"
+    :"公開排班已停用。公開頁下次更新後將不再顯示排班。"
+  );
+ }
+
+ modalSaveActions.add("rpSave");
+
+ dispatch=async function(act,node=null){
+  if(act==="rpOpen"){
+   await rpOpen();
+   return;
+  }
+
+  if(act==="rpSave"){
+   await rpSave();
+   return;
+  }
+
+  return oldDispatch(act,node);
+ };
+})();
+</script>
 </body>
 </html>
