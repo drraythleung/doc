@@ -8804,5 +8804,496 @@ header.appbar .brand{
  };
 })();
 </script>
+ <style id="ray-doctor-days-off-style">
+.dw-root .dw-day.dw-on-leave{
+ background:#fff8e8;
+ border-color:#d6b768;
+}
+
+.dw-root .dw-leave-button{
+ display:block;
+ width:100%;
+ min-height:28px;
+ margin-top:6px;
+ padding:4px 6px;
+ font-size:12px;
+ text-align:left;
+ white-space:normal;
+}
+
+.dw-root .dw-leave-button.is-leave{
+ background:#fff0c6;
+ border-color:#d6b768;
+ color:#755015;
+ font-weight:bold;
+}
+
+.dw-root .dw-leave-tools{
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:8px;
+ margin:12px 0;
+}
+
+.dw-root .dw-leave-help{
+ margin:6px 0;
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.7;
+}
+</style>
+
+<script id="ray-doctor-days-off-script">
+"use strict";
+
+(function installDoctorDaysOff(){
+ if(window.__rayDoctorDaysOffInstalled)return;
+
+ const original={
+  checkDoctorWork,
+  dwScreen,
+  dispatch,
+  counts
+ };
+
+ window.__rayDoctorDaysOffInstalled=true;
+
+ /*
+  * doctorWork.daysOff 為選用欄位：
+  * 舊資料沒有此欄位，仍可載入。
+  *
+  * 不把休假當作更次，
+  * 不改原有計薪及月結公式。
+  */
+ function leaveRows(w){
+  return w.daysOff||[];
+ }
+
+ function activeLeave(w,date){
+  return leaveRows(w).find(
+   x=>x.date===date&&x.state==="active"
+  );
+ }
+
+ function assertWritable(){
+  assert(
+   db&&!busy&&!printing&&!composing&&
+   !conflict&&!uncertain,
+   "目前不能修改休假，請先完成輸入或處理儲存問題。"
+  );
+ }
+
+ /*
+  * 全天區間：[當日 00:00，翌日 00:00)
+  * 同時檢查原定時間及實際／有效時間。
+  */
+ function shiftTouchesDay(s,date){
+  if(s.status==="cancelled")return false;
+
+  const from=dwDT(date+"T00:00");
+  const until=dwDT(dwDayAdd(date,1)+"T00:00");
+
+  const overlaps=(start,end)=>
+   dwDT(start)<until&&dwDT(end)>from;
+
+  return overlaps(s.start,s.end)||
+   (
+    !!s.actualStart&&
+    overlaps(s.actualStart,s.actualEnd)
+   );
+ }
+
+ function conflictingShifts(w,date){
+  return w.shifts.filter(
+   s=>shiftTouchesDay(s,date)
+  );
+ }
+
+ function assertNoShifts(w,date){
+  const conflicts=conflictingShifts(w,date);
+
+  assert(
+   !conflicts.length,
+   date+" 尚有有效更次，不能標記全天休假。\n"+
+   conflicts.slice(0,5).map(s=>
+    dwShiftLabel(w,s)
+   ).join("\n")+
+   "\n請先取消或調整相關更次；系統不會自動取消。"
+  );
+ }
+
+ /*
+  * 接入原有完整資料驗證。
+  * 新增／修改單更、重複排班、備份還原，
+  * 都會經過此驗證。
+  */
+ checkDoctorWork=function(w){
+  original.checkDoctorWork(w);
+
+  if(w.daysOff===undefined)return;
+
+  arr(w.daysOff,"醫生休假");
+  unique(w.daysOff.map(x=>x?.id),"休假 ID");
+
+  const activeDates=new Set();
+
+  for(const x of w.daysOff){
+   assert(O(x),"休假紀錄格式無效");
+
+   [
+    "id","date","note",
+    "createdAt","createdBy",
+    "updatedAt","updatedBy",
+    "cancelledAt","cancelledBy","cancelReason"
+   ].forEach(k=>str(x[k],"休假."+k));
+
+   assert(dateOK(x.date),"休假日期無效");
+   assert(x.note.length<=1000,"休假備註最多 1000 字");
+
+   choice(
+    x.state,
+    ["active","cancelled"],
+    "休假狀態"
+   );
+
+   if(x.state==="active"){
+    assert(
+     !activeDates.has(x.date),
+     x.date+" 有重複的有效休假紀錄"
+    );
+
+    activeDates.add(x.date);
+    assertNoShifts(w,x.date);
+   }else{
+    assert(
+     T(x.cancelReason),
+     "撤銷休假須填寫原因"
+    );
+   }
+  }
+ };
+
+ function decorateCalendar(){
+  const calendar=$("modalBody").querySelector(
+   ".dw-calendar"
+  );
+
+  if(!calendar)return;
+
+  const w=dwRead();
+
+  calendar.querySelectorAll(".dw-day").forEach(cell=>{
+   const dateButton=cell.querySelector(
+    '[data-act="dwNew"][data-date]'
+   );
+
+   if(!dateButton)return;
+
+   const date=dateButton.dataset.date;
+   const leave=activeLeave(w,date);
+
+   cell.classList.toggle("dw-on-leave",!!leave);
+
+   const button=document.createElement("button");
+   button.type="button";
+   button.className=
+    "dw-leave-button"+(leave?" is-leave":"");
+
+   button.dataset.act="dlEdit";
+   button.dataset.date=date;
+
+   button.textContent=leave
+    ?"休假 · 查看／修改"
+    :"標記休假";
+
+   button.setAttribute(
+    "aria-label",
+    date+(leave?" 休假，查看或修改":" 標記全天休假")
+   );
+
+   /*
+    * 已休假時停用「新增此日更次」。
+    * 其他入口亦有資料層驗證，不只靠停用按鈕。
+    */
+   if(leave){
+    dateButton.disabled=true;
+    dateButton.title="此日已標記全天休假";
+   }
+
+   cell.append(button);
+  });
+ }
+
+ dwScreen=function(
+  page=dwState.page,
+  readFilters=false
+ ){
+  original.dwScreen(page,readFilters);
+
+  const root=$("modalBody").querySelector(".dw-root");
+  if(!root)return;
+
+  const tools=document.createElement("div");
+  tools.className="dw-leave-tools";
+
+  tools.innerHTML=`
+   <button type="button" data-act="dlEdit">
+    ＋ 標記全天休假
+   </button>
+   <span class="small">
+    休假為醫生全天狀態，不受工作地點篩選影響。
+   </span>
+  `;
+
+  const filters=root.querySelector(".dw-filters");
+
+  if(filters)filters.after(tools);
+  else root.prepend(tools);
+
+  if(dwState.page==="calendar"){
+   decorateCalendar();
+  }
+ };
+
+ function openLeave(date=""){
+  assertWritable();
+  dwReadFilters();
+
+  if(!date){
+   date=dwState.month===today().slice(0,7)
+    ?today()
+    :dwState.month+"-01";
+  }
+
+  assert(dateOK(date),"請選擇有效日期");
+
+  const w=dwRead();
+  const old=activeLeave(w,date);
+
+  openModal(
+   old?"全天休假 · "+date:"標記全天休假",
+   `
+    <div class="dw-root">
+     <div class="notice">
+      「休假」代表醫生在所有工作地點全天休假。
+      沒有排班的其他日期不會自動標記為休假。
+      如有有效更次，請先取消或調整；不會自動刪除更次。
+     </div>
+
+     <div class="field" style="margin-top:14px">
+      <label for="dlDate">休假日期</label>
+      <input
+       id="dlDate"
+       type="date"
+       value="${E(date)}"
+       ${old?"readonly":""}
+      >
+     </div>
+
+     <div class="field">
+      <label for="dlNote">內部備註（選填，最多 1000 字）</label>
+      <textarea
+       id="dlNote"
+       maxlength="1000"
+       placeholder="例如：私人安排；不需填寫詳細原因"
+      >${E(old?.note||"")}</textarea>
+     </div>
+
+     <p class="dw-leave-help">
+      備註只保存於 CMS 工作區，不會由此補丁公開。
+      休假不計入更數、計薪時數或酬金。
+     </p>
+
+     <div class="modal-footer">
+      <button data-act="dwView" data-page="calendar">
+       返回月曆
+      </button>
+
+      ${old?`
+       <button
+        data-act="dlCancel"
+        data-id="${E(old.id)}"
+        class="danger"
+       >撤銷休假</button>
+      `:""}
+
+      <button data-act="dlSave" class="primary">
+       ${old?"保存備註":"確認標記休假"}
+      </button>
+     </div>
+    </div>
+   `,
+   "dlEdit",
+   {editable:true,saveAction:"dlSave"}
+  );
+
+  modalState.dlContext={
+   before:old?C(old):null
+  };
+ }
+
+ async function saveLeave(){
+  assertWritable();
+
+  const context=modalState?.dlContext;
+  assert(context,"休假表單已離開，請重新開啟");
+
+  const date=$("dlDate").value;
+  const note=T($("dlNote").value);
+
+  assert(dateOK(date),"請選擇有效休假日期");
+  assert(note.length<=1000,"備註最多 1000 字");
+
+  const before=context.before;
+
+  if(before){
+   assert(date===before.date,"修改備註不可更改休假日期");
+  }
+
+  assertNoShifts(dwRead(),date);
+
+  await run(()=>commit(d=>{
+   const w=dwWrite(d);
+   w.daysOff??=[];
+
+   assertNoShifts(w,date);
+
+   const existing=activeLeave(w,date);
+
+   if(before){
+    assert(
+     existing&&equal(existing,before),
+     "休假資料已改變，請重新開啟核對"
+    );
+
+    const previous=C(existing);
+
+    existing.note=note;
+    existing.updatedAt=now();
+    existing.updatedBy=actor;
+
+    dwLog(w,"修改休假備註",{
+     leaveId:existing.id,
+     date,
+     previous
+    });
+   }else{
+    assert(!existing,"此日已標記休假，請重新開啟");
+
+    const at=now();
+    const id=uid();
+
+    w.daysOff.push({
+     id,
+     date,
+     note,
+     state:"active",
+     createdAt:at,
+     createdBy:actor,
+     updatedAt:at,
+     updatedBy:actor,
+     cancelledAt:"",
+     cancelledBy:"",
+     cancelReason:""
+    });
+
+    dwLog(w,"標記全天休假",{
+     leaveId:id,
+     date
+    });
+   }
+  }),{redraw:false});
+
+  dwState.month=date.slice(0,7);
+  dwScreen("calendar");
+
+  message(date+" 已標記為休假；不計入工時或酬金。");
+ }
+
+ async function cancelLeave(id){
+  assertWritable();
+
+  const before=leaveRows(dwRead()).find(
+   x=>x.id===id&&x.state==="active"
+  );
+
+  assert(before,"休假不存在或已撤銷");
+
+  const reason=prompt(
+   "撤銷 "+before.date+" 全天休假的原因：\n"+
+   "撤銷後不會自動恢復之前已取消的更次。"
+  );
+
+  if(!T(reason))return;
+
+  const expected=C(before);
+
+  await run(()=>commit(d=>{
+   const w=dwWrite(d);
+   const x=leaveRows(w).find(v=>v.id===id);
+
+   assert(
+    x&&equal(x,expected)&&x.state==="active",
+    "休假資料已改變，請重新核對"
+   );
+
+   x.state="cancelled";
+   x.cancelledAt=now();
+   x.cancelledBy=actor;
+   x.cancelReason=T(reason);
+   x.updatedAt=now();
+   x.updatedBy=actor;
+
+   dwLog(w,"撤銷全天休假",{
+    leaveId:id,
+    date:x.date,
+    reason:T(reason)
+   });
+  }),{redraw:false});
+
+  dwState.month=expected.date.slice(0,7);
+  dwScreen("calendar");
+
+  message(
+   expected.date+
+   " 的休假標記已撤銷；沒有自動新增或恢復更次。"
+  );
+ }
+
+ /*
+  * 備份摘要加入休假紀錄數。
+  * 實際資料仍由原有整體工作區備份處理。
+  */
+ counts=function(d){
+  return {
+   ...original.counts(d),
+   醫生休假紀錄:(d.doctorWork?.daysOff||[]).length
+  };
+ };
+
+ modalSaveActions.add("dlSave");
+
+ dispatch=async function(act,node=null){
+  switch(act){
+   case "dlEdit":
+    openLeave(node?.dataset.date||"");
+    return;
+
+   case "dlSave":
+    await saveLeave();
+    return;
+
+   case "dlCancel":
+    await cancelLeave(node?.dataset.id);
+    return;
+
+   default:
+    return original.dispatch(act,node);
+  }
+ };
+
+})();
+</script>
 </body>
 </html>
