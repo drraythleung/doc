@@ -2483,7 +2483,7 @@ ${E(allergy(data.patient))}
 function settingsModal(){
  signatureDraft=image(db.settings.signature);const s=db.settings;
  openModal("工作區設定",`
- <div class="notice">圖片簽名只係可複製圖片，不是數碼簽署。此版本敏感操作只核對登入 session，不是第二次身份驗證。更改設定不會影響已簽發文件及已完成的診症紀錄。</div>
+ 
  <div class="grid" style="margin-top:14px">${["nameCn","nameEn","phone","email","reg"].map(k=>`<div class="field"><label>${E({nameCn:"中文姓名",nameEn:"英文姓名",phone:"電話",email:"電郵",reg:"醫生註冊編號"}[k])}</label><input data-setting="${k}" value="${E(s[k])}"></div>`).join("")}</div>
  ${["qualCn","qualEn","address"].map(k=>`<div class="field"><label>${E({qualCn:"中文資歷",qualEn:"英文資歷",address:"診所地址"}[k])}</label><textarea data-setting="${k}">${E(s[k])}</textarea></div>`).join("")}
  <div class="field"><label for="idleMinutes">閒置登出分鐘（1–120）</label><input id="idleMinutes" type="number" min="1" max="120" step="1" value="${s.idleMinutes}"></div>
@@ -8630,7 +8630,39 @@ refreshHeader=function(){
  window.__rayPublicRosterAdminInstalled=true;
 
  const oldDispatch=dispatch;
+/*
+  * 只處理一個 WhatsApp 號碼。
+  * 香港本地 8 位號碼會補上 852。
+  * 其他地區須自行包含國碼。
+  * 多個號碼、分機或文字不會自動猜測。
+  */
+ function rpWhatsAppNumber(value){
+  const raw=T(value);
 
+  assert(
+   raw,
+   "已啟用 WhatsApp 預約，請填寫 WhatsApp 號碼。"
+  );
+
+  assert(
+   /^\+?[\d\s()（）-]+$/.test(raw),
+   "WhatsApp 請只填一個號碼，不要加入斜線、分機或文字；如預約電話有多個號碼，請另填 WhatsApp 專用號碼。"
+  );
+
+  let digits=raw.replace(/[^\d]/g,"");
+
+  if(!raw.startsWith("+")&&digits.length===8){
+   digits="852"+digits;
+  }
+
+  assert(
+   /^[1-9]\d{7,14}$/.test(digits),
+   "WhatsApp 號碼格式無效。香港可填 8 位本地號碼；其他地區請包含國碼，例如 +44…。"
+  );
+
+  return digits;
+ }
+ 
  const menu=document.querySelector(
   "header.appbar .menu-panel"
  );
@@ -8733,6 +8765,55 @@ if(menu){
          placeholder="例如：診所預約電話"
         >
        </div>
+       <section
+        style="
+         margin-top:14px;
+         padding-top:12px;
+         border-top:1px solid var(--line)
+        "
+       >
+        <label class="check">
+         <input
+          type="checkbox"
+          data-rp="whatsapp_enabled"
+          ${saved?.whatsapp_enabled===true?"checked":""}
+         >
+         <span>
+          <strong>啟用 WhatsApp 預約</strong><br>
+          <small>
+           只限診所已確認接受 WhatsApp 預約時啟用。
+          </small>
+         </span>
+        </label>
+
+        <label class="check">
+         <input
+          type="checkbox"
+          data-rp="whatsapp_same_as_phone"
+          ${saved?.whatsapp_same_as_phone!==false?"checked":""}
+         >
+         <span>
+          WhatsApp 號碼與上方公開預約電話相同
+         </span>
+        </label>
+
+        <div class="field">
+         <label>另用 WhatsApp 號碼</label>
+         <input
+          type="tel"
+          data-rp="whatsapp_number"
+          maxlength="40"
+          value="${E(saved?.whatsapp_number||"")}"
+          placeholder="例如：9867 7100 或 +852 9867 7100"
+         >
+         <p class="small" style="margin:5px 0 0">
+          取消勾選「與預約電話相同」時，才採用此欄。
+          香港 8 位號碼會補上 852；
+          其他地區請包含國碼。
+          如預約電話有多個號碼，請在此另填一個 WhatsApp 號碼。
+         </p>
+        </div>
+       </section>
       </section>
      `;
     }).join("")}
@@ -8762,19 +8843,49 @@ if(menu){
  async function rpSave(){
   const enabled=$("rpEnabled").checked;
 
-  const sites=[
+const sites=[
    ...$("modalBody").querySelectorAll("[data-rp-site]")
   ].filter(row=>
    row.querySelector('[data-rp="enabled"]').checked
-  ).map(row=>({
-   id:row.dataset.rpSite,
-   address:T(
-    row.querySelector('[data-rp="address"]').value
-   ),
-   phone:T(
-    row.querySelector('[data-rp="phone"]').value
-   )
-  }));
+  ).map(row=>{
+   const read=name=>
+    row.querySelector('[data-rp="'+name+'"]');
+
+   const phone=T(read("phone").value);
+   const whatsappEnabled=read("whatsapp_enabled").checked;
+   const sameAsPhone=read("whatsapp_same_as_phone").checked;
+
+   const enteredNumber=T(read("whatsapp_number").value);
+   let whatsappNumber="";
+
+   if(whatsappEnabled){
+    const clinicName=dwRead().clinics.find(
+     c=>c.id===row.dataset.rpSite
+    )?.name||row.dataset.rpSite;
+
+    try{
+     whatsappNumber=rpWhatsAppNumber(
+      sameAsPhone?phone:enteredNumber
+     );
+    }catch(error){
+     throw new Error(clinicName+"："+error.message);
+    }
+   }
+
+   return {
+    id:row.dataset.rpSite,
+    address:T(read("address").value),
+    phone,
+    whatsapp_enabled:whatsappEnabled,
+    whatsapp_same_as_phone:sameAsPhone,
+
+    // 啟用時保存整理後號碼；
+    // 未啟用時保留另填內容，方便下次編輯。
+    whatsapp_number:whatsappEnabled
+     ?whatsappNumber
+     :enteredNumber
+   };
+  });
 
   assert(
    !enabled||sites.length,
@@ -8786,7 +8897,7 @@ if(menu){
    sites.map(s=>
     dwRead().clinics.find(c=>c.id===s.id)?.name||s.id
    ).join("\n")+
-   "\n\n地址及電話將可供任何人查閱。"
+"\n\n地址、預約電話及已啟用的 WhatsApp 號碼將可供任何人查閱。"
   )){
    return;
   }
