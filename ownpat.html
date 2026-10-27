@@ -5930,7 +5930,14 @@ header.appbar .brand{
    .findIndex(x=>x.id===v.id)+1;
  }
 
- refreshHeader=function(){
+refreshHeader=function(){
+  /*
+   * 狀態列每次更新都會重建。
+   * 先將現有儲存提示移出，避免被 innerHTML 刪除。
+   */
+  const saveState=$("saveState");
+  $("visitState").after(saveState);
+
   const e=current();
 
   if(!e){
@@ -6055,6 +6062,18 @@ header.appbar .brand{
      :""
    }
   `;
+
+/*
+   * 放到「本次電話」後面。
+   * 使用原有元素，status() 仍然可以照常更新內容。
+   */
+  const statusRow=$("visitState").querySelector(
+   ".cms-status-row"
+  );
+
+  if(statusRow){
+   statusRow.append(saveState);
+  }
 
   $("returnButton").hidden=!view;
 
@@ -8616,12 +8635,21 @@ header.appbar .brand{
   "header.appbar .menu-panel"
  );
 
- if(menu){
+if(menu){
   const button=document.createElement("button");
   button.type="button";
   button.dataset.act="rpOpen";
   button.textContent="公開排班設定";
-  menu.append(button);
+
+  const logoutButton=menu.querySelector(
+   '[data-act="logout"]'
+  );
+
+  if(logoutButton){
+   menu.insertBefore(button,logoutButton);
+  }else{
+   menu.append(button);
+  }
  }
 
  async function rpOpen(){
@@ -9824,5 +9852,27 @@ header.appbar .brand{
 
 })();
 </script>
+ <style id="ray-inline-save-status">
+@media screen {
+ #visitState .cms-status-row > #saveState {
+  flex:0 1 auto;
+  align-self:center;
+  min-width:0;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:3px 0 !important;
+  font-size:12px !important;
+  font-weight:normal;
+  line-height:1.5 !important;
+  color:var(--muted);
+  white-space:normal !important;
+  overflow-wrap:anywhere;
+ }
+
+ #visitState .cms-status-row > #saveState:empty {
+  display:none;
+ }
+}
+</style>
 </body>
 </html>
