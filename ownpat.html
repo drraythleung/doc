@@ -8804,44 +8804,1025 @@ header.appbar .brand{
  };
 })();
 </script>
- <style id="ray-doctor-days-off-style">
-.dw-root .dw-day.dw-on-leave{
- background:#fff8e8;
- border-color:#d6b768;
-}
-
-.dw-root .dw-leave-button{
- display:block;
- width:100%;
- min-height:28px;
- margin-top:6px;
- padding:4px 6px;
- font-size:12px;
- text-align:left;
- white-space:normal;
-}
-
-.dw-root .dw-leave-button.is-leave{
- background:#fff0c6;
- border-color:#d6b768;
- color:#755015;
- font-weight:bold;
-}
-
-.dw-root .dw-leave-tools{
+<style id="ray-doctor-days-off-style">
+/* 只影響醫生休假介面 */
+.dw-root .do-toolbar{
  display:flex;
  align-items:center;
+ gap:10px;
  flex-wrap:wrap;
- gap:8px;
  margin:12px 0;
 }
 
-.dw-root .dw-leave-help{
- margin:6px 0;
+.dw-root .do-toolbar small{
+ line-height:1.65;
+}
+
+.dw-root .dw-day.do-day-off{
+ background:#fff9e9;
+ border-color:#d9bd76;
+}
+
+.dw-root .do-badge{
+ display:inline-flex;
+ align-items:center;
+ gap:5px;
+ min-height:26px;
+ margin-top:7px;
+ padding:3px 9px;
+ border:1px solid #dfc887;
+ border-radius:20px;
+ background:#fff0c4;
+ color:#76551b;
+ font-size:12px;
+ font-weight:bold;
+ line-height:1.4;
+}
+
+.dw-root .do-heading{
+ margin:0 0 7px;
+ font-size:18px;
+}
+
+.dw-root .do-description{
+ margin:0 0 18px;
+ color:var(--muted);
+ line-height:1.75;
+}
+
+.dw-root .do-section{
+ padding:16px;
+ margin-bottom:14px;
+ border:1px solid var(--line);
+ border-radius:10px;
+ background:#fff;
+}
+
+.dw-root .do-weekdays{
+ display:grid;
+ grid-template-columns:repeat(7,minmax(0,1fr));
+ gap:7px;
+ margin:8px 0 12px;
+}
+
+.dw-root .do-weekday{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:6px;
+ margin:0;
+ padding:11px 5px;
+ border:1px solid var(--line);
+ border-radius:8px;
+ background:#f8fafb;
+ color:var(--ink);
+ font-size:13px;
+ cursor:pointer;
+}
+
+.dw-root .do-weekday:has(input:checked){
+ background:#eaf4ef;
+ border-color:#8bb6a4;
+ color:var(--accent);
+ font-weight:bold;
+}
+
+.dw-root .do-shortcuts{
+ display:flex;
+ gap:7px;
+ flex-wrap:wrap;
+}
+
+.dw-root .do-shortcuts button{
+ min-height:30px;
+ padding:4px 10px;
+ font-size:12px;
+}
+
+.dw-root .do-summary{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:10px;
+ margin-bottom:12px;
+}
+
+.dw-root .do-summary>div{
+ padding:12px;
+ border:1px solid var(--line);
+ border-radius:8px;
+ background:#f5f9f7;
  color:var(--muted);
  font-size:12px;
- line-height:1.7;
+}
+
+.dw-root .do-summary strong{
+ display:block;
+ margin-top:5px;
+ color:var(--ink);
+ font-size:20px;
+}
+
+.dw-root .do-help{
+ color:var(--muted);
+ font-size:12px;
+ line-height:1.75;
+}
+
+.dw-root .do-preview-list{
+ display:flex;
+ gap:6px;
+ flex-wrap:wrap;
+ margin:10px 0;
+}
+
+.dw-root .do-date-tag{
+ padding:4px 8px;
+ border:1px solid #d5e3da;
+ border-radius:6px;
+ background:#f1f7f3;
+ font-size:12px;
+}
+
+.dw-root .do-warning{
+ padding:10px 12px;
+ margin-top:12px;
+ border:1px solid #e1c890;
+ border-radius:8px;
+ background:#fff8e8;
+ color:#775516;
+ line-height:1.75;
+ white-space:pre-line;
+}
+
+@media(max-width:600px){
+ .dw-root .do-weekdays{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+ }
+
+ .dw-root .do-summary{
+  grid-template-columns:1fr;
+ }
 }
 </style>
+
+<script id="ray-doctor-days-off-script">
+"use strict";
+
+(function installRecurringDoctorDaysOff(){
+ if(window.__rayDoctorDaysOffInstalled)return;
+
+ const original={
+  checkDoctorWork,
+  dwScreen,
+  dispatch,
+  counts
+ };
+
+ window.__rayDoctorDaysOffInstalled=true;
+
+ const WEEKDAYS=[
+  [1,"一"],
+  [2,"二"],
+  [3,"三"],
+  [4,"四"],
+  [5,"五"],
+  [6,"六"],
+  [0,"日"]
+ ];
+
+ /*
+  * 沿用上一版 daysOff 資料格式。
+  * 每個日期獨立保存，沒有無限期重複規則。
+  */
+ function records(w){
+  return w.daysOff||[];
+ }
+
+ function activeRecords(w){
+  return records(w).filter(x=>x.state==="active");
+ }
+
+ function activeOn(w,date){
+  return records(w).find(
+   x=>x.state==="active"&&x.date===date
+  );
+ }
+
+ function assertWritable(){
+  assert(
+   db&&!busy&&!printing&&!composing&&
+   !conflict&&!uncertain,
+   "目前不能修改休假，請先完成輸入或處理儲存問題。"
+  );
+ }
+
+ function shiftTouchesDate(s,date){
+  if(s.status==="cancelled")return false;
+
+  const from=dwDT(date+"T00:00");
+  const until=from+86400000;
+
+  const overlaps=(start,end)=>
+   dwDT(start)<until&&dwDT(end)>from;
+
+  return overlaps(s.start,s.end)||
+   (
+    !!s.actualStart&&
+    overlaps(s.actualStart,s.actualEnd)
+   );
+ }
+
+ function conflictsOn(w,date){
+  return w.shifts.filter(
+   s=>shiftTouchesDate(s,date)
+  );
+ }
+
+ /*
+  * 不只畫面檢查。
+  * 原有新增更次、重複排班、還原及儲存，
+  * 仍會經過完整資料驗證。
+  */
+ checkDoctorWork=function(w){
+  original.checkDoctorWork(w);
+
+  if(w.daysOff===undefined)return;
+
+  arr(w.daysOff,"醫生休假");
+
+  for(const x of w.daysOff){
+   assert(O(x),"休假紀錄格式無效");
+  }
+
+  unique(
+   w.daysOff.map(x=>x.id),
+   "休假 ID"
+  );
+
+  const activeDates=new Set();
+
+  for(const x of w.daysOff){
+   [
+    "id","date","note",
+    "createdAt","createdBy",
+    "updatedAt","updatedBy",
+    "cancelledAt","cancelledBy","cancelReason"
+   ].forEach(k=>str(x[k],"休假."+k));
+
+   assert(dateOK(x.date),"休假日期無效");
+   assert(x.note.length<=1000,"休假備註最多 1000 字");
+
+   choice(
+    x.state,
+    ["active","cancelled"],
+    "休假狀態"
+   );
+
+   if(x.state==="active"){
+    assert(
+     !activeDates.has(x.date),
+     x.date+" 有重複的有效休假紀錄"
+    );
+
+    activeDates.add(x.date);
+
+    const conflicts=conflictsOn(w,x.date);
+
+    assert(
+     conflicts.length===0,
+     x.date+" 已標記全天休假，不能同時保存有效更次。"+
+     "如要工作，請先撤銷該日休假。"
+    );
+   }else{
+    assert(
+     T(x.cancelReason),
+     "撤銷休假須填寫原因"
+    );
+   }
+  }
+ };
+
+ /*
+  * 月曆不再每格放「標記休假」。
+  * 只有已標記的日期顯示休假標籤。
+  */
+ function decorateCalendar(){
+  const calendar=$("modalBody").querySelector(
+   ".dw-calendar"
+  );
+
+  if(!calendar)return;
+
+  const w=dwRead();
+
+  calendar.querySelectorAll(".dw-day").forEach(cell=>{
+   const dateButton=cell.querySelector(
+    '[data-act="dwNew"][data-date]'
+   );
+
+   if(!dateButton)return;
+
+   const date=dateButton.dataset.date;
+   const leave=activeOn(w,date);
+
+   cell.classList.toggle("do-day-off",!!leave);
+
+   if(!leave)return;
+
+   const badge=document.createElement("button");
+   badge.type="button";
+   badge.className="do-badge";
+   badge.dataset.act="doOpen";
+   badge.dataset.date=date;
+   badge.textContent="休假";
+
+   badge.setAttribute(
+    "aria-label",
+    date+" 已標記休假，開啟休假設定"
+   );
+
+   /*
+    * 備註不放在月曆標籤，
+    * 亦不放在 title 以免意外顯示私人內容。
+    */
+   cell.append(badge);
+
+   dateButton.disabled=true;
+   dateButton.title="此日已標記全天休假";
+  });
+ }
+
+ dwScreen=function(
+  page=dwState.page,
+  readFilters=false
+ ){
+  original.dwScreen(page,readFilters);
+
+  const root=$("modalBody").querySelector(".dw-root");
+  if(!root)return;
+
+  const monthCount=activeRecords(dwRead()).filter(
+   x=>x.date.slice(0,7)===dwState.month
+  ).length;
+
+  const toolbar=document.createElement("div");
+  toolbar.className="do-toolbar";
+
+  toolbar.innerHTML=`
+   <button
+    type="button"
+    data-act="doOpen"
+   >設定休假</button>
+
+   <small>
+    本月已標記 ${monthCount} 日休假。
+    可一次設定整段期間的星期六、日。
+   </small>
+  `;
+
+  const filters=root.querySelector(".dw-filters");
+
+  if(filters)filters.after(toolbar);
+  else root.prepend(toolbar);
+
+  if(dwState.page==="calendar"){
+   decorateCalendar();
+  }
+ };
+
+ function openSettings(singleDate=""){
+  assertWritable();
+  dwReadFilters();
+
+  const from=singleDate||dwState.month+"-01";
+
+  /*
+   * 一般預設顯示月份起計三個月。
+   * 點月曆休假標籤則只開該日。
+   */
+  const until=singleDate||dwDayAdd(
+   dwNextMonth(dwState.month,3)+"-01",
+   -1
+  );
+
+  const checked=singleDate
+   ?WEEKDAYS.map(([day])=>day)
+   :[6,0];
+
+  openModal(
+   "醫生休假設定",
+   `
+    <div class="dw-root">
+     <h3 class="do-heading">
+      ${singleDate?"管理當日休假":"一次設定固定休假日"}
+     </h3>
+
+     <p class="do-description">
+      揀日期範圍，再揀每週休假日。
+      例如逢星期六、日休假，勾選六、日後一次保存即可。
+     </p>
+
+     <section class="do-section">
+      ${dwSelect(
+       "操作",
+       "doOperation",
+       singleDate?"remove":"add",
+       {
+        add:"新增休假",
+        remove:"撤銷已設定休假"
+       }
+      )}
+
+      <div class="grid">
+       ${dwField(
+        "由",
+        "doFrom",
+        from,
+        "date"
+       )}
+
+       ${dwField(
+        "至（包括當日）",
+        "doUntil",
+        until,
+        "date"
+       )}
+      </div>
+
+      <label>套用至以下星期</label>
+
+      <div class="do-weekdays">
+       ${WEEKDAYS.map(([value,label])=>`
+        <label class="do-weekday">
+         <input
+          type="checkbox"
+          data-do-weekday="${value}"
+          ${checked.includes(value)?"checked":""}
+         >
+         <span>星期${label}</span>
+        </label>
+       `).join("")}
+      </div>
+
+      <div class="do-shortcuts">
+       <button
+        type="button"
+        data-act="doPreset"
+        data-preset="weekend"
+       >星期六、日</button>
+
+       <button
+        type="button"
+        data-act="doPreset"
+        data-preset="all"
+       >每日</button>
+
+       <button
+        type="button"
+        data-act="doPreset"
+        data-preset="none"
+       >清除選擇</button>
+      </div>
+
+      <div class="field" style="margin-top:16px">
+       <label for="doNote">
+        新增時：內部備註（選填）
+        ／撤銷時：原因（必填）
+       </label>
+
+       <textarea
+        id="doNote"
+        maxlength="1000"
+        placeholder="例如：固定週末休假"
+       ></textarea>
+      </div>
+
+      <p class="do-help">
+       全天休假適用於所有工作地點，不受診所篩選影響。
+       已有有效更次的日期會列明並跳過，
+       不會自動取消或更改更次。
+      </p>
+
+      <p class="do-help">
+       每次最多設定 366 日。
+       只會建立所選範圍內的日期，不會無限期延伸；
+       之後可再設定下一段期間。
+      </p>
+     </section>
+
+     <section class="do-section">
+      <div class="section-head">
+       <h3>核對結果</h3>
+       <button
+        type="button"
+        data-act="doPreview"
+       >更新預覽</button>
+      </div>
+
+      <div
+       id="doPreviewBody"
+       role="status"
+       aria-live="polite"
+      ></div>
+     </section>
+
+     <div class="modal-footer">
+      <button
+       data-act="dwView"
+       data-page="calendar"
+      >返回月曆</button>
+
+      <button
+       data-act="doSave"
+       class="primary"
+      >確認並保存</button>
+     </div>
+    </div>
+   `,
+   "doSettings",
+   {editable:true,saveAction:"doSave"}
+  );
+
+  updatePreview();
+ }
+
+ function readForm(){
+  assert(
+   modalState?.mode==="doSettings",
+   "休假表單已離開，請重新開啟"
+  );
+
+  const operation=$("doOperation").value;
+  const from=$("doFrom").value;
+  const until=$("doUntil").value;
+
+  const weekdays=[
+   ...$("modalBody").querySelectorAll(
+    "[data-do-weekday]:checked"
+   )
+  ].map(i=>Number(i.dataset.doWeekday));
+
+  const note=T($("doNote").value);
+
+  choice(operation,["add","remove"],"休假操作");
+
+  assert(
+   dateOK(from)&&dateOK(until)&&until>=from,
+   "請選擇有效日期範圍；結束日期不可早於開始日期。"
+  );
+
+  const days=(
+   dwDT(until+"T00:00")-
+   dwDT(from+"T00:00")
+  )/86400000;
+
+  assert(
+   Number.isInteger(days)&&days<=365,
+   "每次日期範圍最多 366 日，請分段設定。"
+  );
+
+  assert(weekdays.length,"請至少選擇一個星期日。");
+  assert(note.length<=1000,"備註／原因最多 1000 字。");
+
+  const dates=[];
+
+  for(let index=0;index<=days;index++){
+   const date=dwDayAdd(from,index);
+
+   const weekday=new Date(
+    date+"T12:00:00Z"
+   ).getUTCDay();
+
+   if(weekdays.includes(weekday)){
+    dates.push(date);
+   }
+  }
+
+  return {
+   operation,
+   from,
+   until,
+   weekdays,
+   note,
+   dates
+  };
+ }
+
+ function buildPlan(w,input){
+  const changes=[];
+  const existing=[];
+  const conflicts=[];
+  const notMarked=[];
+
+  for(const date of input.dates){
+   const leave=activeOn(w,date);
+
+   if(input.operation==="remove"){
+    if(leave){
+     changes.push({
+      date,
+      leaveId:leave.id
+     });
+    }else{
+     notMarked.push(date);
+    }
+
+    continue;
+   }
+
+   if(leave){
+    existing.push(date);
+    continue;
+   }
+
+   const shifts=conflictsOn(w,date);
+
+   if(shifts.length){
+    conflicts.push({
+     date,
+     shifts:shifts.map(s=>dwShiftLabel(w,s))
+    });
+
+    continue;
+   }
+
+   changes.push({
+    date,
+    leaveId:""
+   });
+  }
+
+  return {
+   changes,
+   existing,
+   conflicts,
+   notMarked
+  };
+ }
+
+ function dateTags(dates){
+  return `
+   <div class="do-preview-list">
+    ${dates.map(date=>`
+     <span class="do-date-tag">${E(date)}</span>
+    `).join("")}
+   </div>
+  `;
+ }
+
+ function updatePreview(){
+  const box=$("doPreviewBody");
+  if(!box)return;
+
+  modalState.doPreview=null;
+
+  try{
+   const input=readForm();
+   const w=dwRead();
+   const plan=buildPlan(w,input);
+   const adding=input.operation==="add";
+
+   const skipped=adding
+    ?plan.existing.length+plan.conflicts.length
+    :plan.notMarked.length;
+
+   box.innerHTML=`
+    <div class="do-summary">
+     <div>
+      所選日期
+      <strong>${input.dates.length} 日</strong>
+     </div>
+
+     <div>
+      ${adding?"將新增休假":"將撤銷休假"}
+      <strong>${plan.changes.length} 日</strong>
+     </div>
+
+     <div>
+      保持原狀／跳過
+      <strong>${skipped} 日</strong>
+     </div>
+    </div>
+
+    ${plan.changes.length?`
+     <details>
+      <summary>
+       查看將${adding?"新增":"撤銷"}的日期
+      </summary>
+
+      ${dateTags(plan.changes.map(x=>x.date))}
+     </details>
+    `:`
+     <p class="do-help">
+      沒有需要${adding?"新增":"撤銷"}的休假。
+     </p>
+    `}
+
+    ${adding&&plan.existing.length?`
+     <p class="do-help">
+      ${plan.existing.length} 日已標記休假，
+      會保留原有紀錄及備註，不重複建立。
+     </p>
+    `:""}
+
+    ${!adding&&plan.notMarked.length?`
+     <p class="do-help">
+      ${plan.notMarked.length} 日原本沒有休假標記，
+      不會作任何修改。
+     </p>
+    `:""}
+
+    ${plan.conflicts.length?`
+     <div class="do-warning">
+      <strong>
+       以下 ${plan.conflicts.length} 日已有有效更次，
+       將跳過，不標記休假：
+      </strong>
+
+      ${plan.conflicts.map(x=>
+       E(x.date)+"\n"+
+       x.shifts.map(s=>"• "+E(s)).join("\n")
+      ).join("\n\n")}
+
+      如這些日期亦需要休假，
+      請先調整或取消更次，再重新設定。
+     </div>
+    `:""}
+
+    <p class="do-help" style="margin-bottom:0">
+     預覽尚未保存。
+     ${adding
+      ?"休假不計入更數、計薪時數或酬金。"
+      :"撤銷休假不會自動恢復已取消更次。"}
+    </p>
+   `;
+
+   modalState.doPreview={
+    signature:serial(input),
+    expectedWork:serial(w)
+   };
+  }catch(error){
+   box.innerHTML=`
+    <div class="notice">
+     ${E(error.message||"請先填妥設定")}
+    </div>
+   `;
+  }
+ }
+
+ function applyPreset(preset){
+  const selected=preset==="weekend"
+   ?[6,0]
+   :preset==="all"
+    ?[0,1,2,3,4,5,6]
+    :[];
+
+  $("modalBody")
+   .querySelectorAll("[data-do-weekday]")
+   .forEach(input=>{
+    input.checked=selected.includes(
+     Number(input.dataset.doWeekday)
+    );
+   });
+
+  updatePreview();
+ }
+
+ async function saveSettings(){
+  assertWritable();
+
+  const input=readForm();
+  const preview=modalState.doPreview;
+  const w=dwRead();
+
+  assert(
+   preview&&
+   preview.signature===serial(input)&&
+   preview.expectedWork===serial(w),
+   "設定或排班資料已改變，請先按「更新預覽」重新核對。"
+  );
+
+  const plan=buildPlan(w,input);
+  const adding=input.operation==="add";
+
+  assert(
+   plan.changes.length>0,
+   "沒有需要保存的變更。"
+  );
+
+  if(!adding){
+   assert(input.note,"撤銷休假請填寫原因。");
+  }
+
+  const skipped=adding
+   ?plan.existing.length+plan.conflicts.length
+   :plan.notMarked.length;
+
+  if(!confirm(
+   (adding?"確認新增休假？":"確認撤銷休假？")+
+   "\n\n"+
+   "日期範圍："+input.from+" 至 "+input.until+"\n"+
+   "將"+(adding?"新增":"撤銷")+"："+plan.changes.length+" 日\n"+
+   "保持原狀／跳過："+skipped+" 日\n"+
+   (
+    plan.conflicts.length
+     ?"其中 "+plan.conflicts.length+
+       " 日有更次，將不會標記休假。\n"
+     :""
+   )+
+   "\n不會新增、取消或恢復任何更次。"
+  )){
+   return;
+  }
+
+  const expectedWork=preview.expectedWork;
+
+  await run(()=>commit(d=>{
+   const work=dwWrite(d);
+
+   assert(
+    serial(work)===expectedWork,
+    "排班資料已改變，整批未保存，請重新預覽。"
+   );
+
+   work.daysOff??=[];
+
+   const at=now();
+   const batchId=uid();
+   const changedIds=[];
+
+   /*
+    * 整批只修改 commit 的候選資料。
+    * 驗證或雲端寫入失敗，不會只保存其中幾日。
+    */
+   for(const change of plan.changes){
+    if(adding){
+     assert(
+      !activeOn(work,change.date)&&
+      conflictsOn(work,change.date).length===0,
+      change.date+" 的狀態已改變，請重新核對。"
+     );
+
+     const id=uid();
+
+     work.daysOff.push({
+      id,
+      date:change.date,
+      note:input.note,
+      state:"active",
+      createdAt:at,
+      createdBy:actor,
+      updatedAt:at,
+      updatedBy:actor,
+      cancelledAt:"",
+      cancelledBy:"",
+      cancelReason:"",
+      batchId
+     });
+
+     changedIds.push(id);
+    }else{
+     const leave=work.daysOff.find(
+      x=>x.id===change.leaveId&&x.state==="active"
+     );
+
+     assert(
+      leave&&leave.date===change.date,
+      "休假資料已改變，請重新核對。"
+     );
+
+     leave.state="cancelled";
+     leave.cancelledAt=at;
+     leave.cancelledBy=actor;
+     leave.cancelReason=input.note;
+     leave.updatedAt=at;
+     leave.updatedBy=actor;
+
+     changedIds.push(leave.id);
+    }
+   }
+
+   dwLog(
+    work,
+    adding?"批量設定全天休假":"批量撤銷全天休假",
+    {
+     batchId,
+     leaveIds:changedIds,
+     from:input.from,
+     until:input.until,
+     weekdays:C(input.weekdays),
+     count:changedIds.length,
+     skippedConflictDates:plan.conflicts.map(x=>x.date),
+     reason:input.note,
+     independentDates:true
+    }
+   );
+
+   checkDoctorWork(work);
+  }),{redraw:false});
+
+  dwState.month=input.from.slice(0,7);
+  dwScreen("calendar");
+
+  message(
+   "已"+(adding?"新增":"撤銷")+
+   " "+plan.changes.length+" 日休假。"+
+   (
+    plan.conflicts.length
+     ?"另有 "+plan.conflicts.length+
+       " 日因已有更次而跳過。"
+     :""
+   )+
+   "原有更次及月結未改動。"
+  );
+ }
+
+ counts=function(d){
+  return {
+   ...original.counts(d),
+   醫生休假紀錄:(d.doctorWork?.daysOff||[]).length
+  };
+ };
+
+ modalSaveActions.add("doSave");
+
+ [
+  "doPreset",
+  "doPreview"
+ ].forEach(act=>localModalActions.add(act));
+
+ dispatch=async function(act,node=null){
+  switch(act){
+   case "doOpen":
+    openSettings(node?.dataset.date||"");
+    return;
+
+   case "doPreset":
+    applyPreset(node?.dataset.preset||"none");
+    return;
+
+   case "doPreview":
+    updatePreview();
+    return;
+
+   case "doSave":
+    await saveSettings();
+    return;
+
+   default:
+    return original.dispatch(act,node);
+  }
+ };
+
+ /*
+  * 改日期、操作或星期時自動更新預覽。
+  * 不重建表單，不移走輸入焦點。
+  */
+ $("modalBody").addEventListener("change",event=>{
+  if(
+   modalState?.mode!=="doSettings"||
+   busy||printing||composing
+  ){
+   return;
+  }
+
+  const input=event.target;
+
+  if(
+   ["doOperation","doFrom","doUntil"].includes(input.id)||
+   input.matches?.("[data-do-weekday]")
+  ){
+   updatePreview();
+  }
+ });
+
+ /*
+  * 備註輸入後要求重新核對；
+  * 不在中文組字期間重建任何內容。
+  */
+ $("modalBody").addEventListener("input",event=>{
+  if(
+   modalState?.mode!=="doSettings"||
+   event.target.id!=="doNote"||
+   composing||
+   event.isComposing
+  ){
+   return;
+  }
+
+  updatePreview();
+ });
+
+ $("modalBody").addEventListener("compositionend",event=>{
+  if(
+   modalState?.mode==="doSettings"&&
+   event.target.id==="doNote"
+  ){
+   updatePreview();
+  }
+ });
+
+})();
+</script>
 </body>
 </html>
