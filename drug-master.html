@@ -854,38 +854,59 @@ Sterile water for irrigation||灌洗液1L||||不與 water for injection 視為�
 `;
 
 const $ = id => document.getElementById(id);
-const SITE_IDS = ["cwb","tkp","s20","s5"];
-const SITE_NAMES = ["AMC1 CWB","AMC2 TKP","Specialists 20F","Specialists 5F"];
+const SITE_IDS = ["cwb", "tkp", "s20", "s5"];
+const SITE_NAMES = [
+  "AMC1 CWB", "AMC2 TKP", "Specialists 20F", "Specialists 5F"
+];
 const CATEGORY_ORDER = Object.keys(CATEGORY);
+const STATE_LABELS = {
+  listed: "有列出",
+  unlisted: "未列出",
+  pending: "收錄待核對"
+};
 
 let client = null;
 let currentUser = null;
 let entries = [];
+let baseline = [];
 let visible = [];
 let revision = null;
 let updatedAt = null;
 let dirty = false;
 let busy = false;
 let ready = false;
-let editingId = null;
 let initialized = false;
 
-const copy = value => JSON.parse(JSON.stringify(value));
-const norm = value => String(value ?? "")
-  .normalize("NFKC").toLowerCase().replace(/\s+/g," ").trim();
+let selected = new Set();
+let undoStack = [];
+let redoStack = [];
 
-function esc(value){
-  return String(value ?? "").replace(/[&<>"']/g,c=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+let editing = null;
+let editorInitial = "";
+let cellEditing = null;
+let cellInitial = "";
+
+let reviewAction = null;
+let reviewIsCloud = false;
+
+const copy = value => JSON.parse(JSON.stringify(value));
+const serial = value => JSON.stringify(value);
+const norm = value => String(value ?? "")
+  .normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
   })[c]);
 }
 
-function message(text,type=""){
+function message(text, type = "") {
   $("message").textContent = text;
   $("message").className = type;
 }
 
-function errorText(error){
+function errorText(error) {
   const text = [
     error?.message || String(error),
     error?.details,
@@ -893,226 +914,454 @@ function errorText(error){
     error?.code ? `代碼：${error.code}` : ""
   ].filter(Boolean).join("\n");
 
-  if(/PGRST205|42P01|schema cache|does not exist/i.test(text)){
-    return text + "\n請先在此 Supabase 項目執行上面的建表 SQL。";
+  if (/PGRST205|42P01|schema cache|does not exist/i.test(text)) {
+    return text + "\n請確認已建立 four_clinic_cloud_lists 資料表。";
   }
-  if(/42501|row-level security|permission denied/i.test(text)){
-    return text + "\n資料表權限或 RLS 不符合；請確認已執行完整 SQL，並已登入。";
+  if (/42501|row-level security|permission denied/i.test(text)) {
+    return text + "\n請檢查登入、資料表權限及 RLS。";
   }
-  if(/Failed to fetch|NetworkError|fetch failed/i.test(text)){
-    return text + "\n未能完成網絡連線。請檢查網絡、瀏覽器限制及 Supabase 項目狀態。";
+  if (/Failed to fetch|NetworkError|fetch failed/i.test(text)) {
+    return text + "\n請檢查網絡及 Supabase 項目連線。";
   }
   return text;
 }
 
-function parseSeed(){
+function stateOptions() {
+  return Object.entries(STATE_LABELS).map(([v, label]) =>
+    `<option value="${v}">${label}</option>`
+  ).join("");
+}
+
+function categoryOptions() {
+  return Object.entries(CATEGORY).map(([v, label]) =>
+    `<option value="${v}">${esc(label)}</option>`
+  ).join("");
+}
+
+function stateOf(row, index) {
+  return row.siteStates[index];
+}
+
+// 只作文字分行；不推斷成分、劑量、鹽型或釋放方式。
+function lines(text) {
+  return String(text ?? "").split(/[;\r\n]+/)
+    .map(v => v.trim()).filter(Boolean);
+}
+
+function joinLines(text) {
+  return lines(text).join(";");
+}
+
+// 只移除逐字相同的項目，不把相近規格當作相同。
+function exactUnion(values) {
+  return [...new Set(values)];
+}
+
+function newId() {
+  let id;
+  do {
+    id = globalThis.crypto?.randomUUID
+      ? "g_" + globalThis.crypto.randomUUID()
+      : "g_" + Date.now().toString(36) + "_" +
+        Math.random().toString(36).slice(2);
+  } while (entries.some(r => r.id === id));
+  return id;
+}
+
+function uniqueCopyName(name) {
+  const names = new Set(
+    entries.filter(r => !r.archived).map(r => norm(r.name))
+  );
+  let next = `${name}（副本）`;
+  let n = 2;
+  while (names.has(norm(next))) next = `${name}（副本 ${n++}）`;
+  return next;
+}
+
+function validateEntries(value) {
+  if (!Array.isArray(value) || !value.length) {
+    throw new Error("清單必須是非空陣列；沒有覆蓋雲端資料。");
+  }
+
+  const ids = new Set();
+  const activeNames = new Set();
+
+  return value.map((r, index) => {
+    if (!r || typeof r !== "object" ||
+        typeof r.id !== "string" || !r.id ||
+        typeof r.name !== "string" || !r.name.trim() ||
+        !Object.hasOwn(CATEGORY, r.category) ||
+        !Array.isArray(r.cells) || r.cells.length !== 4 ||
+        r.cells.some(v => typeof v !== "string") ||
+        typeof r.aliases !== "string" ||
+        typeof r.note !== "string" ||
+        typeof r.pending !== "boolean") {
+      throw new Error(`第 ${index + 1} 列結構不正確。`);
+    }
+
+    if (r.editorVersion !== undefined &&
+        (!Number.isInteger(r.editorVersion) ||
+         r.editorVersion > 2)) {
+      throw new Error("資料版本不相容，請使用較新版本：" + r.name);
+    }
+
+    if (r.archived !== undefined &&
+        typeof r.archived !== "boolean") {
+      throw new Error("封存欄位不正確：" + r.name);
+    }
+
+    const cells = r.cells.map(v => v.trim());
+    const states = r.siteStates === undefined
+      ? cells.map(v => v ? "listed" : "unlisted")
+      : r.siteStates;
+
+    if (!Array.isArray(states) || states.length !== 4 ||
+        states.some(v => !Object.hasOwn(STATE_LABELS, v))) {
+      throw new Error("診所收錄狀態不正確：" + r.name);
+    }
+
+    if (r.mergeHistory !== undefined &&
+        !Array.isArray(r.mergeHistory)) {
+      throw new Error("合併來源欄位不正確：" + r.name);
+    }
+
+    const archived = r.archived === true;
+    const nameKey = norm(r.name);
+
+    if (ids.has(r.id)) {
+      throw new Error("清單有重複 ID：" + r.name);
+    }
+    if (!archived && activeNames.has(nameKey)) {
+      throw new Error(
+        "使用中清單有相同名稱：" + r.name +
+        "\n請修改名稱，或先使用合併功能。"
+      );
+    }
+
+    ids.add(r.id);
+    if (!archived) activeNames.add(nameKey);
+
+    // 保留未知附加欄位，避免一般編輯丟失來源資料。
+    return {
+      ...copy(r),
+      editorVersion: 2,
+      name: r.name.trim(),
+      cells,
+      siteStates: [...states],
+      archived,
+      archivedAt: r.archivedAt ?? null,
+      mergedInto: r.mergedInto ?? null,
+      mergeHistory: copy(r.mergeHistory ?? []),
+      pending: r.pending || r.category === "pending"
+    };
+  });
+}
+
+function parseSeed() {
   const result = [];
   let category = "";
 
-  for(const raw of DATA.split(/\r?\n/)){
+  for (const raw of DATA.split(/\r?\n/)) {
     const line = raw.trim();
-    if(!line) continue;
+    if (!line) continue;
 
-    if(line.startsWith("#")){
+    if (line.startsWith("#")) {
       category = line.slice(1);
-      if(!Object.hasOwn(CATEGORY,category)){
-        throw new Error("內嵌資料分類不正確：" + category);
+      if (!Object.hasOwn(CATEGORY, category)) {
+        throw new Error("內嵌分類不正確：" + category);
       }
       continue;
     }
 
-    const parts = line.split("|").map(v=>v.trim());
-    if(parts.length !== 7){
-      throw new Error("內嵌資料欄位數不正確：" + parts[0]);
+    const parts = line.split("|").map(v => v.trim());
+    if (parts.length !== 7) {
+      throw new Error("內嵌欄位數不正確：" + parts[0]);
     }
 
-    const [generic,a,b,c,d,aliases,note] = parts;
-    const cells = [a,b,c,d];
+    const [generic, a, b, c, d, aliases, note] = parts;
+    const cells = [a, b, c, d];
 
-    if(cells[1] === "="){
-      if(!cells[0]) throw new Error(generic + "：CWB 複製來源空白");
+    if (cells[1] === "=") {
+      if (!cells[0]) throw new Error(generic + "：CWB 來源空白");
       cells[1] = cells[0];
     }
-    if(cells[3] === "="){
-      if(!cells[2]) throw new Error(generic + "：20F 複製來源空白");
+    if (cells[3] === "=") {
+      if (!cells[2]) throw new Error(generic + "：20F 來源空白");
       cells[3] = cells[2];
     }
 
     result.push({
-      id:"g" + (result.length + 1),
+      id: "g" + (result.length + 1),
       category,
-      name:generic.replace(/^\?/,""),
+      name: generic.replace(/^\?/, ""),
       cells,
       aliases,
-      note:note.replace(/^\?/,""),
-      pending:generic.startsWith("?") || note.startsWith("?")
-        || category === "pending"
+      note: note.replace(/^\?/, ""),
+      pending: generic.startsWith("?") ||
+        note.startsWith("?") || category === "pending"
     });
   }
 
   return validateEntries(result);
 }
 
-function validateEntries(value){
-  if(!Array.isArray(value) || !value.length){
-    throw new Error("清單不是有效的非空資料陣列；沒有以內嵌清單覆蓋雲端。");
-  }
-
-  const ids = new Set();
-  const names = new Set();
-
-  return value.map((r,index)=>{
-    if(!r || typeof r !== "object" ||
-       typeof r.id !== "string" || !r.id ||
-       typeof r.name !== "string" || !r.name.trim() ||
-       !Object.hasOwn(CATEGORY,r.category) ||
-       !Array.isArray(r.cells) || r.cells.length !== 4 ||
-       r.cells.some(v=>typeof v !== "string") ||
-       !r.cells.some(v=>v.trim()) ||
-       typeof r.aliases !== "string" ||
-       typeof r.note !== "string" ||
-       typeof r.pending !== "boolean"){
-      throw new Error(`第 ${index+1} 列結構不正確，已停止處理。`);
-    }
-
-    const nameKey = norm(r.name);
-    if(ids.has(r.id) || names.has(nameKey)){
-      throw new Error("清單有重複 ID 或名稱：" + r.name);
-    }
-
-    ids.add(r.id);
-    names.add(nameKey);
-
-    return {
-      id:r.id,
-      category:r.category,
-      name:r.name.trim(),
-      cells:r.cells.map(v=>v.trim()),
-      aliases:r.aliases,
-      note:r.note,
-      pending:r.pending || r.category === "pending"
-    };
-  });
+function editable() {
+  return !busy && Boolean(currentUser) && ready;
 }
 
-function availabilityMatches(row,value){
-  const [a,b,c,d] = row.cells.map(Boolean);
-  const count = row.cells.filter(Boolean).length;
+function requireEditable() {
+  if (!editable()) {
+    throw new Error("目前不可修改，請先成功讀取雲端清單。");
+  }
+}
+
+function changedRows(before, after) {
+  const a = new Map(before.map(r => [r.id, r]));
+  const b = new Map(after.map(r => [r.id, r]));
+  return [...new Set([...a.keys(), ...b.keys()])]
+    .filter(id => serial(a.get(id)) !== serial(b.get(id)))
+    .map(id => ({ before: a.get(id), after: b.get(id) }));
+}
+
+function refreshDirty() {
+  dirty = serial(entries) !== serial(baseline);
+}
+
+function commit(next, label) {
+  requireEditable();
+  const checked = validateEntries(next);
+  if (serial(checked) === serial(entries)) {
+    message("沒有資料變更。");
+    return;
+  }
+
+  undoStack.push({
+    label,
+    before: copy(entries),
+    after: copy(checked)
+  });
+  redoStack = [];
+  entries = checked;
+
+  const validIds = new Set(entries.map(r => r.id));
+  selected = new Set([...selected].filter(id => validIds.has(id)));
+
+  refreshDirty();
+  render();
+  message(`${label}已套用至本頁，尚未儲存至雲端。`);
+}
+
+function undo() {
+  requireEditable();
+  const op = undoStack.pop();
+  if (!op) return;
+  entries = copy(op.before);
+  redoStack.push(op);
+  selected.clear();
+  refreshDirty();
+  render();
+  message(`已復原：${op.label}。`);
+}
+
+function redo() {
+  requireEditable();
+  const op = redoStack.pop();
+  if (!op) return;
+  entries = copy(op.after);
+  undoStack.push(op);
+  selected.clear();
+  refreshDirty();
+  render();
+  message(`已重做：${op.label}。`);
+}
+
+function selectedRows() {
+  return entries.filter(r => selected.has(r.id));
+}
+
+function availabilityMatches(row, value) {
+  // 收錄統計以狀態為準；「待核對」不計作已確認有列出。
+  const flags = row.siteStates.map(v => v === "listed");
+  const [a, b, c, d] = flags;
+  const count = flags.filter(Boolean).length;
   const i = SITE_IDS.indexOf(value);
 
-  if(i >= 0) return Boolean(row.cells[i]);
+  if (i >= 0) return flags[i];
 
-  switch(value){
-    case "all4":return count === 4;
-    case "amcBoth":return a && b;
-    case "specialistsBoth":return c && d;
-    case "cross":return (a || b) && (c || d);
-    case "amcOnly":return (a || b) && !c && !d;
-    case "specialistsOnly":return !a && !b && (c || d);
-    case "single":return count === 1;
-    case "onlycwb":return count === 1 && a;
-    case "onlytkp":return count === 1 && b;
-    case "onlys20":return count === 1 && c;
-    case "onlys5":return count === 1 && d;
-    default:return true;
+  switch (value) {
+    case "all4": return count === 4;
+    case "amcBoth": return a && b;
+    case "specialistsBoth": return c && d;
+    case "cross": return (a || b) && (c || d);
+    case "amcOnly": return (a || b) && !c && !d;
+    case "specialistsOnly": return !a && !b && (c || d);
+    case "single": return count === 1;
+    case "onlycwb": return count === 1 && a;
+    case "onlytkp": return count === 1 && b;
+    case "onlys20": return count === 1 && c;
+    case "onlys5": return count === 1 && d;
+    default: return true;
   }
 }
 
-function matches(row){
-  if($("category").value &&
-     row.category !== $("category").value) return false;
+function matches(row) {
+  const archiveView = $("archiveView").value;
+  if (archiveView === "active" && row.archived) return false;
+  if (archiveView === "archived" && !row.archived) return false;
 
-  if(!availabilityMatches(row,$("availability").value)) return false;
+  if ($("category").value &&
+      row.category !== $("category").value) return false;
+
+  if (!availabilityMatches(row, $("availability").value)) return false;
 
   const status = $("status").value;
-  if(status === "normal" && row.pending) return false;
-  if(status === "pending" && !row.pending) return false;
-  if(status === "notes" && !row.note) return false;
+  if (status === "normal" && row.pending) return false;
+  if (status === "pending" && !row.pending) return false;
+  if (status === "notes" && !row.note) return false;
 
   const haystack = norm([
-    row.name,row.aliases,row.note,
-    CATEGORY[row.category],...row.cells
+    row.name, row.aliases, row.note,
+    CATEGORY[row.category], ...row.cells,
+    ...row.siteStates.map(s => STATE_LABELS[s])
   ].join(" "));
 
   return norm($("search").value).split(" ").filter(Boolean)
-    .every(term=>haystack.includes(term));
+    .every(term => haystack.includes(term));
 }
 
-function cellHTML(text,pending){
-  if(!text) return '<span class="absent">未列出此歸組</span>';
+function cellHTML(row, index) {
+  const text = row.cells[index];
+  const state = stateOf(row, index);
+  const warning = state === "pending" || row.pending;
 
   return `
-    <span class="badge ${pending ? "pending" : ""}">
-      ${pending ? "有列出 · 待核成分" : "有列出"}
+    <span class="badge ${warning ? "pending" : ""}">
+      ${esc(STATE_LABELS[state])}
+      ${row.pending && state === "listed" ? " · 成分待核" : ""}
     </span>
-    <ul class="variants">${
-      text.split(";").map(v=>v.trim()).filter(Boolean)
-        .map(v=>`<li>${esc(v)}</li>`).join("")
-    }</ul>`;
+    ${text ? `
+      ${state === "unlisted"
+        ? '<div class="small">保留資料，現標記為未列出</div>' : ""}
+      <ul class="variants">${lines(text)
+        .map(v => `<li>${esc(v)}</li>`).join("")}</ul>
+    ` : '<div class="absent">未填製劑資料</div>'}
+  `;
 }
 
-function controls(){
+function controls() {
+  const can = editable();
+
   $("login").disabled = busy || Boolean(currentUser) || !client;
   $("signup").disabled = busy || Boolean(currentUser) || !client;
   $("logout").disabled = busy || !currentUser;
-  $("saveCloud").disabled =
-    busy || !currentUser || !ready || !dirty;
-  $("reloadCloud").disabled = busy || !currentUser;
   $("email").disabled = busy || Boolean(currentUser);
   $("password").disabled = busy || Boolean(currentUser);
+
+  $("saveCloud").disabled = !can || !dirty;
+  $("reloadCloud").disabled = busy || !currentUser;
+  $("backup").disabled = !entries.length;
   $("csv").disabled = !visible.length;
   $("print").disabled = !visible.length;
-  $("backup").disabled = !entries.length;
 
-  $("rows").querySelectorAll("[data-edit]").forEach(button=>{
-    button.disabled = busy || !currentUser || !ready;
+  $("addEntry").disabled = !can;
+  $("undo").disabled = !can || !undoStack.length;
+  $("redo").disabled = !can || !redoStack.length;
+  $("discardDraft").disabled = !can || !dirty;
+  $("viewChanges").disabled = !dirty;
+  $("selectVisible").disabled = !can || !visible.length;
+  $("clearSelected").disabled = busy || !selected.size;
+
+  const chosen = selectedRows();
+  $("bulkCategory").disabled = !can || !chosen.length;
+  $("bulkPending").disabled = !can || !chosen.length;
+  $("bulkSite").disabled = !can || !chosen.length;
+  $("bulkArchive").disabled =
+    !can || !chosen.some(r => !r.archived);
+  $("bulkRestore").disabled =
+    !can || !chosen.some(r => r.archived);
+  $("mergeSelected").disabled =
+    !can || chosen.filter(r => !r.archived).length < 2 ||
+    chosen.some(r => r.archived);
+
+  $("undo").textContent = undoStack.length
+    ? `復原：${undoStack.at(-1).label}` : "復原";
+  $("redo").textContent = redoStack.length
+    ? `重做：${redoStack.at(-1).label}` : "重做";
+
+  $("rows").querySelectorAll("button,input").forEach(el => {
+    el.disabled = !can;
   });
+
+  $("reviewConfirm").disabled = busy;
+  $("reviewCancel").disabled = busy;
+
+  const visibleIds = new Set(visible.map(r => r.id));
+  const hiddenSelected = chosen.filter(r => !visibleIds.has(r.id)).length;
+
+  $("selectionInfo").textContent =
+    `已選 ${chosen.length} 項` +
+    (hiddenSelected ? `，其中 ${hiddenSelected} 項不在目前篩選畫面` : "") +
+    "。批量預覽會列出所有受影響項目。";
+
+  const count = dirty ? changedRows(baseline, entries).length : 0;
+  $("draftInfo").textContent = dirty
+    ? `${count} 個項目與上次讀取／儲存版本不同`
+    : "沒有未儲存修改";
 
   $("account").textContent = currentUser
     ? `已登入：${currentUser.email || currentUser.id}。此帳戶專用清單。`
-    : "未登入：目前只顯示內嵌預覽，未上傳至雲端。";
+    : "未登入：顯示內嵌預覽或尚未儲存的本頁資料。";
 
-  let state = "未登入｜內嵌預覽";
-  if(currentUser){
-    if(!ready){
-      state = "已登入｜雲端尚未成功載入";
-    }else if(dirty){
-      state = `有未儲存修改｜以雲端版本 ${revision} 為基礎`;
-    }else{
-      state = `雲端版本 ${revision}｜${updatedAt
-        ? new Date(updatedAt).toLocaleString()
-        : "已讀取"}`;
-    }
+  let state = "未登入｜不可提交雲端";
+  if (currentUser) {
+    state = !ready
+      ? "已登入｜雲端尚未成功載入"
+      : dirty
+        ? `有未儲存修改｜以雲端版本 ${revision} 為基礎`
+        : `雲端版本 ${revision}｜${
+            updatedAt ? new Date(updatedAt).toLocaleString() : "已讀取"
+          }`;
   }
-  if(busy) state += "｜處理中……";
+  if (busy) state += "｜處理中……";
   $("sync").textContent = state;
 }
 
-function render(){
-  visible = entries.filter(matches).sort((a,b)=>
-    CATEGORY_ORDER.indexOf(a.category)-CATEGORY_ORDER.indexOf(b.category)
-    || a.name.localeCompare(b.name,"en",{
-      sensitivity:"base",numeric:true
+function render() {
+  visible = entries.filter(matches).sort((a, b) =>
+    CATEGORY_ORDER.indexOf(a.category) -
+      CATEGORY_ORDER.indexOf(b.category) ||
+    a.name.localeCompare(b.name, "en", {
+      sensitivity: "base", numeric: true
     })
   );
 
-  document.body.classList.toggle("compact",$("compact").checked);
+  document.body.classList.toggle("compact", $("compact").checked);
 
-  const html = [];
   let previous = "";
+  const html = [];
 
-  for(const row of visible){
-    if(previous !== row.category){
-      html.push(`<tr class="chapter"><th colspan="7">${
+  for (const row of visible) {
+    if (previous !== row.category) {
+      html.push(`<tr class="chapter"><th colspan="8">${
         esc(CATEGORY[row.category])
       }</th></tr>`);
       previous = row.category;
     }
 
     html.push(`
-      <tr>
+      <tr class="${row.archived ? "archivedRow" : ""}">
+        <td class="noprint selectcol">
+          <input type="checkbox" data-select="${esc(row.id)}"
+            aria-label="選取 ${esc(row.name)}"
+            ${selected.has(row.id) ? "checked" : ""}>
+        </td>
         <td>
           <div class="name">${esc(row.name)}</div>
+          ${row.archived
+            ? '<div class="badge pending">已封存</div>' : ""}
+          ${row.mergedInto
+            ? '<div class="small">原項目已合併；還原不會自動拆分主項目。</div>'
+            : ""}
           ${row.pending
             ? '<div class="small">⚠ 成分／配方待核對</div>' : ""}
           ${row.aliases
@@ -1120,432 +1369,1287 @@ function render(){
                 esc(row.aliases.split(";").join(" ／ "))
               }</div>` : ""}
         </td>
-        ${row.cells.map(text=>
-          `<td>${cellHTML(text,row.pending)}</td>`
-        ).join("")}
+        ${row.cells.map((text, i) => `
+          <td>
+            <button type="button" class="cellEdit"
+              data-cell="${esc(row.id)}" data-site="${i}"
+              aria-label="修改 ${esc(row.name)} ${esc(SITE_NAMES[i])}">
+              ${cellHTML(row, i)}
+            </button>
+          </td>
+        `).join("")}
         <td class="notes">
-          ${row.pending
-            ? "<p>未確認成分／完整配方；不代表已驗證的跨診所匹配。</p>"
-            : ""}
           ${esc(row.note) || "—"}
+          ${row.mergeHistory.length
+            ? `<details><summary>合併來源</summary>${
+                row.mergeHistory.map(event => `
+                  <p>${esc(event.at || "")}<br>${
+                    (event.sources || []).map(s => esc(s.name)).join(" ／ ")
+                  }</p>
+                `).join("")
+              }</details>` : ""}
         </td>
         <td class="noprint">
-          <button class="editbutton" data-edit="${esc(row.id)}"
-            ${!currentUser || !ready || busy ? "disabled" : ""}>
-            修改
-          </button>
+          <div class="rowActions">
+            <button data-edit="${esc(row.id)}">修改</button>
+            <button data-copy="${esc(row.id)}">複製</button>
+            <button data-archive="${esc(row.id)}">
+              ${row.archived ? "還原" : "封存"}
+            </button>
+          </div>
         </td>
-      </tr>`);
+      </tr>
+    `);
   }
 
   $("rows").innerHTML = html.join("") ||
-    '<tr><td colspan="7">沒有符合目前篩選的項目。</td></tr>';
+    '<tr><td colspan="8">沒有符合篩選的項目。</td></tr>';
 
   const stats = [
-    ["顯示歸組",visible.length],
-    ["待核對",visible.filter(r=>r.pending).length],
-    ...SITE_NAMES.map((name,i)=>[
-      name,visible.filter(r=>r.cells[i]).length
+    ["顯示歸組", visible.length],
+    ["成分待核對", visible.filter(r => r.pending).length],
+    ...SITE_NAMES.map((name, i) => [
+      name, visible.filter(r => stateOf(r, i) === "listed").length
     ]),
-    ["四間均列出",visible.filter(r=>r.cells.every(Boolean)).length]
+    ["四間均列出", visible.filter(r =>
+      r.siteStates.every(s => s === "listed")
+    ).length]
   ];
 
-  $("stats").innerHTML = stats.map(([label,count])=>
+  $("stats").innerHTML = stats.map(([label, count]) =>
     `<span class="stat">${esc(label)} <b>${count}</b></span>`
   ).join("");
 
+  const active = entries.filter(r => !r.archived).length;
   $("summary").textContent =
-    `顯示 ${visible.length}／${entries.length} 個摘要歸組。`+
-    "統計不是產品數或庫存數，亦包括待核對列。";
+    `顯示 ${visible.length} 項；使用中 ${active} 項；` +
+    `封存 ${entries.length - active} 項。` +
+    "診所統計按「有列出」狀態計算，不包括收錄待核對；不是庫存數。";
 
   controls();
 }
 
-async function task(fn){
-  if(busy) return;
+// ---------- 修改摘要／預覽 ----------
+
+function diffFields(row) {
+  if (!row) return {};
+  const fields = {
+    "名稱": row.name,
+    "分類": CATEGORY[row.category],
+    "成分／配方狀態": row.pending ? "待核對" : "主要成分歸組",
+    "封存狀態": row.archived ? "已封存" : "使用中",
+    "品牌別名": row.aliases,
+    "備註": row.note
+  };
+
+  SITE_NAMES.forEach((name, i) => {
+    fields[`${name}：收錄狀態`] = STATE_LABELS[stateOf(row, i)];
+    fields[`${name}：製劑資料`] = lines(row.cells[i]).join("\n");
+  });
+
+  fields["合併至項目 ID"] = row.mergedInto || "";
+  fields["封存時間"] = row.archivedAt || "";
+  fields["合併來源紀錄"] = row.mergeHistory.length
+    ? JSON.stringify(row.mergeHistory, null, 2) : "";
+
+  return fields;
+}
+
+function diffHTML(before, after) {
+  const changes = changedRows(before, after);
+  if (!changes.length) return "<p>沒有資料變更。</p>";
+
+  return `<p><strong>共 ${changes.length} 個項目受影響。</strong></p>` +
+    changes.map(({ before: a, after: b }) => {
+      const left = diffFields(a);
+      const right = diffFields(b);
+      const keys = [...new Set([
+        ...Object.keys(left), ...Object.keys(right)
+      ])];
+
+      return `
+        <details class="diffItem" open>
+          <summary>
+            ${esc(b?.name || a?.name)}
+            ${!a ? "〔新增〕" : !b ? "〔移除〕" : "〔修改〕"}
+          </summary>
+          <div class="diffTableWrap">
+            <table class="diffTable">
+              <thead><tr>
+                <th>欄位／影響診所</th><th>修改前</th><th>修改後</th>
+              </tr></thead>
+              <tbody>${keys.filter(k => left[k] !== right[k]).map(k => `
+                <tr>
+                  <th>${esc(k)}</th>
+                  <td><pre>${esc(left[k] || "—")}</pre></td>
+                  <td><pre>${esc(right[k] || "—")}</pre></td>
+                </tr>
+              `).join("")}</tbody>
+            </table>
+          </div>
+        </details>
+      `;
+    }).join("");
+}
+
+function openReview(title, description, before, after, action,
+                    isCloud = false) {
+  $("reviewTitle").textContent = title;
+  $("reviewDescription").textContent = description;
+  $("reviewBody").innerHTML = diffHTML(before, after);
+  reviewAction = action;
+  reviewIsCloud = isCloud;
+
+  $("reviewConfirm").hidden = !action;
+  $("reviewConfirm").textContent =
+    isCloud ? "確認並儲存至雲端" : "確認套用至本頁";
+
+  $("review").showModal();
+  controls();
+}
+
+function previewOperation(next, label, description) {
+  requireEditable();
+  const checked = validateEntries(next);
+
+  if (serial(checked) === serial(entries)) {
+    message("所選操作沒有造成資料變更。");
+    return;
+  }
+
+  const expected = serial(entries);
+
+  openReview(
+    label + "預覽",
+    description + "。確認後只改本頁，仍需另外儲存至雲端。",
+    entries, checked,
+    () => {
+      requireEditable();
+      if (serial(entries) !== expected) {
+        throw new Error("資料已改變，請關閉並重新產生預覽。");
+      }
+      commit(checked, label);
+    }
+  );
+}
+
+function reviewDraft(forSave = false) {
+  if (!dirty) {
+    message("沒有未儲存修改。");
+    return;
+  }
+
+  if (forSave) requireEditable();
+
+  const expected = serial(entries);
+  const baseRevision = revision;
+  const payload = validateEntries(copy(entries));
+
+  openReview(
+    forSave ? "儲存前修改摘要" : "目前未儲存修改",
+    "以下比較整份清單，不只目前篩選畫面。修改前為上次成功讀取／儲存版本。",
+    baseline, payload,
+    forSave ? async () => {
+      if (serial(entries) !== expected || revision !== baseRevision) {
+        throw new Error("資料或版本已改變，請重新查看修改摘要。");
+      }
+      await saveCloud(payload, baseRevision);
+    } : null,
+    forSave
+  );
+}
+
+// ---------- 新增／複製／完整編輯 ----------
+
+function blankRow() {
+  return {
+    id: newId(),
+    name: "",
+    category: $("category").value || CATEGORY_ORDER[0],
+    cells: ["", "", "", ""],
+    siteStates: ["unlisted", "unlisted", "unlisted", "unlisted"],
+    aliases: "",
+    note: "",
+    pending: true,
+    archived: false,
+    archivedAt: null,
+    mergedInto: null,
+    mergeHistory: [],
+    editorVersion: 2
+  };
+}
+
+function editorSnapshot() {
+  return serial({
+    name: $("editName").value,
+    category: $("editCategory").value,
+    cells: [0, 1, 2, 3].map(i => $("edit" + i).value),
+    states: [0, 1, 2, 3].map(i => $("editState" + i).value),
+    aliases: $("editAliases").value,
+    note: $("editNote").value,
+    pending: $("editPending").checked
+  });
+}
+
+function openEditor(id = null, duplicate = false) {
+  requireEditable();
+  const source = id ? entries.find(r => r.id === id) : null;
+  if (id && !source) throw new Error("找不到項目。");
+
+  let row = source ? copy(source) : blankRow();
+
+  if (duplicate) {
+    row = {
+      ...row,
+      id: newId(),
+      name: uniqueCopyName(row.name),
+      pending: true,
+      archived: false,
+      archivedAt: null,
+      mergedInto: null,
+      mergeHistory: [],
+      copiedFrom: source.id
+    };
+  }
+
+  editing = {
+    row,
+    isNew: !source || duplicate,
+    expected: source && !duplicate ? serial(source) : null
+  };
+
+  $("editor").querySelector("h2").textContent =
+    duplicate ? "複製為新項目" : source ? "修改清單項目" : "新增藥物項目";
+
+  $("editName").value = row.name;
+  $("editCategory").value = row.category;
+  row.cells.forEach((text, i) => {
+    $("edit" + i).value = lines(text).join("\n");
+    $("editState" + i).value = stateOf(row, i);
+  });
+  $("editAliases").value = row.aliases;
+  $("editNote").value = row.note;
+  $("editPending").checked = row.pending;
+
+  editorInitial = editorSnapshot();
+  $("editor").showModal();
+}
+
+function applyEdit() {
+  requireEditable();
+  if (!editing) return;
+
+  const { row, isNew, expected } = editing;
+  if (!isNew &&
+      serial(entries.find(r => r.id === row.id)) !== expected) {
+    throw new Error("項目已改變，請取消後重新開啟。");
+  }
+
+  const candidate = {
+    ...row,
+    name: $("editName").value.trim(),
+    category: $("editCategory").value,
+    cells: [0, 1, 2, 3].map(i => joinLines($("edit" + i).value)),
+    siteStates: [0, 1, 2, 3].map(i => $("editState" + i).value),
+    aliases: $("editAliases").value.trim(),
+    note: $("editNote").value.trim(),
+    pending: $("editPending").checked ||
+      $("editCategory").value === "pending"
+  };
+
+  commit(
+    isNew ? [...entries, candidate] :
+      entries.map(r => r.id === row.id ? candidate : r),
+    isNew ? "新增項目" : "修改項目"
+  );
+
+  editing = null;
+  $("editor").close();
+}
+
+function closeEditor() {
+  if (editing && editorSnapshot() !== editorInitial &&
+      !confirm("表單內有尚未套用內容，確定取消？")) return;
+  editing = null;
+  $("editor").close();
+}
+
+// ---------- 點診所格修改 ----------
+
+function cellSnapshot() {
+  return serial({
+    text: $("cellText").value,
+    state: $("cellState").value
+  });
+}
+
+function openCell(id, index) {
+  requireEditable();
+  const row = entries.find(r => r.id === id);
+  if (!row || !Number.isInteger(index) || index < 0 || index > 3) return;
+
+  cellEditing = { id, index, expected: serial(row) };
+  $("cellTitle").textContent = `${row.name}｜${SITE_NAMES[index]}`;
+  $("cellText").value = lines(row.cells[index]).join("\n");
+  $("cellState").value = stateOf(row, index);
+  cellInitial = cellSnapshot();
+  $("cellEditor").showModal();
+}
+
+function applyCell() {
+  requireEditable();
+  const edit = cellEditing;
+  if (!edit) return;
+  const source = entries.find(r => r.id === edit.id);
+
+  if (!source || serial(source) !== edit.expected) {
+    throw new Error("項目已改變，請取消後重新開啟。");
+  }
+
+  const candidate = copy(source);
+  candidate.cells[edit.index] = joinLines($("cellText").value);
+  candidate.siteStates[edit.index] = $("cellState").value;
+
+  commit(
+    entries.map(r => r.id === candidate.id ? candidate : r),
+    `修改 ${SITE_NAMES[edit.index]} 儲存格`
+  );
+
+  cellEditing = null;
+  $("cellEditor").close();
+}
+
+function closeCell() {
+  if (cellEditing && cellSnapshot() !== cellInitial &&
+      !confirm("儲存格有尚未套用內容，確定取消？")) return;
+  cellEditing = null;
+  $("cellEditor").close();
+}
+
+// ---------- 批量修改／封存／還原 ----------
+
+function bulkChange(kind) {
+  requireEditable();
+  const chosen = selectedRows();
+  if (!chosen.length) throw new Error("請先勾選項目。");
+
+  let label = "";
+  let description = "";
+  let transform;
+
+  if (kind === "category") {
+    const value = $("bulkCategoryValue").value;
+    if (!value) throw new Error("請先選擇新分類。");
+    label = "批量更改分類";
+    description = `將所選項目分類改為「${CATEGORY[value]}」`;
+    transform = r => ({
+      ...r, category: value,
+      pending: r.pending || value === "pending"
+    });
+  }
+
+  if (kind === "pending") {
+    label = "批量標記待核對";
+    description = "將所選項目標記為成分／配方待核對";
+    transform = r => ({ ...r, pending: true });
+  }
+
+  if (kind === "site") {
+    const site = $("bulkSiteValue").value;
+    const state = $("bulkStateValue").value;
+    if (site === "" || !state) {
+      throw new Error("請先指定一間診所及新收錄狀態。");
+    }
+
+    const i = Number(site);
+    label = "批量更改診所收錄狀態";
+    description =
+      `只修改 ${SITE_NAMES[i]} 為「${STATE_LABELS[state]}」，` +
+      "保留所有製劑文字，其他診所不變";
+
+    transform = r => {
+      const next = copy(r);
+      next.siteStates[i] = state;
+      return next;
+    };
+  }
+
+  if (!transform) throw new Error("不支援的批量操作。");
+
+  const ids = new Set(chosen.map(r => r.id));
+  previewOperation(
+    entries.map(r => ids.has(r.id) ? transform(r) : r),
+    label, description
+  );
+}
+
+function archiveRows(ids, restore = false) {
+  requireEditable();
+  const affected = new Set(ids);
+  const now = new Date().toISOString();
+
+  const next = entries.map(r => {
+    if (!affected.has(r.id) || r.archived !== restore) return r;
+    return {
+      ...r,
+      archived: !restore,
+      archivedAt: restore ? null : now,
+      // 還原合併來源只恢復該列，不自動刪走主項目製劑。
+      mergedInto: restore ? null : r.mergedInto
+    };
+  });
+
+  previewOperation(
+    next,
+    restore ? "還原封存項目" : "封存項目",
+    restore
+      ? "還原所選封存列；不會自動拆分合併後主項目"
+      : "從使用中清單隱藏所選項目，保留全部資料"
+  );
+}
+
+// ---------- 合併 ----------
+
+function openMerge() {
+  requireEditable();
+  const chosen = selectedRows();
+
+  if (chosen.length < 2 || chosen.some(r => r.archived)) {
+    throw new Error("請選取至少兩個使用中項目；封存項目不可直接合併。");
+  }
+
+  $("mergePrimary").innerHTML = chosen.map(r =>
+    `<option value="${esc(r.id)}">${esc(r.name)}</option>`
+  ).join("");
+  $("mergeName").value = chosen[0].name;
+  $("mergeCategory").value = chosen[0].category;
+  $("mergeAcknowledged").checked = false;
+
+  $("mergeSources").innerHTML = chosen.map(r =>
+    `<li>${esc(r.name)}</li>`
+  ).join("");
+
+  $("mergeForm").dataset.expected = serial(entries);
+  $("mergeForm").dataset.ids = serial(chosen.map(r => r.id));
+  $("mergeDialog").showModal();
+}
+
+function sourceSnapshot(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    cells: [...row.cells],
+    siteStates: [...row.siteStates],
+    aliases: row.aliases,
+    note: row.note,
+    pending: row.pending
+  };
+}
+
+function previewMerge() {
+  requireEditable();
+
+  if (!$("mergeAcknowledged").checked) {
+    throw new Error("請先確認已人工核對合併來源。");
+  }
+  if ($("mergeForm").dataset.expected !== serial(entries)) {
+    throw new Error("清單已改變，請取消後重新選擇合併項目。");
+  }
+
+  const ids = new Set(JSON.parse($("mergeForm").dataset.ids));
+  const sources = entries.filter(r => ids.has(r.id));
+  const primary = sources.find(r => r.id === $("mergePrimary").value);
+  const name = $("mergeName").value.trim();
+
+  if (!primary || !name) throw new Error("請填寫合併後名稱。");
+
+  const now = new Date().toISOString();
+  const cells = [0, 1, 2, 3].map(i =>
+    exactUnion(sources.flatMap(r => lines(r.cells[i]))).join(";")
+  );
+
+  const siteStates = [0, 1, 2, 3].map(i => {
+    const relevant = sources.filter(r =>
+      r.cells[i] || stateOf(r, i) !== "unlisted"
+    );
+
+    if (!relevant.length) return "unlisted";
+
+    // 保留了已標記未列出的舊文字時，不把它直接當作已確認收錄。
+    if (relevant.some(r =>
+      stateOf(r, i) === "pending" ||
+      (stateOf(r, i) === "unlisted" && r.cells[i])
+    )) return "pending";
+
+    return relevant.some(r => stateOf(r, i) === "listed")
+      ? "listed" : "unlisted";
+  });
+
+  const aliases = exactUnion([
+    ...sources.flatMap(r => lines(r.aliases)),
+    ...sources.map(r => r.name)
+  ]).join(";");
+
+  const note = sources.filter(r => r.note)
+    .map(r => `【來源：${r.name}】\n${r.note}`).join("\n\n");
+
+  const merged = {
+    ...copy(primary),
+    name,
+    category: $("mergeCategory").value,
+    cells,
+    siteStates,
+    aliases,
+    note,
+    pending: true,
+    archived: false,
+    archivedAt: null,
+    mergedInto: null,
+    mergeHistory: [
+      ...primary.mergeHistory,
+      {
+        at: now,
+        sources: sources.map(sourceSnapshot)
+      }
+    ]
+  };
+
+  const next = entries.map(r => {
+    if (r.id === primary.id) return merged;
+    if (!ids.has(r.id)) return r;
+    return {
+      ...r,
+      archived: true,
+      archivedAt: now,
+      mergedInto: primary.id
+    };
+  });
+
+  // 驗證成功後才關閉設定視窗。
+  const checked = validateEntries(next);
+  $("mergeDialog").close();
+
+  previewOperation(
+    checked,
+    `合併 ${sources.length} 個項目`,
+    "每間診所分開合併；只去除逐字相同的製劑行；" +
+    "其他來源列封存，合併結果標記待核對"
+  );
+}
+
+// ---------- 雲端 ----------
+
+async function task(fn) {
+  if (busy) return;
   busy = true;
   controls();
 
-  try{
+  try {
     await fn();
-  }catch(error){
-    message(errorText(error),"error");
-  }finally{
+  } catch (error) {
+    const text = errorText(error);
+    message(text, "error");
+    if ($("review").open) alert(text);
+  } finally {
     busy = false;
     controls();
   }
 }
 
-async function requireUser(){
-  const {data,error} = await client.auth.getUser();
-  if(error) throw error;
-  if(!data.user) throw new Error("登入已失效，請重新開啟本頁登入。");
-  if(!currentUser || data.user.id !== currentUser.id){
-    throw new Error("登入帳戶已改變，請重新開啟本頁。");
+async function requireUser() {
+  const { data, error } = await client.auth.getUser();
+  if (error) throw error;
+  if (!data.user || !currentUser ||
+      data.user.id !== currentUser.id) {
+    throw new Error("登入已失效或帳戶已改變，請先備份資料再重新登入。");
   }
   return data.user;
 }
 
-async function fetchDocument(userId){
-  const {data,error} = await client.from(TABLE)
+async function fetchDocument(userId) {
+  const { data, error } = await client.from(TABLE)
     .select("entries,revision,updated_at")
-    .eq("user_id",userId)
+    .eq("user_id", userId)
     .maybeSingle();
-
-  if(error) throw error;
+  if (error) throw error;
   return data;
 }
 
-function acceptDocument(document){
+function acceptDocument(document) {
   const checked = validateEntries(document.entries);
+  if (!Number.isSafeInteger(document.revision)) {
+    throw new Error("雲端 revision 必須是整數，已停止載入。");
+  }
+
   entries = checked;
+  baseline = copy(checked);
   revision = document.revision;
   updatedAt = document.updated_at;
   dirty = false;
   ready = true;
+  selected.clear();
+  undoStack = [];
+  redoStack = [];
   render();
 }
 
-async function loadCloud(){
+async function loadCloud() {
   ready = false;
   controls();
   const user = await requireUser();
   let document = await fetchDocument(user.id);
   let created = false;
 
-  if(!document){
-    message("此帳戶未有清單，正在首次儲存內嵌資料……");
+  if (!document) {
+    message("此帳戶未有清單，正在首次建立內嵌資料……");
 
-    const seed = parseSeed();
-
-    const {data,error} = await client.from(TABLE)
-      .insert({user_id:user.id,entries:seed})
+    const { data, error } = await client.from(TABLE)
+      .insert({ user_id: user.id, entries: parseSeed() })
       .select("entries,revision,updated_at")
       .single();
 
-    if(error){
-      if(error.code === "23505"){
-        document = await fetchDocument(user.id);
-        if(!document) throw error;
-      }else{
-        throw error;
-      }
-    }else{
+    if (error) {
+      if (error.code !== "23505") throw error;
+      document = await fetchDocument(user.id);
+      if (!document) throw error;
+    } else {
       document = data;
       created = true;
     }
   }
 
   acceptDocument(document);
-
   message(
-    created
-      ? `首次建立成功：${entries.length} 個歸組已儲存至 Supabase。`
-      : `已從 Supabase 讀取 ${entries.length} 個歸組。`,
+    created ? "首次建立成功。" : "已讀取雲端清單。",
     "success"
   );
 }
 
-async function login(){
+async function login() {
   const email = $("email").value.trim();
   const password = $("password").value;
+  if (!email || !password) throw new Error("請填登入電郵及密碼。");
 
-  if(!email || !password) throw new Error("請填登入電郵及密碼。");
-
-  message("正在登入……");
-
-  const {data,error} = await client.auth.signInWithPassword({
-    email,password
+  const { data, error } = await client.auth.signInWithPassword({
+    email, password
   });
-  if(error) throw error;
-
+  if (error) throw error;
   currentUser = data.user;
   $("password").value = "";
   await loadCloud();
 }
 
-async function signup(){
+async function signup() {
   const email = $("email").value.trim();
   const password = $("password").value;
+  if (!email || !password) throw new Error("請先填寫電郵及密碼。");
 
-  if(!email || !password){
-    throw new Error("先填電郵及密碼，再按註冊。密碼要求依項目設定。");
-  }
-
-  message("正在提交註冊……");
-
-  const {data,error} = await client.auth.signUp({email,password});
-  if(error) throw error;
-
+  const { data, error } = await client.auth.signUp({ email, password });
+  if (error) throw error;
   $("password").value = "";
 
-  if(data.session && data.user){
+  if (data.session && data.user) {
     currentUser = data.user;
     await loadCloud();
-  }else{
-    message(
-      "註冊請求已提交。如項目要求電郵確認，請先完成確認，"+
-      "再返回此檔登入。如註冊被項目設定停用，"+
-      "請在 Supabase Authentication → Users 建立帳戶。"
-    );
+  } else {
+    message("註冊請求已提交；如需電郵確認，請完成確認後再登入。");
   }
 }
 
-async function saveCloud(){
-  if(!ready || !dirty) return;
+async function saveCloud(payload, baseRevision) {
+  if (!ready || !currentUser) throw new Error("雲端尚未成功載入。");
   const user = await requireUser();
+  const checked = validateEntries(payload);
 
-  const payload = validateEntries(copy(entries));
-  const baseRevision = revision;
+  if (!Number.isSafeInteger(baseRevision) ||
+      !Number.isSafeInteger(baseRevision + 1)) {
+    throw new Error("版本號不正確，已停止提交。");
+  }
 
   message("正在儲存至 Supabase……");
 
-  const {data,error} = await client.from(TABLE)
-    .update({entries:payload})
-    .eq("user_id",user.id)
-    .eq("revision",baseRevision)
+  // 明確遞增 revision，不只依賴資料庫 trigger。
+  // 若原有 trigger 設為 OLD.revision + 1，亦可沿用。
+  const { data, error } = await client.from(TABLE)
+    .update({
+      entries: checked,
+      revision: baseRevision + 1
+    })
+    .eq("user_id", user.id)
+    .eq("revision", baseRevision)
     .select("revision,updated_at")
     .maybeSingle();
 
-  if(error) throw error;
+  if (error) throw error;
 
-  if(!data){
+  if (!data) {
     throw new Error(
-      "未儲存：雲端版本已改變，或目前權限不允許更新。\n"+
-      "你本頁修改仍保留，未被刪除。\n"+
-      "先按「備份目前資料 JSON」，再按「重新讀取雲端」核對。"
+      "未儲存：雲端版本已改變，或目前權限不允許更新。\n" +
+      "本頁修改仍保留。請先備份 JSON，再重新讀取雲端比較。"
+    );
+  }
+
+  if (!Number.isSafeInteger(data.revision) ||
+      data.revision <= baseRevision) {
+    ready = false;
+    throw new Error(
+      "伺服器回傳的版本號未正確遞增。\n" +
+      "資料可能已提交；請先備份，再重新讀取確認，勿重複提交。"
     );
   }
 
   revision = data.revision;
   updatedAt = data.updated_at;
-  dirty = false;
+  baseline = copy(checked);
+  refreshDirty();
   render();
-  message("已成功儲存至 Supabase。","success");
+  message("已成功儲存至 Supabase。", "success");
 }
 
-function openEditor(id){
-  if(busy || !currentUser || !ready) return;
-  const row = entries.find(r=>r.id === id);
-  if(!row) return;
+// ---------- 匯出 ----------
 
-  editingId = id;
-  $("editName").value = row.name;
-  $("editCategory").value = row.category;
-  row.cells.forEach((text,i)=>{
-    $("edit"+i).value = text.split(";").join("\n");
-  });
-  $("editAliases").value = row.aliases;
-  $("editNote").value = row.note;
-  $("editPending").checked = row.pending;
-  $("editor").showModal();
-}
-
-function applyEdit(){
-  if(busy || !currentUser || !ready){
-    throw new Error("目前不可修改；請先成功讀取雲端。");
-  }
-
-  const row = entries.find(r=>r.id === editingId);
-  if(!row) throw new Error("找不到修改項目。");
-
-  const candidate = {
-    id:row.id,
-    name:$("editName").value.trim(),
-    category:$("editCategory").value,
-    cells:[0,1,2,3].map(i=>
-      $("edit"+i).value.split(/\r?\n/)
-        .map(v=>v.trim()).filter(Boolean).join(";")
-    ),
-    aliases:$("editAliases").value.trim(),
-    note:$("editNote").value.trim(),
-    pending:$("editPending").checked
-      || $("editCategory").value === "pending"
-  };
-
-  const next = entries.map(r=>r.id === row.id ? candidate : r);
-  entries = validateEntries(next);
-  dirty = true;
-  $("editor").close();
-  render();
-  message("修改已套用至本頁，尚未上傳。按「儲存修改至雲端」提交。");
-}
-
-function download(text,type,name){
-  const blob = new Blob([text],{type});
-  const url = URL.createObjectURL(blob);
+function download(text, type, name) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement("a");
   a.href = url;
   a.download = name;
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),10000);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
-function backupJSON(){
+function backupJSON() {
   download(JSON.stringify({
-    format:"four-clinic-cloud-backup-v1",
-    exported_at:new Date().toISOString(),
-    source_revision:revision,
-    has_unsaved_changes:dirty,
+    format: "four-clinic-cloud-backup-v2",
+    exported_at: new Date().toISOString(),
+    source_revision: revision,
+    has_unsaved_changes: dirty,
     entries
-  },null,2),"application/json;charset=utf-8",
-    "four-clinic-backup.json");
+  }, null, 2), "application/json;charset=utf-8",
+  "four-clinic-backup-v2.json");
 }
 
-function csvCell(value){
+function csvCell(value) {
   let text = String(value ?? "");
-  if(/^[\s\u0000-\u001f\uFEFF]*[=+\-@]/.test(text)){
-    text = "'" + text;
-  }
-  return '"' + text.replace(/"/g,'""') + '"';
+  if (/^[\s\u0000-\u001f\uFEFF]*[=+\-@]/.test(text)) text = "'" + text;
+  return '"' + text.replace(/"/g, '""') + '"';
 }
 
-function exportCSV(){
+function exportCSV() {
   const header = [
-    "整理分類","GENERIC／項目名稱","對照狀態",
-    ...SITE_NAMES,"搜尋品牌別名","備註",
-    "藥房覆核結果","確認人","確認日期"
+    "分類", "名稱", "成分待核對", "封存狀態",
+    ...SITE_NAMES.flatMap(name => [
+      name + "：收錄狀態", name + "：製劑資料"
+    ]),
+    "品牌別名", "備註", "合併至項目ID"
   ];
 
-  const records = visible.map(r=>[
-    CATEGORY[r.category],r.name,
-    r.pending ? "成分／配方待核對" : "主要成分級歸組，非產品等價",
-    ...r.cells.map(v=>v
-      ? v.split(";").join("\n") : "未列出此歸組"),
-    r.aliases,r.note,"","",""
+  const records = visible.map(r => [
+    CATEGORY[r.category], r.name, r.pending ? "是" : "否",
+    r.archived ? "已封存" : "使用中",
+    ...SITE_NAMES.flatMap((name, i) => [
+      STATE_LABELS[stateOf(r, i)], lines(r.cells[i]).join("\n")
+    ]),
+    r.aliases, r.note, r.mergedInto || ""
   ]);
 
   download(
-    "\uFEFF"+[header,...records].map(record=>
+    "\uFEFF" + [header, ...records].map(record =>
       record.map(csvCell).join(",")
     ).join("\r\n"),
     "text/csv;charset=utf-8",
-    "four-clinic-comparison.csv"
+    "four-clinic-comparison-v2.csv"
   );
 }
 
-function initialize(){
-  if(initialized) return;
-  initialized = true;
+// ---------- 建立新增介面 ----------
 
-  entries = parseSeed();
+function mountUI() {
+  const style = document.createElement("style");
+  style.textContent = `
+    .editorToolbar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+    .bulkGroup{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+    .selectcol{width:42px!important;min-width:42px}
+    table:not(.diffTable) thead th:nth-child(2){width:17%}
+    .cellEdit{
+      display:block;width:100%;height:100%;text-align:left;
+      border:1px dashed transparent;background:transparent;
+      padding:2px;font-weight:400
+    }
+    .cellEdit:not(:disabled):hover,
+    .cellEdit:not(:disabled):focus-visible{
+      background:#edf5ff;border-color:var(--blue)
+    }
+    .cellEdit:disabled{opacity:1;cursor:default}
+    .rowActions{display:flex;flex-direction:column;gap:5px}
+    .archivedRow{background:#f2f2f2}
+    .diffItem{border:1px solid var(--line);border-radius:6px;padding:10px;margin:12px 0}
+    .diffItem>summary{font-weight:750;cursor:pointer}
+    .diffTableWrap{overflow:auto}
+    .diffTable{min-width:650px;width:100%;table-layout:fixed}
+    .diffTable th:first-child{width:24%}
+    .diffTable thead th{position:static}
+    .diffTable pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;font:inherit}
+    #review{width:min(1150px,96vw)}
+    #review .reviewFooter{
+      position:sticky;bottom:-20px;background:#fff;
+      padding:12px 0;border-top:1px solid var(--line)
+    }
+    #cellText{min-height:180px}
+    @media print{
+      .cellEdit{border:0;padding:0}
+      .archivedRow{background:white}
+    }
+  `;
+  document.head.appendChild(style);
 
-  for(const [value,label] of Object.entries(CATEGORY)){
-    $("category").add(new Option(label,value));
-    $("editCategory").add(new Option(label,value));
-  }
+  const filterLabel = document.createElement("label");
+  filterLabel.innerHTML = `
+    清單範圍
+    <select id="archiveView">
+      <option value="active">使用中項目</option>
+      <option value="archived">封存項目</option>
+      <option value="all">全部項目</option>
+    </select>
+  `;
+  $("reset").before(filterLabel);
 
-  $("search").addEventListener("input",render);
-  ["category","availability","status","compact"].forEach(id=>{
-    $(id).addEventListener("change",render);
+  const panel = document.createElement("section");
+  panel.className = "panel noprint";
+  panel.innerHTML = `
+    <strong>日常編輯工具</strong>
+    <div class="editorToolbar">
+      <button id="addEntry" class="primary">＋ 新增項目</button>
+      <button id="undo">復原</button>
+      <button id="redo">重做</button>
+      <button id="viewChanges">查看未儲存修改</button>
+      <button id="discardDraft">放棄全部未儲存修改</button>
+    </div>
+    <div id="draftInfo" class="small"></div>
+
+    <div class="bulkGroup">
+      <div class="editorToolbar">
+        <button id="selectVisible">選取目前顯示項目</button>
+        <button id="clearSelected">清除所有勾選</button>
+        <button id="mergeSelected">合併所選項目…</button>
+        <button id="bulkArchive">封存所選項目…</button>
+        <button id="bulkRestore">還原所選項目…</button>
+      </div>
+      <div id="selectionInfo" class="small"></div>
+    </div>
+
+    <div class="bulkGroup bar">
+      <label>新分類
+        <select id="bulkCategoryValue">
+          <option value="">請選擇分類</option>${categoryOptions()}
+        </select>
+      </label>
+      <button id="bulkCategory">預覽更改分類</button>
+      <button id="bulkPending">預覽標記待核對</button>
+    </div>
+
+    <div class="bulkGroup bar">
+      <label>只修改以下診所
+        <select id="bulkSiteValue">
+          <option value="">請指定一間診所</option>
+          ${SITE_NAMES.map((name, i) =>
+            `<option value="${i}">${esc(name)}</option>`
+          ).join("")}
+        </select>
+      </label>
+      <label>新收錄狀態
+        <select id="bulkStateValue">
+          <option value="">請指定狀態</option>${stateOptions()}
+        </select>
+      </label>
+      <button id="bulkSite">預覽更改收錄狀態</button>
+      <span class="small">不會清空製劑文字。</span>
+    </div>
+  `;
+  $("stats").closest("section").before(panel);
+
+  const th = document.createElement("th");
+  th.className = "noprint selectcol";
+  th.textContent = "選取";
+  $("rows").closest("table").querySelector("thead tr").prepend(th);
+
+  [0, 1, 2, 3].forEach(i => {
+    const fieldLabel = document.createElement("span");
+    fieldLabel.textContent = "收錄狀態";
+    const select = document.createElement("select");
+    select.id = "editState" + i;
+    select.innerHTML = stateOptions();
+    $("edit" + i).before(fieldLabel, select);
   });
 
-  $("reset").addEventListener("click",()=>{
-    $("search").value = "";
-    $("category").value = "";
-    $("availability").value = "";
-    $("status").value = "";
+  $("editor").querySelector("p.small").textContent =
+    "每行一個製劑。收錄狀態與文字分開保存：" +
+    "改成未列出不會刪除文字；輸入新製劑後請確認收錄狀態。";
+
+  document.body.insertAdjacentHTML("beforeend", `
+    <dialog id="cellEditor">
+      <h2 id="cellTitle"></h2>
+      <form id="cellForm">
+        <label>收錄狀態
+          <select id="cellState">${stateOptions()}</select>
+        </label>
+        <label>製劑資料：每行一項
+          <textarea id="cellText"></textarea>
+        </label>
+        <p class="small">
+          收錄狀態與資料分開保存；改成未列出不會清空文字。
+        </p>
+        <div class="bar">
+          <button class="primary" type="submit">套用至本頁</button>
+          <button id="cancelCell" type="button">取消</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="mergeDialog">
+      <h2>合併藥物項目</h2>
+      <p class="notice">
+        名稱相似不代表成分相同。本功能只整理清單，
+        不判斷藥物等價或可否替代；不自動換算強度。
+      </p>
+      <ul id="mergeSources"></ul>
+      <form id="mergeForm">
+        <label>保留為主項目
+          <select id="mergePrimary"></select>
+        </label>
+        <label>合併後名稱
+          <input id="mergeName" required>
+        </label>
+        <label>合併後分類
+          <select id="mergeCategory">${categoryOptions()}</select>
+        </label>
+        <label class="check">
+          <input id="mergeAcknowledged" type="checkbox" required>
+          我已人工核對，確認要將以上項目整理到同一歸組。
+        </label>
+        <p class="small">
+          所有劑型及強度文字會保留；只移除逐字相同的製劑行。
+          其他來源項目先封存，合併結果標記待核對。
+        </p>
+        <div class="bar">
+          <button class="primary" type="submit">產生合併預覽</button>
+          <button id="cancelMerge" type="button">取消</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="review">
+      <h2 id="reviewTitle"></h2>
+      <p id="reviewDescription"></p>
+      <div id="reviewBody"></div>
+      <div class="bar reviewFooter">
+        <button id="reviewConfirm" class="primary" type="button">
+          確認套用至本頁
+        </button>
+        <button id="reviewCancel" type="button">關閉／取消</button>
+      </div>
+    </dialog>
+  `);
+
+  // 更新原本的功能範圍說明。
+  const details = $("stats").closest("section").nextElementSibling;
+  if (details?.matches("details")) {
+    const ul = details.querySelector("ul");
+    if (ul) {
+      const li = document.createElement("li");
+      li.textContent =
+        "本版加入封存、診所收錄狀態及本次工作階段 Undo／Redo。" +
+        "升級後勿再使用舊版儲存相同清單。";
+      ul.appendChild(li);
+    }
+  }
+
+  $("message").textContent =
+    "請先備份舊資料，再登入測試新版。批量操作及合併必須先預覽。";
+}
+
+// ---------- 事件 ----------
+
+function safely(fn) {
+  try {
+    fn();
+  } catch (error) {
+    const text = errorText(error);
+    message(text, "error");
+    alert(text);
+  }
+}
+
+function bindEvents() {
+  $("search").addEventListener("input", render);
+  ["category", "availability", "status", "compact", "archiveView"]
+    .forEach(id => $(id).addEventListener("change", render));
+
+  $("reset").addEventListener("click", () => {
+    ["search", "category", "availability", "status"]
+      .forEach(id => $(id).value = "");
     $("compact").checked = false;
+    $("archiveView").value = "active";
     render();
   });
 
-  $("authForm").addEventListener("submit",event=>{
+  $("authForm").addEventListener("submit", event => {
     event.preventDefault();
-    if(client) task(login);
+    if (!client) return;
+    if (dirty && !confirm(
+      "登入後成功讀取雲端會取代本頁資料。請先備份 JSON。繼續？"
+    )) return;
+    task(login);
   });
 
-  $("signup").addEventListener("click",()=>{
-    if(client) task(signup);
+  $("signup").addEventListener("click", () => {
+    if (!client) return;
+    if (dirty && !confirm(
+      "註冊並載入帳戶清單可能取代本頁資料。請先備份。繼續？"
+    )) return;
+    task(signup);
   });
 
-  $("logout").addEventListener("click",()=>{
-    if(dirty && !confirm("有未儲存修改，確定登出並捨棄？")) return;
-
-    task(async()=>{
-      const {error} = await client.auth.signOut();
-      if(error) throw error;
-
+  $("logout").addEventListener("click", () => {
+    if (dirty && !confirm("有未儲存修改，確定登出並捨棄？")) return;
+    task(async () => {
+      const { error } = await client.auth.signOut();
+      if (error) throw error;
       currentUser = null;
       ready = false;
       revision = null;
       updatedAt = null;
-      dirty = false;
       entries = parseSeed();
+      baseline = copy(entries);
+      dirty = false;
+      selected.clear();
+      undoStack = [];
+      redoStack = [];
       render();
-      message("已登出。現在顯示內嵌預覽，不是雲端已更新資料。");
+      message("已登出，現在顯示內嵌預覽。");
     });
   });
 
-  $("saveCloud").addEventListener("click",()=>{
-    task(saveCloud);
-  });
-
-  $("reloadCloud").addEventListener("click",()=>{
-    if(dirty && !confirm(
-      "重新讀取會捨棄本頁未儲存修改。需要保留請先備份 JSON。繼續？"
+  $("reloadCloud").addEventListener("click", () => {
+    if (dirty && !confirm(
+      "重新讀取會捨棄本頁修改及 Undo／Redo。請先備份 JSON。繼續？"
     )) return;
-
     task(loadCloud);
   });
 
-  $("rows").addEventListener("click",event=>{
-    const button = event.target.closest("[data-edit]");
-    if(button) openEditor(button.dataset.edit);
-  });
+  $("saveCloud").addEventListener("click", () =>
+    safely(() => reviewDraft(true))
+  );
+  $("viewChanges").addEventListener("click", () =>
+    safely(() => reviewDraft(false))
+  );
 
-  $("editForm").addEventListener("submit",event=>{
-    event.preventDefault();
-    try{
-      applyEdit();
-    }catch(error){
-      alert(errorText(error));
+  $("reviewConfirm").addEventListener("click", () => {
+    if (!reviewAction || busy) return;
+    const action = reviewAction;
+
+    if (reviewIsCloud) {
+      task(async () => {
+        await action();
+        $("review").close();
+      });
+    } else {
+      safely(() => {
+        action();
+        $("review").close();
+      });
     }
   });
 
-  $("cancelEdit").addEventListener("click",()=>{
-    $("editor").close();
+  $("reviewCancel").addEventListener("click", () => {
+    if (!busy) $("review").close();
+  });
+  $("review").addEventListener("cancel", event => {
+    if (busy) event.preventDefault();
+  });
+  $("review").addEventListener("close", () => {
+    reviewAction = null;
+    reviewIsCloud = false;
   });
 
-  $("backup").addEventListener("click",backupJSON);
-  $("csv").addEventListener("click",exportCSV);
-  $("print").addEventListener("click",()=>window.print());
+  $("addEntry").addEventListener("click", () =>
+    safely(() => openEditor())
+  );
+  $("undo").addEventListener("click", () => safely(undo));
+  $("redo").addEventListener("click", () => safely(redo));
 
-  window.addEventListener("beforeunload",event=>{
-    if(!dirty) return;
+  $("discardDraft").addEventListener("click", () => safely(() => {
+    requireEditable();
+    if (!confirm("放棄所有未儲存修改？之後仍可用復原救返本次操作。")) return;
+    commit(copy(baseline), "放棄全部未儲存修改");
+    selected.clear();
+    controls();
+  }));
+
+  $("selectVisible").addEventListener("click", () => safely(() => {
+    requireEditable();
+    visible.forEach(r => selected.add(r.id));
+    render();
+  }));
+
+  $("clearSelected").addEventListener("click", () => {
+    selected.clear();
+    render();
+  });
+
+  $("bulkCategory").addEventListener("click", () =>
+    safely(() => bulkChange("category"))
+  );
+  $("bulkPending").addEventListener("click", () =>
+    safely(() => bulkChange("pending"))
+  );
+  $("bulkSite").addEventListener("click", () =>
+    safely(() => bulkChange("site"))
+  );
+  $("bulkArchive").addEventListener("click", () =>
+    safely(() => archiveRows([...selected], false))
+  );
+  $("bulkRestore").addEventListener("click", () =>
+    safely(() => archiveRows([...selected], true))
+  );
+
+  $("mergeSelected").addEventListener("click", () => safely(openMerge));
+  $("mergeForm").addEventListener("submit", event => {
+    event.preventDefault();
+    safely(previewMerge);
+  });
+  $("cancelMerge").addEventListener("click", () =>
+    $("mergeDialog").close()
+  );
+
+  $("mergePrimary").addEventListener("change", () => {
+    const row = entries.find(r => r.id === $("mergePrimary").value);
+    if (!row) return;
+    $("mergeName").value = row.name;
+    $("mergeCategory").value = row.category;
+  });
+
+  $("rows").addEventListener("change", event => {
+    const box = event.target.closest("[data-select]");
+    if (!box || !editable()) return;
+    if (box.checked) selected.add(box.dataset.select);
+    else selected.delete(box.dataset.select);
+    controls();
+  });
+
+  $("rows").addEventListener("click", event => {
+    const button = event.target.closest("button");
+    if (!button || !editable()) return;
+
+    safely(() => {
+      if (button.hasAttribute("data-edit")) {
+        openEditor(button.dataset.edit);
+      } else if (button.hasAttribute("data-copy")) {
+        openEditor(button.dataset.copy, true);
+      } else if (button.hasAttribute("data-cell")) {
+        openCell(button.dataset.cell, Number(button.dataset.site));
+      } else if (button.hasAttribute("data-archive")) {
+        const row = entries.find(r => r.id === button.dataset.archive);
+        if (row) archiveRows([row.id], row.archived);
+      }
+    });
+  });
+
+  $("editForm").addEventListener("submit", event => {
+    event.preventDefault();
+    safely(applyEdit);
+  });
+  $("cancelEdit").addEventListener("click", closeEditor);
+  $("editor").addEventListener("cancel", event => {
+    event.preventDefault();
+    closeEditor();
+  });
+
+  $("cellForm").addEventListener("submit", event => {
+    event.preventDefault();
+    safely(applyCell);
+  });
+  $("cancelCell").addEventListener("click", closeCell);
+  $("cellEditor").addEventListener("cancel", event => {
+    event.preventDefault();
+    closeCell();
+  });
+
+  $("backup").addEventListener("click", backupJSON);
+  $("csv").addEventListener("click", exportCSV);
+  $("print").addEventListener("click", () => window.print());
+
+  // 避免攔截輸入框本身的文字 Undo／Redo。
+  document.addEventListener("keydown", event => {
+    const target = event.target;
+    if (target.closest("input,textarea,select,[contenteditable]") ||
+        document.querySelector("dialog[open]") ||
+        !editable() || !(event.ctrlKey || event.metaKey)) return;
+
+    const key = event.key.toLowerCase();
+    if (key === "z") {
+      event.preventDefault();
+      safely(event.shiftKey ? redo : undo);
+    } else if (key === "y") {
+      event.preventDefault();
+      safely(redo);
+    }
+  });
+
+  window.addEventListener("beforeunload", event => {
+    const formChanged =
+      ($("editor").open && editorSnapshot() !== editorInitial) ||
+      ($("cellEditor").open && cellSnapshot() !== cellInitial);
+
+    if (!dirty && !formChanged) return;
     event.preventDefault();
     event.returnValue = "";
   });
+}
 
-  if(window.supabase?.createClient){
+function initialize() {
+  if (initialized) return;
+  initialized = true;
+
+  mountUI();
+  entries = parseSeed();
+  baseline = copy(entries);
+
+  for (const [value, label] of Object.entries(CATEGORY)) {
+    $("category").add(new Option(label, value));
+    $("editCategory").add(new Option(label, value));
+  }
+
+  bindEvents();
+
+  if (window.supabase?.createClient) {
     client = window.supabase.createClient(
-      SUPABASE_URL,SUPABASE_KEY,{
-        auth:{
-          persistSession:false,
-          autoRefreshToken:true,
-          detectSessionInUrl:false
+      SUPABASE_URL, SUPABASE_KEY,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: true,
+          detectSessionInUrl: false
         }
       }
     );
 
-    client.auth.onAuthStateChange((event)=>{
-      if(event === "SIGNED_OUT" && currentUser){
+    client.auth.onAuthStateChange(event => {
+      if (event === "SIGNED_OUT" && currentUser) {
         currentUser = null;
         ready = false;
         controls();
         message(
-          "登入已失效或已登出。本頁未儲存修改仍保留；"+
-          "可先備份 JSON，再重新登入。",
+          "已登出或登入失效。本頁資料仍保留；如有修改，請先備份 JSON。",
           "error"
         );
       }
     });
-  }else{
+  } else {
     message(
-      "Supabase 程式庫未載入。請連接互聯網後重新開啟本檔，"+
-      "或檢查瀏覽器／公司網絡有否封鎖 jsDelivr。\n"+
-      "目前僅顯示內嵌預覽，沒有儲存至雲端。",
+      "Supabase 程式庫未載入，目前只顯示內嵌預覽，不能提交雲端。",
       "error"
     );
   }
@@ -1553,15 +2657,719 @@ function initialize(){
   render();
 }
 
-window.addEventListener("DOMContentLoaded",()=>{
-  try{
+window.addEventListener("DOMContentLoaded", () => {
+  try {
     initialize();
-  }catch(error){
-    message("初始化失敗："+errorText(error),"error");
+  } catch (error) {
+    message("初始化失敗：" + errorText(error), "error");
     $("rows").innerHTML =
-      '<tr><td colspan="7">載入失敗，請勿視為完整清單。</td></tr>';
-    document.querySelectorAll("button").forEach(b=>b.disabled=true);
+      '<tr><td colspan="8">載入失敗，請勿視為完整清單。</td></tr>';
+    document.querySelectorAll("button").forEach(b => b.disabled = true);
   }
+});
+</script>
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  const byId = id => document.getElementById(id);
+  const addButton = byId("addEntry");
+  const rows = byId("rows");
+
+  if (!addButton || !rows) return;
+
+  /* ===== 工具列：保留原本按鈕及事件，只重新排位 ===== */
+
+  const tools = addButton.closest("section");
+  tools.classList.add("cleanTools");
+
+  const heading = tools.querySelector(":scope > strong");
+  if (heading) {
+    heading.textContent = "清單管理";
+    heading.classList.add("toolsTitle");
+  }
+
+  const toolbar = tools.querySelector(":scope > .editorToolbar");
+  const draftInfo = byId("draftInfo");
+
+  const top = document.createElement("div");
+  top.className = "toolsTop";
+
+  if (heading) top.appendChild(heading);
+  if (toolbar) top.appendChild(toolbar);
+  tools.prepend(top);
+
+  if (draftInfo) {
+    draftInfo.classList.add("draftStatus");
+    top.appendChild(draftInfo);
+  }
+
+  /* 批量功能收入摺疊區 */
+  const bulk = document.createElement("details");
+  bulk.className = "bulkDrawer";
+
+  const summary = document.createElement("summary");
+  const summaryTitle = document.createElement("span");
+  summaryTitle.textContent = "批量操作";
+
+  const summaryHint = document.createElement("span");
+  summaryHint.className = "bulkSummaryHint";
+  summaryHint.textContent = "分類、收錄狀態、合併及封存";
+
+  summary.append(summaryTitle, summaryHint);
+  bulk.appendChild(summary);
+
+  tools.querySelectorAll(":scope > .bulkGroup").forEach(group => {
+    bulk.appendChild(group);
+  });
+
+  tools.appendChild(bulk);
+
+  /* 收起危險操作，避免同新增一樣搶眼 */
+  const discard = byId("discardDraft");
+  if (discard) {
+    discard.classList.add("dangerQuiet");
+    discard.textContent = "放棄修改";
+  }
+
+  const viewChanges = byId("viewChanges");
+  if (viewChanges) viewChanges.textContent = "修改摘要";
+
+  addButton.textContent = "＋ 新增項目";
+
+  /* 勾選數量顯示於摺疊標題，收起時亦睇到 */
+  const selectionInfo = byId("selectionInfo");
+
+  function updateSelectionSummary() {
+    const count = selectionInfo?.textContent.match(/已選\s*(\d+)/)?.[1];
+    const hasSelection = Number(count) > 0;
+
+    summaryTitle.textContent = hasSelection
+      ? `批量操作 · 已選 ${count} 項`
+      : "批量操作";
+
+    bulk.classList.toggle("hasSelection", hasSelection);
+    summaryHint.textContent = hasSelection
+      ? "展開處理所選項目"
+      : "分類、收錄狀態、合併及封存";
+  }
+
+  if (selectionInfo) {
+    new MutationObserver(updateSelectionSummary).observe(
+      selectionInfo,
+      { childList: true, characterData: true, subtree: true }
+    );
+    updateSelectionSummary();
+  }
+
+  /* ===== 表格：明確欄寬，避免最後一欄被擠到逐字換行 ===== */
+
+  const table = rows.closest("table");
+  table.classList.add("clinicTable");
+
+  table.querySelector(":scope > colgroup")?.remove();
+
+  const colgroup = document.createElement("colgroup");
+  [
+    "40px",   // 勾選
+    "18%",    // 成分名稱
+    "13.5%",  // CWB
+    "13.5%",  // TKP
+    "13.5%",  // 20F
+    "13.5%",  // 5F
+    "",       // 備註：分配餘下空間
+    "150px"   // 操作：足夠橫排三個按鈕
+  ].forEach(width => {
+    const col = document.createElement("col");
+    if (width) col.style.width = width;
+    colgroup.appendChild(col);
+  });
+  table.prepend(colgroup);
+
+  /* 狀態使用不同顏色；每次清單重新 render 後亦會套用 */
+  function decorateRows() {
+    rows.querySelectorAll(".cellEdit > .badge").forEach(badge => {
+      const text = badge.textContent.trim();
+
+      badge.classList.toggle(
+        "stateUnlisted",
+        text.startsWith("未列出")
+      );
+      badge.classList.toggle(
+        "stateReview",
+        text.includes("待核")
+      );
+    });
+  }
+
+  new MutationObserver(decorateRows).observe(rows, {
+    childList: true
+  });
+  decorateRows();
+
+  /* 放在最後，覆蓋原本動態加入的樣式 */
+  const style = document.createElement("style");
+  style.textContent = `
+    :root {
+      --bg:#f5f7fa;
+      --ink:#243247;
+      --muted:#718096;
+      --line:#e5eaf0;
+      --blue:#2563eb;
+    }
+
+    body {
+      font-size:13px;
+      line-height:1.5;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    main {
+      max-width:1920px;
+      padding:18px 22px;
+    }
+
+    header {
+      padding:20px 24px;
+      background:#fff;
+      color:var(--ink);
+      border-bottom:1px solid var(--line);
+    }
+
+    header h1 {
+      font-size:21px;
+      letter-spacing:-.4px;
+    }
+
+    header p {
+      color:#64748b;
+      font-size:12px;
+    }
+
+    header .small {
+      color:#8290a2 !important;
+      font-size:11px;
+    }
+
+    .panel {
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:16px;
+      margin-bottom:14px;
+      box-shadow:0 2px 5px #162b4203;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font-size:13px;
+      border-radius:7px;
+      border-color:#dce3ec;
+    }
+
+    button {
+      min-height:34px;
+      padding:6px 11px;
+      font-weight:550;
+      white-space:nowrap;
+      transition:
+        background .15s,
+        border-color .15s;
+    }
+
+    button:not(:disabled):hover {
+      background:#f1f5f9;
+      border-color:#c1cedd;
+    }
+
+    button.primary {
+      background:var(--blue);
+      border-color:var(--blue);
+      color:#fff;
+    }
+
+    button.primary:not(:disabled):hover {
+      background:#1d4ed8;
+      border-color:#1d4ed8;
+    }
+
+    button:disabled {
+      opacity:1;
+      color:#a2adbb;
+      background:#f8fafc;
+      border-color:#edf0f5;
+    }
+
+    button.primary:disabled {
+      color:#91a6cc;
+      background:#edf2fb;
+      border-color:#edf2fb;
+    }
+
+    input,
+    select {
+      min-height:36px;
+      padding:7px 10px;
+    }
+
+    label {
+      font-size:12px;
+      font-weight:550;
+      gap:5px;
+    }
+
+    input[type=checkbox] {
+      min-height:0;
+      width:15px;
+      height:15px;
+      accent-color:var(--blue);
+    }
+
+    .bar {
+      gap:9px;
+    }
+
+    #account,
+    #sync {
+      font-size:12px;
+    }
+
+    #sync {
+      color:#64748b;
+      font-weight:550;
+    }
+
+    #message {
+      font-size:12px;
+      padding:9px 12px;
+      background:#f1f5fb;
+      border:1px solid #e5edf8;
+    }
+
+    /* 精簡工具列 */
+    .cleanTools {
+      padding:0;
+      overflow:hidden;
+    }
+
+    .toolsTop {
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:10px 16px;
+      padding:13px 16px;
+    }
+
+    .toolsTitle {
+      font-size:13px;
+      white-space:nowrap;
+    }
+
+    .cleanTools .editorToolbar {
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:6px;
+      margin:0;
+    }
+
+    .toolsTop .editorToolbar {
+      flex:1;
+    }
+
+    .draftStatus {
+      color:#8290a2;
+      font-size:11px;
+      margin-left:auto;
+    }
+
+    .dangerQuiet {
+      color:#a36464;
+      background:transparent;
+      border-color:transparent;
+    }
+
+    .dangerQuiet:not(:disabled):hover {
+      background:#fff1f2;
+      border-color:#fecdd3;
+      color:#b42339;
+    }
+
+    /* 批量操作：預設只佔一條細行 */
+    .bulkDrawer {
+      border-top:1px solid var(--line);
+      background:#fafbfd;
+    }
+
+    .bulkDrawer > summary {
+      padding:10px 16px;
+      cursor:pointer;
+      color:#53647b;
+      font-size:12px;
+      font-weight:550;
+      user-select:none;
+    }
+
+    .bulkSummaryHint {
+      margin-left:12px;
+      color:#94a0af;
+      font-size:11px;
+      font-weight:400;
+    }
+
+    .bulkDrawer.hasSelection > summary {
+      background:#eff5ff;
+      color:#2563eb;
+    }
+
+    .bulkDrawer .bulkGroup {
+      margin:0 16px;
+      padding:12px 0;
+      border-top:1px solid var(--line);
+    }
+
+    .bulkDrawer .bulkGroup:first-of-type {
+      border-top:0;
+    }
+
+    .bulkDrawer .bar {
+      align-items:end;
+    }
+
+    .bulkDrawer select {
+      min-width:160px;
+      max-width:280px;
+    }
+
+    #selectionInfo {
+      margin-top:8px;
+      font-size:11px;
+    }
+
+    /* 提示與統計降低視覺重量 */
+    .notice {
+      padding:10px 12px;
+      font-size:12px;
+      line-height:1.65;
+      background:#fffbef;
+      border-color:#f0e6c6;
+      color:#74633c;
+    }
+
+    .stats {
+      gap:7px;
+      margin:12px 0 8px;
+    }
+
+    .stat {
+      font-size:11px;
+      color:#64748b;
+      background:#f3f6fa;
+      border:1px solid #e9eef5;
+      padding:5px 9px;
+      border-radius:6px;
+    }
+
+    .stat b {
+      margin-left:5px;
+      font-size:13px;
+      color:#26364d;
+    }
+
+    #summary {
+      font-size:11px;
+      color:#8994a3;
+      margin-bottom:10px;
+    }
+
+    /* 表格 */
+    .tablewrap {
+      border-color:var(--line);
+      border-radius:9px;
+      max-height:72vh;
+    }
+
+    .tablewrap .clinicTable {
+      width:100%;
+      min-width:1350px;
+      table-layout:fixed;
+      font-size:12px;
+    }
+
+    .tablewrap .clinicTable th,
+    .tablewrap .clinicTable td {
+      padding:11px 10px;
+      border-bottom:1px solid #edf0f4;
+      vertical-align:top;
+    }
+
+    /* 清除舊 CSS 對 th 設定的百分比欄寬 */
+    .tablewrap .clinicTable th {
+      width:auto !important;
+    }
+
+    .tablewrap .clinicTable thead th {
+      background:#f7f9fc;
+      color:#64748b;
+      font-size:11px;
+      font-weight:650;
+      padding:11px 10px;
+      white-space:nowrap;
+      z-index:2;
+    }
+
+    .tablewrap .clinicTable .selectcol {
+      text-align:center;
+      padding-left:8px;
+      padding-right:8px;
+    }
+
+    .tablewrap .clinicTable .chapter th {
+      background:#edf2f8;
+      color:#4a617d;
+      padding:7px 12px;
+      font-size:11px;
+      font-weight:650;
+      letter-spacing:.3px;
+    }
+
+    .clinicTable tbody > tr:not(.chapter):hover {
+      background:#fafcff;
+    }
+
+    .clinicTable tbody > tr:has(input[data-select]:checked) {
+      background:#f0f6ff;
+    }
+
+    .clinicTable .name {
+      font-size:13px;
+      line-height:1.45;
+      font-weight:650;
+      color:#24354e;
+    }
+
+    .clinicTable .alias {
+      font-size:10px;
+      line-height:1.5;
+      color:#8b97a6;
+      margin-top:5px;
+    }
+
+    .clinicTable .notes {
+      font-size:11px;
+      line-height:1.65;
+      color:#8a7751;
+    }
+
+    .clinicTable .small,
+    .clinicTable .absent {
+      font-size:10px;
+    }
+
+    /* 關鍵：取消舊 height:100%，避免儲存格異常拉高 */
+    .clinicTable .cellEdit {
+      display:block;
+      width:100%;
+      height:auto;
+      min-height:0;
+      padding:2px 3px;
+      margin:-2px -3px;
+      border:1px solid transparent;
+      border-radius:5px;
+      white-space:normal;
+      text-align:left;
+      font-size:12px;
+      line-height:1.5;
+      font-weight:400;
+      background:transparent;
+    }
+
+    .clinicTable .cellEdit:disabled {
+      color:inherit;
+      background:transparent;
+      border-color:transparent;
+      opacity:1;
+    }
+
+    .clinicTable .cellEdit:not(:disabled):hover {
+      background:#eff5ff;
+      border-color:#d9e6fc;
+    }
+
+    .clinicTable .badge {
+      padding:1px 6px;
+      border-radius:4px;
+      font-size:10px;
+      font-weight:500;
+      color:#32815d;
+      background:#edf7f1;
+    }
+
+    .clinicTable .badge.stateUnlisted {
+      background:#f0f2f5;
+      color:#96a0ad;
+    }
+
+    .clinicTable .badge.pending,
+    .clinicTable .badge.stateReview {
+      background:#fff5dc;
+      color:#a27824;
+    }
+
+    .clinicTable .variants {
+      margin:5px 0 0;
+      padding-left:15px;
+      font-size:11px;
+      line-height:1.6;
+    }
+
+    .clinicTable .variants li + li {
+      margin-top:2px;
+    }
+
+    /* 操作橫排，永不逐字換行 */
+    .clinicTable .rowActions {
+      display:flex;
+      flex-direction:row;
+      flex-wrap:nowrap;
+      align-items:center;
+      gap:3px;
+    }
+
+    .clinicTable .rowActions button {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+      min-height:28px;
+      padding:4px 7px;
+      font-size:11px;
+      line-height:1.3;
+      white-space:nowrap;
+      word-break:keep-all;
+      border-color:transparent;
+      background:transparent;
+      color:#718096;
+    }
+
+    .clinicTable .rowActions button:not(:disabled):hover {
+      background:#eaf1fd;
+      color:#2563eb;
+    }
+
+    .clinicTable .rowActions button[data-archive]:not(:disabled):hover {
+      background:#fff0f0;
+      color:#b45353;
+    }
+
+    .clinicTable .rowActions button:disabled {
+      color:#bac2cd;
+      background:transparent;
+    }
+
+    .clinicTable .archivedRow {
+      background:#f8f9fb;
+    }
+
+    /* 對話框亦跟返同一風格 */
+    dialog {
+      border:1px solid #e5eaf0;
+      border-radius:14px;
+      padding:24px;
+      box-shadow:0 24px 80px #172b4230;
+    }
+
+    dialog::backdrop {
+      background:#15243b60;
+    }
+
+    dialog h2 {
+      font-size:18px;
+      letter-spacing:-.3px;
+    }
+
+    dialog textarea {
+      font-size:13px;
+      line-height:1.6;
+      padding:10px;
+    }
+
+    dialog label {
+      color:#53647b;
+    }
+
+    @media(max-width:800px) {
+      main { padding:10px; }
+      header { padding:16px; }
+      header h1 { font-size:18px; }
+
+      .toolsTop {
+        gap:10px;
+        padding:12px;
+      }
+
+      .toolsTitle {
+        width:100%;
+      }
+
+      .draftStatus {
+        width:100%;
+        margin-left:0;
+      }
+
+      .bulkSummaryHint {
+        display:none;
+      }
+
+      .bulkDrawer .bulkGroup {
+        margin:0 12px;
+      }
+    }
+
+    @media print {
+      header {
+        padding:0;
+        border:0;
+      }
+
+      .tablewrap {
+        max-height:none;
+        overflow:visible;
+        border:0;
+      }
+
+      .tablewrap .clinicTable {
+        min-width:0;
+        font-size:8px;
+      }
+
+      .clinicTable col:first-child,
+      .clinicTable col:last-child {
+        display:none;
+      }
+
+      .tablewrap .clinicTable th,
+      .tablewrap .clinicTable td {
+        padding:4px;
+      }
+
+      .clinicTable .name { font-size:9px; }
+
+      .clinicTable .variants,
+      .clinicTable .alias,
+      .clinicTable .notes,
+      .clinicTable .badge {
+        font-size:7px;
+      }
+
+      .clinicTable .cellEdit {
+        padding:0;
+        margin:0;
+        border:0;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
 });
 </script>
 </body>
