@@ -1,0 +1,1361 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>四診所 GENERIC 主要成分綜合藥物清單</title>
+<style>
+:root{
+  --bg:#f3f6fa;--paper:#fff;--ink:#172b42;--muted:#586c80;
+  --line:#d9e2ec;--blue:#175dcc;--green:#17633f;--amber:#805500
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif
+}
+header{background:#142d49;color:white;padding:22px 24px}
+h1{font-size:25px;margin:0}
+header p{margin:7px 0 0;color:#d8e7fa}
+main{max-width:2200px;margin:auto;padding:18px}
+.panel{
+  padding:16px;background:var(--paper);border:1px solid var(--line);
+  border-radius:12px;margin-bottom:14px
+}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:650}
+.grow{flex:1;min-width:240px}
+input,select,button{
+  font:inherit;padding:8px 10px;border:1px solid #b9c9da;
+  border-radius:7px;color:var(--ink);background:white
+}
+input[type=search]{width:100%}
+button{cursor:pointer;font-weight:650}
+button:hover{background:#edf4ff}
+button.primary{background:var(--blue);border-color:var(--blue);color:white}
+button:disabled{opacity:.45;cursor:not-allowed}
+.check{flex-direction:row;align-items:center;padding-bottom:9px}
+.small{font-size:12px;color:var(--muted)}
+.notice{
+  background:#fff5db;color:#654b1c;padding:12px;
+  border:1px solid #eed7a2;border-radius:8px;margin:12px 0
+}
+.notice strong{color:#663b00}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin:13px 0}
+.stat{background:#eaf1fc;border-radius:7px;padding:7px 11px}
+.summary{margin:10px 0}
+.tablewrap{
+  overflow:auto;max-height:74vh;border:1px solid var(--line);
+  border-radius:9px
+}
+table{width:100%;min-width:1500px;border-collapse:collapse;background:white}
+th,td{
+  padding:11px;border-bottom:1px solid var(--line);
+  text-align:left;vertical-align:top;overflow-wrap:anywhere
+}
+thead th{
+  position:sticky;top:0;z-index:3;background:#eaf0f8;
+  white-space:nowrap
+}
+th.generic{width:18%}
+th.site{width:17%}
+th.notes{width:14%}
+.generic-name{font-size:15px;font-weight:750}
+.alias{font-size:11px;color:var(--muted);margin-top:6px}
+.badge{
+  display:inline-block;padding:2px 8px;background:#e0f1e7;
+  color:var(--green);border-radius:5px;font-size:12px;font-weight:700
+}
+.pending-badge{background:#fff0c9;color:var(--amber)}
+.absent{color:#8a96a3;font-size:12px}
+.variants{margin:7px 0 0;padding-left:17px;font-size:12px}
+.variants li+li{margin-top:5px}
+.notes-cell{font-size:12px;color:#75551b}
+.notes-cell ul{margin:0;padding-left:17px}
+.notes-cell li+li{margin-top:6px}
+.chapter th{background:#dfe9f7;padding:9px 12px;font-size:15px}
+.empty td{text-align:center;color:var(--muted);padding:25px}
+.alert{
+  background:#ffe7e4;border:1px solid #e6aaa2;color:#92291f;
+  padding:12px;border-radius:7px;white-space:pre-wrap;margin:12px 0
+}
+details summary{cursor:pointer;font-weight:700}
+details li+li{margin-top:6px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 20px}
+.legend span{white-space:nowrap}
+.caption{padding:8px;text-align:left;font-size:12px;color:var(--muted)}
+:focus-visible{outline:3px solid #93baff;outline-offset:2px}
+[hidden]{display:none!important}
+body.compact .variants,body.compact .alias{display:none}
+body.compact td{padding-top:8px;padding-bottom:8px}
+@media(max-width:700px){
+  header{padding:16px}h1{font-size:21px}
+  main{padding:10px}.bar>label{flex:1 1 170px}
+}
+@media print{
+  @page{size:A4 landscape;margin:9mm}
+  body{background:white;font-size:9px}
+  header{padding:0;background:white;color:black}
+  header h1{font-size:18px}header p{color:black;font-size:9px}
+  main{padding:0}.panel{border:0;padding:0}
+  .noprint{display:none!important}
+  .notice{background:white;border:1px solid #bbb;font-size:8px;padding:6px}
+  .tablewrap{max-height:none;overflow:visible;border:0}
+  table{min-width:0;width:100%;table-layout:fixed}
+  thead{display:table-header-group}
+  thead th{position:static;white-space:normal}
+  th,td{padding:5px;font-size:8px}
+  .generic-name{font-size:9px}
+  .variants,.alias,.notes-cell,.small,.badge{font-size:7px}
+  .variants{padding-left:11px}
+  .badge{padding:0;background:none}
+  .stats{margin:6px 0;font-size:8px}
+  .stat{padding:0 10px 0 0;background:none}
+  .chapter th{font-size:10px;padding:5px}
+  tr{break-inside:avoid}
+  .chapter{break-after:avoid}
+  body.has-errors .tablewrap{display:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>四診所 GENERIC 主要成分綜合藥物清單</h1>
+  <p>AMC1 · CWB｜AMC2 · TKP｜The Specialists · 20F｜The Specialists · 5F</p>
+  <p>來源標示：AMC 2026-08-05；Specialists OCT 2026，20F 更新日期 2026-09-30</p>
+</header>
+
+<main>
+<noscript>
+  <div class="alert">請啟用 JavaScript，才能顯示內嵌清單及使用篩選。</div>
+</noscript>
+
+<section class="panel noprint">
+  <div class="bar">
+    <label class="grow">
+      搜尋 GENERIC、商品名、劑型、劑量或備註
+      <input id="search" type="search" autocomplete="off"
+        placeholder="例如：metformin、Nexium、pregabalin、eye、25mg">
+    </label>
+
+    <label>整理分類
+      <select id="category"><option value="">全部分類</option></select>
+    </label>
+
+    <label>收錄情況
+      <select id="availability">
+        <option value="">全部</option>
+        <option value="cwb">AMC1 CWB 有列出</option>
+        <option value="tkp">AMC2 TKP 有列出</option>
+        <option value="s20">Specialists 20F 有列出</option>
+        <option value="s5">Specialists 5F 有列出</option>
+        <option value="all4">四間都有列出</option>
+        <option value="amcBoth">兩間 AMC 都有列出</option>
+        <option value="specialistsBoth">20F、5F 都有列出</option>
+        <option value="cross">AMC 及 Specialists 都有列出</option>
+        <option value="amcOnly">只列於 AMC 組</option>
+        <option value="specialistsOnly">只列於 Specialists 組</option>
+        <option value="single">只列於一間診所</option>
+        <option value="onlycwb">只列於 AMC1 CWB</option>
+        <option value="onlytkp">只列於 AMC2 TKP</option>
+        <option value="onlys20">只列於 Specialists 20F</option>
+        <option value="onlys5">只列於 Specialists 5F</option>
+      </select>
+    </label>
+
+    <label>對照狀態
+      <select id="status">
+        <option value="">全部狀態</option>
+        <option value="normal">主要成分歸組</option>
+        <option value="pending">成分／配方待核對</option>
+        <option value="notes">有個別備註</option>
+      </select>
+    </label>
+
+    <label class="check">
+      <input id="compact" type="checkbox">只顯示有／未列出
+    </label>
+
+    <button id="reset" type="button">清除篩選</button>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="bar noprint">
+    <button id="csv" class="primary" type="button" disabled>匯出目前對照 CSV</button>
+    <button id="print" type="button" disabled>列印目前對照</button>
+    <button id="save" type="button">下載本綜合 HTML</button>
+  </div>
+
+  <div class="notice">
+    <strong>本頁比較的是「成分級收錄」，不是同規格產品或即時庫存。</strong>
+    同一列可包含不同品牌、劑型、強度、鹽型及釋放方式，各診所的文字須分別閱讀。
+    複方不會拆入單方列；成分不足或原文矛盾的項目另列待核對。
+    「未列出」只代表本次提供清單未見相應歸組，不代表診所實際沒有該藥。
+    本表不可直接用作調劑、替代或用藥指示。
+  </div>
+
+  <div class="small legend">
+    <span>T＝片劑</span><span>CA＝膠囊</span><span>INJ＝注射／輸液</span>
+    <span>ER／XR／SR／PR／LA＝沿用來源的釋放方式文字</span>
+    <span>未標強度＝提供文字未列完整強度</span>
+  </div>
+
+  <div id="stats" class="stats"></div>
+  <div id="summary" class="small summary" aria-live="polite"></div>
+  <div id="error" class="alert" role="alert" hidden></div>
+
+  <div class="tablewrap" tabindex="0" aria-label="四診所成分對照表，可橫向捲動">
+    <table>
+      <caption class="caption">
+        同主要成分歸組；不同規格只在診所欄內並列，並不視為完全相同產品。
+      </caption>
+      <thead>
+        <tr>
+          <th class="generic" scope="col">GENERIC／完整複方組合</th>
+          <th class="site" scope="col">AMC1 · CWB</th>
+          <th class="site" scope="col">AMC2 · TKP</th>
+          <th class="site" scope="col">Specialists · 20F</th>
+          <th class="site" scope="col">Specialists · 5F</th>
+          <th class="notes" scope="col">對照備註</th>
+        </tr>
+      </thead>
+      <tbody id="rows">
+        <tr class="empty"><td colspan="6">正在載入內嵌資料……</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<details class="panel noprint">
+  <summary>合併規則、資料範圍及限制</summary>
+  <ul>
+    <li>本檔依用戶貼出的兩組 HTML 整理。重複貼出的 Specialists 版本只納入一次，未重新讀取原 PDF、圖片或診所系統。</li>
+    <li>每列以主要成分或完整複方組合歸組。此歸組不是 RxNorm、BNF 或官方產品代碼，亦未完成官方藥物主檔驗證。</li>
+    <li>商品名只作搜尋別名；出現於別名欄不表示四間診所均有該品牌。各診所收錄情況以該診所欄為準。</li>
+    <li>同成分不同供應商及重複分類合併為摘要；不同劑量、給藥部位及釋放方式保留在各診所欄內。</li>
+    <li>部分常見拼法及鹽型按主要成分作導覽歸組，例如 amoxicillin／amoxycillin、lidocaine／lignocaine；原文有具體鹽型或酯型時，盡量保留於診所欄。此歸組不確認劑量等價。</li>
+    <li>複方次序不同而成分組合相同者可並列，但不因共同含一種成分而合併單方及複方。</li>
+    <li>成分只寫 PROBIOTICS、DIGESTIVE ENZYMES、品牌、PEG＋electrolytes 或配方未完整列出者，保留為獨立待核對項目，不當作已確認完全相同成分。</li>
+    <li>AMC2 共用項目沿用提供 HTML 的 AMC1 展示名稱。這不是 AMC2 原文的獨立重新核對結果。</li>
+    <li>本頁為成分級摘要，不保留每個供應商、AMC 代碼、HK 註冊編號、採購包裝及所有原頁碼。原 HTML 仍應保留作追溯。</li>
+    <li>來源中的可疑數值與文字不作靜默修正，包括 CORSODYL 0%、GLYCERINE 16g、HEPTRAL 1.9g、SYNVISC ONE 16mg/2ml 及其他疑點。</li>
+    <li>本表未推定任何診所即時庫存、藥物效期、包裝片數或可互換性。</li>
+    <li>CSV 匯出依目前篩選，保留四診所詳情；覆核欄供另行填寫，修改 CSV 不會自動更新 HTML。</li>
+  </ul>
+  <div id="validation" class="small"></div>
+</details>
+</main>
+
+<script>
+"use strict";
+
+/*
+資料格式：
+#整理分類代號
+GENERIC|CWB|TKP|20F|5F|搜尋別名|個別備註
+
+空白診所欄＝未列出。
+TKP 的 "=" 只複製同列 CWB；5F 的 "=" 只複製同列 20F。
+各診所欄以 ";" 分隔不同製劑／規格。
+GENERIC 以 "?" 開頭＝成分／完整配方待核對，不當作已驗證成分匹配。
+
+此資料是成分級摘要，並非原始逐列／供應商／代碼複本。
+*/
+
+const CATEGORY = {
+  allergy:"過敏／抗組織胺",
+  cardio:"心血管／循環",
+  gi:"腸胃／止嘔／腸道製劑",
+  respiratory:"呼吸／耳鼻口咽",
+  neuro:"神經／精神／鎮痛",
+  infection:"抗感染",
+  endocrine:"內分泌／骨代謝",
+  uro:"泌尿／婦產／性激素",
+  skin:"皮膚／外用",
+  eye:"眼科",
+  nutrition:"營養／血液／輸液／電解質",
+  joint:"肌肉骨骼／關節",
+  anaesthesia:"麻醉／程序用藥／解毒",
+  vaccine:"疫苗",
+  pending:"成分／完整配方待核對",
+  device:"器材／清潔用品"
+};
+
+const DATA = String.raw`
+#allergy
+Hydroxyzine|T 10mg、25mg|T 10mg|||Atarax|
+Bilastine|T 10mg OD、20mg|T 20mg|T 20mg||Labixten|10mg OD 沿用 AMC 展示文字，未推定為其他劑型。
+Cetirizine|T 10mg;口服液 5mg/5ml，200ml|=|T 10mg||Zyrtec|
+Levocetirizine|T 5mg||||Xyzal|
+Loratadine|T 10mg|=|||Clarityne|
+Loratadine + Pseudoephedrine|CA ER 5/120mg|T 5/120mg|T 5mg/120mg||Clarinase;Clarinase Repetabs|AMC1 列膠囊 ER；AMC2 及 20F 列片劑，不確認為相同劑型。
+Chlorpheniramine|T 4mg;糖漿 2mg/5ml;INJ 10mg/ml|=|T 4mg;糖漿 2mg/5ml;INJ 10mg/ml|T 4mg;INJ 10mg/ml|Piriton;Chlorpyrimine|
+Dexchlorpheniramine|T 2mg|=|||Polaramine|與 chlorpheniramine 分列。
+Desloratidine（原拼法）|T 5mg||||Aerius;Desloratadine|?來源拼作 Desloratidine；保留並標示待核對，未靜默改字。
+Fexofenadine|T 120mg、180mg|=|T 180mg||Telfast|
+Fexofenadine + Pseudoephedrine|T 60/120mg|=|T 60mg/120mg||Telfast-D|
+Cyproheptadine|T 4mg|=|T 4mg||Periactin;Appetin|
+Promethazine|T HCl 10mg|=|T hydrochloride 10mg||Phenergan|
+Triprolidine + Pseudoephedrine|T 2.5/60mg|=|||Actifed|
+#cardio
+Perindopril arginine|T 5mg||||Acertil AR|
+Lisinopril|T 10mg||||Zestril|
+Ramipril|T 5mg||||Tritace|
+Enalapril maleate||T 5mg|||Renitec|
+Irbesartan|T 150mg、300mg|=|T 150mg||Aprovel|
+Irbesartan + Hydrochlorothiazide|T 150/12.5mg、300/12.5mg|=|||Co-Aprovel;HCTZ|
+Losartan|T 50mg、100mg|T 50mg|T 50mg||Cozaar|
+Losartan + Hydrochlorothiazide|||T 100mg/25mg||Hyzaar Forte;HCTZ|
+Valsartan|T 80mg|=|||Diovan|
+Olmesartan|T 10mg、20mg||||Olmetec|
+Candesartan||T 8mg|||Blopress|
+Telmisartan|T 80mg||||Micardis|
+Amlodipine|T 2.5mg、5mg、10mg|T 5mg、10mg|T 2.5mg、5mg、10mg||Norvasc|
+Amlodipine + Olmesartan|T olmesartan/amlodipine 20/5mg|=|T 原成分次序 AMLODIPINE/OLMESARTAN；原規格 20mg/5mg、40mg/5mg||Azoren|20F 成分排列與 AMC 不同；20F 劑量與成分的逐一對應須核對，未交換或重寫原數值。
+Amlodipine + Valsartan|T 5/80mg、5/160mg、10/160mg|=|||Exforge|CWB 的 5/160mg 原展示為 valsartan 160mg＋amlodipine 5mg。
+Telmisartan + Amlodipine|T 40/5mg、80/5mg||||Twynsta|
+Felodipine|T ER 5mg||||Plendil|
+Atenolol|T 50mg||||Tenormin|
+Bisoprolol fumarate|T 2.5mg、5mg|=|T 2.5mg||Concor|
+Metoprolol|T tartrate 50mg|T ZOK 25mg、50mg|T tartrate 50mg;INJ tartrate 1mg/ml|INJ tartrate 1mg/ml|Betaloc;Betaloc ZOK|按主要成分並列；tartrate 與 ZOK 釋放製劑不作等同處理。
+Propranolol|T 10mg、40mg|T 10mg|T 10mg||Inderal|
+Labetalol|||INJ 5mg/ml|=|Trandate|
+Methyldopa|T 250mg|=|||Aldomet|
+Hydralazine||T 25mg|INJ HCl 20mg|=|Apresoline|注射項目原規格只列 20mg，未補成 mg/ml。
+Prazosin|T 2mg|=|||Minipress|
+Spironolactone|||T 25mg||Aldactone|
+Furosemide / Frusemide|T frusemide 40mg|=|T furosemide 40mg;INJ 20mg/2ml|INJ 20mg/2ml|Lasix|名稱按主要成分導覽歸組；20F／5F 注射項目原註冊編號不同，原表須另核對。
+Hydrochlorothiazide|T 25mg||||Dichlotride;HCTZ|
+Indapamide|T SR 1.5mg|=|||Natrilix SR|
+Triamterene + Hydrochlorothiazide|T 50/25mg||||Dyazide;HCTZ|
+Amiodarone|INJ 150mg/3ml|T 200mg;INJ 150mg/3ml|INJ 50mg/ml|=|Cordarone|保留不同濃度表達，不據此建立同規格產品配對。
+Flecainide acetate|T 100mg|=|||Tambocor|
+Dronedarone||T 400mg|||Multaq|
+Verapamil|INJ 5mg/2ml|=|||Isoptin|
+Adenosine|||INJ 30mg/10ml|=|Adenoscan|
+Atorvastatin|T 10mg、20mg、40mg|T 10mg、20mg|T 10mg、20mg||Lipitor|
+Rosuvastatin|T 5mg、10mg、20mg|=|T 5mg、10mg||Crestor|
+Simvastatin|T 10mg、20mg|T 20mg|||Zocor|
+Ezetimibe|T 10mg|=|T 10mg||Ezetrol|
+Ezetimibe + Atorvastatin|T 10/10mg、10/20mg|=|||Atozet|
+Bempedoic acid|T 180mg||||Nilemdo|
+Bempedoic acid + Ezetimibe|T 180/10mg|=|||Nustendi|
+Alirocumab|INJ 150mg/ml，Sub-Q PFP||||Praluent|
+Fenofibrate|||T 145mg||Lipanthyl Penta|
+Aspirin|T 80mg、100mg|=|||Acetylsalicylic acid|
+Aspirin + Glycine|T 原展示總述 100mg|=|T 100mg/45mg|=|Cardiprin|AMC 展示未分列兩種成分的個別分量；不當作已確認與 Specialists 同規格。
+Clopidogrel|T bisulfate 75mg|=|T 75mg||Plavix|
+Edoxaban||T 30mg|||Lixiana|
+Rivaroxaban||T 15mg、20mg|||Xarelto|
+Heparin sodium||||INJ 5,000 I.U./ml;INJ 原名 HEPARIN SODIUM 5ML，規格 10IU/ML||
+Glyceryl trinitrate|T 舌下 0.5mg|=|T 500mcg;噴劑 0.4mg/dose|=|TNG;Nitrolingual-Spray|
+Isosorbide dinitrate||T 10mg|||Isordil|
+Isosorbide-5-mononitrate|||T 60mg||Imdur|
+Pentoxifylline|T SR 400mg||||Trental;APO-Pentoxifylline|20F 另有普通展示片劑 400mg，見本列診所補充。
+Diosmin + Hesperidin|T 1000mg|=|T 1g、500mg|T 500mg|Daflon;Diosper FC;Diosper 500mg|
+Adrenaline|INJ 1:10,000，1mg/10ml IV;INJ 1:1000，1mg/ml IM/Sub-Q|=|INJ 1:10,000|=|Epinephrine|濃度及來源給藥途徑原文分開保留，並非用藥指示。
+Dopamine|INJ 200mg/5ml|=|INJ hydrochloride 200mg/5ml|=||
+Ephedrine|INJ 30mg/ml|=|INJ sulfate 30mg/ml;INJ 30mg/ml|=||按主要成分歸組；鹽型及同層重複來源仍須覆核。
+Phenylephrine|INJ HCl 10mg/ml;眼用 2.5% Minims|=|INJ 1%|=|Neo-Synephrine|眼用與注射在同成分列內分開列明；5F 註冊編號與 vasopressin 有原文衝突，未代為修正。
+Vasopressin|INJ 20units/ml|=||INJ 20IU/ml|Pitressin|
+#gi
+Aluminium + Magnesium + Simethicone|T，未標各成分強度|=|T 原規格 200mg/100mg/100mg/5mg|T 原規格 200mg/100mg/200mg/5mg|Maalox Plus;Gastrogel;Allumag|?原文成分有三項而規格列四段數值；兩層亦不同，不能確認各成分與數值的對應。
+Aluminium + Magnesium + Oxethazaine|T，未標各成分強度||||Mucaine|
+Sodium alginate + Sodium bicarbonate + Calcium carbonate|T Extra Strength 500，未分列全部分量|T Extra Strength 500;液體 200ml，未標完整濃度|T 500mg/267mg/160mg;液體 500mg/267mg/160mg/10ml|=|Gaviscon|
+Sodium alginate + Potassium bicarbonate|液體 1000/200mg，150ml||||Gaviscon Advance|不與含 sodium bicarbonate／calcium carbonate 的複方合併。
+Simethicone|T 40mg|=|||Gascon;Gasteel|與來源另寫 DIMETHYLPOLYSILOXANE 的項目分列，未自動認定配方完全一致。
+Dimethylpolysiloxane||口服滴劑 20mg/ml，300ml|T 40mg|T 40mg;口服滴劑 20mg/ml|Gascon;Gascon Drop|來源 generic 用字如此；與 simethicone 另列待藥房覆核。
+Activated charcoal / Charcoal|T 300mg|=|||Charcoal|
+Esomeprazole|T 20mg、40mg；40mg 一項標 gastro-resistant|T 20mg、40mg|T 20mg|=|Nexium|
+Omeprazole|CA 20mg|=|CA 20mg||Losec;Proton|
+Pantoprazole|T 20mg、40mg|=|T 20mg、40mg|=|Pantoloc;Pantoprazole Sandoz|
+Rabeprazole|T 20mg||||Pariet|
+Lansoprazole|T OD 30mg|T OD 15mg、30mg|T OD 15mg、30mg|=|Takepron OD|
+Dexlansoprazole|CA DR 30mg|=|CA 30mg、60mg|=|Dexilant|
+Vonoprazan|||T 20mg||Vocinti|
+Famotidine|T 20mg|T 20mg、40mg|T 20mg|=|Pepcidine|20F／5F 原註冊編號不同，本列只表達同成分收錄。
+Hyoscine butylbromide|T 10mg;糖漿 5mg/5ml;INJ 20mg/ml|=|T 10mg;INJ 20mg/ml|=|Buscopan;Holopon;Antispa|
+Dicyclomine + Simethicone|糖漿 5+50mg/5ml，90ml|=|||Infacol C;Colimix|
+Otilonium|T bromide 40mg|=|T 原拼法 OTILONIUM 40mg|=|Spasmomen|Specialists 拼法保留為 OTILONIUM；此列僅主要成分導覽。
+Mebeverine| |CA retard 200mg|CA hydrochloride 200mg||Duspatalin Retard|
+Loperamide|T 2mg|=|T 2mg||Imodium|
+Diphenoxylate + Atropine|T 2.5/0.025mg||||Lomotil|
+Racecadotril|||CA 100mg;兒童顆粒袋 30mg||Hidrasec|
+Dioctahedral smectite|袋裝，未標強度|=|粉袋 3g|=|Smecta|
+Bismuth subcitrate|||T 120mg|||
+Bisacodyl||T 5mg|T 5mg|=|Dulcolax|
+Lactulose|口服液，未標濃度|=|口服液 67g/100ml|=|Duphalac|
+Sennosides / Sennoside B|T Sennoside B 7.5mg|=|T sennosides 7.5mg|T sennosides 7.5mg、8.6mg|Senokot;PMS-Sennosides|成分描述及強度各自保留，不確認 sennoside B 與總 sennosides 的強度等價。
+Psyllium|粉劑 283g|=|粉劑 283g;袋裝 psyllium husk powder 5g|粉劑 283g|Metamucil;Mucofalk|20F 的 5g 袋裝與 283g 散裝不作同包裝處理。
+Macrogol 4000|||袋裝 10g||Forlax|不與配方不完整的 PEG＋electrolytes 自動合併。
+Glycerine / Glycerol|||栓劑，原規格 16g||Glycerine|16g 沿用原文，待核對；未更改成其他數值。
+Sodium phosphate（monobasic + dibasic）||灌腸 133ml|灌腸 133ml|=|Fleet Enema|AMC 原文為 sodium biphosphate/sodium phosphate；Specialists 為 monobasic & dibasic sodium phosphate。主要配方組別並列，詳細鹽型與分量未核實。
+Linaclotide|||CA 290mcg||Linzess|
+Mesalazine||袋裝 prolonged-release 1000mg|T 500mg、1g;T prolonged-release 1200mg;顆粒袋 1g;栓劑 250mg||Salofalk;Pentasa;Mezavant XL|給藥部位及釋放形式不同，各項不可由成分歸組推定可替代。
+Budesonide|||T 9mg;直腸泡沫 2mg/dose||Cortiment;Budenofalk|此列為單方；與 budesonide/formoterol 複方分列。
+Misoprostol|T 200mcg|=|T 200mcg||Cytotec|
+Essential phospholipids|||CA 300mg||Essentiale Liver Health|未補充原文未列出的完整組成或各磷脂分量。
+Ademetionine|||T，原規格 1.9g||Heptral|1.9g 沿用提供文字，待核對。
+Domperidone|T 10mg|=|T 10mg|=|Motilium;Domper-M|
+Metoclopramide|T 10mg;INJ 10mg/2ml|=|T 10mg|T 10mg|Maxolon;Primperan|
+Prochlorperazine|T 5mg|INJ 12.5mg/ml|T 5mg||Stemetil|AMC1 與 AMC2 劑型不同。
+Dimenhydrinate|T 50mg;糖漿 15mg/5ml，60ml|=|T 50mg;糖漿 15mg/5ml||Gravol;Novomin|20F 糖漿在原表不同分類的容器描述略有不同。
+Promethazine teoclate|||T 25mg||Alvomin;Avomin|保留 teoclate；不與 HCl 10mg 項目當作同製劑。
+Ondansetron||INJ 4mg/2ml||INJ 2mg/ml|Zofran|
+Granisetron||||INJ 1mg/1ml、3mg/3ml||
+Betahistine|T mesylate 6mg|=|T 6mg||Merislon|
+Ursodeoxycholic acid|||CA 250mg||Ursofalk|
+Policresulen + Cinchocaine|栓劑，cinchocaine HCl/policresulen，未標分量|=|軟膏 50mg/10mg;栓劑 100mg/2.5mg|=|Faktu|AMC 軟膏只有品牌、沒有成分原文，另列待核對，不由品牌推定成分。
+#respiratory
+Salbutamol|T 2mg;吸入劑 100mcg|吸入劑 100mcg|糖漿 2mg/5ml;MDI 100mcg|MDI 100mcg|Ventolin|
+Procaterol||T HCl 25mcg;糖漿 25mcg/5ml，60ml|||Meptin|
+Theophylline|CA SR 50mg、100mg|=|||Slo-Theo|
+Beclomethasone||吸入劑 50mcg、250mcg，CFC-free|||Beclazone;Beclofort|
+Budesonide + Formoterol|Turbuhaler 160/4.5mcg;Vannair 吸入劑 fumarate 80/4.5mcg、160/4.5mcg|Turbuhaler 160/4.5mcg;Vannair 吸入劑 fumarate 80/4.5mcg|MDI 80mcg/4.5mcg||Symbicort;Vannair;Vannair VANNAIR|不同吸入器、劑數及來源強度表達未視為同規格。
+Montelukast|T 10mg;咀嚼片 4mg、5mg|=|T 10mg;口服顆粒 4mg||Singulair|4mg 咀嚼片與口服顆粒分別保留。
+Ambroxol HCl|T 30mg|=|||Mucosolvan|
+Bromhexine|T 8mg|=|||Bisolvon|
+Codeine + Bromhexine|T 15/8mg|=||||
+Dextromethorphan|T DM 15mg;linctus 15mg/5ml，90ml|=||||
+Dextromethorphan + Promethazine + Ephedrine|糖漿，原簡寫 DM/promethazine/ephedrine，未列強度|=||||DM 依原展示簡寫歸組，完整配方及強度須核對。
+Diphenhydramine + Ammonium chloride|糖漿，原簡寫 diphenhydramine/NH4Cl|=|||Benadryl Expectorant|
+Promethazine + Codeine + Ephedrine|糖漿，未列強度|=|糖漿 原成分次序 promethazine/ephedrine/codeine；3.6mg/7.2mg/9mg||Phensedyl;PEC;Fendyl|20F 劑量次序依該欄原成分次序，未交換。
+Guaifenesin|T ER 600mg|=|||Mucinex|
+Levodropropizine|||口服溶液 0.6%||Bional Syrup|
+Carbocysteine lysine salt|||糖漿 9%;粉袋 2.7g||Fluifort|保留 lysine salt 描述，未換算成 carbocysteine 含量。
+Acetylcysteine|袋裝 100mg、200mg;發泡片 600mg|袋裝 100mg;發泡片 600mg|發泡片 600mg||Fluimucil A|
+Lysozyme|T 30mg|=|T 60mg||Neuzym|
+Ciclodiol|||CA 100mg||Mucoflux|原文拼作 CICLODIOL，未另推定其他成分名稱。
+Cocillana + Euphorbia + Senega + Squill|||糖漿 0.5ml/1.25ml/0.13ml/0.13ml||Cocillana Co.|未補充原文未列出的其他可能成分。
+Guaifenesin + Methylephedrine + Chlorpheniramine|||T 原規格 5mg/50mg/17.5mg/1.5mg||Codaewon|?原文列三種成分卻有四段強度，完整配方及分量對應待核對。
+Ivy leaf dry extract|糖漿 35mg/5ml，100ml|=|||Prospan|
+Fluticasone furoate|鼻噴 27.5mcg|=||||與只寫 fluticasone 的 Specialists 項目分列，未由商品名補成 ester。
+Fluticasone（未標酯型）|||鼻噴 27.5mcg/spray||Avamys|?20F 原成分只寫 FLUTICASONE；未當作已確認 furoate。
+Azelastine + Fluticasone propionate|鼻噴 137/50mcg，120 doses|=|||Dymista|Specialists 原文未標 fluticasone 酯型，另列。
+Azelastine + Fluticasone（未標酯型）|||鼻噴 137mcg/50mcg||Dymista|?完整 ester 描述待核對。
+Mometasone|鼻噴 50mcg||||Nasonex|皮膚 mometasone furoate 另列，未由品牌自動補酯型。
+Xylometazoline|鼻噴 0.1%，10ml;滴鼻 0.05%，10ml|=|鼻噴 hydrochloride 0.10%;滴鼻 hydrochloride 0.05%||Otrivin|
+Chlorhexidine|外用 digluconate 0.05%，10ml;漱口 digluconate 0.2%，300ml|=|漱口液 0.2%|漱口液，原規格 0%|Corsodyl;Hibitane|5F 的 0% 沿用原文並列作疑點，未自動修正；給藥部位不同。
+Benzydamine|咽喉噴劑 3mg/ml，15ml|=|噴劑 3mg/ml;漱口液 22.5mg/15ml|噴劑 3mg/ml|Difflam Forte;Difflam Gargle|
+Benzydamine + Cetylpyridinium|含片 原展示 3mg;口腔凝膠 10g|含片 原展示 3mg|||Difflam|兩種成分個別強度未完整列出。
+Hexylresorcinol|||含片 2.4mg|=|Difflam Hextra|
+Dequalinium chloride|含片 0.25mg|含片 0.25mg;陰道 pessary 10mg|||Dequadin;Fluomizin|不同使用部位並列，不能由成分歸組視為同製劑。
+Choline salicylate|||口腔凝膠 15g|=|Bonjela|原規格是包裝重量，未標成分濃度。
+Olive oil|耳滴劑，未標容量|=|瓶裝 pure olive oil 100ml||Pure Olive Oil|20F 原表未明寫給藥部位，未自行補成耳用。
+Phenazone|耳滴劑 5%，10ml|=|||Tropex|
+Lidocaine + Neomycin + Polymyxin B|耳滴劑 8ml|=|||Otozambon|
+Ciprofloxacin + Fluocinolone|||耳滴單劑量 0.25ml；3mg/ml / 0.25mg/ml||Cetraxal Plus|
+Sodium bicarbonate + Sodium chloride|||鼻噴 20ml||Nista|
+#neuro
+Paracetamol|T 500mg;T SR 665mg;懸液 250mg/5ml，60ml|T 500mg;T SR 665mg;懸液 250mg/5ml，60ml;栓劑 250mg|T 500mg;T Extend 665mg;懸液 120mg/5ml、250mg/5ml，各120ml|T 500mg;T Extend 665mg;懸液 120mg/5ml、250mg/5ml，各120ml;栓劑 125mg、250mg|Panadol;Paramolan;New-Eurogesic;Tiffyparacetamol|20F／5F Extend 項目原劑型只寫 TABLET，釋放方式未重新核驗。
+Paracetamol + Caffeine|||T 500mg/65mg|=|Panadol Menstrual|
+Tramadol|CA 50mg|=|CA 50mg;INJ 50mg/ml|=|Tramal;Tramo Cap|
+Tramadol + Paracetamol|T 37.5/325mg|=|||Ultracet|
+Pethidine / Meperidine||INJ 50mg/ml||INJ 50mg/ml|Pethidine|依來源展示的 Pethidine／Meperidine 名稱作主要成分歸組。
+Atogepant|T 60mg||||Aquipta|
+Rimegepant|口服 lyophilisate／sublingual tablet 75mg||||Nurtec|劑型文字沿用 AMC 展示，未重新核實。
+Eptinezumab|INJ 100mg/ml IV||||Vyepti|
+Amitriptyline|T 10mg、25mg|||T 10mg|||本列資料於初始化時補正欄位位置。
+Fluoxetine|CA 10mg、20mg|=|CA 10mg、20mg||Prozac;APO-Fluoxetine|
+Escitalopram|T 10mg|||T 10mg|||本列資料於初始化時補正欄位位置。
+Sertraline|T 50mg|=|T 50mg||Zoloft|
+Paroxetine|T 20mg|=|||Seroxat|
+Venlafaxine|CA XR 37.5mg、75mg、150mg||||Efexor XR|
+Desvenlafaxine|T extended release 50mg||T ER 25mg、50mg、100mg||Pristiq|
+Duloxetine|||CA 30mg|||
+Vortioxetine|T 5mg、10mg||T 5mg、10mg||Brintellix|
+Bupropion|T XL 150mg||||Wellbutrin XL|
+Mirtazapine|||T OD 15mg、30mg||Mirtazapine Sandoz OD|
+Trazodone|||T 50mg||PMS-Trazodone|
+Flupentixol + Melitracin（原拼法）|||T 0.5mg/10mg||Deanxit|?第二成分原拼作 MELITRACIN，未靜默改成其他字。
+Aripiprazole|T 2mg、5mg||T 2mg、5mg、10mg||Abilify;APO-Aripiprazole|20F 10mg 註冊編號原文不完整；不影響本列僅表達成分級列出情況。
+Quetiapine|T 25mg、100mg|T 100mg|T 25mg;T XR 50mg、200mg||Seroquel;Seroquel XR|普通展示與 XR 分別保留。
+Risperidone|T 0.5mg、2mg|T 2mg|T 1mg、2mg||Risperdal;APO-Risperidone;Actavis|
+Lurasidone|T 20mg、40mg||||Latuda|
+Olanzapine|||T 5mg||Olzapin|
+Methylphenidate|T HCl 10mg;CA LA 10mg、20mg、30mg;T Concerta 18mg、27mg、36mg、54mg;T PR 18mg、27mg、36mg|T HCl 10mg;CA LA 10mg、20mg、30mg;T Concerta 18mg、27mg、36mg|T Ritalin 10mg;CA LA 10mg、20mg;T Concerta ER 18mg、27mg、36mg;T PR 18mg、36mg||Ritalin;Ritalin LA;Concerta;Methylphenidate PR-Teva|IR／LA／ER／PR 不作同規格合併；保留各來源展示方式。
+Atomoxetine|CA 10mg、18mg、25mg、40mg、60mg|CA 10mg、18mg、25mg、40mg|CA 18mg||Strattera;APO-Atomoxetine|
+Lisdexamfetamine|CA dimesylate 20mg、30mg、50mg|CA dimesylate 20mg、30mg|CA 20mg、30mg||Vyvanse|
+Diazepam|T 5mg||T 2mg、5mg||Valium|
+Lorazepam|T 1mg|||T 1mg|||本列資料於初始化時補正欄位位置。
+Alprazolam|T 0.5mg|T 0.25mg|T 0.5mg||Xanax|
+Bromazepam|||T 1.5mg||Lexotan|
+Clonazepam|||T 0.5mg||Rivotril|
+Zolpidem|T 10mg|=|T 10mg|=|Stilnox|
+Zopiclone||T 7.5mg|T 7.5mg||Imovane;Zopivane|
+Lemborexant|T 5mg|=|T 5mg||Dayvigo|
+Daridorexant|T 25mg、50mg||||Quviviq|
+Melatonin|T 3mg|||||
+Pregabalin|CA 25mg、75mg|CA 25mg、50mg、75mg|CA 25mg、50mg、75mg|CA 25mg、50mg|Lyrica|原表 20F 25mg／50mg 有相同註冊編號等疑點，未在本成分摘要中修正。
+Levetiracetam|T 250mg||||Keppra|
+Sodium valproate|||T Chrono 200mg、300mg||Epilim Chrono|
+Phenytoin||||INJ 250mg/5ml||
+Carbidopa + Levodopa|T 25/100mg;T ER 50/200mg||||Sinemet;Sinemet CR|
+Memantine|T HCl 20mg||T 10mg||Ebixa;Memantine Sandoz|
+Donepezil|||T 5mg||Alzedon|
+Rivastigmine|||CA 1.5mg、3mg||Exelon|
+Ginkgo biloba|T 40mg||||Tanakan|
+#infection
+Aciclovir / Acyclovir|T 800mg;乳膏 5%，5g;眼膏 3%，4.5g|T 400mg;乳膏 5%，5g|T 400mg;乳膏原規格 5g，未標濃度;乳膏 50mg/1g||Zovirax;Clinovir|未將 20F 只列 5g 的乳膏自行補成 5%。
+Valaciclovir|T 500mg|=|T 500mg、1g||Valtrex;Valacyclovir|
+Entecavir|T 0.5mg|=|T 0.5mg||Baraclude;PMS-Entecavir|
+Tenofovir（原文未標完整形式）|||T 25mg||Vemlidy|?來源只寫 TENOFOVIR；未由品牌補成特定 prodrug／鹽型。
+Oseltamivir|CA 30mg、45mg、75mg;懸液 30mg/5ml，65ml|=|CA 75mg||Tamiflu|
+Baloxavir marboxil|T 40mg|=|||Xofluza|
+Amoxicillin|CA 500mg|=|CA 500mg|=|Amoxil;Amoxicap|原拼法 amoxycillin 歸於同主要成分；5F 註冊編號與其他原表項目有衝突，未代為修正。
+Amoxicillin + Clavulanate|T 總強度 375mg、625mg、1g;懸液 457mg/5ml，70ml|T 總強度 375mg、625mg、1g;懸液 457mg/5ml，70ml;INJ 1.2g|T 250mg/125mg、875mg/125mg;懸液 457mg/5ml;懸液 amoxycillin/clavulanic acid 125mg/31.25mg/5ml|T 250mg/125mg、875mg/125mg;INJ amoxycillin/potassium clavulanate 1.2g|Augmentin;Syntoclav;Curam|總強度與個別成分強度不換算；clavulanic acid／clavulanate／potassium clavulanate 原文字面差異保留。
+Ampicillin|CA 500mg|||||
+Ampicillin + Cloxacillin|CA 原簡寫 Ampi/Cloxacillin，總強度500mg|=|||Ampiclox|各成分分量未分列，跨來源同規格關係待核對。
+Ampicillin + Sulbactam|||T 220mg/147mg||Unasyn|成分及劑型依原文字面保留，未推定其他形式。
+Cloxacillin|CA 250mg||||Orbenin|
+Cefuroxime|T axetil 250mg;懸液 125mg/5ml，50ml|T axetil 250mg|T 250mg|=|Zinnat;Cmaxid;Farmacef|按 cefuroxime 主要成分歸組；axetil 文字保留，不確認各產品規格一致。
+Ceftriaxone|INJ 1g IM|=|INJ 1g IM|=|Rocephin|
+Cefazolin||||INJ 1g||
+Ertapenem||||INJ 1g|Invanz|
+Azithromycin|T 250mg;懸液 200mg/5ml，15ml|T 250mg|T 250mg;懸液 200mg/5ml|T 250mg|Zithromax|
+Clarithromycin|T 250mg|T 250mg、500mg|T 250mg;CA 250mg;懸液 125mg/5ml|CA 250mg|Klacid|20F 的 tablet／capsule 分別保留，未自行更正劑型。
+Ciprofloxacin|T 250mg|=|T 250mg|=|Ciproxin;Loxin|
+Levofloxacin|T 250mg;眼滴 0.5%，5ml|=|T 250mg|=|Cravit;Lexacin|
+Doxycycline|CA 100mg|=|T 100mg|=|Vibramycin|AMC 列膠囊，Specialists 列片劑。
+Tetracycline|CA 250mg|=|T 250mg|CA 250mg||
+Lymecycline|CA 300mg|=|||Tetralysal|
+Metronidazole|T 200mg;皮膚凝膠 0.75%，15g|=|T 200mg|=|Flagyl;Rozex|口服與外用分開列明。
+Clindamycin|皮膚 lotion 1%，60ml|皮膚 lotion 1%，60ml;CA 150mg|||Dalacin-T;Dalacin-C|
+Nitrofurantoin|T 100mg|T 50mg|T 100mg|||
+Sulfamethoxazole + Trimethoprim|T 400/80mg|T 400/80mg;懸液總強度 240mg/5ml|T 原成分次序 trimethoprim/sulfamethoxazole，總強度480mg||Septrin;Bactrim;Sulfatrim|總強度不自動換算為各成分強度。
+Fosfomycin|袋裝 3g|=|||Monurol|
+Mebendazole|||T 100mg|||
+Fluconazole|CA 150mg|=|CA 50mg||Diflucan|
+Nystatin|懸液 100000units/ml|=|懸液 100000 I.U./ml||Mycostatin|
+Terbinafine|T 250mg;乳膏 1%，30g|T 250mg|||Lamisil|
+Ganciclovir||眼凝膠 0.15%|||Ganciclovir|
+#endocrine
+Metformin|T 500mg;T ER 500mg;T XR 1000mg|T 500mg;T ER 500mg;T XR 500mg、1000mg|T 250mg、500mg;T Glucophage XR 1g||Glucophage;Glucophage XR|普通片與 ER／XR 分別列明，未判定釋放規格相同。
+Sitagliptin + Metformin|T 50/500mg|T XR 100/1000mg|||Janumet;Janumet XR|AMC1 與 AMC2 所列強度及釋放方式不同。
+Dapagliflozin|T 10mg|=|||Forxiga|
+Dapagliflozin + Metformin|||T XR 10mg/1000mg||Xigduo XR|
+Empagliflozin|T 10mg、25mg|=|T 25mg||Jardiance|
+Linagliptin|||T 5mg||Trajenta|
+Gliclazide|T 80mg||||Diamicron|
+Pioglitazone||T 15mg|||Actos|
+Insulin（未標完整類型）||||INJ/PEN 100 I.U./ml|Actrapid HM|?原成分只寫 INSULIN，不由商品名補完整 insulin 類型。
+Semaglutide|INJ 0.5mg/dose，Sub-Q PFP 1.5ml||||Ozempic|
+Tirzepatide|INJ 2.5mg/0.6ml，KwikPen 2.4ml|=|||Mounjaro|5mg 項目的提供成分欄空白，另列品牌待核對。
+Carbimazole|T 5mg|=|T 5mg||Neo Mercazole|
+Propylthiouracil||T 50mg|T 50mg|||
+Levothyroxine / Thyroxine|T thyroxine 50mcg、100mcg|=|T levothyroxine 50mcg||Eltroxin|主要成分名稱導覽歸組，原名稱及強度保留。
+Prednisolone|T 5mg;眼滴 1%，5ml|=|T 5mg|=|Dhasolone;Pred Forte|口服與眼用不能由成分歸組視為同製劑。
+Dexamethasone|INJ 4mg/ml|T 0.5mg|INJ sodium phosphate 4mg/ml|=|Decadron|AMC2 清單未列 AMC1 的注射代碼；因此 AMC2 本欄只列 0.5mg 片。
+Hydrocortisone|INJ 100mg;皮膚乳膏 1%，15g|=|INJ 50mg/ml;皮膚乳膏原成分1%，規格15g|=|Solu-Cortef|注射總量與濃度原文各自保留，不自動換算。
+Triamcinolone|INJ 1%，50mg/5ml;INJ 4%，40mg/ml;牙膏 acetonide 5g|INJ 4%，40mg/ml;牙膏 acetonide 5g|INJ 10mg/ml;口腔 paste 1mg/g|INJ 10mg/ml|Kenacort;Kenacort-A;Kenalog in Orabase;Shincort;Oramedy|主要成分歸組並保留 acetonide 原文，未確認 ester、濃度及用途等同。
+Alendronate|T 70mg|=|||Fosamax|
+Alendronate + Colecalciferol|T 70mg/2800units||||Fosamax Plus|
+Ibandronic acid|||T 150mg||Bonviva|
+Raloxifene||T 60mg|||Evista|
+Calcitonin|||鼻噴 200u/dose|||
+Teriparatide|||INJ/PEN 250mcg/ml||Forteo|
+Denosumab|INJ 60mg Sub-Q PFS|=|INJ/SYRINGE 60mg/ml||Prolia|來源一邊列總量、一邊列濃度，不自行補容量以認定同規格。
+#uro
+Dutasteride|CA 0.5mg|=|||Avodart|
+Dutasteride + Tamsulosin|CA 0.5/0.4mg|=|CA 0.5mg/0.4mg||Duodart|
+Tamsulosin|T OCAS 0.4mg|=|T Harnal OCAS 0.4mg||Harnal OCAS|
+Silodosin|CA 4mg|=|CA 4mg||Urief|
+Mirabegron|T prolonged-release 50mg|=|T 50mg|=|Betmiga|Specialists 原劑型未完整標示 prolonged release。
+Solifenacin succinate|||T 5mg||Vesicare|
+Desmopressin|||T 25mcg、50mcg||Nocdurna|
+Phenazopyridine|T 100mg|=|T 100mg||Pyridium|
+Sildenafil|T 50mg|T 100mg|T 100mg||Viagra;Ernafil-Teva|
+Tadalafil|T 5mg、20mg|T 5mg|||Cialis|
+Avanafil|||T 200mg||Spedra|
+Finasteride|T 1mg|=|||Propecia|
+Levonorgestrel|T 1.5mg;Mirena IUD 原展示20mcg/24hr|=|T 1.5mg;Mirena intrauterine system 52mg|Mirena intrauterine system 52mg|Escapelle;Emcon 1;Mirena|口服緊急避孕與 IUD 分別保留；釋放率與總含量不互相換算。
+Ethinylestradiol + Levonorgestrel|T 0.03/0.15mg，21's|=|||Microgynon 30|
+Ethinylestradiol + Drospirenone|Yasmin T 0.03/3mg，21's;Yaz T 0.02/3mg，24/4's 28's|Yasmin T 0.03/3mg，21's|Yasmin T 原次序 drospirenone/ethinyloestradiol 3mg/0.03mg;Yaz T 3mg/0.02mg||Yasmin;Yaz|複方次序差異已列明；不同強度及週期包裝不當作同產品。
+Desogestrel||T 0.075mg，28's|||Cerazette|
+Desogestrel + Ethinylestradiol||T 150/20mcg，21's|||Mercilon|
+Dydrogesterone|T 10mg|=|||Duphaston|
+Estradiol||T 1mg、2mg，28's;陰道片10mcg|T 1mg||Estrofem;Vagifem|
+Estradiol + Dydrogesterone||T Femoston 2/10：2mg(14's)＋2/10mg(14's)|||Femoston|序貫產品原組合文字保留。
+Estradiol + Norethisterone acetate|||T 1mg/0.5mg，Activelle;T 原規格1mg/0.5mg，Trisequens||Activelle;Trisequens|原表未列完整序貫片組成，未據此確認兩品牌配方相同。
+Norethisterone|T 5mg|=|T 5mg||Norcolut|
+Medroxyprogesterone|T 5mg|=|T acetate 5mg;INJ acetate150mg/1ml||Provera;Trisofem;Depo-Provera|主要成分層級歸組；鹽／酯型及口服、注射各自保留。
+Progesterone|CA micronized 100mg|=|||Utrogestan|
+Dienogest|T 2mg|=|T 2mg||Visanne|
+Tibolone||T 2.5mg|||Livial|
+Conjugated estrogen / estrogens|陰道乳膏 0.625mg/g，14g||T conjugated estrogens 0.625mg;陰道乳膏 conjugated estrogen，原規格14g||Premarin|20F 陰道乳膏未列濃度，未由 AMC 補入。
+Clomifene / Clomiphene|T clomiphene 50mg|=|T clomifene citrate 50mg||Clomid;Ovulet|拼法按主要成分歸組；citrate 原文保留。
+Letrozole||T 2.5mg|||Femara|
+Leuprorelin|INJ depot 3.75mg，1 Month DPS|INJ depot 3.75mg，Enantone SR|||Enantone|供應商及裝置細節仍須原檔覆核。
+Testosterone salts||INJ 250mg|||Sustanon|?原文未逐一列出各種 testosterone ester 及分量。
+Oxytocin||||INJ 10 IU|Syntocinon|
+Lactobacillus acidophilus + Estriol||陰道片 100M/0.03mg|||Gynoflor|與口服 Lactobacillus 單方分列。
+#skin
+Betamethasone valerate|乳膏0.1%，15g;scalp application 0.1%，30ml|=|||Betnovate|20F 只寫 betamethasone，另列，不由商品名補成 valerate。
+Betamethasone（未標酯型）|||乳膏0.10%||Betnovate|?20F 未標 ester，與 AMC valerate 項目分列。
+Betamethasone + Gentamicin + Clotrimazole|乳膏15g，未列完整濃度|=|||Triderm|
+Betamethasone + Gentamicin|乳膏，未列完整濃度|=|||BeproGENT;Diprogenta|
+Betamethasone + Salicylic acid|軟膏15g，未列完整濃度||||Beprosalic;Diprosalic|
+Calcipotriol + Betamethasone|軟膏30g，未列完整濃度||||Daivobet|
+Calcipotriol|軟膏50mcg/g，30g||||Daivonex|
+Calcitriol|軟膏3mcg/g，30g||||Silkis|
+Clobetasol propionate|軟膏0.05%|=|||Dermovate|AMC1 Dermovate scalp application 未明列成分，另列待核對。
+Mometasone furoate|乳膏15g;軟膏15g;scalp lotion30ml|=|||Elomet|來源未完整列各製劑濃度；與20F只寫 mometasone 的項目分列。
+Mometasone（皮膚，未標酯型）|||乳膏0.1%||Elomet|?成分 ester 未完整列出。
+Fusidic acid|乳膏2%，15g;軟膏2%，15g|乳膏2%，15g|乳膏2%，15g||Fucidin|
+Fusidic acid + Betamethasone valerate|乳膏15g|=|||Fucicort|不與 fusidic acid/hydrocortisone 複方合併。
+Fusidic acid + Hydrocortisone|||乳膏15g，未標個別強度||Fucidin H|
+Hydrocortisone + Neomycin|乳膏1%/0.5%，15g|||||
+Miconazole + Hydrocortisone|乳膏2%/1%，15g|乳膏15g，個別濃度未標|||Zaricort;Daktacort|
+Clotrimazole|乳膏1%，20g;lotion1%，10ml;陰道pessary100mg;陰道片500mg|乳膏1%，20g;lotion1%，10ml;陰道片500mg|乳膏1%;噴劑1%;陰道片500mg||Canesten;Lotremin;Canesten One-Day|皮膚與陰道製劑分別列明。
+Isoconazole nitrate|乳膏1%，20g|=|||Travogen|
+Isoconazole + Diflucortolone|乳膏10g|=|||Travocort|
+Amorolfine|指甲外用液5%，2.5ml|=|||Loceryl|
+Ketoconazole|洗髮劑2%，100ml|=|||Nizoral|
+Sertaconazole|陰道栓劑300mg|=|||Zalain|
+Mupirocin|鼻膏2%，3g;皮膚軟膏2%，10g|=|||Bactroban|鼻用與皮膚用分別保留。
+Gentamicin|皮膚乳膏0.3%，450g||||Garamycin|
+Silver sulfadiazine|乳膏1%，25g|=|||Dermazin|
+Crotamiton|乳膏10%，20g|乳膏10%，450g|乳膏10%||Eurax|
+Calamine|乳膏20%，450g;lotion120ml|lotion120ml||||
+Mepyramine maleate|乳膏2%，18g|=|||Anthisan|
+Imiquimod|乳膏5%，盒裝||||Aldara|
+Pimecrolimus|乳膏1%，15g|=|||Elidel|
+Tacrolimus|軟膏0.03%、0.1%，各30g|軟膏0.1%，30g|||Protopic|
+Crisaborole|軟膏2%，30g|=|||Staquis|
+Ruxolitinib|乳膏15mg/g，100g||||Lumirix|
+Ivermectin|乳膏1%，30g||||Soolantra|
+Adapalene|凝膠0.1%，30g|=|||Differin|
+Benzoyl peroxide|凝膠5%，15g|=|||Panoxyl|
+Adapalene + Benzoyl peroxide|凝膠0.1/2.5%，15g||||Epiduo|
+Brimonidine|皮膚凝膠3mg/g，30g|眼滴tartrate0.15%，5ml|||Mirvaso;Alphagan-P|主要成分歸組；皮膚與眼用製劑分開列明。
+Acitretin||CA 10mg、25mg|||Neotigason|
+Salicylic acid + Lactic acid|外用液，原規格16.7%，14ml|=|||Duofilm|未將單一16.7%自動分配為兩種成分各自強度。
+Silver nitrate|外用applicator75%|外用caustic pencils95%|PEN95%|||
+Hydrogen peroxide|外用液3%，50ml|||||
+Potassium permanganate|外用液4%||溶液4%|=|KMnO4|AMC1 有列出，AMC2 shared 未列此項。
+Acetic acid||外用液5%，100ml||||
+Iodine + Potassium iodide||Lugol's solution，未標完整濃度|||Lugol|
+Zinc oxide|乳膏20g，未標濃度|=|乳膏32%，20g|||
+Petrolatum||||凝膠／瓶裝100g|Vaseline|未與含多成分的眼膏或 paraffin 複方合併。
+Liquid paraffin + White soft paraffin||軟膏50:50，200g||||
+Heparinoid|乳膏Forte40000u，14g|=|乳膏14g|=|Hirudoid;Hirudoid Forte|Specialists 未列 heparinoid 強度，不確認為 Forte 同規格。
+#eye
+Acetazolamide|T 250mg|=|||Diamox|分類只作導覽，不限制其他用途。
+Atropine|眼滴0.05%，5ml;眼滴0.05% SDU0.5ml×30;眼滴1%，10ml;INJ1mg/ml|眼滴0.01%0.5ml×30;眼滴0.05%0.5ml×30;INJ1mg/ml|INJ sulphate0.6mg/ml|INJ sulphate0.6mg/ml;INJ原成分ATROPINE0.6mg/ml||眼用與注射在同主要成分列分開顯示，鹽型及強度不作等價換算。
+Brinzolamide|眼滴1%，5ml||||Azopt|
+Brinzolamide + Timolol||眼滴10/5mg/ml，5ml|||Azarga|
+Brinzolamide + Brimonidine|眼滴10mg/2mg/ml，5ml|=|||Simbrinza|來源 CWB drug_type 有既存覆核疑點，本摘要未重新核實。
+Pilocarpine|眼滴2%，15ml|眼滴2%、4%，各15ml|||Isopto-Carpine|
+Latanoprost|眼滴2.5ml，未標濃度|眼滴0.005%，2.5ml|||Xalatan|
+Latanoprost + Timolol|眼滴2.5ml，未標各成分濃度||||Xalacom|
+Timolol（Timoptol，成分待核）|眼滴原名Timoptol0.5%，5ml|=|||Timoptol|?AMC 展示只列品牌及濃度，未另列 generic；保留為待核對品牌項目。
+Travoprost + Timolol||眼滴40mcg+5mg/ml，2.5ml|||Duotrav|
+Tafluprost + Timolol||眼滴0.0015%/0.5%，0.3ml SDU×30|||Tapcom-S|
+Cyclopentolate|眼滴1%，15ml|=|||Cyclogyl|
+Tropicamide + Phenylephrine|眼滴10ml，未標完整濃度|=|||Mydrin-P|
+Carbachol||intraocular solution0.01%|||Miostat|
+Chloramphenicol||眼膏1%，4g|眼滴5ml，未標濃度;眼膏1%|眼膏1%|Kemicetine;Chlorsig;Chloraphenicol Eye Drop|
+Ofloxacin|耳用液0.3%，10ml|=|眼用液3mg/ml||Tarivid|AMC 為耳用，20F 為眼用；同主要成分不代表同給藥部位。
+Moxifloxacin|眼滴0.5%，5ml|=|||Vigamox|
+Tobramycin|眼滴0.3%，5ml;眼膏0.3%，3.5g|=|||Tobrex|
+Tobramycin + Dexamethasone|眼滴5ml;眼膏3.5g|=|||Tobradex|
+Gentamicin + Dexamethasone|眼／耳滴0.3/0.1%，5ml|=||||
+Dexamethasone + Neomycin|||眼／耳滴0.1%/0.5%||Dextracin|與含第三種成分 polymyxin／polymycin B 的產品分列。
+Dexamethasone + Neomycin + Polymyxin B|眼膏3.5g|=|||Maxitrol|Dexatrol 原文拼作 Polymycin B，另列待核對。
+Dexamethasone + Neomycin + Polymycin B（原拼法）|眼／耳滴5ml|=|||Dexatrol|?來源原成分拼作 Polymycin B；未靜默視為已確認 Polymyxin B。
+Fluorometholone|眼滴0.1%，5ml|=|||FML|
+Loteprednol|眼滴0.5%，5ml|=|||Lotemax|
+Nepafenac|眼滴0.1%，5ml|=|||Nevanac|
+Olopatadine|眼滴0.2%，2.5ml|=|||Pataday|
+Pemirolast|眼滴0.1%，5ml|=|眼滴原成分0.1%，規格5ml||Pemirox|
+Cromoglicate sodium||眼滴2%，10ml|||Opticrom|
+Ketotifen||眼滴0.25mg/ml，SDU10's|||Zaditen Ophtha|
+Naphazoline + Pheniramine||眼滴15ml，未標個別濃度|||Naphcon-A|
+Cyclosporin A|眼用emulsion0.05%，30's|=|||Restasis|
+Proxymetacaine||眼滴0.5%，10ml|||Alcaine|
+Aflibercept||intravitreal40mg/ml PFS0.09ml;intravitreal8mg/0.07ml PFS0.184ml|||Eylea|原文濃度、劑量及容器容量均保留，不自行換算。
+Ranibizumab||intravitreal10mg/ml PFS0.165ml|||Lucentis|
+Faricimab||intravitreal6mg/0.05ml|||Vabysmo|
+Hyaluronic acid|眼用0.2% UD30's|=|||Artelac Advanced|與來源另寫 sodium hyaluronate 的項目分列。
+Sodium hyaluronate|眼滴2mg/ml，10ml;關節INJ88mg/4ml|=|||Hylo Gel;Monovisc|眼用與關節注射分別保留。
+Hyaluronate（未標完整鹽型）|關節INJ20mg/2ml||||Hyalgan|未由商品名補充來源未寫出的鹽型。
+Carboxymethylcellulose|眼滴0.5% UD;眼滴0.5%，15ml|眼滴0.5%，15ml|||Refresh Plus;Refresh Tears|
+Hypromellose|||眼滴原成分0.3%，規格5ml||Lostear|
+Dexpanthenol|眼凝膠50mg/g，10g|=|||Corneregel|
+Lanolin + Mineral oil + White petrolatum|眼膏3.5g||||Duratears|
+#nutrition
+Glucose / Dextrose|INJ dextrose5%250ml、500ml;INJ glucose5%100ml|INJ dextrose5%250ml;INJ dextrose50%20ml;INJ glucose5%100ml||INJ glucose20ml(50%);輸液glucose500ml(5%)||按主要成分歸組；濃度、容量及原名保留，未判定產品同規格。
+Sodium chloride|INJ0.9%10ml、100ml、1000ml|=|INJ10ml(0.9%)、20ml(0.9%)|INJ10ml(0.9%W/V)、20ml(0.9%W/V);flush syringe10ml(0.9%W/V);輸液100ml、500ml(0.9%W/V)||眼用 NORMAL SALINE 原文只列名稱、未列成分濃度，另列待核對。
+Sodium bicarbonate|INJ8.4%100ml|=|INJ100ml(8.4%)|=||
+Calcium chloride|INJ10%，1g/10ml|=|INJ100mg/ml|||
+Magnesium sulphate|||INJ2.47g/5ml(49.3%)|=||原文數值及括號濃度均保留，未重新計算。
+Potassium chloride|T SR600mg/8mEq|=|||Slow K|
+Tranexamic acid|CA250mg;T500mg|=|CA250mg|CA250mg;INJ100mg/ml|Transamin|
+Ferric subsulfate / subsulphate||溶液20–22%，8ml with applicators|溶液原成分FERRIC SUBSULPHATE20-22%Fe，規格20-22%|溶液20-22%|Monsel's Solution;Monsel's Soln|鐵含量與化合物濃度表達未核實，不據此確認完全同規格。
+Cholecalciferol / Colecalciferol|T1000units|=|CA原成分VITAMIN D3，1000I.U.||Vitamin D3|AMC 片劑、20F 膠囊分別保留。
+Calcium + Cholecalciferol|咀嚼片500mg+400units|=|咀嚼片500mg/400I.U.||CalciChew D3;Calci Chew|
+Mecobalamin||T500mcg|T500mcg||Methycobal|不與 cyanocobalamin 合併為同成分。
+Cyanocobalamin|INJ1000mcg/ml，10ml|=|||Vitamin B12|
+Vitamin B1 + Vitamin B6 + Vitamin B12|T93mg/46mg/900mcg|=|T93mg,46mg,900mcg||Neurobion Protect|原文未完整列各維他命化學形式，不補填。
+Folic acid|T1mg|T5mg||||
+Ascorbic acid|T500mg|T time-release500mg|||Vitamin C|
+Tocopheryl（原文未標完整形式）|CA400units|=|||Vitamin E|?原文只寫 Tocopheryl，未列完整 ester／形式。
+Iron(III) hydroxide polymaltose complex|咀嚼片100mg|=|||Ferrum|20F generic 只寫 FERRUM HAUSMANN，另列待核對，不由品牌推定成分。
+Succinylated gelatin|輸液500ml||||Gelofusine|
+Soya oil||||輸液250ml|Intralipid|只保留原文所列 SOYA OIL，不補完整脂肪乳配方。
+Mannitol + Sorbitol||||INJ17.5%/2.5%|Osmofundin|
+Water for injection||INJ10ml||||不與灌洗用無菌水合併為同製劑。
+#joint
+Ibuprofen|T200mg;懸液100mg/5ml，100ml|T200mg;懸液100mg/5ml，1.0L|T200mg;懸液100mg/5ml|=|Brufen|
+Etoricoxib|T60mg、90mg、120mg|=|T60mg、90mg、120mg|=|Arcoxia|20F 90mg 在不同分類的註冊編號有原文差異，未在本摘要更正。
+Celecoxib|CA200mg|=|CA100mg、200mg|=|Celebrex;Celecoxib Sandoz|20F Sandoz 註冊編號原文為0，未用作產品匹配依據。
+Diclofenac|T sodium25mg;T sodium ER100mg;INJ75mg/3ml;外用diethylamine gel20g|T sodium25mg;INJ75mg/3ml;外用diethylamine gel20g|Emulgel1%|栓劑100mg|Voltaren;Voltaren SR;Voltaren Emulgel|鹽型、劑型與釋放方式分別保留；不認定外用diethylamine與其他製劑等價。
+Mefenamic acid|CA250mg|=|CA250mg||Ponstan|
+Naproxen|T250mg||||Naprosyn|
+Nimesulide|||T100mg||Nidol|
+Parecoxib|||INJ40mg|=|Dynastat|
+Ketoprofen|凝膠2.5%，30g;貼劑2%，7's|=|貼劑2%||Fastum;Mohrus;Ketoprus|
+Orphenadrine + Paracetamol|||T35mg/450mg||Norgesic|
+Baclofen|||T10mg|||
+Tolperisone|T150mg|=|||Mydocalm|原代碼有 see-code 覆核事項；本頁只作成分歸組。
+Colchicine|T0.5mg|=|T0.5mg|||
+Allopurinol|T100mg、300mg|=|||Zyloric|
+Febuxostat|T80mg|=|T80mg||Feburic|
+Glucosamine|CA sulphate250mg|袋裝sulphate1500mg|CA500mg||Viartril-S|保留 sulphate 原文；20F 未標鹽型，不確認同規格。
+Hylan G-F 20|關節INJ Synvisc One48mg/6ml|=|INJ Synvisc16mg/2ml;INJ Synvisc One原規格16mg/2ml||Synvisc;Synvisc One|20F Synvisc One 與 AMC 所列總量／容量不同，原文保留待核對。
+Methylprednisolone + Lidocaine||關節INJ methylprednisolone40mg+lidocaine，後者未標強度|INJ40mg/10mg/ml||Depo-Medrol;Depo-Medrol w/Lidocaine|AMC lidocaine 強度未列；20F 原規格的分母對應未重新核實。
+#anaesthesia
+Lidocaine / Lignocaine|INJ lignocaine2%，5ml;外用spray lignocaine10%，50g;jelly lignocaine2%，30g|INJ lignocaine2%，5ml;INJ lignocaine1%，5ml;外用spray lignocaine10%，50g;jelly lignocaine2%，30g|INJ lignocaine2%;jelly lignocaine2%|INJ lignocaine2%;jelly lignocaine2%;pump spray lidocaine10%|Xylocaine|主要成分名稱歸組；不同容量、給藥途徑及產品仍分別列示。
+Lidocaine + Phenylephrine|spray 原成分lignocaine/phenylephrine50+5mg/ml，50ml|=||spray 原成分lignocaine HCl;phenylephrine HCl，規格50ml|Co-Phenylcaine Forte|5F 未列完整強度，不由 AMC 補入。
+Lidocaine + Prilocaine|乳膏總濃度5%，5g|=|||Emla|未由總濃度推算兩成分各自濃度。
+Lidocaine + Chlorhexidine||gel11ml| |prefilled syringe原規格215.7mg,28.8mg|Instillagel|AMC2 與5F 劑型／規格表達不同，不能據此判定同產品。
+Lidocaine + Adrenaline||INJ lidocaine2%+adrenaline1:80000，1.7ml|||Xylestesin A|
+Lidocaine + Glyceryl trinitrate|||extemporaneous gel/jar，原規格2%|=|Xylocaine Jelly 2% + TNG|複方完整濃度未列，不把2%同時套用於兩成分。
+Levobupivacaine||||INJ5mg/ml|Chirocaine|
+Midazolam|INJ5mg/5ml|=|INJ5mg/5ml|INJ5mg/5ml，兩筆不同註冊編號|Dormicum|5F 同名同規格在麻醉及神經分類列不同註冊編號，保留為來源疑點。
+Ketamine||||INJ10mg/ml|Ketalar|
+Propofol||INJ1%MCT/LCT200mg/20ml||INJ10mg/ml|Diprivan;Fresofol|賦形／脂肪乳描述及容量各自保留，未判定同產品。
+Sevoflurane||||inhalation liquid250ml|Sevorane|
+Desflurane||||inhalation liquid240ml|Suprane|
+Fentanyl||INJ100mcg/2ml||INJ100mcg/2ml||
+Remifentanil||||INJ1mg/vial|Dormiden|
+Cisatracurium||||INJ10mg/5ml||
+Rocuronium||||INJ50mg/5ml|Rocuronium Inj 1%|
+Suxamethonium||||INJ50mg/ml||
+Atracurium||||INJ25mg/2.5ml|Tracrium|
+Neostigmine||||INJ2.5mg/ml||
+Flumazenil||INJ0.5mg/5ml|||Anexate|
+Naloxone|INJ0.4mg/ml|=|INJ0.4mg/ml|=|Narcan|
+Dantrolene||||INJ250mg/5ml|Ryanodex|
+Ethanol||||INJ anhydrous99%|Anhydrous Ethanol Injection|
+#vaccine
+Hib vaccine|Act-HIB0.5ml IM/Sub-Q|=||||來源疫苗名稱歸組，未核驗抗原量及完整產品組成。
+Tdap vaccine|Adacel0.5ml IM|=||||
+Adult diphtheria + Tetanus vaccine|Imovax D.T.0.5ml PFS|=||||
+DTP + IPV + Hib + Hepatitis B vaccine|Hexaxim6-in-1，0.5ml||||Hexaxim|
+RSV recombinant vaccine|Arexvy0.5ml IM|=||||
+Meningococcal B vaccine|Bexsero0.5ml PFS|=||||
+Meningococcal ACYW conjugate vaccine|Menquadfi0.5ml IM|=||||
+Hepatitis B vaccine|Engerix B Adult20mcg/ml PFS|=|Engerix-B Adult INJ，強度原表空白||Engerix-B|
+Hepatitis A adult vaccine|Havrix1440，1ml|=|Havrix1440 Adult INJ，強度原表空白||Havrix|
+Hepatitis A + B vaccine|Twinrix Adult1ml|=||||
+HPV 9-valent vaccine|Gardasil-9，0.5ml|=|Gardasil9 INJ，強度原表空白||Gardasil 9|
+Pneumococcal polysaccharide 23-valent vaccine|Pneumovax-23，0.5ml PFS|=||||
+Pneumococcal conjugate 20-valent vaccine|Prevenar-20，0.5ml PFS|=||||
+Pneumococcal conjugate 15-valent vaccine|Vaxneuvance，0.5ml PFS|=||||
+MMR live vaccine|Priorix0.5ml|||||
+MMR + Varicella live vaccine||ProQuad0.5ml PFS||||
+Varicella vaccine|Varivax0.5ml|=||||
+Rotavirus oral live vaccine|Rotateq2ml|=||||
+Typhoid vaccine|Typhim Vi0.5ml|=||||
+Inactivated rabies vaccine|Verorab IM|=||||
+?Shingrix（原成分描述有衝突）|Shingrix／Herpes zoster vaccine0.5ml IM|=|Shingrix／原文VARICELLA-ZOSTER VIRUS VACCINE LIVE||Shingrix|20F 寫 LIVE，AMC 未寫 LIVE；只按同品牌並列提示，不作已驗證的疫苗成分匹配。
+#pending
+?Anusol（完整成分未提供）|軟膏25g;栓劑|=|||Anusol|只有品牌及劑型，未推定各製劑完整成分相同。
+?Faktu 軟膏（AMC 未列成分）|軟膏20g|=|||Faktu|不由品牌推定與 Specialists policresulen/cinchocaine 配方完全相同。
+?Combizym／Digestive enzymes（配方未完整）||Combizym T|Combizym T，原成分DIGESTIVE ENZYMES|=|Combizym|只可確認列有此品牌／概括成分，未確認酵素種類、活性及配方一致。
+?GI Klean（跨來源完整配方未確認）|粉袋，原成分PEG+electrolytes／Klean Prep|=|袋裝70g；polyethylene glycol/sodium sulphate/sodium bicarbonate/sodium chloride/potassium chloride/aspartame|=|GI Klean;Klean Prep|AMC 只列概括成分，不將兩組當作已確認完整複方一致。
+?Isocolan（sample）|||袋裝35g；polyethylene glycol/sodium sulphate/sodium bicarbonate/sodium chloride/potassium chloride/aspartame|=|Isocolan|雖與 Specialists GI Klean 有相同成分文字，劑量配方比例及製劑規格未完整，不跨品牌強行視為同產品。
+?PicoPrep（完整配方／強度待核對）|袋裝16.1g；sodium picosulfate/MgO/citric acid|=|袋裝25.5g；sodium picosulfate/magnesium oxide/anhydrous citric acid/potassium hydrogen carbonate/sodium saccharin/acacia gum/lactose/ascorbic acid/butylated hydroxyanisole|=|PicoPrep;Picolax|來源成分詳略及袋重不同，未自行判定哪些是活性或賦形劑，亦未確認同配方。
+?Oral Fleet（未列完整成分）|||原成分FLEET PHOSPHO-SODA，劑型／規格空白|=|Oral Fleet|不由品牌補成完整 sodium phosphate 配方，亦不與 Fleet enema 合併為同製劑。
+?Normal saline 眼用（成分濃度未提供）| | |solution/bottle5ml|=|Normal Saline|原表眼科類只寫 NORMAL SALINE，不補入0.9%濃度或推定與注射製劑相同。
+?FLO Baby Nasal Spray（原縮寫配方）|||鼻噴15ml；NAHCO3,NACL,KCL,CACL,MGCL||FLO Baby|保留原縮寫，未擅自補化學式下標、鹽型或成分濃度。
+?Oral rehydration salts NF|袋裝5.3g|=|||GES|完整鹽類及比例未列，不與其他電解質複方合併。
+?Plasma-Lyte 148||輸液pH7.4，1L|||Plasma-Lyte|完整成分及各濃度未提供。
+?Ferrum Hausmann（成分欄為品牌）|||咀嚼片100mg||Ferrum Hausmann|不由品牌自動推定為 AMC iron(III) hydroxide polymaltose complex。
+?Spatone iron + Vitamin C||液體袋25ml|||Spatone|鐵的化學形式及分量未完整列出，不與其他鐵劑合併。
+?Mounjaro 5mg（原成分欄空白）|INJ5mg/0.6ml，KwikPen2.4ml|=|||Mounjaro|提供版本指出 name_cmn 空白；未由同品牌2.5mg項目自動補成分。
+?Vitamin B complex|T，未標各成分|=|||Vitamin B Complex|不與 Neurobion B1/B6/B12 複方強行合併。
+?Nestle MOM vitamins/minerals/DHA|原type T，名稱capsule，包裝30C||||Nestle MOM|完整成分未列，且來源劑型有矛盾。
+?Materna||T，未標完整成分|||Materna|未推定與其他綜合維他命配方相同。
+?Biomed Tailormade Probiotic Kit|Kit|=|||Biomed|未列菌株、菌量及完整組成。
+?Enterogermina／Bacillus clausii|口服懸液單位2B/5ml|=|||Enterogermina|菌種有列，但未列完整菌株及與其他益生菌配方的匹配資料。
+?Lacteol Fort／Lactobacillus acidophilus|CA|=|||Lacteol Fort|菌株、活性狀態及菌量未完整列出。
+?Reuteri／Lactobacillus reuteri|咀嚼片100million cells|=|||Reuteri|未列完整菌株；不與其他益生菌合併。
+?G-NiiB Immunity／Immunity Pro（配方待核）|袋裝2g，10b CFU；prebiotics+3Bifidobacteria|=|袋裝2g；原成分PROBIOTICS|=|G-NiiB Immunity;G-NiiB Immunity Pro|名稱相近但 Specialists 未列菌株／完整配方，不能確認跨來源同配方。
+?G-NiiB M3xtra Pro|袋裝2g，12.5b CFU；pre-probiotics+Streptococci|=|||G-NiiB M3xtra Pro|不與 Immunity Pro 當作同菌株配方。
+?Bioflor（原文PROBIOTICS）|||袋裝250mg|=|Bioflor|未由品牌補菌種，亦不與其他 PROBIOTICS 概括項目合併。
+?Isnochem 15-in-1|||CA60Billion||Isnochem|原文只寫PROBIOTICS，完整菌株及配方未列。
+?Onevita 17 Mixed Probiotics|||CA；原成分PROBIOTIC+PREBIOTIC，強度空白|=|Onevita|完整菌株及組合未列。
+?Ceradan Skin Barrier Repair|||乳膏80g；ceramide-dominant therapeutic moisturiser||Ceradan|不是完整成分清單，不與其他潤膚產品合併。
+?Cetaphil cream|乳膏100g|=|||Cetaphil|完整成分未提供。
+?Lipikar Baume AP+M|乳膏400ml||||Lipikar|完整成分未提供。
+?Physiogel AI cream|乳膏50ml|=|||Physiogel AI|完整成分未提供，不與其他 Physiogel 配方合併。
+?Physiogel cream|乳膏75ml||||Physiogel|完整成分未提供。
+?Physiogel cleanser|cleanser150ml；原展示sodium cocoyl isethionate|=|||Physiogel cleanser|只列一個成分名稱，不當作完整清潔配方。
+?Emulsifying ointment|軟膏jar||||Emulsifying Ointment|完整乳化軟膏配方未提供。
+?Nisita saline nasal ointment|鼻膏20g||||Nisita|saline不足以確認完整成分及濃度。
+?Sterimar sea water nasal spray|鼻噴50ml|=|||Sterimar|未列完整離子組成、濃度或產品變體。
+?NasalCare rinse powder|粉袋3.5g；sea salt/sodium citrate/citric acid||||NasalCare|sea salt為概括成分，未補完整離子配方。
+?Dermatix Ultra|silicone gel15g|=|||Dermatix|未列完整配方。
+?Dermovate scalp application|scalp application，未標成分及強度||||Dermovate|不由品牌自動填入 clobetasol propionate。
+?Pinetarsol|200ml|=|||Pinetarsol|完整成分未提供。
+?Sebitar scalp cleansing||250ml；tar1%、coal tar1%、salicylic acid2%|||Sebitar|tar與coal tar原文均保留，未自行合併或補成分。
+?Cationorm|眼用UD0.4ml×30||||Cationorm|完整組成未提供。
+?Extracomb（成分文字及單位待核）|||乳膏；gramicidin/neomycin sulfate/nystatin/triamcinolone acetonide；原規格0.05%/0.25%/100000 OU/g,0.1%||Extracomb|OU/g沿用原文，不靜默改為其他單位。
+#device
+Co-Phenylcaine nozzle|short flexi nozzle，原see NOZ-M||||Co-Phenylcaine Nozzle|器材，不當作 lidocaine/phenylephrine 藥物收錄。
+Blephaclean|sterile eye wipes20's|=|||Blephaclean|清潔用品，不補完整成分。
+NasalCare starter kit|kit30's||||NasalCare Starter Kit|器材／套裝，不由名稱推定內容物藥物。
+Mona Lisa NT Cu380 IUD|IUD|=|||Mona Lisa|器材獨立列出，不與 levonorgestrel IUD 合併。
+Sterile water for irrigation||灌洗液1L||||不與 water for injection 視為同給藥製劑。
+`;
+
+/*
+少量明確欄位修正：
+只修正本摘要編排，不改寫提供來源。
+避免將口服藥誤放在5F欄或遺漏20F。
+*/
+const SUMMARY_FIXES = {
+  "Pentoxifylline": {
+    cells: [
+      "T SR 400mg",
+      "",
+      "T 400mg",
+      ""
+    ],
+    note: "AMC1 列 SR；20F 原展示未標 SR，未判定釋放方式相同。"
+  },
+  "Amitriptyline": {
+    cells: ["T 10mg、25mg", "", "T 10mg", ""],
+    aliases: "Tryptanol",
+    note: ""
+  },
+  "Escitalopram": {
+    cells: ["T 10mg", "", "T 10mg", ""],
+    aliases: "Lexapro",
+    note: ""
+  },
+  "Lorazepam": {
+    cells: ["T 1mg", "", "T 1mg", ""],
+    aliases: "Ativan;Lorans",
+    note: ""
+  },
+  "Normal saline 眼用（成分濃度未提供）": {
+    cells: ["", "", "solution/bottle5ml", "solution/bottle5ml"]
+  }
+};
+
+const SITE_IDS = ["cwb","tkp","s20","s5"];
+const SITE_NAMES = [
+  "AMC1 CWB","AMC2 TKP","Specialists 20F","Specialists 5F"
+];
+
+const $ = id => document.getElementById(id);
+const UI = {
+  search:$("search"),category:$("category"),
+  availability:$("availability"),status:$("status"),
+  compact:$("compact"),reset:$("reset"),
+  csv:$("csv"),print:$("print"),save:$("save"),
+  stats:$("stats"),summary:$("summary"),
+  error:$("error"),rows:$("rows"),validation:$("validation")
+};
+
+let model = [];
+let visible = [];
+let initialized = false;
+
+function esc(value){
+  return String(value ?? "").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",
+    '"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+function norm(value){
+  return String(value ?? "").normalize("NFKC")
+    .toLowerCase().replace(/\s+/g," ").trim();
+}
+
+function uniq(values){
+  return [...new Set(values)];
+}
+
+function parseData(){
+  let category = "";
+  const result = [];
+  const seen = new Set();
+
+  DATA.split(/\r?\n/).forEach((raw,index)=>{
+    const line = raw.trim();
+    if(!line) return;
+
+    if(line.startsWith("#")){
+      category = line.slice(1).trim();
+      if(!Object.prototype.hasOwnProperty.call(CATEGORY,category)){
+        throw new Error(`第${index+1}行：未知分類 ${category}`);
+      }
+      return;
+    }
+
+    if(!category){
+      throw new Error(`第${index+1}行：缺少分類`);
+    }
+
+    const parts = line.split("|").map(v=>v.trim());
+
+    /*
+    個別已明列於 SUMMARY_FIXES 的編排修正列，
+    可含原編排留下的空白尾欄；其餘一律檢查欄數。
+    */
+    const rawName = (parts[0] || "").replace(/^\?/,"");
+    const hasFix = Object.prototype.hasOwnProperty.call(
+      SUMMARY_FIXES, rawName
+    );
+
+    if(parts.length>7 && !hasFix){
+      throw new Error(`第${index+1}行：欄數超過7，${rawName}`);
+    }
+
+    while(parts.length<7) parts.push("");
+
+    const [generic,cwb,tkp,s20,s5,aliases,note] = parts;
+    if(!generic) throw new Error(`第${index+1}行：成分名稱空白`);
+
+    const name = generic.replace(/^\?/,"");
+    const key = norm(name);
+
+    if(seen.has(key)){
+      throw new Error(`重複摘要列：${name}`);
+    }
+    seen.add(key);
+
+    let cells = [cwb,tkp,s20,s5];
+
+    if(cells[1]==="="){
+      if(!cells[0]) throw new Error(`${name}：TKP無可複製的CWB資料`);
+      cells[1]=cells[0];
+    }
+
+    if(cells[3]==="="){
+      if(!cells[2]) throw new Error(`${name}：5F無可複製的20F資料`);
+      cells[3]=cells[2];
+    }
+
+    if(cells[0]==="=" || cells[2]==="="){
+      throw new Error(`${name}：不支援此位置的等號`);
+    }
+
+    const row = {
+      id:`g${result.length+1}`,
+      category,
+      name,
+      cells,
+      aliases,
+      note,
+      pending:generic.startsWith("?") || note.startsWith("?")
+    };
+
+    const fix = SUMMARY_FIXES[name];
+    if(fix){
+      if(fix.cells) row.cells=[...fix.cells];
+      if(Object.prototype.hasOwnProperty.call(fix,"aliases")){
+        row.aliases=fix.aliases;
+      }
+      if(Object.prototype.hasOwnProperty.call(fix,"note")){
+        row.note=fix.note;
+      }
+    }
+
+    row.note=row.note.replace(/^\?/,"");
+
+    /*
+    以下分類只表示有條件對照，不假裝已完成精確成分驗證。
+    */
+    if(row.category==="pending") row.pending=true;
+
+    if(!row.cells.some(Boolean)){
+      throw new Error(`${name}：四間診所皆空白`);
+    }
+
+    row.siteCount=row.cells.filter(Boolean).length;
+    row.search=norm([
+      row.name,row.aliases,row.note,
+      CATEGORY[row.category],...row.cells
+    ].join(" "));
+
+    result.push(row);
+  });
+
+  return result;
+}
+
+function availabilityMatches(row,value){
+  const [a,b,c,d]=row.cells.map(Boolean);
+  const count=row.siteCount;
+  const siteIndex=SITE_IDS.indexOf(value);
+
+  if(siteIndex>=0) return Boolean(row.cells[siteIndex]);
+
+  switch(value){
+    case "all4":return count===4;
+    case "amcBoth":return a&&b;
+    case "specialistsBoth":return c&&d;
+    case "cross":return (a||b)&&(c||d);
+    case "amcOnly":return (a||b)&&!c&&!d;
+    case "specialistsOnly":return !a&&!b&&(c||d);
+    case "single":return count===1;
+    case "onlycwb":return count===1&&a;
+    case "onlytkp":return count===1&&b;
+    case "onlys20":return count===1&&c;
+    case "onlys5":return count===1&&d;
+    default:return true;
+  }
+}
+
+function matches(row){
+  const terms=norm(UI.search.value).split(" ").filter(Boolean);
+
+  if(terms.some(term=>!row.search.includes(term))) return false;
+  if(UI.category.value && row.category!==UI.category.value) return false;
+  if(!availabilityMatches(row,UI.availability.value)) return false;
+
+  switch(UI.status.value){
+    case "normal":if(row.pending) return false;break;
+    case "pending":if(!row.pending) return false;break;
+    case "notes":if(!row.note) return false;break;
+  }
+
+  return true;
+}
+
+function cellHTML(text,pending){
+  if(!text){
+    return '<span class="absent">未列出此歸組</span>';
+  }
+
+  const variants=text.split(";").map(v=>v.trim()).filter(Boolean);
+
+  return `
+    <span class="badge ${pending?"pending-badge":""}">
+      ${pending?"有列出 · 待核成分":"有列出"}
+    </span>
+    <ul class="variants">
+      ${variants.map(v=>`<li>${esc(v)}</li>`).join("")}
+    </ul>
+  `;
+}
+
+function notesHTML(row){
+  const notes=[];
+
+  if(row.pending){
+    notes.push("成分／完整配方未確認；本列不代表已驗證的跨診所成分匹配。");
+  }
+
+  if(row.note) notes.push(row.note);
+
+  if(!notes.length) return '<span class="absent">—</span>';
+
+  return `<ul>${notes.map(v=>`<li>${esc(v)}</li>`).join("")}</ul>`;
+}
+
+function rowHTML(row){
+  return `
+    <tr>
+      <td>
+        <div class="generic-name">${esc(row.name)}</div>
+        ${row.pending?'<div class="small">⚠ 成分／配方待核對</div>':""}
+        ${row.aliases?`
+          <div class="alias">
+            搜尋別名：${esc(row.aliases.split(";").join(" ／ "))}
+          </div>
+        `:""}
+      </td>
+      ${row.cells.map(text=>`<td>${cellHTML(text,row.pending)}</td>`).join("")}
+      <td class="notes-cell">${notesHTML(row)}</td>
+    </tr>
+  `;
+}
+
+function renderStats(){
+  const confirmed=visible.filter(row=>!row.pending);
+  const pending=visible.length-confirmed.length;
+
+  const stats=[
+    ["目前歸組列",visible.length],
+    ["主要成分歸組",confirmed.length],
+    ["待核對列",pending],
+    ...SITE_NAMES.map((name,index)=>[
+      `${name} 列出`,
+      visible.filter(row=>row.cells[index]).length
+    ]),
+    ["四間均列出",visible.filter(row=>row.siteCount===4).length]
+  ];
+
+  UI.stats.innerHTML=stats.map(([label,value])=>
+    `<span class="stat">${esc(label)} <b>${value}</b></span>`
+  ).join("");
+}
+
+function render(){
+  if(!initialized) return;
+
+  visible=model.filter(matches);
+  document.body.classList.toggle("compact",UI.compact.checked);
+
+  if(!visible.length){
+    UI.rows.innerHTML=
+      '<tr class="empty"><td colspan="6">沒有符合目前篩選的項目。</td></tr>';
+  }else{
+    let previous="";
+    const html=[];
+
+    for(const row of visible){
+      if(previous!==row.category){
+        html.push(
+          `<tr class="chapter"><th colspan="6">${esc(CATEGORY[row.category])}</th></tr>`
+        );
+        previous=row.category;
+      }
+      html.push(rowHTML(row));
+    }
+
+    UI.rows.innerHTML=html.join("");
+  }
+
+  renderStats();
+
+  const filterText=[
+    UI.category.selectedOptions[0].textContent,
+    UI.availability.selectedOptions[0].textContent,
+    UI.status.selectedOptions[0].textContent
+  ];
+
+  if(UI.search.value.trim()){
+    filterText.push(`搜尋：${UI.search.value.trim()}`);
+  }
+
+  UI.summary.textContent=
+    `顯示 ${visible.length}／${model.length} 個成分／配方／獨立待核對歸組。`+
+    ` ${filterText.join(" ｜ ")}。`+
+    "統計為摘要歸組數，不是原始產品數、品牌數或庫存數；"+
+    "待核對列亦計入「列出」數，但不代表已確認成分相同。";
+
+  UI.csv.disabled=!visible.length;
+  UI.print.disabled=!visible.length;
+}
+
+function csvCell(value){
+  let text=String(value??"");
+  if(/^[\s\u0000-\u001f\uFEFF]*[=+\-@]/.test(text)){
+    text="'"+text;
+  }
+  return '"'+text.replace(/"/g,'""')+'"';
+}
+
+function downloadBlob(blob,filename){
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");
+  link.href=url;
+  link.download=filename;
+  link.hidden=true;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+}
+
+function exportCSV(){
+  if(!initialized || !visible.length) return;
+
+  const header=[
+    "整理分類",
+    "GENERIC／完整複方組合／待核對項目",
+    "對照狀態",
+    "AMC1 CWB列出情況","AMC1 CWB製劑詳情",
+    "AMC2 TKP列出情況","AMC2 TKP製劑詳情",
+    "Specialists20F列出情況","Specialists20F製劑詳情",
+    "Specialists5F列出情況","Specialists5F製劑詳情",
+    "搜尋品牌別名（不代表各診所均有此品牌）",
+    "個別備註",
+    "藥房覆核結果","確認人","確認日期"
+  ];
+
+  const records=visible.map(row=>{
+    const values=[
+      CATEGORY[row.category],
+      row.name,
+      row.pending?"成分／完整配方待核對":"主要成分級歸組，非產品等價"
+    ];
+
+    row.cells.forEach(text=>{
+      values.push(
+        text
+          ? (row.pending?"有列出，成分待核對":"有列出")
+          : "未列出此歸組",
+        text.split(";").map(v=>v.trim()).filter(Boolean).join("\n")
+      );
+    });
+
+    values.push(
+      row.aliases.split(";").join(" ／ "),
+      row.note,"","",""
+    );
+    return values;
+  });
+
+  const csv="\uFEFF"+[header,...records]
+    .map(record=>record.map(csvCell).join(","))
+    .join("\r\n");
+
+  downloadBlob(
+    new Blob([csv],{type:"text/csv;charset=utf-8"}),
+    "Four-Clinics-Generic-Comparison.csv"
+  );
+}
+
+function saveHTML(){
+  /*
+  下載目前檔案的獨立副本。
+  內嵌 DATA 及程式均在檔案內，不依賴原始兩份HTML。
+  清除已渲染表身，減少重複內容；重新開啟時由內嵌資料載入。
+  */
+  const clone=document.documentElement.cloneNode(true);
+  const rows=clone.querySelector("#rows");
+
+  if(rows){
+    rows.innerHTML=
+      '<tr class="empty"><td colspan="6">正在載入內嵌資料……</td></tr>';
+  }
+
+  ["stats","summary","validation"].forEach(id=>{
+    const node=clone.querySelector("#"+id);
+    if(node) node.textContent="";
+  });
+
+  const error=clone.querySelector("#error");
+  if(error){
+    error.hidden=true;
+    error.textContent="";
+  }
+
+  clone.querySelector("body")?.classList.remove("has-errors");
+
+  const html="<!doctype html>\n"+clone.outerHTML;
+
+  downloadBlob(
+    new Blob([html],{type:"text/html;charset=utf-8"}),
+    "Combined-Generic-Formulary.html"
+  );
+}
+
+function fail(error){
+  initialized=false;
+  console.error(error);
+  document.body.classList.add("has-errors");
+  UI.error.hidden=false;
+  UI.error.textContent=
+    "摘要資料載入失敗，請勿將部分結果視為完整清單。\n"+
+    (error instanceof Error?error.message:String(error));
+  UI.rows.innerHTML=
+    '<tr class="empty"><td colspan="6">載入失敗。</td></tr>';
+  UI.stats.innerHTML="";
+  UI.summary.textContent="未完成載入。";
+  UI.csv.disabled=true;
+  UI.print.disabled=true;
+}
+
+function safeRender(){
+  try{render()}catch(error){fail(error)}
+}
+
+function initialize(){
+  model=parseData();
+
+  if(!model.length) throw new Error("未載入任何摘要項目");
+
+  const categoryOrder=Object.keys(CATEGORY);
+
+  model.sort((a,b)=>
+    categoryOrder.indexOf(a.category)-categoryOrder.indexOf(b.category)||
+    a.name.localeCompare(b.name,"en",{sensitivity:"base",numeric:true})
+  );
+
+  for(const [value,label] of Object.entries(CATEGORY)){
+    if(!model.some(row=>row.category===value)) continue;
+    const option=document.createElement("option");
+    option.value=value;
+    option.textContent=label;
+    UI.category.appendChild(option);
+  }
+
+  UI.search.addEventListener("input",safeRender);
+
+  [
+    UI.category,UI.availability,UI.status,UI.compact
+  ].forEach(element=>element.addEventListener("change",safeRender));
+
+  UI.reset.addEventListener("click",()=>{
+    UI.search.value="";
+    UI.category.value="";
+    UI.availability.value="";
+    UI.status.value="";
+    UI.compact.checked=false;
+    safeRender();
+    UI.search.focus();
+  });
+
+  UI.csv.addEventListener("click",()=>{
+    try{exportCSV()}catch(error){
+      UI.error.hidden=false;
+      UI.error.textContent="CSV匯出失敗："+String(error);
+    }
+  });
+
+  UI.print.addEventListener("click",()=>{
+    if(initialized&&visible.length) window.print();
+  });
+
+  UI.save.addEventListener("click",()=>{
+    try{saveHTML()}catch(error){
+      UI.error.hidden=false;
+      UI.error.textContent="HTML下載失敗："+String(error);
+    }
+  });
+
+  const siteTotals=SITE_NAMES.map((name,index)=>
+    `${name}：${model.filter(row=>row.cells[index]).length}個摘要歸組`
+  );
+
+  const pending=model.filter(row=>row.pending).length;
+
+  UI.validation.textContent=
+    `內嵌摘要載入：${model.length}列；其中${pending}列標示成分／配方待核對。`+
+    siteTotals.join("；")+"。"+
+    "程式已檢查分類引用、摘要名稱重複、欄位、跨欄複製及四欄皆空白等結構問題。"+
+    "這不是與原始PDF／圖片逐列核對的完整性證明，亦不是官方成分或產品等價驗證。";
+
+  initialized=true;
+  render();
+}
+
+try{
+  initialize();
+}catch(error){
+  fail(error);
+}
+</script>
+</body>
+</html>
