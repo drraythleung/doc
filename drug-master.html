@@ -3,152 +3,174 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>四診所 GENERIC 主要成分綜合藥物清單</title>
+<title>四診所藥物清單｜Supabase 雲端版</title>
 <style>
 :root{
-  --bg:#f3f6fa;--paper:#fff;--ink:#172b42;--muted:#586c80;
-  --line:#d9e2ec;--blue:#175dcc;--green:#17633f;--amber:#805500
+  --bg:#f3f6fa;--paper:#fff;--ink:#172b42;
+  --muted:#586c80;--line:#d9e2ec;--blue:#175dcc
 }
 *{box-sizing:border-box}
 body{
   margin:0;background:var(--bg);color:var(--ink);
   font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif
 }
-header{background:#142d49;color:white;padding:22px 24px}
-h1{font-size:25px;margin:0}
-header p{margin:7px 0 0;color:#d8e7fa}
-main{max-width:2200px;margin:auto;padding:18px}
+header{background:#142d49;color:#fff;padding:20px}
+h1{font-size:24px;margin:0}
+header p{margin:6px 0 0}
+main{max-width:2200px;margin:auto;padding:16px}
 .panel{
-  padding:16px;background:var(--paper);border:1px solid var(--line);
-  border-radius:12px;margin-bottom:14px
+  background:#fff;border:1px solid var(--line);
+  border-radius:10px;padding:15px;margin-bottom:14px
 }
-.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
-label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:650}
-.grow{flex:1;min-width:240px}
-input,select,button{
-  font:inherit;padding:8px 10px;border:1px solid #b9c9da;
-  border-radius:7px;color:var(--ink);background:white
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+label{display:flex;flex-direction:column;gap:5px;font-weight:600}
+.grow{flex:1;min-width:220px}
+input,select,button,textarea{
+  font:inherit;padding:9px;border:1px solid #b9c9da;
+  border-radius:6px;background:#fff;color:var(--ink)
 }
 input[type=search]{width:100%}
 button{cursor:pointer;font-weight:650}
-button:hover{background:#edf4ff}
-button.primary{background:var(--blue);border-color:var(--blue);color:white}
 button:disabled{opacity:.45;cursor:not-allowed}
-.check{flex-direction:row;align-items:center;padding-bottom:9px}
+.primary{background:var(--blue);color:white;border-color:var(--blue)}
 .small{font-size:12px;color:var(--muted)}
 .notice{
-  background:#fff5db;color:#654b1c;padding:12px;
-  border:1px solid #eed7a2;border-radius:8px;margin:12px 0
+  padding:11px;background:#fff5db;border:1px solid #eed7a2;
+  border-radius:7px;margin-bottom:12px
 }
-.notice strong{color:#663b00}
-.stats{display:flex;flex-wrap:wrap;gap:8px;margin:13px 0}
-.stat{background:#eaf1fc;border-radius:7px;padding:7px 11px}
-.summary{margin:10px 0}
-.tablewrap{
-  overflow:auto;max-height:74vh;border:1px solid var(--line);
-  border-radius:9px
+#message{
+  white-space:pre-wrap;padding:11px;border-radius:7px;
+  background:#eaf1fc;margin-top:12px;overflow-wrap:anywhere
 }
-table{width:100%;min-width:1500px;border-collapse:collapse;background:white}
+#message.error{background:#ffe7e4;color:#92291f}
+#message.success{background:#e0f1e7;color:#17633f}
+#sync{font-weight:700;margin:10px 0}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stat{background:#eaf1fc;border-radius:6px;padding:6px 9px}
+.tablewrap{overflow:auto;max-height:70vh;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:1550px;background:#fff}
 th,td{
-  padding:11px;border-bottom:1px solid var(--line);
-  text-align:left;vertical-align:top;overflow-wrap:anywhere
+  border-bottom:1px solid var(--line);padding:10px;
+  vertical-align:top;text-align:left;overflow-wrap:anywhere
 }
-thead th{
-  position:sticky;top:0;z-index:3;background:#eaf0f8;
-  white-space:nowrap
-}
-th.generic{width:18%}
-th.site{width:17%}
-th.notes{width:14%}
-.generic-name{font-size:15px;font-weight:750}
-.alias{font-size:11px;color:var(--muted);margin-top:6px}
+thead th{position:sticky;top:0;background:#eaf0f8;z-index:2}
+th:first-child{width:17%}
+.site{width:16%}
+.chapter th{background:#dfe9f7;font-size:15px}
+.name{font-size:15px;font-weight:750}
+.alias{font-size:11px;color:var(--muted);margin-top:5px}
 .badge{
-  display:inline-block;padding:2px 8px;background:#e0f1e7;
-  color:var(--green);border-radius:5px;font-size:12px;font-weight:700
+  display:inline-block;padding:2px 7px;border-radius:4px;
+  background:#e0f1e7;color:#17633f;font-size:12px
 }
-.pending-badge{background:#fff0c9;color:var(--amber)}
-.absent{color:#8a96a3;font-size:12px}
-.variants{margin:7px 0 0;padding-left:17px;font-size:12px}
+.pending{background:#fff0c9;color:#805500}
+.absent{font-size:12px;color:#8996a3}
+.variants{padding-left:17px;font-size:12px;margin:7px 0 0}
 .variants li+li{margin-top:5px}
-.notes-cell{font-size:12px;color:#75551b}
-.notes-cell ul{margin:0;padding-left:17px}
-.notes-cell li+li{margin-top:6px}
-.chapter th{background:#dfe9f7;padding:9px 12px;font-size:15px}
-.empty td{text-align:center;color:var(--muted);padding:25px}
-.alert{
-  background:#ffe7e4;border:1px solid #e6aaa2;color:#92291f;
-  padding:12px;border-radius:7px;white-space:pre-wrap;margin:12px 0
+.notes{font-size:12px;color:#75551b}
+.compact .variants,.compact .alias{display:none}
+.check{flex-direction:row;align-items:center;padding:9px 0}
+dialog{
+  border:1px solid var(--line);border-radius:12px;
+  width:min(850px,95vw);max-height:90vh;padding:20px
 }
-details summary{cursor:pointer;font-weight:700}
-details li+li{margin-top:6px}
-.legend{display:flex;flex-wrap:wrap;gap:6px 20px}
-.legend span{white-space:nowrap}
-.caption{padding:8px;text-align:left;font-size:12px;color:var(--muted)}
-:focus-visible{outline:3px solid #93baff;outline-offset:2px}
+dialog::backdrop{background:#0008}
+dialog label{margin:10px 0}
+dialog textarea{width:100%;min-height:70px;resize:vertical}
+dialog input:not([type=checkbox]),dialog select{width:100%}
+.editgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 [hidden]{display:none!important}
-body.compact .variants,body.compact .alias{display:none}
-body.compact td{padding-top:8px;padding-bottom:8px}
-@media(max-width:700px){
-  header{padding:16px}h1{font-size:21px}
-  main{padding:10px}.bar>label{flex:1 1 170px}
+@media(max-width:650px){
+  h1{font-size:20px}main{padding:9px}
+  .editgrid{grid-template-columns:1fr}
 }
 @media print{
-  @page{size:A4 landscape;margin:9mm}
-  body{background:white;font-size:9px}
-  header{padding:0;background:white;color:black}
-  header h1{font-size:18px}header p{color:black;font-size:9px}
-  main{padding:0}.panel{border:0;padding:0}
-  .noprint{display:none!important}
-  .notice{background:white;border:1px solid #bbb;font-size:8px;padding:6px}
-  .tablewrap{max-height:none;overflow:visible;border:0}
-  table{min-width:0;width:100%;table-layout:fixed}
+  @page{size:A4 landscape;margin:8mm}
+  .noprint,.editbutton{display:none!important}
+  header{background:white;color:black;padding:0}
+  main,.panel{padding:0}
+  .panel{border:0}
+  .tablewrap{overflow:visible;max-height:none;border:0}
+  table{min-width:0;table-layout:fixed;font-size:8px}
   thead{display:table-header-group}
-  thead th{position:static;white-space:normal}
-  th,td{padding:5px;font-size:8px}
-  .generic-name{font-size:9px}
-  .variants,.alias,.notes-cell,.small,.badge{font-size:7px}
-  .variants{padding-left:11px}
-  .badge{padding:0;background:none}
-  .stats{margin:6px 0;font-size:8px}
-  .stat{padding:0 10px 0 0;background:none}
-  .chapter th{font-size:10px;padding:5px}
+  thead th{position:static}
+  th,td{padding:4px}
+  .name{font-size:9px}
+  .variants,.notes,.alias,.badge,.absent{font-size:7px}
   tr{break-inside:avoid}
   .chapter{break-after:avoid}
-  body.has-errors .tablewrap{display:none}
 }
 </style>
+<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"
+  defer></script>
 </head>
 <body>
 <header>
   <h1>四診所 GENERIC 主要成分綜合藥物清單</h1>
-  <p>AMC1 · CWB｜AMC2 · TKP｜The Specialists · 20F｜The Specialists · 5F</p>
-  <p>來源標示：AMC 2026-08-05；Specialists OCT 2026，20F 更新日期 2026-09-30</p>
+  <p>AMC1 · CWB｜AMC2 · TKP｜Specialists · 20F｜Specialists · 5F</p>
+  <p class="small" style="color:#d8e7fa">
+    來源標示：AMC 2026-08-05；Specialists OCT 2026；
+    20F 更新日期 2026-09-30
+  </p>
 </header>
 
 <main>
-<noscript>
-  <div class="alert">請啟用 JavaScript，才能顯示內嵌清單及使用篩選。</div>
-</noscript>
+<noscript>請啟用 JavaScript。</noscript>
+
+<section class="panel noprint">
+  <form id="authForm">
+    <div class="bar">
+      <label class="grow">登入電郵
+        <input id="email" type="email" autocomplete="username" required>
+      </label>
+      <label class="grow">密碼
+        <input id="password" type="password"
+          autocomplete="current-password" required>
+      </label>
+      <button id="login" type="submit" class="primary">
+        登入並開啟雲端清單
+      </button>
+      <button id="signup" type="button">註冊帳戶</button>
+      <button id="logout" type="button" disabled>登出</button>
+    </div>
+  </form>
+
+  <div id="account" class="small" style="margin-top:10px">
+    未登入：目前只顯示內嵌預覽，未上傳至雲端。
+  </div>
+  <div id="sync">尚未連線</div>
+
+  <div class="bar">
+    <button id="saveCloud" class="primary" disabled>儲存修改至雲端</button>
+    <button id="reloadCloud" disabled>重新讀取雲端</button>
+    <button id="backup" type="button">備份目前資料 JSON</button>
+    <button id="csv" type="button">匯出目前 CSV</button>
+    <button id="print" type="button">列印目前清單</button>
+  </div>
+
+  <div id="message" role="status" aria-live="polite">
+    URL 及 Publishable key 已填好。先執行建表 SQL，再登入。
+    首次登入會自動將本檔內嵌清單儲存至你帳戶。
+  </div>
+</section>
 
 <section class="panel noprint">
   <div class="bar">
-    <label class="grow">
-      搜尋 GENERIC、商品名、劑型、劑量或備註
-      <input id="search" type="search" autocomplete="off"
-        placeholder="例如：metformin、Nexium、pregabalin、eye、25mg">
+    <label class="grow">搜尋
+      <input id="search" type="search"
+        placeholder="成分、品牌、劑型、強度、備註">
     </label>
-
-    <label>整理分類
+    <label>分類
       <select id="category"><option value="">全部分類</option></select>
     </label>
-
     <label>收錄情況
       <select id="availability">
         <option value="">全部</option>
         <option value="cwb">AMC1 CWB 有列出</option>
         <option value="tkp">AMC2 TKP 有列出</option>
-        <option value="s20">Specialists 20F 有列出</option>
-        <option value="s5">Specialists 5F 有列出</option>
+        <option value="s20">20F 有列出</option>
+        <option value="s5">5F 有列出</option>
         <option value="all4">四間都有列出</option>
         <option value="amcBoth">兩間 AMC 都有列出</option>
         <option value="specialistsBoth">20F、5F 都有列出</option>
@@ -158,11 +180,10 @@ body.compact td{padding-top:8px;padding-bottom:8px}
         <option value="single">只列於一間診所</option>
         <option value="onlycwb">只列於 AMC1 CWB</option>
         <option value="onlytkp">只列於 AMC2 TKP</option>
-        <option value="onlys20">只列於 Specialists 20F</option>
-        <option value="onlys5">只列於 Specialists 5F</option>
+        <option value="onlys20">只列於 20F</option>
+        <option value="onlys5">只列於 5F</option>
       </select>
     </label>
-
     <label>對照狀態
       <select id="status">
         <option value="">全部狀態</option>
@@ -171,97 +192,107 @@ body.compact td{padding-top:8px;padding-bottom:8px}
         <option value="notes">有個別備註</option>
       </select>
     </label>
-
     <label class="check">
-      <input id="compact" type="checkbox">只顯示有／未列出
+      <input id="compact" type="checkbox">精簡顯示
     </label>
-
     <button id="reset" type="button">清除篩選</button>
   </div>
 </section>
 
 <section class="panel">
-  <div class="bar noprint">
-    <button id="csv" class="primary" type="button" disabled>匯出目前對照 CSV</button>
-    <button id="print" type="button" disabled>列印目前對照</button>
-    <button id="save" type="button">下載本綜合 HTML</button>
-  </div>
-
   <div class="notice">
-    <strong>本頁比較的是「成分級收錄」，不是同規格產品或即時庫存。</strong>
-    同一列可包含不同品牌、劑型、強度、鹽型及釋放方式，各診所的文字須分別閱讀。
-    複方不會拆入單方列；成分不足或原文矛盾的項目另列待核對。
-    「未列出」只代表本次提供清單未見相應歸組，不代表診所實際沒有該藥。
-    本表不可直接用作調劑、替代或用藥指示。
+    <strong>本表比較成分級收錄，不是同規格產品、即時庫存或替代用藥指示。</strong>
+    不同品牌、強度、鹽型、釋放方式及給藥部位須分別覆核。
+    「未列出」不代表診所實際沒有該藥。
+    原資料疑點保留，未作臨床驗證。
   </div>
-
-  <div class="small legend">
-    <span>T＝片劑</span><span>CA＝膠囊</span><span>INJ＝注射／輸液</span>
-    <span>ER／XR／SR／PR／LA＝沿用來源的釋放方式文字</span>
-    <span>未標強度＝提供文字未列完整強度</span>
-  </div>
-
   <div id="stats" class="stats"></div>
-  <div id="summary" class="small summary" aria-live="polite"></div>
-  <div id="error" class="alert" role="alert" hidden></div>
-
-  <div class="tablewrap" tabindex="0" aria-label="四診所成分對照表，可橫向捲動">
+  <div id="summary" class="small"></div>
+  <div class="tablewrap" tabindex="0">
     <table>
-      <caption class="caption">
-        同主要成分歸組；不同規格只在診所欄內並列，並不視為完全相同產品。
-      </caption>
       <thead>
         <tr>
-          <th class="generic" scope="col">GENERIC／完整複方組合</th>
-          <th class="site" scope="col">AMC1 · CWB</th>
-          <th class="site" scope="col">AMC2 · TKP</th>
-          <th class="site" scope="col">Specialists · 20F</th>
-          <th class="site" scope="col">Specialists · 5F</th>
-          <th class="notes" scope="col">對照備註</th>
+          <th>GENERIC／完整複方</th>
+          <th class="site">AMC1 · CWB</th>
+          <th class="site">AMC2 · TKP</th>
+          <th class="site">Specialists · 20F</th>
+          <th class="site">Specialists · 5F</th>
+          <th>對照備註</th>
+          <th class="noprint">修改</th>
         </tr>
       </thead>
       <tbody id="rows">
-        <tr class="empty"><td colspan="6">正在載入內嵌資料……</td></tr>
+        <tr><td colspan="7">正在載入……</td></tr>
       </tbody>
     </table>
   </div>
 </section>
 
-<details class="panel noprint">
-  <summary>合併規則、資料範圍及限制</summary>
+<details class="panel">
+  <summary>資料及雲端儲存範圍</summary>
   <ul>
-    <li>本檔依用戶貼出的兩組 HTML 整理。重複貼出的 Specialists 版本只納入一次，未重新讀取原 PDF、圖片或診所系統。</li>
-    <li>每列以主要成分或完整複方組合歸組。此歸組不是 RxNorm、BNF 或官方產品代碼，亦未完成官方藥物主檔驗證。</li>
-    <li>商品名只作搜尋別名；出現於別名欄不表示四間診所均有該品牌。各診所收錄情況以該診所欄為準。</li>
-    <li>同成分不同供應商及重複分類合併為摘要；不同劑量、給藥部位及釋放方式保留在各診所欄內。</li>
-    <li>部分常見拼法及鹽型按主要成分作導覽歸組，例如 amoxicillin／amoxycillin、lidocaine／lignocaine；原文有具體鹽型或酯型時，盡量保留於診所欄。此歸組不確認劑量等價。</li>
-    <li>複方次序不同而成分組合相同者可並列，但不因共同含一種成分而合併單方及複方。</li>
-    <li>成分只寫 PROBIOTICS、DIGESTIVE ENZYMES、品牌、PEG＋electrolytes 或配方未完整列出者，保留為獨立待核對項目，不當作已確認完全相同成分。</li>
-    <li>AMC2 共用項目沿用提供 HTML 的 AMC1 展示名稱。這不是 AMC2 原文的獨立重新核對結果。</li>
-    <li>本頁為成分級摘要，不保留每個供應商、AMC 代碼、HK 註冊編號、採購包裝及所有原頁碼。原 HTML 仍應保留作追溯。</li>
-    <li>來源中的可疑數值與文字不作靜默修正，包括 CORSODYL 0%、GLYCERINE 16g、HEPTRAL 1.9g、SYNVISC ONE 16mg/2ml 及其他疑點。</li>
-    <li>本表未推定任何診所即時庫存、藥物效期、包裝片數或可互換性。</li>
-    <li>CSV 匯出依目前篩選，保留四診所詳情；覆核欄供另行填寫，修改 CSV 不會自動更新 HTML。</li>
+    <li>內嵌資料來自你提供的綜合 HTML，未重新核對原 PDF 或診所系統。</li>
+    <li>AMC2 共用文字沿用原摘要；不代表已獨立核對 AMC2 原文。</li>
+    <li>待核對列不代表已確認跨診所成分匹配。</li>
+    <li>原清單不保留所有供應商、代碼、註冊編號及頁碼。</li>
+    <li>首次登入只會在該帳戶尚無雲端清單時建立；不會以內嵌資料覆蓋已有清單。</li>
+    <li>同一帳戶跨裝置共用；不同帳戶各自獨立，並非所有員工自動共用。</li>
+    <li>修改先留在本頁，按「儲存修改至雲端」後才提交。</li>
+    <li>遇到其他視窗已儲存的新版本，會拒絕覆蓋；可先備份目前 JSON，再重新讀取。</li>
+    <li>本版本沒有完整修改歷史或臨床審批流程，不應儲存病人資料。</li>
   </ul>
-  <div id="validation" class="small"></div>
 </details>
 </main>
+
+<dialog id="editor">
+  <h2 style="margin-top:0">修改清單項目</h2>
+  <form id="editForm">
+    <label>成分／項目名稱
+      <input id="editName" required>
+    </label>
+    <label>分類
+      <select id="editCategory"></select>
+    </label>
+    <div class="editgrid">
+      <label>AMC1 CWB
+        <textarea id="edit0"></textarea>
+      </label>
+      <label>AMC2 TKP
+        <textarea id="edit1"></textarea>
+      </label>
+      <label>Specialists 20F
+        <textarea id="edit2"></textarea>
+      </label>
+      <label>Specialists 5F
+        <textarea id="edit3"></textarea>
+      </label>
+    </div>
+    <p class="small">
+      每行一個製劑；留空代表未列出。修改唔會自動推斷成分或劑量。
+    </p>
+    <label>搜尋品牌別名（用分號分隔）
+      <input id="editAliases">
+    </label>
+    <label>個別備註
+      <textarea id="editNote"></textarea>
+    </label>
+    <label class="check">
+      <input id="editPending" type="checkbox">
+      成分／完整配方待核對
+    </label>
+    <div class="bar">
+      <button class="primary" type="submit">套用至本頁</button>
+      <button id="cancelEdit" type="button">取消</button>
+    </div>
+  </form>
+</dialog>
 
 <script>
 "use strict";
 
-/*
-資料格式：
-#整理分類代號
-GENERIC|CWB|TKP|20F|5F|搜尋別名|個別備註
-
-空白診所欄＝未列出。
-TKP 的 "=" 只複製同列 CWB；5F 的 "=" 只複製同列 20F。
-各診所欄以 ";" 分隔不同製劑／規格。
-GENERIC 以 "?" 開頭＝成分／完整配方待核對，不當作已驗證成分匹配。
-
-此資料是成分級摘要，並非原始逐列／供應商／代碼複本。
-*/
+const SUPABASE_URL = "https://pdtiwdndcwtojqfoxrfe.supabase.co";
+const SUPABASE_KEY = "sb_publishable_MX1K8ycnd9rTcbp6pRMJpQ_xXr4kxIR";
+const TABLE = "four_clinic_cloud_lists";
 
 const CATEGORY = {
   allergy:"過敏／抗組織胺",
@@ -352,7 +383,7 @@ Heparin sodium||||INJ 5,000 I.U./ml;INJ 原名 HEPARIN SODIUM 5ML，規格 10IU/
 Glyceryl trinitrate|T 舌下 0.5mg|=|T 500mcg;噴劑 0.4mg/dose|=|TNG;Nitrolingual-Spray|
 Isosorbide dinitrate||T 10mg|||Isordil|
 Isosorbide-5-mononitrate|||T 60mg||Imdur|
-Pentoxifylline|T SR 400mg||||Trental;APO-Pentoxifylline|20F 另有普通展示片劑 400mg，見本列診所補充。
+Pentoxifylline|T SR 400mg||T 400mg||Trental;APO-Pentoxifylline|AMC1 列 SR；20F 原展示未標 SR，未判定釋放方式相同。
 Diosmin + Hesperidin|T 1000mg|=|T 1g、500mg|T 500mg|Daflon;Diosper FC;Diosper 500mg|
 Adrenaline|INJ 1:10,000，1mg/10ml IV;INJ 1:1000，1mg/ml IM/Sub-Q|=|INJ 1:10,000|=|Epinephrine|濃度及來源給藥途徑原文分開保留，並非用藥指示。
 Dopamine|INJ 200mg/5ml|=|INJ hydrochloride 200mg/5ml|=||
@@ -378,7 +409,7 @@ Famotidine|T 20mg|T 20mg、40mg|T 20mg|=|Pepcidine|20F／5F 原註冊編號不�
 Hyoscine butylbromide|T 10mg;糖漿 5mg/5ml;INJ 20mg/ml|=|T 10mg;INJ 20mg/ml|=|Buscopan;Holopon;Antispa|
 Dicyclomine + Simethicone|糖漿 5+50mg/5ml，90ml|=|||Infacol C;Colimix|
 Otilonium|T bromide 40mg|=|T 原拼法 OTILONIUM 40mg|=|Spasmomen|Specialists 拼法保留為 OTILONIUM；此列僅主要成分導覽。
-Mebeverine| |CA retard 200mg|CA hydrochloride 200mg||Duspatalin Retard|
+Mebeverine||CA retard 200mg|CA hydrochloride 200mg||Duspatalin Retard|
 Loperamide|T 2mg|=|T 2mg||Imodium|
 Diphenoxylate + Atropine|T 2.5/0.025mg||||Lomotil|
 Racecadotril|||CA 100mg;兒童顆粒袋 30mg||Hidrasec|
@@ -456,9 +487,9 @@ Pethidine / Meperidine||INJ 50mg/ml||INJ 50mg/ml|Pethidine|依來源展示的 Pe
 Atogepant|T 60mg||||Aquipta|
 Rimegepant|口服 lyophilisate／sublingual tablet 75mg||||Nurtec|劑型文字沿用 AMC 展示，未重新核實。
 Eptinezumab|INJ 100mg/ml IV||||Vyepti|
-Amitriptyline|T 10mg、25mg|||T 10mg|||本列資料於初始化時補正欄位位置。
+Amitriptyline|T 10mg、25mg||T 10mg||Tryptanol|
 Fluoxetine|CA 10mg、20mg|=|CA 10mg、20mg||Prozac;APO-Fluoxetine|
-Escitalopram|T 10mg|||T 10mg|||本列資料於初始化時補正欄位位置。
+Escitalopram|T 10mg||T 10mg||Lexapro|
 Sertraline|T 50mg|=|T 50mg||Zoloft|
 Paroxetine|T 20mg|=|||Seroxat|
 Venlafaxine|CA XR 37.5mg、75mg、150mg||||Efexor XR|
@@ -478,7 +509,7 @@ Methylphenidate|T HCl 10mg;CA LA 10mg、20mg、30mg;T Concerta 18mg、27mg、36m
 Atomoxetine|CA 10mg、18mg、25mg、40mg、60mg|CA 10mg、18mg、25mg、40mg|CA 18mg||Strattera;APO-Atomoxetine|
 Lisdexamfetamine|CA dimesylate 20mg、30mg、50mg|CA dimesylate 20mg、30mg|CA 20mg、30mg||Vyvanse|
 Diazepam|T 5mg||T 2mg、5mg||Valium|
-Lorazepam|T 1mg|||T 1mg|||本列資料於初始化時補正欄位位置。
+Lorazepam|T 1mg||T 1mg||Ativan;Lorans|
 Alprazolam|T 0.5mg|T 0.25mg|T 0.5mg||Xanax|
 Bromazepam|||T 1.5mg||Lexotan|
 Clonazepam|||T 0.5mg||Rivotril|
@@ -729,7 +760,7 @@ Methylprednisolone + Lidocaine||關節INJ methylprednisolone40mg+lidocaine，後
 Lidocaine / Lignocaine|INJ lignocaine2%，5ml;外用spray lignocaine10%，50g;jelly lignocaine2%，30g|INJ lignocaine2%，5ml;INJ lignocaine1%，5ml;外用spray lignocaine10%，50g;jelly lignocaine2%，30g|INJ lignocaine2%;jelly lignocaine2%|INJ lignocaine2%;jelly lignocaine2%;pump spray lidocaine10%|Xylocaine|主要成分名稱歸組；不同容量、給藥途徑及產品仍分別列示。
 Lidocaine + Phenylephrine|spray 原成分lignocaine/phenylephrine50+5mg/ml，50ml|=||spray 原成分lignocaine HCl;phenylephrine HCl，規格50ml|Co-Phenylcaine Forte|5F 未列完整強度，不由 AMC 補入。
 Lidocaine + Prilocaine|乳膏總濃度5%，5g|=|||Emla|未由總濃度推算兩成分各自濃度。
-Lidocaine + Chlorhexidine||gel11ml| |prefilled syringe原規格215.7mg,28.8mg|Instillagel|AMC2 與5F 劑型／規格表達不同，不能據此判定同產品。
+Lidocaine + Chlorhexidine||gel11ml||prefilled syringe原規格215.7mg,28.8mg|Instillagel|AMC2 與5F 劑型／規格表達不同，不能據此判定同產品。
 Lidocaine + Adrenaline||INJ lidocaine2%+adrenaline1:80000，1.7ml|||Xylestesin A|
 Lidocaine + Glyceryl trinitrate|||extemporaneous gel/jar，原規格2%|=|Xylocaine Jelly 2% + TNG|複方完整濃度未列，不把2%同時套用於兩成分。
 Levobupivacaine||||INJ5mg/ml|Chirocaine|
@@ -779,7 +810,7 @@ Inactivated rabies vaccine|Verorab IM|=||||
 ?Isocolan（sample）|||袋裝35g；polyethylene glycol/sodium sulphate/sodium bicarbonate/sodium chloride/potassium chloride/aspartame|=|Isocolan|雖與 Specialists GI Klean 有相同成分文字，劑量配方比例及製劑規格未完整，不跨品牌強行視為同產品。
 ?PicoPrep（完整配方／強度待核對）|袋裝16.1g；sodium picosulfate/MgO/citric acid|=|袋裝25.5g；sodium picosulfate/magnesium oxide/anhydrous citric acid/potassium hydrogen carbonate/sodium saccharin/acacia gum/lactose/ascorbic acid/butylated hydroxyanisole|=|PicoPrep;Picolax|來源成分詳略及袋重不同，未自行判定哪些是活性或賦形劑，亦未確認同配方。
 ?Oral Fleet（未列完整成分）|||原成分FLEET PHOSPHO-SODA，劑型／規格空白|=|Oral Fleet|不由品牌補成完整 sodium phosphate 配方，亦不與 Fleet enema 合併為同製劑。
-?Normal saline 眼用（成分濃度未提供）| | |solution/bottle5ml|=|Normal Saline|原表眼科類只寫 NORMAL SALINE，不補入0.9%濃度或推定與注射製劑相同。
+?Normal saline 眼用（成分濃度未提供）|||solution/bottle5ml|=|Normal Saline|原表眼科類只寫 NORMAL SALINE，不補入0.9%濃度或推定與注射製劑相同。
 ?FLO Baby Nasal Spray（原縮寫配方）|||鼻噴15ml；NAHCO3,NACL,KCL,CACL,MGCL||FLO Baby|保留原縮寫，未擅自補化學式下標、鹽型或成分濃度。
 ?Oral rehydration salts NF|袋裝5.3g|=|||GES|完整鹽類及比例未列，不與其他電解質複方合併。
 ?Plasma-Lyte 148||輸液pH7.4，1L|||Plasma-Lyte|完整成分及各濃度未提供。
@@ -822,540 +853,716 @@ Mona Lisa NT Cu380 IUD|IUD|=|||Mona Lisa|器材獨立列出，不與 levonorgest
 Sterile water for irrigation||灌洗液1L||||不與 water for injection 視為同給藥製劑。
 `;
 
-/*
-少量明確欄位修正：
-只修正本摘要編排，不改寫提供來源。
-避免將口服藥誤放在5F欄或遺漏20F。
-*/
-const SUMMARY_FIXES = {
-  "Pentoxifylline": {
-    cells: [
-      "T SR 400mg",
-      "",
-      "T 400mg",
-      ""
-    ],
-    note: "AMC1 列 SR；20F 原展示未標 SR，未判定釋放方式相同。"
-  },
-  "Amitriptyline": {
-    cells: ["T 10mg、25mg", "", "T 10mg", ""],
-    aliases: "Tryptanol",
-    note: ""
-  },
-  "Escitalopram": {
-    cells: ["T 10mg", "", "T 10mg", ""],
-    aliases: "Lexapro",
-    note: ""
-  },
-  "Lorazepam": {
-    cells: ["T 1mg", "", "T 1mg", ""],
-    aliases: "Ativan;Lorans",
-    note: ""
-  },
-  "Normal saline 眼用（成分濃度未提供）": {
-    cells: ["", "", "solution/bottle5ml", "solution/bottle5ml"]
-  }
-};
-
-const SITE_IDS = ["cwb","tkp","s20","s5"];
-const SITE_NAMES = [
-  "AMC1 CWB","AMC2 TKP","Specialists 20F","Specialists 5F"
-];
-
 const $ = id => document.getElementById(id);
-const UI = {
-  search:$("search"),category:$("category"),
-  availability:$("availability"),status:$("status"),
-  compact:$("compact"),reset:$("reset"),
-  csv:$("csv"),print:$("print"),save:$("save"),
-  stats:$("stats"),summary:$("summary"),
-  error:$("error"),rows:$("rows"),validation:$("validation")
-};
+const SITE_IDS = ["cwb","tkp","s20","s5"];
+const SITE_NAMES = ["AMC1 CWB","AMC2 TKP","Specialists 20F","Specialists 5F"];
+const CATEGORY_ORDER = Object.keys(CATEGORY);
 
-let model = [];
+let client = null;
+let currentUser = null;
+let entries = [];
 let visible = [];
+let revision = null;
+let updatedAt = null;
+let dirty = false;
+let busy = false;
+let ready = false;
+let editingId = null;
 let initialized = false;
+
+const copy = value => JSON.parse(JSON.stringify(value));
+const norm = value => String(value ?? "")
+  .normalize("NFKC").toLowerCase().replace(/\s+/g," ").trim();
 
 function esc(value){
   return String(value ?? "").replace(/[&<>"']/g,c=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",
-    '"':"&quot;","'":"&#39;"
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   })[c]);
 }
 
-function norm(value){
-  return String(value ?? "").normalize("NFKC")
-    .toLowerCase().replace(/\s+/g," ").trim();
+function message(text,type=""){
+  $("message").textContent = text;
+  $("message").className = type;
 }
 
-function uniq(values){
-  return [...new Set(values)];
+function errorText(error){
+  const text = [
+    error?.message || String(error),
+    error?.details,
+    error?.hint,
+    error?.code ? `代碼：${error.code}` : ""
+  ].filter(Boolean).join("\n");
+
+  if(/PGRST205|42P01|schema cache|does not exist/i.test(text)){
+    return text + "\n請先在此 Supabase 項目執行上面的建表 SQL。";
+  }
+  if(/42501|row-level security|permission denied/i.test(text)){
+    return text + "\n資料表權限或 RLS 不符合；請確認已執行完整 SQL，並已登入。";
+  }
+  if(/Failed to fetch|NetworkError|fetch failed/i.test(text)){
+    return text + "\n未能完成網絡連線。請檢查網絡、瀏覽器限制及 Supabase 項目狀態。";
+  }
+  return text;
 }
 
-function parseData(){
-  let category = "";
+function parseSeed(){
   const result = [];
-  const seen = new Set();
+  let category = "";
 
-  DATA.split(/\r?\n/).forEach((raw,index)=>{
+  for(const raw of DATA.split(/\r?\n/)){
     const line = raw.trim();
-    if(!line) return;
+    if(!line) continue;
 
     if(line.startsWith("#")){
-      category = line.slice(1).trim();
-      if(!Object.prototype.hasOwnProperty.call(CATEGORY,category)){
-        throw new Error(`第${index+1}行：未知分類 ${category}`);
+      category = line.slice(1);
+      if(!Object.hasOwn(CATEGORY,category)){
+        throw new Error("內嵌資料分類不正確：" + category);
       }
-      return;
-    }
-
-    if(!category){
-      throw new Error(`第${index+1}行：缺少分類`);
+      continue;
     }
 
     const parts = line.split("|").map(v=>v.trim());
-
-    /*
-    個別已明列於 SUMMARY_FIXES 的編排修正列，
-    可含原編排留下的空白尾欄；其餘一律檢查欄數。
-    */
-    const rawName = (parts[0] || "").replace(/^\?/,"");
-    const hasFix = Object.prototype.hasOwnProperty.call(
-      SUMMARY_FIXES, rawName
-    );
-
-    if(parts.length>7 && !hasFix){
-      throw new Error(`第${index+1}行：欄數超過7，${rawName}`);
+    if(parts.length !== 7){
+      throw new Error("內嵌資料欄位數不正確：" + parts[0]);
     }
 
-    while(parts.length<7) parts.push("");
+    const [generic,a,b,c,d,aliases,note] = parts;
+    const cells = [a,b,c,d];
 
-    const [generic,cwb,tkp,s20,s5,aliases,note] = parts;
-    if(!generic) throw new Error(`第${index+1}行：成分名稱空白`);
-
-    const name = generic.replace(/^\?/,"");
-    const key = norm(name);
-
-    if(seen.has(key)){
-      throw new Error(`重複摘要列：${name}`);
+    if(cells[1] === "="){
+      if(!cells[0]) throw new Error(generic + "：CWB 複製來源空白");
+      cells[1] = cells[0];
     }
-    seen.add(key);
-
-    let cells = [cwb,tkp,s20,s5];
-
-    if(cells[1]==="="){
-      if(!cells[0]) throw new Error(`${name}：TKP無可複製的CWB資料`);
-      cells[1]=cells[0];
+    if(cells[3] === "="){
+      if(!cells[2]) throw new Error(generic + "：20F 複製來源空白");
+      cells[3] = cells[2];
     }
 
-    if(cells[3]==="="){
-      if(!cells[2]) throw new Error(`${name}：5F無可複製的20F資料`);
-      cells[3]=cells[2];
-    }
-
-    if(cells[0]==="=" || cells[2]==="="){
-      throw new Error(`${name}：不支援此位置的等號`);
-    }
-
-    const row = {
-      id:`g${result.length+1}`,
+    result.push({
+      id:"g" + (result.length + 1),
       category,
-      name,
+      name:generic.replace(/^\?/,""),
       cells,
       aliases,
-      note,
+      note:note.replace(/^\?/,""),
       pending:generic.startsWith("?") || note.startsWith("?")
+        || category === "pending"
+    });
+  }
+
+  return validateEntries(result);
+}
+
+function validateEntries(value){
+  if(!Array.isArray(value) || !value.length){
+    throw new Error("清單不是有效的非空資料陣列；沒有以內嵌清單覆蓋雲端。");
+  }
+
+  const ids = new Set();
+  const names = new Set();
+
+  return value.map((r,index)=>{
+    if(!r || typeof r !== "object" ||
+       typeof r.id !== "string" || !r.id ||
+       typeof r.name !== "string" || !r.name.trim() ||
+       !Object.hasOwn(CATEGORY,r.category) ||
+       !Array.isArray(r.cells) || r.cells.length !== 4 ||
+       r.cells.some(v=>typeof v !== "string") ||
+       !r.cells.some(v=>v.trim()) ||
+       typeof r.aliases !== "string" ||
+       typeof r.note !== "string" ||
+       typeof r.pending !== "boolean"){
+      throw new Error(`第 ${index+1} 列結構不正確，已停止處理。`);
+    }
+
+    const nameKey = norm(r.name);
+    if(ids.has(r.id) || names.has(nameKey)){
+      throw new Error("清單有重複 ID 或名稱：" + r.name);
+    }
+
+    ids.add(r.id);
+    names.add(nameKey);
+
+    return {
+      id:r.id,
+      category:r.category,
+      name:r.name.trim(),
+      cells:r.cells.map(v=>v.trim()),
+      aliases:r.aliases,
+      note:r.note,
+      pending:r.pending || r.category === "pending"
     };
-
-    const fix = SUMMARY_FIXES[name];
-    if(fix){
-      if(fix.cells) row.cells=[...fix.cells];
-      if(Object.prototype.hasOwnProperty.call(fix,"aliases")){
-        row.aliases=fix.aliases;
-      }
-      if(Object.prototype.hasOwnProperty.call(fix,"note")){
-        row.note=fix.note;
-      }
-    }
-
-    row.note=row.note.replace(/^\?/,"");
-
-    /*
-    以下分類只表示有條件對照，不假裝已完成精確成分驗證。
-    */
-    if(row.category==="pending") row.pending=true;
-
-    if(!row.cells.some(Boolean)){
-      throw new Error(`${name}：四間診所皆空白`);
-    }
-
-    row.siteCount=row.cells.filter(Boolean).length;
-    row.search=norm([
-      row.name,row.aliases,row.note,
-      CATEGORY[row.category],...row.cells
-    ].join(" "));
-
-    result.push(row);
   });
-
-  return result;
 }
 
 function availabilityMatches(row,value){
-  const [a,b,c,d]=row.cells.map(Boolean);
-  const count=row.siteCount;
-  const siteIndex=SITE_IDS.indexOf(value);
+  const [a,b,c,d] = row.cells.map(Boolean);
+  const count = row.cells.filter(Boolean).length;
+  const i = SITE_IDS.indexOf(value);
 
-  if(siteIndex>=0) return Boolean(row.cells[siteIndex]);
+  if(i >= 0) return Boolean(row.cells[i]);
 
   switch(value){
-    case "all4":return count===4;
-    case "amcBoth":return a&&b;
-    case "specialistsBoth":return c&&d;
-    case "cross":return (a||b)&&(c||d);
-    case "amcOnly":return (a||b)&&!c&&!d;
-    case "specialistsOnly":return !a&&!b&&(c||d);
-    case "single":return count===1;
-    case "onlycwb":return count===1&&a;
-    case "onlytkp":return count===1&&b;
-    case "onlys20":return count===1&&c;
-    case "onlys5":return count===1&&d;
+    case "all4":return count === 4;
+    case "amcBoth":return a && b;
+    case "specialistsBoth":return c && d;
+    case "cross":return (a || b) && (c || d);
+    case "amcOnly":return (a || b) && !c && !d;
+    case "specialistsOnly":return !a && !b && (c || d);
+    case "single":return count === 1;
+    case "onlycwb":return count === 1 && a;
+    case "onlytkp":return count === 1 && b;
+    case "onlys20":return count === 1 && c;
+    case "onlys5":return count === 1 && d;
     default:return true;
   }
 }
 
 function matches(row){
-  const terms=norm(UI.search.value).split(" ").filter(Boolean);
+  if($("category").value &&
+     row.category !== $("category").value) return false;
 
-  if(terms.some(term=>!row.search.includes(term))) return false;
-  if(UI.category.value && row.category!==UI.category.value) return false;
-  if(!availabilityMatches(row,UI.availability.value)) return false;
+  if(!availabilityMatches(row,$("availability").value)) return false;
 
-  switch(UI.status.value){
-    case "normal":if(row.pending) return false;break;
-    case "pending":if(!row.pending) return false;break;
-    case "notes":if(!row.note) return false;break;
-  }
+  const status = $("status").value;
+  if(status === "normal" && row.pending) return false;
+  if(status === "pending" && !row.pending) return false;
+  if(status === "notes" && !row.note) return false;
 
-  return true;
+  const haystack = norm([
+    row.name,row.aliases,row.note,
+    CATEGORY[row.category],...row.cells
+  ].join(" "));
+
+  return norm($("search").value).split(" ").filter(Boolean)
+    .every(term=>haystack.includes(term));
 }
 
 function cellHTML(text,pending){
-  if(!text){
-    return '<span class="absent">未列出此歸組</span>';
-  }
-
-  const variants=text.split(";").map(v=>v.trim()).filter(Boolean);
+  if(!text) return '<span class="absent">未列出此歸組</span>';
 
   return `
-    <span class="badge ${pending?"pending-badge":""}">
-      ${pending?"有列出 · 待核成分":"有列出"}
+    <span class="badge ${pending ? "pending" : ""}">
+      ${pending ? "有列出 · 待核成分" : "有列出"}
     </span>
-    <ul class="variants">
-      ${variants.map(v=>`<li>${esc(v)}</li>`).join("")}
-    </ul>
-  `;
+    <ul class="variants">${
+      text.split(";").map(v=>v.trim()).filter(Boolean)
+        .map(v=>`<li>${esc(v)}</li>`).join("")
+    }</ul>`;
 }
 
-function notesHTML(row){
-  const notes=[];
+function controls(){
+  $("login").disabled = busy || Boolean(currentUser) || !client;
+  $("signup").disabled = busy || Boolean(currentUser) || !client;
+  $("logout").disabled = busy || !currentUser;
+  $("saveCloud").disabled =
+    busy || !currentUser || !ready || !dirty;
+  $("reloadCloud").disabled = busy || !currentUser;
+  $("email").disabled = busy || Boolean(currentUser);
+  $("password").disabled = busy || Boolean(currentUser);
+  $("csv").disabled = !visible.length;
+  $("print").disabled = !visible.length;
+  $("backup").disabled = !entries.length;
 
-  if(row.pending){
-    notes.push("成分／完整配方未確認；本列不代表已驗證的跨診所成分匹配。");
+  $("rows").querySelectorAll("[data-edit]").forEach(button=>{
+    button.disabled = busy || !currentUser || !ready;
+  });
+
+  $("account").textContent = currentUser
+    ? `已登入：${currentUser.email || currentUser.id}。此帳戶專用清單。`
+    : "未登入：目前只顯示內嵌預覽，未上傳至雲端。";
+
+  let state = "未登入｜內嵌預覽";
+  if(currentUser){
+    if(!ready){
+      state = "已登入｜雲端尚未成功載入";
+    }else if(dirty){
+      state = `有未儲存修改｜以雲端版本 ${revision} 為基礎`;
+    }else{
+      state = `雲端版本 ${revision}｜${updatedAt
+        ? new Date(updatedAt).toLocaleString()
+        : "已讀取"}`;
+    }
   }
-
-  if(row.note) notes.push(row.note);
-
-  if(!notes.length) return '<span class="absent">—</span>';
-
-  return `<ul>${notes.map(v=>`<li>${esc(v)}</li>`).join("")}</ul>`;
-}
-
-function rowHTML(row){
-  return `
-    <tr>
-      <td>
-        <div class="generic-name">${esc(row.name)}</div>
-        ${row.pending?'<div class="small">⚠ 成分／配方待核對</div>':""}
-        ${row.aliases?`
-          <div class="alias">
-            搜尋別名：${esc(row.aliases.split(";").join(" ／ "))}
-          </div>
-        `:""}
-      </td>
-      ${row.cells.map(text=>`<td>${cellHTML(text,row.pending)}</td>`).join("")}
-      <td class="notes-cell">${notesHTML(row)}</td>
-    </tr>
-  `;
-}
-
-function renderStats(){
-  const confirmed=visible.filter(row=>!row.pending);
-  const pending=visible.length-confirmed.length;
-
-  const stats=[
-    ["目前歸組列",visible.length],
-    ["主要成分歸組",confirmed.length],
-    ["待核對列",pending],
-    ...SITE_NAMES.map((name,index)=>[
-      `${name} 列出`,
-      visible.filter(row=>row.cells[index]).length
-    ]),
-    ["四間均列出",visible.filter(row=>row.siteCount===4).length]
-  ];
-
-  UI.stats.innerHTML=stats.map(([label,value])=>
-    `<span class="stat">${esc(label)} <b>${value}</b></span>`
-  ).join("");
+  if(busy) state += "｜處理中……";
+  $("sync").textContent = state;
 }
 
 function render(){
-  if(!initialized) return;
+  visible = entries.filter(matches).sort((a,b)=>
+    CATEGORY_ORDER.indexOf(a.category)-CATEGORY_ORDER.indexOf(b.category)
+    || a.name.localeCompare(b.name,"en",{
+      sensitivity:"base",numeric:true
+    })
+  );
 
-  visible=model.filter(matches);
-  document.body.classList.toggle("compact",UI.compact.checked);
+  document.body.classList.toggle("compact",$("compact").checked);
 
-  if(!visible.length){
-    UI.rows.innerHTML=
-      '<tr class="empty"><td colspan="6">沒有符合目前篩選的項目。</td></tr>';
-  }else{
-    let previous="";
-    const html=[];
+  const html = [];
+  let previous = "";
 
-    for(const row of visible){
-      if(previous!==row.category){
-        html.push(
-          `<tr class="chapter"><th colspan="6">${esc(CATEGORY[row.category])}</th></tr>`
-        );
-        previous=row.category;
-      }
-      html.push(rowHTML(row));
+  for(const row of visible){
+    if(previous !== row.category){
+      html.push(`<tr class="chapter"><th colspan="7">${
+        esc(CATEGORY[row.category])
+      }</th></tr>`);
+      previous = row.category;
     }
 
-    UI.rows.innerHTML=html.join("");
+    html.push(`
+      <tr>
+        <td>
+          <div class="name">${esc(row.name)}</div>
+          ${row.pending
+            ? '<div class="small">⚠ 成分／配方待核對</div>' : ""}
+          ${row.aliases
+            ? `<div class="alias">搜尋別名：${
+                esc(row.aliases.split(";").join(" ／ "))
+              }</div>` : ""}
+        </td>
+        ${row.cells.map(text=>
+          `<td>${cellHTML(text,row.pending)}</td>`
+        ).join("")}
+        <td class="notes">
+          ${row.pending
+            ? "<p>未確認成分／完整配方；不代表已驗證的跨診所匹配。</p>"
+            : ""}
+          ${esc(row.note) || "—"}
+        </td>
+        <td class="noprint">
+          <button class="editbutton" data-edit="${esc(row.id)}"
+            ${!currentUser || !ready || busy ? "disabled" : ""}>
+            修改
+          </button>
+        </td>
+      </tr>`);
   }
 
-  renderStats();
+  $("rows").innerHTML = html.join("") ||
+    '<tr><td colspan="7">沒有符合目前篩選的項目。</td></tr>';
 
-  const filterText=[
-    UI.category.selectedOptions[0].textContent,
-    UI.availability.selectedOptions[0].textContent,
-    UI.status.selectedOptions[0].textContent
+  const stats = [
+    ["顯示歸組",visible.length],
+    ["待核對",visible.filter(r=>r.pending).length],
+    ...SITE_NAMES.map((name,i)=>[
+      name,visible.filter(r=>r.cells[i]).length
+    ]),
+    ["四間均列出",visible.filter(r=>r.cells.every(Boolean)).length]
   ];
 
-  if(UI.search.value.trim()){
-    filterText.push(`搜尋：${UI.search.value.trim()}`);
+  $("stats").innerHTML = stats.map(([label,count])=>
+    `<span class="stat">${esc(label)} <b>${count}</b></span>`
+  ).join("");
+
+  $("summary").textContent =
+    `顯示 ${visible.length}／${entries.length} 個摘要歸組。`+
+    "統計不是產品數或庫存數，亦包括待核對列。";
+
+  controls();
+}
+
+async function task(fn){
+  if(busy) return;
+  busy = true;
+  controls();
+
+  try{
+    await fn();
+  }catch(error){
+    message(errorText(error),"error");
+  }finally{
+    busy = false;
+    controls();
   }
-
-  UI.summary.textContent=
-    `顯示 ${visible.length}／${model.length} 個成分／配方／獨立待核對歸組。`+
-    ` ${filterText.join(" ｜ ")}。`+
-    "統計為摘要歸組數，不是原始產品數、品牌數或庫存數；"+
-    "待核對列亦計入「列出」數，但不代表已確認成分相同。";
-
-  UI.csv.disabled=!visible.length;
-  UI.print.disabled=!visible.length;
 }
 
-function csvCell(value){
-  let text=String(value??"");
-  if(/^[\s\u0000-\u001f\uFEFF]*[=+\-@]/.test(text)){
-    text="'"+text;
+async function requireUser(){
+  const {data,error} = await client.auth.getUser();
+  if(error) throw error;
+  if(!data.user) throw new Error("登入已失效，請重新開啟本頁登入。");
+  if(!currentUser || data.user.id !== currentUser.id){
+    throw new Error("登入帳戶已改變，請重新開啟本頁。");
   }
-  return '"'+text.replace(/"/g,'""')+'"';
+  return data.user;
 }
 
-function downloadBlob(blob,filename){
-  const url=URL.createObjectURL(blob);
-  const link=document.createElement("a");
-  link.href=url;
-  link.download=filename;
-  link.hidden=true;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),10000);
+async function fetchDocument(userId){
+  const {data,error} = await client.from(TABLE)
+    .select("entries,revision,updated_at")
+    .eq("user_id",userId)
+    .maybeSingle();
+
+  if(error) throw error;
+  return data;
 }
 
-function exportCSV(){
-  if(!initialized || !visible.length) return;
-
-  const header=[
-    "整理分類",
-    "GENERIC／完整複方組合／待核對項目",
-    "對照狀態",
-    "AMC1 CWB列出情況","AMC1 CWB製劑詳情",
-    "AMC2 TKP列出情況","AMC2 TKP製劑詳情",
-    "Specialists20F列出情況","Specialists20F製劑詳情",
-    "Specialists5F列出情況","Specialists5F製劑詳情",
-    "搜尋品牌別名（不代表各診所均有此品牌）",
-    "個別備註",
-    "藥房覆核結果","確認人","確認日期"
-  ];
-
-  const records=visible.map(row=>{
-    const values=[
-      CATEGORY[row.category],
-      row.name,
-      row.pending?"成分／完整配方待核對":"主要成分級歸組，非產品等價"
-    ];
-
-    row.cells.forEach(text=>{
-      values.push(
-        text
-          ? (row.pending?"有列出，成分待核對":"有列出")
-          : "未列出此歸組",
-        text.split(";").map(v=>v.trim()).filter(Boolean).join("\n")
-      );
-    });
-
-    values.push(
-      row.aliases.split(";").join(" ／ "),
-      row.note,"","",""
-    );
-    return values;
-  });
-
-  const csv="\uFEFF"+[header,...records]
-    .map(record=>record.map(csvCell).join(","))
-    .join("\r\n");
-
-  downloadBlob(
-    new Blob([csv],{type:"text/csv;charset=utf-8"}),
-    "Four-Clinics-Generic-Comparison.csv"
-  );
-}
-
-function saveHTML(){
-  /*
-  下載目前檔案的獨立副本。
-  內嵌 DATA 及程式均在檔案內，不依賴原始兩份HTML。
-  清除已渲染表身，減少重複內容；重新開啟時由內嵌資料載入。
-  */
-  const clone=document.documentElement.cloneNode(true);
-  const rows=clone.querySelector("#rows");
-
-  if(rows){
-    rows.innerHTML=
-      '<tr class="empty"><td colspan="6">正在載入內嵌資料……</td></tr>';
-  }
-
-  ["stats","summary","validation"].forEach(id=>{
-    const node=clone.querySelector("#"+id);
-    if(node) node.textContent="";
-  });
-
-  const error=clone.querySelector("#error");
-  if(error){
-    error.hidden=true;
-    error.textContent="";
-  }
-
-  clone.querySelector("body")?.classList.remove("has-errors");
-
-  const html="<!doctype html>\n"+clone.outerHTML;
-
-  downloadBlob(
-    new Blob([html],{type:"text/html;charset=utf-8"}),
-    "Combined-Generic-Formulary.html"
-  );
-}
-
-function fail(error){
-  initialized=false;
-  console.error(error);
-  document.body.classList.add("has-errors");
-  UI.error.hidden=false;
-  UI.error.textContent=
-    "摘要資料載入失敗，請勿將部分結果視為完整清單。\n"+
-    (error instanceof Error?error.message:String(error));
-  UI.rows.innerHTML=
-    '<tr class="empty"><td colspan="6">載入失敗。</td></tr>';
-  UI.stats.innerHTML="";
-  UI.summary.textContent="未完成載入。";
-  UI.csv.disabled=true;
-  UI.print.disabled=true;
-}
-
-function safeRender(){
-  try{render()}catch(error){fail(error)}
-}
-
-function initialize(){
-  model=parseData();
-
-  if(!model.length) throw new Error("未載入任何摘要項目");
-
-  const categoryOrder=Object.keys(CATEGORY);
-
-  model.sort((a,b)=>
-    categoryOrder.indexOf(a.category)-categoryOrder.indexOf(b.category)||
-    a.name.localeCompare(b.name,"en",{sensitivity:"base",numeric:true})
-  );
-
-  for(const [value,label] of Object.entries(CATEGORY)){
-    if(!model.some(row=>row.category===value)) continue;
-    const option=document.createElement("option");
-    option.value=value;
-    option.textContent=label;
-    UI.category.appendChild(option);
-  }
-
-  UI.search.addEventListener("input",safeRender);
-
-  [
-    UI.category,UI.availability,UI.status,UI.compact
-  ].forEach(element=>element.addEventListener("change",safeRender));
-
-  UI.reset.addEventListener("click",()=>{
-    UI.search.value="";
-    UI.category.value="";
-    UI.availability.value="";
-    UI.status.value="";
-    UI.compact.checked=false;
-    safeRender();
-    UI.search.focus();
-  });
-
-  UI.csv.addEventListener("click",()=>{
-    try{exportCSV()}catch(error){
-      UI.error.hidden=false;
-      UI.error.textContent="CSV匯出失敗："+String(error);
-    }
-  });
-
-  UI.print.addEventListener("click",()=>{
-    if(initialized&&visible.length) window.print();
-  });
-
-  UI.save.addEventListener("click",()=>{
-    try{saveHTML()}catch(error){
-      UI.error.hidden=false;
-      UI.error.textContent="HTML下載失敗："+String(error);
-    }
-  });
-
-  const siteTotals=SITE_NAMES.map((name,index)=>
-    `${name}：${model.filter(row=>row.cells[index]).length}個摘要歸組`
-  );
-
-  const pending=model.filter(row=>row.pending).length;
-
-  UI.validation.textContent=
-    `內嵌摘要載入：${model.length}列；其中${pending}列標示成分／配方待核對。`+
-    siteTotals.join("；")+"。"+
-    "程式已檢查分類引用、摘要名稱重複、欄位、跨欄複製及四欄皆空白等結構問題。"+
-    "這不是與原始PDF／圖片逐列核對的完整性證明，亦不是官方成分或產品等價驗證。";
-
-  initialized=true;
+function acceptDocument(document){
+  const checked = validateEntries(document.entries);
+  entries = checked;
+  revision = document.revision;
+  updatedAt = document.updated_at;
+  dirty = false;
+  ready = true;
   render();
 }
 
-try{
-  initialize();
-}catch(error){
-  fail(error);
+async function loadCloud(){
+  ready = false;
+  controls();
+  const user = await requireUser();
+  let document = await fetchDocument(user.id);
+  let created = false;
+
+  if(!document){
+    message("此帳戶未有清單，正在首次儲存內嵌資料……");
+
+    const seed = parseSeed();
+
+    const {data,error} = await client.from(TABLE)
+      .insert({user_id:user.id,entries:seed})
+      .select("entries,revision,updated_at")
+      .single();
+
+    if(error){
+      if(error.code === "23505"){
+        document = await fetchDocument(user.id);
+        if(!document) throw error;
+      }else{
+        throw error;
+      }
+    }else{
+      document = data;
+      created = true;
+    }
+  }
+
+  acceptDocument(document);
+
+  message(
+    created
+      ? `首次建立成功：${entries.length} 個歸組已儲存至 Supabase。`
+      : `已從 Supabase 讀取 ${entries.length} 個歸組。`,
+    "success"
+  );
 }
+
+async function login(){
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  if(!email || !password) throw new Error("請填登入電郵及密碼。");
+
+  message("正在登入……");
+
+  const {data,error} = await client.auth.signInWithPassword({
+    email,password
+  });
+  if(error) throw error;
+
+  currentUser = data.user;
+  $("password").value = "";
+  await loadCloud();
+}
+
+async function signup(){
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  if(!email || !password){
+    throw new Error("先填電郵及密碼，再按註冊。密碼要求依項目設定。");
+  }
+
+  message("正在提交註冊……");
+
+  const {data,error} = await client.auth.signUp({email,password});
+  if(error) throw error;
+
+  $("password").value = "";
+
+  if(data.session && data.user){
+    currentUser = data.user;
+    await loadCloud();
+  }else{
+    message(
+      "註冊請求已提交。如項目要求電郵確認，請先完成確認，"+
+      "再返回此檔登入。如註冊被項目設定停用，"+
+      "請在 Supabase Authentication → Users 建立帳戶。"
+    );
+  }
+}
+
+async function saveCloud(){
+  if(!ready || !dirty) return;
+  const user = await requireUser();
+
+  const payload = validateEntries(copy(entries));
+  const baseRevision = revision;
+
+  message("正在儲存至 Supabase……");
+
+  const {data,error} = await client.from(TABLE)
+    .update({entries:payload})
+    .eq("user_id",user.id)
+    .eq("revision",baseRevision)
+    .select("revision,updated_at")
+    .maybeSingle();
+
+  if(error) throw error;
+
+  if(!data){
+    throw new Error(
+      "未儲存：雲端版本已改變，或目前權限不允許更新。\n"+
+      "你本頁修改仍保留，未被刪除。\n"+
+      "先按「備份目前資料 JSON」，再按「重新讀取雲端」核對。"
+    );
+  }
+
+  revision = data.revision;
+  updatedAt = data.updated_at;
+  dirty = false;
+  render();
+  message("已成功儲存至 Supabase。","success");
+}
+
+function openEditor(id){
+  if(busy || !currentUser || !ready) return;
+  const row = entries.find(r=>r.id === id);
+  if(!row) return;
+
+  editingId = id;
+  $("editName").value = row.name;
+  $("editCategory").value = row.category;
+  row.cells.forEach((text,i)=>{
+    $("edit"+i).value = text.split(";").join("\n");
+  });
+  $("editAliases").value = row.aliases;
+  $("editNote").value = row.note;
+  $("editPending").checked = row.pending;
+  $("editor").showModal();
+}
+
+function applyEdit(){
+  if(busy || !currentUser || !ready){
+    throw new Error("目前不可修改；請先成功讀取雲端。");
+  }
+
+  const row = entries.find(r=>r.id === editingId);
+  if(!row) throw new Error("找不到修改項目。");
+
+  const candidate = {
+    id:row.id,
+    name:$("editName").value.trim(),
+    category:$("editCategory").value,
+    cells:[0,1,2,3].map(i=>
+      $("edit"+i).value.split(/\r?\n/)
+        .map(v=>v.trim()).filter(Boolean).join(";")
+    ),
+    aliases:$("editAliases").value.trim(),
+    note:$("editNote").value.trim(),
+    pending:$("editPending").checked
+      || $("editCategory").value === "pending"
+  };
+
+  const next = entries.map(r=>r.id === row.id ? candidate : r);
+  entries = validateEntries(next);
+  dirty = true;
+  $("editor").close();
+  render();
+  message("修改已套用至本頁，尚未上傳。按「儲存修改至雲端」提交。");
+}
+
+function download(text,type,name){
+  const blob = new Blob([text],{type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+}
+
+function backupJSON(){
+  download(JSON.stringify({
+    format:"four-clinic-cloud-backup-v1",
+    exported_at:new Date().toISOString(),
+    source_revision:revision,
+    has_unsaved_changes:dirty,
+    entries
+  },null,2),"application/json;charset=utf-8",
+    "four-clinic-backup.json");
+}
+
+function csvCell(value){
+  let text = String(value ?? "");
+  if(/^[\s\u0000-\u001f\uFEFF]*[=+\-@]/.test(text)){
+    text = "'" + text;
+  }
+  return '"' + text.replace(/"/g,'""') + '"';
+}
+
+function exportCSV(){
+  const header = [
+    "整理分類","GENERIC／項目名稱","對照狀態",
+    ...SITE_NAMES,"搜尋品牌別名","備註",
+    "藥房覆核結果","確認人","確認日期"
+  ];
+
+  const records = visible.map(r=>[
+    CATEGORY[r.category],r.name,
+    r.pending ? "成分／配方待核對" : "主要成分級歸組，非產品等價",
+    ...r.cells.map(v=>v
+      ? v.split(";").join("\n") : "未列出此歸組"),
+    r.aliases,r.note,"","",""
+  ]);
+
+  download(
+    "\uFEFF"+[header,...records].map(record=>
+      record.map(csvCell).join(",")
+    ).join("\r\n"),
+    "text/csv;charset=utf-8",
+    "four-clinic-comparison.csv"
+  );
+}
+
+function initialize(){
+  if(initialized) return;
+  initialized = true;
+
+  entries = parseSeed();
+
+  for(const [value,label] of Object.entries(CATEGORY)){
+    $("category").add(new Option(label,value));
+    $("editCategory").add(new Option(label,value));
+  }
+
+  $("search").addEventListener("input",render);
+  ["category","availability","status","compact"].forEach(id=>{
+    $(id).addEventListener("change",render);
+  });
+
+  $("reset").addEventListener("click",()=>{
+    $("search").value = "";
+    $("category").value = "";
+    $("availability").value = "";
+    $("status").value = "";
+    $("compact").checked = false;
+    render();
+  });
+
+  $("authForm").addEventListener("submit",event=>{
+    event.preventDefault();
+    if(client) task(login);
+  });
+
+  $("signup").addEventListener("click",()=>{
+    if(client) task(signup);
+  });
+
+  $("logout").addEventListener("click",()=>{
+    if(dirty && !confirm("有未儲存修改，確定登出並捨棄？")) return;
+
+    task(async()=>{
+      const {error} = await client.auth.signOut();
+      if(error) throw error;
+
+      currentUser = null;
+      ready = false;
+      revision = null;
+      updatedAt = null;
+      dirty = false;
+      entries = parseSeed();
+      render();
+      message("已登出。現在顯示內嵌預覽，不是雲端已更新資料。");
+    });
+  });
+
+  $("saveCloud").addEventListener("click",()=>{
+    task(saveCloud);
+  });
+
+  $("reloadCloud").addEventListener("click",()=>{
+    if(dirty && !confirm(
+      "重新讀取會捨棄本頁未儲存修改。需要保留請先備份 JSON。繼續？"
+    )) return;
+
+    task(loadCloud);
+  });
+
+  $("rows").addEventListener("click",event=>{
+    const button = event.target.closest("[data-edit]");
+    if(button) openEditor(button.dataset.edit);
+  });
+
+  $("editForm").addEventListener("submit",event=>{
+    event.preventDefault();
+    try{
+      applyEdit();
+    }catch(error){
+      alert(errorText(error));
+    }
+  });
+
+  $("cancelEdit").addEventListener("click",()=>{
+    $("editor").close();
+  });
+
+  $("backup").addEventListener("click",backupJSON);
+  $("csv").addEventListener("click",exportCSV);
+  $("print").addEventListener("click",()=>window.print());
+
+  window.addEventListener("beforeunload",event=>{
+    if(!dirty) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+
+  if(window.supabase?.createClient){
+    client = window.supabase.createClient(
+      SUPABASE_URL,SUPABASE_KEY,{
+        auth:{
+          persistSession:false,
+          autoRefreshToken:true,
+          detectSessionInUrl:false
+        }
+      }
+    );
+
+    client.auth.onAuthStateChange((event)=>{
+      if(event === "SIGNED_OUT" && currentUser){
+        currentUser = null;
+        ready = false;
+        controls();
+        message(
+          "登入已失效或已登出。本頁未儲存修改仍保留；"+
+          "可先備份 JSON，再重新登入。",
+          "error"
+        );
+      }
+    });
+  }else{
+    message(
+      "Supabase 程式庫未載入。請連接互聯網後重新開啟本檔，"+
+      "或檢查瀏覽器／公司網絡有否封鎖 jsDelivr。\n"+
+      "目前僅顯示內嵌預覽，沒有儲存至雲端。",
+      "error"
+    );
+  }
+
+  render();
+}
+
+window.addEventListener("DOMContentLoaded",()=>{
+  try{
+    initialize();
+  }catch(error){
+    message("初始化失敗："+errorText(error),"error");
+    $("rows").innerHTML =
+      '<tr><td colspan="7">載入失敗，請勿視為完整清單。</td></tr>';
+    document.querySelectorAll("button").forEach(b=>b.disabled=true);
+  }
+});
 </script>
 </body>
 </html>
