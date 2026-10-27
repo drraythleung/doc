@@ -24,7 +24,7 @@
 
 <meta
  name="description"
- content="以月曆查閱梁子恒醫生已公布的診症時間、地點及診所預約資料。"
+ content="以月曆查閱梁子恒醫生已公布的診症時間、休假日期、地點及診所預約資料。"
 >
 
 <style>
@@ -39,6 +39,9 @@
  --warn:#775516;
  --warnbg:#fff7df;
  --bad:#a32e35;
+ --leave-bg:#fff8e7;
+ --leave-line:#dfc985;
+ --leave-ink:#775516;
 
  font-family:
   Arial,"Microsoft JhengHei","PingFang TC",sans-serif;
@@ -222,6 +225,14 @@ select{
  background:var(--site-color);
 }
 
+.legend-leave{
+ width:12px;
+ height:12px;
+ border:1px solid var(--leave-line);
+ border-radius:3px;
+ background:var(--leave-bg);
+}
+
 .calendar-scroll{
  overflow:auto;
  overscroll-behavior-x:contain;
@@ -254,18 +265,22 @@ select{
  background:#fff;
 }
 
-.day.outside{
- background:#f5f7f8;
-}
+.day.outside{background:#f5f7f8}
+.day.past{background:#fafbfc}
 
-.day.past{
- background:#fafbfc;
+.day.on-leave{
+ background:var(--leave-bg);
+ border-color:var(--leave-line);
 }
 
 .day.today{
  border:2px solid var(--accent);
  padding:6px;
  background:#f6fbf8;
+}
+
+.day.today.on-leave{
+ background:var(--leave-bg);
 }
 
 .day-head{
@@ -315,9 +330,7 @@ select{
  line-height:1.45;
 }
 
-.event:hover:not(:disabled){
- background:#edf5f1;
-}
+.event:hover:not(:disabled){background:#edf5f1}
 
 .event-time{
  display:block;
@@ -333,12 +346,34 @@ select{
  font-size:12px;
 }
 
+.leave-label{
+ display:block;
+ margin:12px 0 0;
+ padding:8px 5px;
+ border:1px solid var(--leave-line);
+ border-radius:6px;
+ color:var(--leave-ink);
+ background:#fff0c4;
+ text-align:center;
+ font-size:13px;
+ font-weight:bold;
+}
+
+.leave-caption{
+ margin:5px 0 0;
+ color:var(--leave-ink);
+ text-align:center;
+ font-size:11px;
+}
+
 .day-note{
  margin:12px 0 0;
  color:#8b9ba2;
  font-size:11px;
  text-align:center;
 }
+
+.day-note.warning{color:var(--warn)}
 
 .mobile-hint{
  display:none;
@@ -404,9 +439,7 @@ dialog::backdrop{background:#17333d80}
  line-height:1.4;
 }
 
-.detail-section{
- margin:15px 0;
-}
+.detail-section{margin:15px 0}
 
 .detail-section h3{
  margin:0 0 5px;
@@ -451,7 +484,6 @@ dialog::backdrop{background:#17333d80}
  .filter-controls select{flex:1;max-width:none;min-width:0}
 
  .calendar-panel{padding:10px}
- .calendar{min-width:730px}
  .day{min-height:140px}
  .mobile-hint{display:block}
 }
@@ -465,8 +497,10 @@ dialog::backdrop{background:#17333d80}
   <p class="eyebrow">診症時間及地點</p>
   <h1>梁子恒醫生</h1>
   <p class="english">Dr. LEUNG Tsz Hang</p>
+
   <p class="intro">
-按月曆內的診症時段，查看診所地址、預約電話及已提供的 WhatsApp 預約方式。
+   按月曆內的診症時段，查看診所地址、預約電話及
+   WhatsApp 預約方式。已公布的全天休假會另作標示。
   </p>
  </header>
 
@@ -475,14 +509,11 @@ dialog::backdrop{background:#17333d80}
   class="notice"
   role="status"
   aria-live="polite"
- >
-  正在載入診症月曆…
- </div>
+ >正在載入診症月曆…</div>
 
  <section id="calendarSection" hidden>
 
   <div class="toolbar">
-
    <div class="month-controls">
     <button
      id="prev"
@@ -502,9 +533,7 @@ dialog::backdrop{background:#17333d80}
      aria-label="下一個月"
     >→</button>
 
-    <button id="thisMonth" type="button">
-     本月
-    </button>
+    <button id="thisMonth" type="button">本月</button>
    </div>
 
    <div class="filter-controls">
@@ -514,11 +543,8 @@ dialog::backdrop{background:#17333d80}
      <option value="">全部地點</option>
     </select>
 
-    <button id="refresh" type="button">
-     重新整理
-    </button>
+    <button id="refresh" type="button">重新整理</button>
    </div>
-
   </div>
 
   <div class="calendar-panel">
@@ -531,7 +557,7 @@ dialog::backdrop{background:#17333d80}
    <div
     id="legend"
     class="legend"
-    aria-label="診所顏色標示"
+    aria-label="診所及休假標示"
    ></div>
 
    <p class="mobile-hint">
@@ -547,7 +573,7 @@ dialog::backdrop{background:#17333d80}
     <div
      id="calendar"
      class="calendar"
-     aria-label="診症日期及時段"
+     aria-label="診症日期、時段及已公布休假"
      aria-busy="true"
     ></div>
    </div>
@@ -570,13 +596,21 @@ dialog::backdrop{background:#17333d80}
  <footer>
   <p>
    所有時間均為香港時間（UTC+8）。
-   月曆只顯示已公布且尚未結束的原定時段，
-   過往安排不在此頁展示。
+   月曆只顯示已公布且尚未結束的原定診症時段，
+   以及今日起已公布的休假；過往安排不在此頁展示。
   </p>
+
+  <p>
+   「休假」代表醫生當日在所有工作地點全天休假，
+   並不代表相關診所休診。
+   沒有公布時段的日期，不會自動當作休假。
+  </p>
+
   <p>
    排班不代表尚有預約名額。診症期間可能另設休息時間；
    預約、臨時調動及實際診症安排，請先向有關診所確認。
   </p>
+
   <p>
    此頁只供查閱排班，不接收病歷、醫療查詢或預約表單。
   </p>
@@ -595,7 +629,7 @@ dialog::backdrop{background:#17333d80}
 <script>
 "use strict";
 
-/* 公開排班接口；不包含登入資料或 secret key。 */
+/* 公開接口；不要在此加入 secret key 或 service_role key。 */
 const API=
  "https://pdtiwdndcwtojqfoxrfe.supabase.co";
 
@@ -615,7 +649,6 @@ const E=value=>String(value??"").replace(
  }[c])
 );
 
-/* 固定色盤，只用於區分公開地點。 */
 const COLORS=[
  "#376aaf",
  "#39846a",
@@ -633,7 +666,26 @@ let viewMonth="";
 let visibleEvents=[];
 let returnFocus=null;
 
-/* 日期一律按香港計算，不依賴訪客所在地。 */
+/*
+ * 預期公開 RPC 格式：
+ *
+ * {
+ *   enabled: true,
+ *   throughDate: "YYYY-MM-DD",
+ *   checkedAt: "帶時區的 ISO 時間",
+ *   shifts: [...原有公開更次...],
+ *   daysOff: [
+ *     { date: "YYYY-MM-DD" }
+ *   ]
+ * }
+ *
+ * daysOff 只應包含已獲准公開、未撤銷的全天休假。
+ * 不應回傳 note、actor、操作紀錄或其他內部資料。
+ *
+ * 舊接口沒有 daysOff 時：
+ * 仍顯示排班，但明確提示休假資料尚未接駁。
+ */
+
 function hkNow(){
  const parts=new Intl.DateTimeFormat("en-GB",{
   timeZone:"Asia/Hong_Kong",
@@ -696,7 +748,12 @@ function checkedLabel(iso){
 }
 
 function dateOK(day){
- if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return false;
+ if(
+  typeof day!=="string"||
+  !/^\d{4}-\d{2}-\d{2}$/.test(day)
+ ){
+  return false;
+ }
 
  const d=new Date(day+"T12:00:00Z");
 
@@ -721,6 +778,13 @@ function validShift(s){
   s.end>s.start;
 }
 
+function validLeave(x){
+ return x&&
+  typeof x==="object"&&
+  !Array.isArray(x)&&
+  dateOK(x.date);
+}
+
 function setStatus(text,error=false){
  $("status").hidden=false;
  $("status").classList.toggle("error",error);
@@ -740,7 +804,6 @@ function sites(){
 }
 
 function siteColor(id){
- /* 依地點 ID 決定顏色，切換月份時不變。 */
  let hash=0;
 
  for(const c of id){
@@ -783,22 +846,73 @@ function timeRange(s){
  return s.start.slice(11)+"–"+endTime(s);
 }
 
+/*
+ * 香港日期全天區間：
+ * [當日 00:00，翌日 00:00)
+ *
+ * 原有公開更次時間是香港本地 YYYY-MM-DDTHH:mm，
+ * 因此以下比較使用相同格式，不以訪客本地時區解析。
+ */
+function shiftTouchesDay(s,day){
+ const from=day+"T00:00";
+ const until=dayAdd(day,1)+"T00:00";
+
+ return s.start<until&&s.end>from;
+}
+
+/*
+ * 防禦性處理：
+ * 如果公開資料同時有全天休假及衝突更次，
+ * 不顯示「休假」，保留更次並提示向診所確認。
+ *
+ * 這不是取代 CMS／資料庫驗證。
+ */
+function publicLeaveState(today){
+ const dates=new Set();
+ const conflicts=new Set();
+
+ if(!data.leaveConnected){
+  return {dates,conflicts};
+ }
+
+ for(const row of data.daysOff){
+  const day=row.date;
+
+  if(day<today||day>data.throughDate){
+   continue;
+  }
+
+  if(data.shifts.some(s=>shiftTouchesDay(s,day))){
+   conflicts.add(day);
+  }else{
+   dates.add(day);
+  }
+ }
+
+ return {dates,conflicts};
+}
+
 function render(){
  if(!data?.enabled)return;
 
  const now=hkNow();
  const today=now.slice(0,10);
  const thisMonth=today.slice(0,7);
- const lastMonth=data.throughDate.slice(0,7);
+
+ /*
+  * 若公布範圍已過，不倒退到過往月份。
+  */
+ const lastMonth=data.throughDate.slice(0,7)>thisMonth
+  ?data.throughDate.slice(0,7)
+  :thisMonth;
+
  const chosenSite=$("site").value;
 
  if(!viewMonth)viewMonth=thisMonth;
-
  if(viewMonth<thisMonth)viewMonth=thisMonth;
  if(viewMonth>lastMonth)viewMonth=lastMonth;
 
  $("monthTitle").textContent=monthLabel(viewMonth);
-
  $("prev").disabled=viewMonth<=thisMonth;
  $("next").disabled=viewMonth>=lastMonth;
  $("thisMonth").disabled=viewMonth===thisMonth;
@@ -809,15 +923,19 @@ function render(){
   first+"T12:00:00Z"
  ).getUTCDay();
 
-/* 星期日起首，完整顯示六週。 */
+ /* 星期日起首，完整六週。 */
  const begin=dayAdd(first,-weekday);
  const end=dayAdd(begin,41);
+
+ const leaveState=publicLeaveState(today);
 
  visibleEvents=data.shifts.filter(s=>{
   const day=s.start.slice(0,10);
 
   return s.end>now&&
-   day>=begin&&day<=end&&
+   day<=data.throughDate&&
+   day>=begin&&
+   day<=end&&
    (!chosenSite||s.siteId===chosenSite);
  }).sort((a,b)=>
   a.start.localeCompare(b.start)||
@@ -828,8 +946,17 @@ function render(){
   s=>s.start.slice(0,7)===viewMonth
  );
 
+ const monthLeaves=[...leaveState.dates].filter(
+  day=>day.slice(0,7)===viewMonth
+ );
+
  $("summary").textContent=
   "本月已公布 "+monthEvents.length+" 個時段"+
+  (
+   data.leaveConnected
+    ?" · "+monthLeaves.length+" 日休假"
+    :" · 休假資料尚未接駁"
+  )+
   " · 香港時間";
 
  const usedSites=new Map();
@@ -848,7 +975,20 @@ function render(){
     ></span>
     ${E(name)}
    </span>
-  `).join("");
+  `).join("")+
+  (
+   data.leaveConnected
+    ?`
+     <span class="legend-item">
+      <span
+       class="legend-leave"
+       aria-hidden="true"
+      ></span>
+      醫生全天休假（所有地點）
+     </span>
+    `
+    :""
+  );
 
  const byDay=new Map();
 
@@ -860,9 +1000,11 @@ function render(){
   byDay.get(day).push({shift:s,index});
  });
 
-const headers=["日","一","二","三","四","五","六"]
+ const headers=["日","一","二","三","四","五","六"]
   .map((name,index)=>`
-   <div class="weekday ${index===0||index===6?"weekend":""}">
+   <div class="weekday ${
+    index===0||index===6?"weekend":""
+   }">
     星期${name}
    </div>
   `).join("");
@@ -875,15 +1017,22 @@ const headers=["日","一","二","三","四","五","六"]
   const afterRange=day>data.throughDate;
   const rows=byDay.get(day)||[];
 
+  const onLeave=leaveState.dates.has(day);
+  const hasConflict=leaveState.conflicts.has(day);
+
   let note="";
 
-  if(!rows.length){
-   if(afterRange){
-    note="尚未開放查閱";
-   }else if(past){
+  if(hasConflict){
+   note="安排待確認，請向診所查詢";
+  }else if(!rows.length&&!onLeave){
+   if(past){
     note="過往時段不展示";
+   }else if(afterRange){
+    note="尚未開放查閱";
    }else if(!outside){
-    note="未有公布時段";
+    note=chosenSite
+     ?"此地點未有公布時段"
+     :"未有公布時段";
    }
   }
 
@@ -899,16 +1048,25 @@ const headers=["日","一","二","三","四","五","六"]
      ${outside?"outside":""}
      ${isToday?"today":""}
      ${past?"past":""}
+     ${onLeave?"on-leave":""}
     "
-    aria-label="${E(dateLabel(day))}"
+    aria-label="${E(
+     dateLabel(day)+(onLeave?"，醫生全天休假":"")
+    )}"
     ${isToday?'aria-current="date"':""}
    >
     <div class="day-head">
      <span class="day-number">${E(number)}</span>
+
      ${isToday?`
       <span class="today-label">今天</span>
      `:""}
     </div>
+
+    ${onLeave?`
+     <p class="leave-label">休假</p>
+     <p class="leave-caption">醫生全天休假</p>
+    `:""}
 
     ${rows.map(({shift:s,index:eventIndex})=>`
      <button
@@ -925,6 +1083,7 @@ const headers=["日","一","二","三","四","五","六"]
       <span class="event-time">
        ${E(timeRange(s))}
       </span>
+
       <span class="event-site">
        ${E(s.siteName)}
       </span>
@@ -932,7 +1091,9 @@ const headers=["日","一","二","三","四","五","六"]
     `).join("")}
 
     ${note?`
-     <p class="day-note">${E(note)}</p>
+     <p class="day-note ${hasConflict?"warning":""}">
+      ${E(note)}
+     </p>
     `:""}
    </section>
   `;
@@ -945,8 +1106,30 @@ const headers=["日","一","二","三","四","五","六"]
  if(!monthEvents.length){
   $("emptyMessage").textContent=
    "本月在所選地點暫未有可顯示的診症時段。"+
-   "未有公布不代表診所休診，請向診所查詢。";
+   (
+    monthLeaves.length
+     ?"已公布的醫生全天休假已在月曆另作標示。"
+     :""
+   )+
+   "其他未有公布時段的日期不代表休假或診所休診，"+
+   "請向診所查詢。";
  }
+
+ let status=
+  "點選月曆內的時段查看預約資料。"+
+  "目前公布範圍至 "+data.throughDate+"。";
+
+ if(!data.leaveConnected){
+  status+=" 休假資料尚未接駁；目前只提供診症時段。";
+ }
+
+ if(leaveState.conflicts.size){
+  status+=
+   " 部分日期的休假與診症資料不一致，"+
+   "已標示「安排待確認」，請先向診所核實。";
+ }
+
+ setStatus(status);
 }
 
 function closeDetail(){
@@ -974,11 +1157,8 @@ function openDetail(index,button){
   :"";
 
  /*
-  * 只採用公開 RPC 明確回傳的 whatsapp。
-  * 不從預約電話推斷，避免診所未啟用時仍顯示按鈕。
-  *
-  * 格式：包含國碼、只有數字，例如 85298677100。
-  * 空白、缺少或格式不符時，不顯示 WhatsApp。
+  * 只使用 RPC 明確提供的 WhatsApp 號碼；
+  * 不從電話號碼推斷。
   */
  const whatsapp=typeof s.whatsapp==="string"
   ?s.whatsapp.trim()
@@ -986,10 +1166,6 @@ function openDetail(index,button){
 
  const canWhatsApp=/^[1-9]\d{7,14}$/.test(whatsapp);
 
- /*
-  * 預填內容只包含公開排班資料，
-  * 不加入病人身份或病歷。
-  */
  const whatsappMessage=[
   "你好，我想查詢預約梁子恒醫生。",
   "診所："+s.siteName,
@@ -1003,9 +1179,23 @@ function openDetail(index,button){
     "?text="+encodeURIComponent(whatsappMessage)
   :"";
 
+ const leaveState=publicLeaveState(
+  hkNow().slice(0,10)
+ );
+
+ const needsConfirmation=[...leaveState.conflicts]
+  .some(day=>shiftTouchesDay(s,day));
+
  $("detailTitle").textContent=s.siteName;
 
  $("detailBody").innerHTML=`
+  ${needsConfirmation?`
+   <div class="notice">
+    此時段涉及的日期有安排資料不一致，
+    請先向診所確認醫生是否應診。
+   </div>
+  `:""}
+
   <p class="dialog-date">
    ${E(dateLabel(s.start.slice(0,10)))}
   </p>
@@ -1046,7 +1236,8 @@ function openDetail(index,button){
      target="_blank"
      rel="noopener noreferrer"
      aria-label="${E(
-      "透過 WhatsApp 向"+s.siteName+"查詢預約（另開視窗）"
+      "透過 WhatsApp 向"+s.siteName+
+      "查詢預約（另開視窗）"
      )}"
     >WhatsApp 預約</a>
    `:""}
@@ -1064,6 +1255,7 @@ function openDetail(index,button){
   <p class="dialog-note">
    香港時間。以上為原定診症安排，不代表尚有預約名額；
    休息時間及實際診症安排請先向診所確認。
+
    ${canWhatsApp?`
     <br>
     WhatsApp 按鈕只會開啟預約查詢，
@@ -1076,7 +1268,6 @@ function openDetail(index,button){
  $("detail").showModal();
  $("closeDetail").focus();
 }
-
 
 async function load(){
  if(loading)return;
@@ -1122,27 +1313,41 @@ async function load(){
    throw new Error("接口回應格式無效");
   }
 
-  if(result.enabled&&(
-   !dateOK(result.throughDate)||
-   typeof result.checkedAt!=="string"||
-   !Number.isFinite(Date.parse(result.checkedAt))||
-   !result.shifts.every(validShift)
-  )){
-   throw new Error("排班資料格式無效");
+  const leaveConnected=
+   Object.prototype.hasOwnProperty.call(
+    result,
+    "daysOff"
+   );
+
+  if(result.enabled){
+   if(
+    !dateOK(result.throughDate)||
+    typeof result.checkedAt!=="string"||
+    !Number.isFinite(Date.parse(result.checkedAt))||
+    !result.shifts.every(validShift)
+   ){
+    throw new Error("排班資料格式無效");
+   }
+
+   if(
+    leaveConnected&&
+    (
+     !Array.isArray(result.daysOff)||
+     !result.daysOff.every(validLeave)
+    )
+   ){
+    throw new Error("休假資料格式無效");
+   }
   }
 
-  /*
-   * 背景更新後關閉已開啟的舊詳情，
-   * 避免取消更次後仍展示舊安排。
-   */
   if($("detail").open)closeDetail();
 
-  data=result;
-
   if(!result.enabled){
+   data=null;
+   visibleEvents=[];
+
    $("calendarSection").hidden=true;
    $("calendar").replaceChildren();
-   visibleEvents=[];
 
    setStatus(
     "目前未開放網上排班查詢，請直接向診所查詢。"
@@ -1151,17 +1356,38 @@ async function load(){
    return;
   }
 
+  /*
+   * 只保留顯示所需欄位。
+   *
+   * 注意：此處丟棄多餘欄位不是保密措施；
+   * 後端本身就不應傳送內部備註。
+   */
+  data={
+   enabled:true,
+   throughDate:result.throughDate,
+   checkedAt:result.checkedAt,
+   shifts:result.shifts.map(s=>({
+    siteId:s.siteId,
+    siteName:s.siteName,
+    start:s.start,
+    end:s.end,
+    address:typeof s.address==="string"?s.address:"",
+    phone:typeof s.phone==="string"?s.phone:"",
+    whatsapp:typeof s.whatsapp==="string"?s.whatsapp:""
+   })),
+   leaveConnected,
+   daysOff:leaveConnected
+    ?result.daysOff.map(x=>({date:x.date}))
+    :[]
+  };
+
   updateSiteFilter();
+
   $("calendarSection").hidden=false;
 
   $("freshness").textContent=
    "最近成功讀取："+
-   checkedLabel(result.checkedAt);
-
-  setStatus(
-   "點選月曆內的時段查看預約資料。"+
-   "目前可查閱至 "+result.throughDate+"。"
-  );
+   checkedLabel(data.checkedAt);
 
   render();
 
@@ -1171,10 +1397,6 @@ async function load(){
 
   if($("detail").open)closeDetail();
 
-  /*
-   * 更新失敗不繼續展示舊時段，
-   * 以免被誤認為最新安排。
-   */
   $("calendar").replaceChildren();
   $("calendarSection").hidden=true;
 
@@ -1195,13 +1417,14 @@ async function load(){
 }
 
 function installRetry(){
- /* 月曆隱藏時，仍保留手動重試入口。 */
  const button=document.createElement("button");
  button.type="button";
  button.textContent="重新載入月曆";
  button.style.marginLeft="10px";
 
  button.addEventListener("click",()=>{
+  if(loading)return;
+
   button.disabled=true;
   load();
  });
@@ -1244,19 +1467,24 @@ $("detail").addEventListener("close",()=>{
  }
 
  returnFocus=null;
-});
 
-/* 離開分頁後返回，立即更新。 */
-document.addEventListener("visibilitychange",()=>{
- if(!document.hidden)load();
+ if(!loading&&!document.hidden){
+  load();
+ }
 });
 
 /*
- * 操作詳情期間暫緩背景重載，避免打斷查閱。
- * 關閉詳情後立即更新，以核對最新安排。
+ * 返回分頁時更新。
+ * 如果正在看詳情，先關閉，再重新核對資料。
  */
-$("detail").addEventListener("close",()=>{
- if(!loading&&!document.hidden)load();
+document.addEventListener("visibilitychange",()=>{
+ if(!document.hidden){
+  if($("detail").open){
+   closeDetail();
+  }
+
+  load();
+ }
 });
 
 setInterval(()=>{
