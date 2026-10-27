@@ -5955,7 +5955,7 @@ header.appbar .brand{
    m?.mrn,
    age(p.dob,e.date),
    p.sex,
-   dateOK(p.dob)?"出生："+fmt(p.dob):"",
+   dateOK(p.dob)?""+fmt(p.dob):"",
    normID(p.hkid)
   ].filter(Boolean).join(" · ");
 
