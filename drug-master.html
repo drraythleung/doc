@@ -2668,519 +2668,964 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 </script>
+
+
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-  const byId = id => document.getElementById(id);
-  const addButton = byId("addEntry");
-  const rows = byId("rows");
+  const el = id => document.getElementById(id);
 
-  if (!addButton || !rows) return;
+  if (!el("addEntry") || !el("archiveView")) return;
 
-  /* ===== 工具列：保留原本按鈕及事件，只重新排位 ===== */
+  const header = document.querySelector("body > header");
+  const main = document.querySelector("main");
+  const authPanel = el("authForm").closest("section");
+  const filterPanel = el("search").closest("section");
+  const toolsPanel = el("addEntry").closest("section");
+  const dataPanel = el("stats").closest("section");
+  const table = el("rows").closest("table");
 
-  const tools = addButton.closest("section");
-  tools.classList.add("cleanTools");
+  document.body.classList.add("workspaceUI");
+  filterPanel.classList.add("searchPanel");
+  dataPanel.classList.add("dataPanel");
+  table.classList.add("clinicTable");
 
-  const heading = tools.querySelector(":scope > strong");
-  if (heading) {
-    heading.textContent = "清單管理";
-    heading.classList.add("toolsTitle");
-  }
+  /*
+   * 移動現有節點，保留原本事件。
+   * 不複製登入、儲存、篩選或編輯按鈕。
+   */
 
-  const toolbar = tools.querySelector(":scope > .editorToolbar");
-  const draftInfo = byId("draftInfo");
+  // ── 頂欄 ──
 
-  const top = document.createElement("div");
-  top.className = "toolsTop";
+  const originalTitle = header.querySelector("h1").textContent;
+  const sourceParagraphs = [...header.querySelectorAll("p")];
 
-  if (heading) top.appendChild(heading);
-  if (toolbar) top.appendChild(toolbar);
-  tools.prepend(top);
+  header.innerHTML = `
+    <div class="appHeader">
+      <div class="appIdentity">
+        <h1>Dr Ray 合作診所藥物清單</h1>
+        <p>港安醫療中心（銅鑼灣、太古坊）· 香港專科（20樓診所及5樓手術室）</p>
+      </div>
 
-  if (draftInfo) {
-    draftInfo.classList.add("draftStatus");
-    top.appendChild(draftInfo);
-  }
+      <div class="appActions noprint">
+        <span id="workspaceState" role="status"></span>
+        <span id="saveSlot"></span>
+        <button id="openAccount" type="button">登入</button>
 
-  /* 批量功能收入摺疊區 */
-  const bulk = document.createElement("details");
-  bulk.className = "bulkDrawer";
+        <details id="workspaceMenu" class="popover">
+          <summary>更多 ▾</summary>
+          <div class="popoverBody">
+            <div class="menuCaption">資料操作</div>
+            <div id="documentActions"></div>
 
-  const summary = document.createElement("summary");
-  const summaryTitle = document.createElement("span");
-  summaryTitle.textContent = "批量操作";
+            <div class="menuCaption">本頁修改</div>
+            <div id="draftActions"></div>
+            <div id="draftDetail" class="menuInfo"></div>
 
-  const summaryHint = document.createElement("span");
-  summaryHint.className = "bulkSummaryHint";
-  summaryHint.textContent = "分類、收錄狀態、合併及封存";
+            <div class="menuCaption">雲端版本</div>
+            <div id="syncDetail" class="menuInfo"></div>
 
-  summary.append(summaryTitle, summaryHint);
-  bulk.appendChild(summary);
+            <details class="sourceDetails">
+              <summary>資料來源與日期</summary>
+              <div id="sourceDetail" class="menuInfo"></div>
+            </details>
+          </div>
+        </details>
+      </div>
+    </div>
+  `;
 
-  tools.querySelectorAll(":scope > .bulkGroup").forEach(group => {
-    bulk.appendChild(group);
+  el("saveSlot").append(el("saveCloud"));
+  el("saveCloud").textContent = "儲存修改";
+
+  const actions = [
+    ["reloadCloud", "重新讀取雲端"],
+    ["backup", "備份完整資料 · JSON"],
+    ["csv", "匯出目前結果 · CSV"],
+    ["print", "列印目前結果"]
+  ];
+
+  actions.forEach(([id, text]) => {
+    el(id).textContent = text;
+    el("documentActions").append(el(id));
   });
 
-  tools.appendChild(bulk);
+  el("viewChanges").textContent = "查看修改摘要";
+  el("discardDraft").textContent = "放棄未儲存修改";
+  el("discardDraft").classList.add("dangerQuiet");
 
-  /* 收起危險操作，避免同新增一樣搶眼 */
-  const discard = byId("discardDraft");
-  if (discard) {
-    discard.classList.add("dangerQuiet");
-    discard.textContent = "放棄修改";
+  el("draftActions").append(
+    el("viewChanges"),
+    el("discardDraft")
+  );
+  el("draftDetail").append(el("draftInfo"));
+  el("syncDetail").append(el("sync"));
+
+  const fullTitle = document.createElement("p");
+  fullTitle.textContent = originalTitle;
+  el("sourceDetail").append(fullTitle, ...sourceParagraphs);
+
+  // ── 帳戶視窗 ──
+
+  const accountDialog = document.createElement("dialog");
+  accountDialog.id = "accountDialog";
+  accountDialog.className = "noprint";
+  accountDialog.innerHTML = `
+    <div class="dialogHeading">
+      <h2>帳戶</h2>
+      <button id="closeAccount" type="button" aria-label="關閉帳戶視窗">
+        關閉
+      </button>
+    </div>
+    <div id="accountContent"></div>
+  `;
+  document.body.append(accountDialog);
+
+  el("accountContent").append(
+    el("account"),
+    el("authForm"),
+    el("logout")
+  );
+
+  el("login").textContent = "登入";
+  el("logout").classList.add("accountLogout");
+
+  el("openAccount").addEventListener("click", () => {
+    accountDialog.showModal();
+  });
+
+  el("closeAccount").addEventListener("click", () => {
+    accountDialog.close();
+  });
+
+  // ── 搜尋與篩選 ──
+
+  const searchLabel = el("search").closest("label");
+  const categoryLabel = el("category").closest("label");
+  const availabilityLabel = el("availability").closest("label");
+  const statusLabel = el("status").closest("label");
+  const archiveLabel = el("archiveView").closest("label");
+  const compactLabel = el("compact").closest("label");
+
+  // 用 aria-label 保留無障礙名稱，移除常駐欄位標題。
+  function removeLabelText(label, control, name) {
+    [...label.childNodes].forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE) node.remove();
+    });
+    control.setAttribute("aria-label", name);
   }
 
-  const viewChanges = byId("viewChanges");
-  if (viewChanges) viewChanges.textContent = "修改摘要";
+  removeLabelText(searchLabel, el("search"), "搜尋藥物清單");
+  removeLabelText(categoryLabel, el("category"), "分類");
 
-  addButton.textContent = "＋ 新增項目";
+  el("search").placeholder = "搜尋成分、品牌、劑型、強度或備註…";
 
-  /* 勾選數量顯示於摺疊標題，收起時亦睇到 */
-  const selectionInfo = byId("selectionInfo");
+// 容器尚未放入 document 時，
+  // 必須用容器.querySelector() 查找內部元素。
 
-  function updateSelectionSummary() {
-    const count = selectionInfo?.textContent.match(/已選\s*(\d+)/)?.[1];
-    const hasSelection = Number(count) > 0;
+  const searchBar = document.createElement("div");
+  searchBar.className = "workspaceSearch";
+  searchBar.innerHTML = `
+    <details id="filterDrawer" class="filterDrawer">
+      <summary id="filterToggle">篩選</summary>
+      <div class="advancedFilters">
+        <div id="advancedFields"></div>
+        <div class="filterFoot">
+          <span class="small">更改條件即時更新清單</span>
+          <span id="resetSlot"></span>
+        </div>
+      </div>
+    </details>
+  `;
 
-    summaryTitle.textContent = hasSelection
-      ? `批量操作 · 已選 ${count} 項`
-      : "批量操作";
+  // 先取得原本節點，之後先移動。
+  const addEntryButton = el("addEntry");
+  const resetButton = el("reset");
 
-    bulk.classList.toggle("hasSelection", hasSelection);
-    summaryHint.textContent = hasSelection
-      ? "展開處理所選項目"
-      : "分類、收錄狀態、合併及封存";
+  addEntryButton.textContent = "＋ 新增項目";
+
+  searchBar.prepend(searchLabel, categoryLabel);
+  searchBar.append(addEntryButton);
+
+  searchBar.querySelector("#advancedFields").append(
+    availabilityLabel,
+    statusLabel,
+    archiveLabel
+  );
+
+  searchBar.querySelector("#resetSlot").append(resetButton);
+
+  // compactLabel 先前已保存引用，稍後會重新放入頁面。
+  filterPanel.replaceChildren(searchBar);
+
+  const filterChips = document.createElement("div");
+  filterChips.id = "filterChips";
+  filterChips.className = "filterChips";
+  filterChips.hidden = true;
+  filterPanel.append(filterChips);
+
+  // ── 顯示／歷史操作 ──
+
+  const viewBar = document.createElement("div");
+  viewBar.className = "workspaceViewbar";
+  viewBar.innerHTML = `
+    <div class="viewOptions" id="viewOptions"></div>
+    <div class="historyActions" id="historyActions"></div>
+  `;
+
+  const undoButton = el("undo");
+  const redoButton = el("redo");
+
+  viewBar.querySelector("#viewOptions").append(compactLabel);
+  viewBar.querySelector("#historyActions").append(
+    undoButton,
+    redoButton
+  );
+
+  filterPanel.append(viewBar);
+
+  // ── 批量操作：有勾選先出現 ──
+
+  const bulkBar = document.createElement("div");
+  bulkBar.id = "workspaceBulk";
+  bulkBar.className = "workspaceBulk";
+  bulkBar.hidden = true;
+  bulkBar.innerHTML = `
+    <div class="bulkTop">
+      <strong id="bulkCount"></strong>
+
+      <span id="bulkQuick"></span>
+
+      <details class="bulkSettings">
+        <summary>分類與收錄狀態 ▾</summary>
+        <div id="bulkFields"></div>
+      </details>
+
+      <span id="clearSelectionSlot"></span>
+    </div>
+
+    <div id="bulkSelectionDetail"></div>
+  `;
+
+  const mergeButton = el("mergeSelected");
+  const archiveButton = el("bulkArchive");
+  const restoreButton = el("bulkRestore");
+  const clearSelectionButton = el("clearSelected");
+  const selectionInfoNode = el("selectionInfo");
+
+  clearSelectionButton.textContent = "取消選取";
+
+  bulkBar.querySelector("#bulkQuick").append(
+    mergeButton,
+    archiveButton,
+    restoreButton
+  );
+
+  bulkBar.querySelector("#clearSelectionSlot").append(
+    clearSelectionButton
+  );
+
+  const groups = [
+    ...toolsPanel.querySelectorAll(".bulkGroup")
+  ];
+
+  const bulkFieldsNode = bulkBar.querySelector("#bulkFields");
+
+  groups.slice(1).forEach(group => {
+    bulkFieldsNode.append(group);
+  });
+
+  bulkBar.querySelector("#bulkSelectionDetail").append(
+    selectionInfoNode
+  );
+
+  filterPanel.append(bulkBar);
+
+  // 選取目前結果屬於表格操作，而唔係常駐一個批量大區域。
+  el("selectVisible").textContent = "選取目前結果";
+  el("historyActions").prepend(el("selectVisible"));
+
+  // ── 提示訊息 ──
+
+  const messageBox = el("message");
+  messageBox.classList.add("workspaceMessage");
+  filterPanel.after(messageBox);
+
+  // 移走原本初始化教學文字，錯誤仍保留。
+  if (!messageBox.classList.contains("error")) {
+    messageBox.hidden = true;
   }
 
-  if (selectionInfo) {
-    new MutationObserver(updateSelectionSummary).observe(
-      selectionInfo,
-      { childList: true, characterData: true, subtree: true }
-    );
-    updateSelectionSummary();
-  }
+  // 保留原 message()，只新增顯示行為。
+  const originalMessage = message;
+  let messageTimer;
 
-  /* ===== 表格：明確欄寬，避免最後一欄被擠到逐字換行 ===== */
+  message = function(text, type = "") {
+    originalMessage(text, type);
+    clearTimeout(messageTimer);
+    messageBox.hidden = false;
 
-  const table = rows.closest("table");
-  table.classList.add("clinicTable");
+    // 成功訊息短暫出現；錯誤不會自動消失。
+    if (type === "success") {
+      messageTimer = setTimeout(() => {
+        messageBox.hidden = true;
+      }, 5000);
+    }
+  };
+
+  // 原本兩張控制卡片已經移空。
+  authPanel.remove();
+  toolsPanel.remove();
+
+  // ── 安全提示保留重點，詳細說明可展開 ──
+
+  const notice = dataPanel.querySelector(".notice");
+  const originalNotice = notice.innerHTML;
+
+  notice.innerHTML = `
+    <span class="noticeLead">
+      ⓘ 成分級收錄對照，非同規格產品、即時庫存或替代用藥指示。
+    </span>
+    <details class="noticeDetails">
+      <summary>查看說明</summary>
+      <div>${originalNotice}</div>
+    </details>
+  `;
+
+  // ── 表格欄寬 ──
 
   table.querySelector(":scope > colgroup")?.remove();
 
   const colgroup = document.createElement("colgroup");
+
   [
-    "40px",   // 勾選
-    "18%",    // 成分名稱
-    "13.5%",  // CWB
-    "13.5%",  // TKP
-    "13.5%",  // 20F
-    "13.5%",  // 5F
-    "",       // 備註：分配餘下空間
-    "150px"   // 操作：足夠橫排三個按鈕
+    "40px", "18%", "13%", "13%",
+    "13%", "13%", "", "150px"
   ].forEach(width => {
     const col = document.createElement("col");
     if (width) col.style.width = width;
-    colgroup.appendChild(col);
+    colgroup.append(col);
   });
+
   table.prepend(colgroup);
 
-  /* 狀態使用不同顏色；每次清單重新 render 後亦會套用 */
   function decorateRows() {
-    rows.querySelectorAll(".cellEdit > .badge").forEach(badge => {
-      const text = badge.textContent.trim();
-
+    el("rows").querySelectorAll(".cellEdit > .badge").forEach(badge => {
       badge.classList.toggle(
         "stateUnlisted",
-        text.startsWith("未列出")
-      );
-      badge.classList.toggle(
-        "stateReview",
-        text.includes("待核")
+        badge.textContent.trim().startsWith("未列出")
       );
     });
   }
 
-  new MutationObserver(decorateRows).observe(rows, {
+  new MutationObserver(decorateRows).observe(el("rows"), {
     childList: true
   });
   decorateRows();
 
-  /* 放在最後，覆蓋原本動態加入的樣式 */
+  // ── 同步既有應用狀態 ──
+
+  function refreshWorkspace() {
+    const signedIn = Boolean(currentUser);
+
+    el("authForm").hidden = signedIn;
+    el("logout").hidden = !signedIn;
+    el("openAccount").textContent = signedIn ? "帳戶" : "登入";
+
+    const state = el("workspaceState");
+    state.className = "";
+
+    if (busy) {
+      state.textContent = "處理中…";
+    } else if (!signedIn) {
+      state.textContent = "唯讀預覽";
+    } else if (!ready) {
+      state.textContent = "雲端未載入";
+      state.className = "stateWarning";
+    } else if (dirty) {
+      state.textContent =
+        `${changedRows(baseline, entries).length} 項未儲存`;
+      state.className = "stateWarning";
+    } else {
+      state.textContent = "✓ 已儲存";
+      state.className = "stateSaved";
+    }
+
+    // 保留修改摘要；放棄操作只喺有修改時出現。
+    el("discardDraft").hidden = !dirty;
+
+    // 唔覆寫 controls() 原本設定嘅 disabled 狀態。
+    el("undo").textContent = "復原";
+    el("redo").textContent = "重做";
+
+    el("undo").title = undoStack.length
+      ? `復原：${undoStack.at(-1).label}` : "沒有可復原操作";
+    el("redo").title = redoStack.length
+      ? `重做：${redoStack.at(-1).label}` : "沒有可重做操作";
+
+    bulkBar.hidden = selected.size === 0;
+    el("bulkCount").textContent = `已選 ${selected.size} 項`;
+
+    const chosen = selectedRows();
+    el("bulkArchive").hidden = !chosen.some(row => !row.archived);
+    el("bulkRestore").hidden = !chosen.some(row => row.archived);
+
+    // 篩選標籤以 select 原本選項文字為準。
+    const activeFilters = [
+      ["category", ""],
+      ["availability", ""],
+      ["status", ""],
+      ["archiveView", "active"]
+    ].filter(([id, defaultValue]) => el(id).value !== defaultValue);
+
+    el("filterToggle").textContent = activeFilters.length
+      ? `篩選 · ${activeFilters.length}` : "篩選";
+
+    filterChips.replaceChildren();
+
+    activeFilters.forEach(([id, defaultValue]) => {
+      const control = el(id);
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "filterChip";
+
+      const text = control.selectedOptions[0]?.textContent || "";
+      chip.textContent = `${text} ×`;
+      chip.setAttribute("aria-label", `移除篩選：${text}`);
+
+      chip.addEventListener("click", () => {
+        control.value = defaultValue;
+        control.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+
+      filterChips.append(chip);
+    });
+
+    filterChips.hidden = activeFilters.length === 0;
+
+    // 登入成功並完成載入後先關閉視窗。
+    if (signedIn && ready && !busy && accountDialog.open) {
+      accountDialog.close();
+    }
+  }
+
+  const originalControls = controls;
+  controls = function() {
+    originalControls();
+    refreshWorkspace();
+  };
+
+  // 更多選單執行操作後關閉，避免遮住後續視窗。
+  el("workspaceMenu").addEventListener("click", event => {
+    if (event.target.closest("button")) {
+      el("workspaceMenu").open = false;
+    }
+  });
+
+  document.addEventListener("click", event => {
+    const menu = el("workspaceMenu");
+    if (menu.open && !menu.contains(event.target)) menu.open = false;
+  });
+
+  // ── 樣式 ──
+
   const style = document.createElement("style");
   style.textContent = `
     :root {
       --bg:#f5f7fa;
       --ink:#243247;
-      --muted:#718096;
-      --line:#e5eaf0;
+      --muted:#64748b;
+      --line:#e3e9f0;
       --blue:#2563eb;
     }
 
-    body {
+    body.workspaceUI {
       font-size:13px;
-      line-height:1.5;
       -webkit-font-smoothing:antialiased;
     }
 
-    main {
-      max-width:1920px;
-      padding:18px 22px;
-    }
-
-    header {
-      padding:20px 24px;
+    .workspaceUI header {
       background:#fff;
       color:var(--ink);
+      padding:18px 24px;
       border-bottom:1px solid var(--line);
     }
 
-    header h1 {
-      font-size:21px;
-      letter-spacing:-.4px;
+    .appHeader {
+      max-width:1880px;
+      margin:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
     }
 
-    header p {
-      color:#64748b;
+    .appIdentity h1 {
+      font-size:21px;
+      letter-spacing:-.5px;
+      line-height:1.3;
+    }
+
+    .workspaceUI .appIdentity p {
+      margin:5px 0 0;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .appActions {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    #workspaceState {
+      margin-right:5px;
+      color:var(--muted);
       font-size:12px;
     }
 
-    header .small {
-      color:#8290a2 !important;
-      font-size:11px;
+    #workspaceState.stateSaved { color:#287653; }
+    #workspaceState.stateWarning { color:#956314; }
+
+    .workspaceUI main {
+      max-width:1920px;
+      padding:18px 24px;
     }
 
-    .panel {
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:16px;
-      margin-bottom:14px;
-      box-shadow:0 2px 5px #162b4203;
-    }
-
-    button,
-    input,
-    select,
-    textarea {
+    .workspaceUI button,
+    .workspaceUI input,
+    .workspaceUI select,
+    .workspaceUI textarea {
       font-size:13px;
+      border:1px solid #d9e1eb;
       border-radius:7px;
-      border-color:#dce3ec;
     }
 
-    button {
+    .workspaceUI button {
       min-height:34px;
       padding:6px 11px;
       font-weight:550;
       white-space:nowrap;
-      transition:
-        background .15s,
-        border-color .15s;
     }
 
-    button:not(:disabled):hover {
-      background:#f1f5f9;
-      border-color:#c1cedd;
+    .workspaceUI input,
+    .workspaceUI select {
+      min-height:38px;
+      padding:8px 10px;
     }
 
-    button.primary {
-      background:var(--blue);
-      border-color:var(--blue);
-      color:#fff;
-    }
-
-    button.primary:not(:disabled):hover {
-      background:#1d4ed8;
-      border-color:#1d4ed8;
-    }
-
-    button:disabled {
-      opacity:1;
-      color:#a2adbb;
-      background:#f8fafc;
-      border-color:#edf0f5;
-    }
-
-    button.primary:disabled {
-      color:#91a6cc;
-      background:#edf2fb;
-      border-color:#edf2fb;
-    }
-
-    input,
-    select {
-      min-height:36px;
-      padding:7px 10px;
-    }
-
-    label {
-      font-size:12px;
-      font-weight:550;
-      gap:5px;
-    }
-
-    input[type=checkbox] {
+    .workspaceUI input[type=checkbox] {
       min-height:0;
       width:15px;
       height:15px;
       accent-color:var(--blue);
     }
 
-    .bar {
-      gap:9px;
+    .workspaceUI button:disabled {
+      opacity:1;
+      color:#8c98a8;
+      background:#f5f7fa;
+      border-color:#e8edf3;
+      cursor:not-allowed;
     }
 
-    #account,
-    #sync {
-      font-size:12px;
+    .workspaceUI button.primary:not(:disabled) {
+      background:var(--blue);
+      border-color:var(--blue);
+      color:#fff;
     }
 
-    #sync {
-      color:#64748b;
-      font-weight:550;
+    .workspaceUI button:not(:disabled):hover {
+      background:#eef3f9;
     }
 
-    #message {
-      font-size:12px;
-      padding:9px 12px;
-      background:#f1f5fb;
-      border:1px solid #e5edf8;
+    .workspaceUI button.primary:not(:disabled):hover {
+      background:#1d4ed8;
     }
 
-    /* 精簡工具列 */
-    .cleanTools {
-      padding:0;
-      overflow:hidden;
+    .workspaceUI :is(button,input,select,summary):focus-visible {
+      outline:2px solid #2563eb;
+      outline-offset:3px;
     }
 
-    .toolsTop {
-      display:flex;
-      flex-wrap:wrap;
-      align-items:center;
-      gap:10px 16px;
-      padding:13px 16px;
-    }
+    /* 頂欄選單 */
 
-    .toolsTitle {
-      font-size:13px;
+    .popover { position:relative; }
+
+    .popover > summary,
+    .filterDrawer > summary,
+    .bulkSettings > summary {
+      cursor:pointer;
+      user-select:none;
+      list-style:none;
+      border:1px solid #d9e1eb;
+      border-radius:7px;
+      background:#fff;
+      padding:7px 11px;
       white-space:nowrap;
     }
 
-    .cleanTools .editorToolbar {
-      display:flex;
-      flex-wrap:wrap;
-      align-items:center;
-      gap:6px;
-      margin:0;
+    .popover > summary::-webkit-details-marker,
+    .filterDrawer > summary::-webkit-details-marker,
+    .bulkSettings > summary::-webkit-details-marker {
+      display:none;
     }
 
-    .toolsTop .editorToolbar {
-      flex:1;
+    .popover[open] > summary,
+    .filterDrawer[open] > summary {
+      background:#eef4ff;
+      border-color:#cbdcf8;
+      color:#245db2;
     }
 
-    .draftStatus {
-      color:#8290a2;
+    .popoverBody {
+      position:absolute;
+      top:calc(100% + 9px);
+      right:0;
+      width:min(340px,calc(100vw - 32px));
+      max-height:75vh;
+      overflow:auto;
+      padding:10px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:12px;
+      box-shadow:0 12px 40px #172b4220;
+      z-index:30;
+    }
+
+    .menuCaption {
+      padding:9px 9px 4px;
       font-size:11px;
-      margin-left:auto;
+      font-weight:650;
+      color:#69798e;
     }
 
-    .dangerQuiet {
-      color:#a36464;
-      background:transparent;
+    .popoverBody button {
+      display:block;
+      width:100%;
+      text-align:left;
       border-color:transparent;
+      background:transparent;
     }
 
-    .dangerQuiet:not(:disabled):hover {
-      background:#fff1f2;
-      border-color:#fecdd3;
-      color:#b42339;
-    }
-
-    /* 批量操作：預設只佔一條細行 */
-    .bulkDrawer {
-      border-top:1px solid var(--line);
-      background:#fafbfd;
-    }
-
-    .bulkDrawer > summary {
-      padding:10px 16px;
-      cursor:pointer;
-      color:#53647b;
+    .menuInfo {
+      padding:4px 9px 9px;
       font-size:12px;
-      font-weight:550;
-      user-select:none;
+      color:var(--muted);
+      overflow-wrap:anywhere;
     }
 
-    .bulkSummaryHint {
-      margin-left:12px;
-      color:#94a0af;
-      font-size:11px;
+    .menuInfo p { margin:5px 0; }
+
+    #sourceDetail p {
+      color:var(--muted) !important;
+      font-size:12px;
+    }
+
+    #sync { margin:0; font-size:12px; font-weight:400; }
+    .sourceDetails > summary { padding:8px 9px; cursor:pointer; }
+    .dangerQuiet:not(:disabled) { color:#ad4343; }
+
+    /* 搜尋工作區：唔再用獨立大卡片 */
+
+    .workspaceUI .searchPanel {
+      padding:0;
+      margin-bottom:12px;
+      background:transparent;
+      border:0;
+      border-radius:0;
+    }
+
+    .workspaceSearch {
+      display:flex;
+      gap:9px;
+      align-items:center;
+    }
+
+    .workspaceSearch > label:first-child {
+      flex:1;
+      min-width:180px;
+    }
+
+    .workspaceSearch > label:nth-child(2) {
+      width:230px;
+      flex:none;
+    }
+
+    .workspaceSearch input,
+    .workspaceSearch select {
+      width:100%;
+      height:40px;
+      background:#fff;
+    }
+
+    .workspaceSearch > button,
+    .filterDrawer > summary {
+      min-height:40px;
+      display:flex;
+      align-items:center;
+    }
+
+    .filterDrawer {
+      flex:none;
+    }
+
+    .advancedFilters {
+      margin-top:10px;
+      padding:15px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#fff;
+    }
+
+    /*
+     * 篩選展開佔一整行，唔用浮層遮住清單。
+     * display:contents 令 details 內的展開區參與 flex 排列。
+     */
+    .filterDrawer { display:contents; }
+    .workspaceSearch { flex-wrap:wrap; }
+
+    .advancedFilters {
+      flex:0 0 100%;
+      order:10;
+    }
+
+    #advancedFields {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+    }
+
+    #advancedFields label { min-width:0; }
+    #advancedFields select { width:100%; }
+
+    .filterFoot {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .filterChips {
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-top:9px;
+    }
+
+    .workspaceUI .filterChip {
+      min-height:28px;
+      padding:3px 9px;
+      background:#eaf1fd;
+      border-color:#dce7fa;
+      color:#335e9b;
+      font-size:12px;
+    }
+
+    .workspaceViewbar {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-top:9px;
+      min-height:30px;
+    }
+
+    .viewOptions,
+    .historyActions {
+      display:flex;
+      align-items:center;
+      gap:5px;
+    }
+
+    .viewOptions .check {
+      padding:0;
       font-weight:400;
-    }
-
-    .bulkDrawer.hasSelection > summary {
-      background:#eff5ff;
-      color:#2563eb;
-    }
-
-    .bulkDrawer .bulkGroup {
-      margin:0 16px;
-      padding:12px 0;
-      border-top:1px solid var(--line);
-    }
-
-    .bulkDrawer .bulkGroup:first-of-type {
-      border-top:0;
-    }
-
-    .bulkDrawer .bar {
-      align-items:end;
-    }
-
-    .bulkDrawer select {
-      min-width:160px;
-      max-width:280px;
-    }
-
-    #selectionInfo {
-      margin-top:8px;
-      font-size:11px;
-    }
-
-    /* 提示與統計降低視覺重量 */
-    .notice {
-      padding:10px 12px;
       font-size:12px;
-      line-height:1.65;
-      background:#fffbef;
-      border-color:#f0e6c6;
-      color:#74633c;
+      color:var(--muted);
     }
 
-    .stats {
+    .historyActions button {
+      border-color:transparent;
+      background:transparent;
+      min-height:28px;
+      padding:3px 8px;
+      font-size:12px;
+    }
+
+    /* 批量選取 */
+
+    .workspaceBulk {
+      margin-top:10px;
+      padding:11px 13px;
+      background:#eef4ff;
+      border:1px solid #d8e5fc;
+      border-radius:9px;
+    }
+
+    .bulkTop,
+    #bulkQuick {
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
       gap:7px;
-      margin:12px 0 8px;
     }
 
-    .stat {
-      font-size:11px;
-      color:#64748b;
-      background:#f3f6fa;
-      border:1px solid #e9eef5;
-      padding:5px 9px;
-      border-radius:6px;
+    .bulkTop > strong {
+      font-size:12px;
+      color:#285da4;
+      margin-right:5px;
     }
 
-    .stat b {
-      margin-left:5px;
-      font-size:13px;
-      color:#26364d;
+    #clearSelectionSlot { margin-left:auto; }
+    #selectionInfo { margin-top:7px; font-size:11px; }
+
+    .bulkSettings { display:contents; }
+
+    #bulkFields {
+      order:20;
+      flex:0 0 100%;
+      padding-top:8px;
+    }
+
+    #bulkFields .bulkGroup {
+      display:flex;
+      align-items:end;
+      flex-wrap:wrap;
+      gap:9px;
+      margin:0;
+      padding:10px 0;
+      border-top:1px solid #d8e5fc;
+    }
+
+    #bulkFields label { font-size:12px; }
+    #bulkFields select { max-width:300px; }
+
+    /* 訊息與清單 */
+
+    .workspaceUI #message {
+      margin:0 0 12px;
+      padding:9px 12px;
+      border:1px solid #dce5f3;
+      font-size:12px;
+    }
+
+    .workspaceUI #message.error {
+      border-color:#efc8c2;
+    }
+
+    .workspaceUI .dataPanel {
+      padding:14px;
+      border:1px solid var(--line);
+      border-radius:12px;
+    }
+
+    .workspaceUI .notice {
+      display:flex;
+      align-items:baseline;
+      flex-wrap:wrap;
+      gap:5px 12px;
+      padding:8px 10px;
+      margin-bottom:10px;
+      background:#fffcf3;
+      border-color:#eee5cb;
+      color:#79663c;
+      font-size:12px;
+    }
+
+    .noticeDetails { display:contents; }
+    .noticeDetails > summary { cursor:pointer; text-decoration:underline; }
+    .noticeDetails > div { flex-basis:100%; padding-top:7px; }
+
+    .workspaceUI .stats {
+      gap:5px 16px;
+      margin:9px 0 5px;
+    }
+
+    .workspaceUI .stat {
+      padding:0;
+      background:transparent;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .workspaceUI .stat b {
+      color:#273950;
+      margin-left:3px;
     }
 
     #summary {
       font-size:11px;
-      color:#8994a3;
       margin-bottom:10px;
+      color:#6f7e91;
     }
 
-    /* 表格 */
+    /* 表格維持可讀字級，唔靠縮到極細換空間 */
+
     .tablewrap {
-      border-color:var(--line);
-      border-radius:9px;
       max-height:72vh;
+      border-radius:8px;
+      border-color:var(--line);
     }
 
     .tablewrap .clinicTable {
+      min-width:1320px;
       width:100%;
-      min-width:1350px;
       table-layout:fixed;
-      font-size:12px;
+      font-size:13px;
     }
 
-    .tablewrap .clinicTable th,
-    .tablewrap .clinicTable td {
-      padding:11px 10px;
-      border-bottom:1px solid #edf0f4;
-      vertical-align:top;
-    }
-
-    /* 清除舊 CSS 對 th 設定的百分比欄寬 */
     .tablewrap .clinicTable th {
       width:auto !important;
     }
 
-    .tablewrap .clinicTable thead th {
-      background:#f7f9fc;
-      color:#64748b;
-      font-size:11px;
-      font-weight:650;
-      padding:11px 10px;
-      white-space:nowrap;
-      z-index:2;
+    .tablewrap .clinicTable th,
+    .tablewrap .clinicTable td {
+      padding:10px;
+      border-bottom:1px solid #e8edf3;
+      vertical-align:top;
     }
 
-    .tablewrap .clinicTable .selectcol {
-      text-align:center;
-      padding-left:8px;
-      padding-right:8px;
+    .tablewrap .clinicTable thead th {
+      background:#f5f7fb;
+      color:#516278;
+      font-size:12px;
+      white-space:nowrap;
     }
 
     .tablewrap .clinicTable .chapter th {
       background:#edf2f8;
-      color:#4a617d;
-      padding:7px 12px;
-      font-size:11px;
-      font-weight:650;
-      letter-spacing:.3px;
+      color:#47617d;
+      padding:7px 10px;
+      font-size:12px;
     }
+
+    .clinicTable .selectcol { text-align:center; }
 
     .clinicTable tbody > tr:not(.chapter):hover {
       background:#fafcff;
     }
 
-    .clinicTable tbody > tr:has(input[data-select]:checked) {
+    .clinicTable tr:has(input[data-select]:checked) {
       background:#f0f6ff;
     }
 
-    .clinicTable .name {
-      font-size:13px;
-      line-height:1.45;
-      font-weight:650;
-      color:#24354e;
-    }
+    .clinicTable .name { font-size:14px; font-weight:650; }
+    .clinicTable .alias { font-size:11px; color:#6c7d91; }
 
-    .clinicTable .alias {
-      font-size:10px;
-      line-height:1.5;
-      color:#8b97a6;
-      margin-top:5px;
-    }
-
-    .clinicTable .notes {
-      font-size:11px;
-      line-height:1.65;
-      color:#8a7751;
-    }
-
-    .clinicTable .small,
-    .clinicTable .absent {
-      font-size:10px;
-    }
-
-    /* 關鍵：取消舊 height:100%，避免儲存格異常拉高 */
     .clinicTable .cellEdit {
-      display:block;
       width:100%;
       height:auto;
       min-height:0;
-      padding:2px 3px;
-      margin:-2px -3px;
+      margin:0;
+      padding:2px;
       border:1px solid transparent;
-      border-radius:5px;
+      background:transparent;
       white-space:normal;
       text-align:left;
-      font-size:12px;
-      line-height:1.5;
+      font-size:13px;
       font-weight:400;
-      background:transparent;
     }
 
     .clinicTable .cellEdit:disabled {
@@ -3191,185 +3636,154 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     .clinicTable .cellEdit:not(:disabled):hover {
-      background:#eff5ff;
-      border-color:#d9e6fc;
+      background:#edf5ff;
+      border-color:#cfdef5;
     }
 
     .clinicTable .badge {
+      font-size:11px;
       padding:1px 6px;
-      border-radius:4px;
-      font-size:10px;
-      font-weight:500;
-      color:#32815d;
-      background:#edf7f1;
+      background:#eaf5ee;
+      color:#2d744f;
     }
 
     .clinicTable .badge.stateUnlisted {
-      background:#f0f2f5;
-      color:#96a0ad;
+      background:#eef1f5;
+      color:#687789;
     }
 
-    .clinicTable .badge.pending,
-    .clinicTable .badge.stateReview {
-      background:#fff5dc;
-      color:#a27824;
+    .clinicTable .badge.pending {
+      background:#fff2d4;
+      color:#896318;
     }
 
     .clinicTable .variants {
       margin:5px 0 0;
-      padding-left:15px;
-      font-size:11px;
+      font-size:12px;
       line-height:1.6;
     }
 
-    .clinicTable .variants li + li {
-      margin-top:2px;
-    }
+    .clinicTable .variants li + li { margin-top:2px; }
 
-    /* 操作橫排，永不逐字換行 */
     .clinicTable .rowActions {
       display:flex;
       flex-direction:row;
       flex-wrap:nowrap;
-      align-items:center;
-      gap:3px;
+      gap:2px;
     }
 
     .clinicTable .rowActions button {
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      flex:0 0 auto;
+      padding:4px 6px;
       min-height:28px;
-      padding:4px 7px;
-      font-size:11px;
-      line-height:1.3;
-      white-space:nowrap;
-      word-break:keep-all;
+      font-size:12px;
       border-color:transparent;
       background:transparent;
-      color:#718096;
+      white-space:nowrap;
+      word-break:keep-all;
     }
 
-    .clinicTable .rowActions button:not(:disabled):hover {
-      background:#eaf1fd;
-      color:#2563eb;
-    }
+    /* 帳戶／編輯視窗 */
 
-    .clinicTable .rowActions button[data-archive]:not(:disabled):hover {
-      background:#fff0f0;
-      color:#b45353;
-    }
-
-    .clinicTable .rowActions button:disabled {
-      color:#bac2cd;
-      background:transparent;
-    }
-
-    .clinicTable .archivedRow {
-      background:#f8f9fb;
-    }
-
-    /* 對話框亦跟返同一風格 */
-    dialog {
-      border:1px solid #e5eaf0;
+    .workspaceUI dialog {
+      border:1px solid var(--line);
       border-radius:14px;
-      padding:24px;
+      padding:22px;
       box-shadow:0 24px 80px #172b4230;
     }
 
-    dialog::backdrop {
-      background:#15243b60;
+    .workspaceUI dialog::backdrop { background:#172b4266; }
+    .workspaceUI dialog h2 { font-size:18px; margin:0 0 14px; }
+
+    #accountDialog { width:min(460px,94vw); }
+
+    .dialogHeading {
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:12px;
     }
 
-    dialog h2 {
-      font-size:18px;
-      letter-spacing:-.3px;
+    #account { margin:0 0 15px !important; }
+
+    #authForm .bar {
+      display:flex;
+      flex-direction:column;
+      align-items:stretch;
+      gap:10px;
     }
 
-    dialog textarea {
-      font-size:13px;
-      line-height:1.6;
-      padding:10px;
-    }
-
-    dialog label {
-      color:#53647b;
-    }
+    #authForm .grow { min-width:0; }
+    #authForm label { margin:0; }
+    .accountLogout { margin-top:8px; }
 
     @media(max-width:800px) {
-      main { padding:10px; }
-      header { padding:16px; }
-      header h1 { font-size:18px; }
+      .workspaceUI header { padding:15px; }
+      .workspaceUI main { padding:12px; }
 
-      .toolsTop {
-        gap:10px;
-        padding:12px;
-      }
+      .appHeader { align-items:flex-start; flex-direction:column; gap:12px; }
+      .appIdentity h1 { font-size:19px; }
+      .appActions { width:100%; }
+      #workspaceState { margin-right:auto; }
 
-      .toolsTitle {
-        width:100%;
-      }
+      .workspaceSearch > label:first-child { flex:1 1 100%; }
+      .workspaceSearch > label:nth-child(2) { flex:1; width:auto; min-width:0; }
 
-      .draftStatus {
-        width:100%;
-        margin-left:0;
-      }
+      #advancedFields { grid-template-columns:1fr; }
 
-      .bulkSummaryHint {
-        display:none;
-      }
+      .workspaceViewbar { align-items:flex-start; }
+      .historyActions { justify-content:flex-end; flex-wrap:wrap; }
 
-      .bulkDrawer .bulkGroup {
-        margin:0 12px;
-      }
+      .popoverBody { right:0; }
+      .workspaceUI .dataPanel { padding:10px; }
     }
 
     @media print {
-      header {
+      .workspaceUI header {
+        padding:0 0 8px;
+        border:0;
+        background:#fff;
+      }
+
+      .workspaceUI main,
+      .workspaceUI .dataPanel {
         padding:0;
+        margin:0;
         border:0;
       }
 
-      .tablewrap {
+      .workspaceUI .tablewrap {
         max-height:none;
         overflow:visible;
         border:0;
       }
 
-      .tablewrap .clinicTable {
+      .workspaceUI .clinicTable {
         min-width:0;
         font-size:8px;
       }
 
-      .clinicTable col:first-child,
-      .clinicTable col:last-child {
-        display:none;
-      }
+      .clinicTable col { width:auto !important; }
 
       .tablewrap .clinicTable th,
-      .tablewrap .clinicTable td {
-        padding:4px;
-      }
+      .tablewrap .clinicTable td { padding:4px; }
 
       .clinicTable .name { font-size:9px; }
 
+      .clinicTable .cellEdit,
       .clinicTable .variants,
       .clinicTable .alias,
       .clinicTable .notes,
-      .clinicTable .badge {
-        font-size:7px;
-      }
+      .clinicTable .badge { font-size:7px; }
 
-      .clinicTable .cellEdit {
-        padding:0;
-        margin:0;
-        border:0;
-      }
+      .noticeDetails > div { display:block !important; }
+      .noticeDetails > summary { display:none; }
+
+      .workspaceMessage { display:none !important; }
     }
   `;
 
-  document.head.appendChild(style);
+  document.head.append(style);
+  controls();
 });
 </script>
 </body>
