@@ -1664,7 +1664,7 @@ async function completeEncounter(){
  if(!confirm("保存完成快照並完成診症？\n"+(missing.length?"未填 SOAP："+missing.join("、")+"\n":"")+(drafts.length?"尚未簽發／修改草稿："+drafts.join("、")+"；不會自動簽發。\n":"")+(!e.allergyReviewed?"本次未記錄敏感覆核。\n":"")+"檢查跟進不會自動結案。"))return;
  await run(()=>commit(d=>{
   const x=d.encounters.find(x=>x.id===e.id),sum=summary(x,d.settings);
-  x.status="completed";x.updated=now();x.revisions.push({id:uid(),savedAt:x.updated,actor,sessionId,data:core(x),settings:doctor(d.settings,"manual"),summary:sum});
+  x.status="completed";x.updated=now();x.revisions.push({id:uid(),savedAt:x.updated,actor,sessionId,data:core(x),settings:doctor(lhOutputSettings(x,d.settings),"manual"),summary:sum});
   audit(x,"完成診症","保存第 "+x.revisions.length+" 個完成快照")
  }));tab="note";render(false)
 }
@@ -1782,7 +1782,7 @@ async function printDocuments(types,alreadyIssued=false){
    if(view)s=source();
    else if(t==="note"){
     if(e.status==="completed"&&e.revisions.length){const r=e.revisions.at(-1);s={kind:"revision",entry:r,data:r.data,settings:r.settings,savedAt:r.savedAt}}
-    else s={kind:"live",entry:null,data:current(),settings:db.settings,savedAt:current().updated}
+    else s={kind:"live",entry:null,data:current(),settings:lhOutputSettings(current(),db.settings),savedAt:current().updated}
    }else{const v=effective(current(),t);assert(v,"有效版本不存在");s={kind:"document",entry:v,data:v.data,settings:v.settings,savedAt:v.savedAt}}
    return `<article class="paper">${page(t,s)}</article>`
   });
@@ -9985,5 +9985,686 @@ const sites=[
  }
 }
 </style>
+ <style id="ray-document-letterhead-style">
+@media screen {
+ #lhBar {
+  margin-top:9px;
+  padding:9px 11px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+ }
+
+ #lhButtons {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:7px;
+ }
+
+ #lhButtons button {
+  min-height:32px;
+  padding:5px 10px;
+  font-size:12px;
+ }
+
+ #lhButtons button.active {
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+ }
+
+ #lhCurrent {
+  font-weight:bold;
+  line-height:1.6;
+ }
+
+ #lhHint {
+  margin-top:5px;
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.65;
+ }
+
+ #modal .lh-profile {
+  white-space:normal;
+ }
+}
+</style>
+
+<script id="ray-document-letterhead-script">
+"use strict";
+
+/*
+ * 只覆蓋診所聯絡抬頭。
+ * 醫生姓名、資歷、註冊編號及簽名仍沿用原本設定。
+ *
+ * 若診症未有 documentHeader，保留原有設定路徑；
+ * 不會在載入舊資料時猜測或補寫歷史診所。
+ */
+function lhOutputSettings(e,s){
+ const h=e?.documentHeader;
+
+ if(!h)return s;
+
+ return {
+  ...s,
+  clinicName:h.clinicName,
+  address:h.address,
+  phone:h.phone,
+  email:h.email,
+  whatsapp:h.whatsapp
+ };
+}
+
+(function installDocumentLetterheads(){
+ if(window.__rayDocumentLetterheadsInstalled)return;
+ window.__rayDocumentLetterheadsInstalled=true;
+
+ const original={
+  encounter,
+  checkSettings,
+  checkCore,
+  doctor,
+  fingerprint,
+  warnings,
+  issuedVersion,
+  source,
+  paperHead,
+  refreshHeader,
+  updateButtons,
+  dispatch
+ };
+
+ const FIELDS=[
+  "id","label","clinicName",
+  "address","phone","email","whatsapp"
+ ];
+
+ function baseline(s){
+  return {
+   id:"lh-original",
+   label:"原有抬頭",
+   clinicName:S(s.clinicName),
+   address:S(s.address),
+   phone:S(s.phone),
+   email:S(s.email),
+   whatsapp:S(s.whatsapp)
+  };
+ }
+
+ /*
+  * 首次開設定時建立候選列表，未保存前不修改 db。
+  * 排班地點只帶入名稱，不猜測地址、電話或 WhatsApp。
+  */
+ function readConfig(s=db.settings){
+  if(s.documentLetterheads){
+   return C(s.documentLetterheads);
+  }
+
+  return {
+   version:1,
+   defaultId:"lh-original",
+   profiles:[
+    baseline(s),
+    ...dwRead().clinics.map(c=>({
+     id:"lh-"+c.id,
+     label:c.name,
+     clinicName:c.name,
+     address:"",
+     phone:"",
+     email:"",
+     whatsapp:""
+    }))
+   ]
+  };
+ }
+
+ function checkProfile(p){
+  assert(O(p),"文件抬頭格式錯誤");
+
+  FIELDS.forEach(k=>str(p[k],"文件抬頭."+k));
+
+  assert(
+   T(p.id)&&T(p.label),
+   "抬頭 ID 及按鈕名稱不可空白"
+  );
+
+  assert(
+   p.id.length<=150&&
+   p.label.length<=150&&
+   p.clinicName.length<=200&&
+   p.address.length<=2000&&
+   p.phone.length<=150&&
+   p.email.length<=200&&
+   p.whatsapp.length<=100,
+   "文件抬頭欄位超出長度上限"
+  );
+ }
+
+ function requireContact(p){
+  checkProfile(p);
+
+  assert(
+   T(p.address)&&T(p.phone),
+   "「"+p.label+"」未填齊地址及電話；請先開「文件抬頭設定」填寫。"
+  );
+ }
+
+ function checkConfig(config){
+  assert(
+   O(config)&&config.version===1,
+   "文件抬頭設定版本不支援"
+  );
+
+  arr(config.profiles,"文件抬頭列表");
+
+  assert(
+   config.profiles.length>0&&
+   config.profiles.length<=30,
+   "文件抬頭須為 1 至 30 組"
+  );
+
+  config.profiles.forEach(checkProfile);
+
+  unique(
+   config.profiles.map(p=>p.id),
+   "文件抬頭 ID"
+  );
+
+  str(config.defaultId,"預設文件抬頭");
+
+  const chosen=config.profiles.find(
+   p=>p.id===config.defaultId
+  );
+
+  assert(chosen,"找不到預設文件抬頭");
+
+  requireContact(chosen);
+ }
+
+ /*
+  * 沿用 Schema 5、原有 envelope 及加密備份。
+  * 新設定及本次抬頭一併經過資料驗證。
+  */
+ checkSettings=function(s,full=true){
+  original.checkSettings(s,full);
+
+  ["clinicName","whatsapp"].forEach(k=>{
+   if(s[k]!==undefined){
+    str(s[k],"設定."+k);
+   }
+  });
+
+  if(full&&s.documentLetterheads!==undefined){
+   checkConfig(s.documentLetterheads);
+  }
+ };
+
+ checkCore=function(e,type=null){
+  original.checkCore(e,type);
+
+  if(e.documentHeader!==undefined){
+   checkProfile(e.documentHeader);
+  }
+ };
+
+ /*
+  * 新診症複製預設抬頭。
+  * 日後修改抬頭設定，不會自動改寫已建立診症。
+  */
+ encounter=function(settings=DEFAULT){
+  const e=original.encounter(settings);
+  const config=settings.documentLetterheads;
+
+  if(config){
+   checkConfig(config);
+
+   e.documentHeader=C(
+    config.profiles.find(
+     p=>p.id===config.defaultId
+    )
+   );
+  }else{
+   e.documentHeader=baseline(settings);
+  }
+
+  return e;
+ };
+
+ /*
+  * 文件版本保存診所名称及 WhatsApp。
+  * 不改原本的醫生身份及圖片簽名規則。
+  */
+ doctor=function(s,mode){
+  return {
+   ...original.doctor(s,mode),
+   clinicName:S(s.clinicName),
+   whatsapp:S(s.whatsapp)
+  };
+ };
+
+ fingerprint=function(e,t,s){
+  return original.fingerprint(
+   e,t,lhOutputSettings(e,s)
+  );
+ };
+
+ warnings=function(e,t="note",s=db.settings){
+  return original.warnings(
+   e,t,lhOutputSettings(e,s)
+  );
+ };
+
+ issuedVersion=function(e,t,s,reason){
+  return original.issuedVersion(
+   e,t,lhOutputSettings(e,s),reason
+  );
+ };
+
+ source=function(){
+  const result=original.source();
+
+  /*
+   * 歷史文件及完成快照使用原先保存的 settings。
+   * 只有即時草稿使用目前診症的抬頭。
+   */
+  if(result.kind==="live"){
+   return {
+    ...result,
+    settings:lhOutputSettings(
+     result.data,result.settings
+    )
+   };
+  }
+
+  return result;
+ };
+
+ paperHead=function(s){
+  const clinic=T(s.clinicName);
+  const address=T(s.address);
+  const contacts=[
+   T(s.phone)
+    ?"Telephone 電話 : "+s.phone
+    :"",
+   T(s.whatsapp)
+    ?"WhatsApp : "+s.whatsapp
+    :"",
+   T(s.email)
+    ?"E-mail 電郵 : "+s.email
+    :""
+  ].filter(Boolean);
+
+  const contact=[
+   clinic,
+   address,
+   contacts.join(" | ")
+  ].filter(Boolean).join("\n");
+
+  return `
+   <header class="letterhead">
+    <div>
+     <div class="doctor">${E(s.nameCn)}</div>
+     <div class="doctor">${E(s.nameEn)}</div>
+    </div>
+    <div class="qual">${E(s.qualCn)}</div>
+    <div class="qual">${E(s.qualEn)}</div>
+   </header>
+   <div class="contact">${E(contact)}</div>
+  `;
+ };
+
+ function installBar(){
+  if($("lhBar"))return;
+
+  const bar=document.createElement("section");
+  bar.id="lhBar";
+  bar.hidden=true;
+
+  bar.innerHTML=`
+   <div id="lhCurrent"></div>
+   <div id="lhButtons" aria-label="選擇文件抬頭診所"></div>
+   <div id="lhHint"></div>
+  `;
+
+  $("workActions").before(bar);
+ }
+
+ function syncBar(){
+  installBar();
+
+  const e=current();
+  const bar=$("lhBar");
+
+  bar.hidden=!e;
+
+  if(!e)return;
+
+  const config=readConfig();
+  const h=e.documentHeader;
+  const displayed=source();
+  const historical=displayed.kind!=="live";
+
+  $("lhCurrent").textContent=historical
+   ?"正在檢視已保存抬頭："+(
+     T(displayed.settings.clinicName)||
+     "原有抬頭／未記錄診所名稱"
+    )
+   :"本次文件抬頭："+(
+     h?.label||"舊診症未指定（沿用工作區設定）"
+    );
+
+  const buttons=config.profiles.map(p=>`
+   <button
+    type="button"
+    data-act="lhChoose"
+    data-id="${E(p.id)}"
+    class="${h?.id===p.id?"active":""}"
+    aria-pressed="${h?.id===p.id?"true":"false"}"
+    ${!editable()?"disabled":""}
+   >${E(p.label)}</button>
+  `).join("");
+
+  $("lhButtons").innerHTML=buttons+`
+   <button
+    type="button"
+    data-act="lhSettings"
+    ${busy||printing||composing||conflict||uncertain
+     ?"disabled":""
+    }
+   >文件抬頭設定</button>
+  `;
+
+  $("lhHint").textContent=historical
+   ?"已簽發文件及完成快照保留當時資料。請返回未完成診症，才可切換草稿抬頭。"
+   :"切換會套用於本次全部文件草稿。已簽發版本不會改寫；如要出具新抬頭文件，須另行簽發修訂版。";
+ }
+
+ refreshHeader=function(){
+  original.refreshHeader();
+
+  if(db)syncBar();
+ };
+
+ updateButtons=function(){
+  original.updateButtons();
+
+  if(db)syncBar();
+ };
+
+ async function chooseHeader(id){
+  assert(editable(),"請返回本次未完成診症");
+
+  const config=readConfig();
+  const p=config.profiles.find(p=>p.id===id);
+
+  assert(p,"找不到文件抬頭");
+  requireContact(p);
+
+  const e=current();
+
+  if(equal(e.documentHeader,p))return;
+
+  const old=e.documentHeader
+   ?C(e.documentHeader)
+   :null;
+
+  const eid=e.id;
+
+  const issued=DOCS.filter(t=>effective(e,t));
+
+  if(!confirm(
+   "切換本次文件抬頭為：\n"+
+   p.label+"\n\n"+
+   p.address+"\n"+
+   "電話："+p.phone+
+   (T(p.whatsapp)?"\nWhatsApp："+p.whatsapp:"")+
+   "\n\n"+
+   "本次全部文件草稿會使用此抬頭。\n"+
+   (
+    issued.length
+     ?"本次已有已簽發文件；原版本保留，新抬頭須另行簽發修訂版。\n"
+     :""
+   )+
+   "其他診症不會改動。"
+  ))return;
+
+  await run(()=>commit(d=>{
+   const x=d.encounters.find(x=>x.id===eid);
+
+   assert(
+    x&&selected===eid&&
+    x.status==="draft"&&!view,
+    "診症狀態已改變，請重新核對"
+   );
+
+   assert(
+    equal(x.documentHeader??null,old),
+    "本次抬頭已改變，請重新核對"
+   );
+
+   x.documentHeader=C(p);
+   x.updated=now();
+
+   audit(
+    x,
+    "切換本次文件抬頭",
+    (old?.label||"未指定")+" → "+p.label+
+    "；未改寫已簽發版本及完成快照"
+   );
+  }),{redraw:false});
+
+  message(
+   "本次文件草稿已切換至「"+p.label+
+   "」。已簽發版本及其他診症未改動。"
+  );
+ }
+
+ function profileHTML(p){
+  const input=(label,key,type="text")=>`
+   <div class="field">
+    <label>${E(label)}</label>
+    <input
+     type="${type}"
+     data-lh-field="${key}"
+     value="${E(p[key])}"
+    >
+   </div>
+  `;
+
+  return `
+   <section
+    class="card lh-profile"
+    data-lh-profile="${E(p.id)}"
+   >
+    <h3>${E(p.label)}</h3>
+
+    <div class="grid">
+     ${input("切換按鈕名稱","label")}
+     ${input("文件上顯示的診所名稱（可留空）","clinicName")}
+    </div>
+
+    <div class="field">
+     <label>文件抬頭地址</label>
+     <textarea data-lh-field="address">${E(p.address)}</textarea>
+    </div>
+
+    <div class="grid">
+     ${input("電話","phone")}
+     ${input("WhatsApp（選填；只印文字）","whatsapp")}
+    </div>
+
+    ${input("電郵（選填）","email","email")}
+   </section>
+  `;
+ }
+
+ function openSettings(){
+  assert(
+   db&&!conflict&&!uncertain,
+   "請先登入並處理儲存問題"
+  );
+
+  const config=readConfig();
+
+  openModal(
+   "文件抬頭診所設定",
+   `
+    <div class="notice">
+     此設定只供 CMS 文件使用，不會自動公開。
+     醫生姓名、資歷、註冊編號及簽名仍於原本「設定」修改。
+     保存本頁不會自動更新既有診症或舊文件。
+    </div>
+
+    <div class="field" style="margin-top:14px">
+     <label for="lhDefault">
+      新診症預設抬頭
+     </label>
+
+     <select id="lhDefault">
+      ${config.profiles.map(p=>`
+       <option
+        value="${E(p.id)}"
+        ${p.id===config.defaultId?"selected":""}
+       >${E(p.label)}</option>
+      `).join("")}
+     </select>
+    </div>
+
+    <p class="small">
+     未填齊地址及電話的診所可以暫存，
+     但不能選作預設或套用到診症。
+     地址及電話請自行核實，系統不會從公開排班猜測。
+    </p>
+
+    ${config.profiles.map(profileHTML).join("")}
+
+    <div class="modal-footer">
+     <button data-act="closeModal">取消</button>
+     <button
+      data-act="lhSaveSettings"
+      class="primary"
+     >保存文件抬頭設定</button>
+    </div>
+   `,
+   "lhSettings",
+   {
+    editable:true,
+    saveAction:"lhSaveSettings"
+   }
+  );
+ }
+
+ async function saveHeaderSettings(){
+  assert(
+   modalState?.mode==="lhSettings",
+   "文件抬頭表單已離開"
+  );
+
+  const profiles=[
+   ...$("modalBody").querySelectorAll(
+    "[data-lh-profile]"
+   )
+  ].map(row=>{
+   const p={id:row.dataset.lhProfile};
+
+   row.querySelectorAll("[data-lh-field]")
+    .forEach(input=>{
+     p[input.dataset.lhField]=T(input.value);
+
+     if(input.type==="email"&&T(input.value)){
+      assert(
+       input.validity.valid,
+       "請核對「"+p.id+"」的電郵格式"
+      );
+     }
+    });
+
+   checkProfile(p);
+   return p;
+  });
+
+  const config={
+   version:1,
+   defaultId:$("lhDefault").value,
+   profiles
+  };
+
+  checkConfig(config);
+
+  await run(()=>commit(d=>{
+   d.settings.documentLetterheads=C(config);
+
+   d.meta.security.push({
+    at:now(),
+    actor,
+    sessionId,
+    action:"保存文件抬頭診所設定",
+    defaultId:config.defaultId
+   });
+  }),{redraw:false});
+
+  closeModalNow();
+
+  message(
+   "文件抬頭設定已保存。"+
+   "如要更新目前診症，請再按一次相應診所按鈕；"+
+   "其他既有診症及舊文件不會自動改寫。"
+  );
+ }
+
+ /*
+  * 接入原本未保存彈窗保護及動作處理。
+  */
+ modalSaveActions.add("lhSaveSettings");
+
+ dispatch=async function(act,node=null){
+  switch(act){
+   case "lhSettings":
+    openSettings();
+    return;
+
+   case "lhSaveSettings":
+    await saveHeaderSettings();
+    return;
+
+   case "lhChoose":
+    await chooseHeader(node?.dataset.id);
+    return;
+
+   default:
+    return original.dispatch(act,node);
+  }
+ };
+
+ /*
+  * 管理選單加入入口，維持「登出」在底部。
+  */
+ const menu=document.querySelector(
+  "header.appbar .menu-panel"
+ );
+
+ if(menu){
+  const button=document.createElement("button");
+  button.type="button";
+  button.dataset.act="lhSettings";
+  button.textContent="文件抬頭設定";
+
+  menu.insertBefore(
+   button,
+   menu.querySelector('[data-act="logout"]')
+  );
+ }
+
+ installBar();
+
+ if(db){
+  refreshHeader();
+  preview();
+  updateButtons();
+ }
+})();
+</script>
 </body>
 </html>
