@@ -10091,26 +10091,116 @@ function lhOutputSettings(e,s){
   * 首次開設定時建立候選列表，未保存前不修改 db。
   * 排班地點只帶入名稱，不猜測地址、電話或 WhatsApp。
   */
+/*
+  * 公開診所資料獨立存於資料庫。
+  * 只在使用者選診所或開設定時讀取；
+  * 不在每次畫面更新時發送網絡請求。
+  */
+ let publicSites=[];
+ let publicSitesSession="";
+
+ async function loadPublicContacts(){
+  assert(
+   db&&!conflict&&!uncertain,
+   "請先登入並處理工作區儲存問題。"
+  );
+
+  let config;
+
+  await run(async()=>{
+   await save();
+
+   config=await cloudHTTP(
+    "/rest/v1/rpc/ray_roster_admin_get",
+    {method:"POST",body:{}}
+   );
+
+   assert(
+    O(config)&&Array.isArray(config.sites),
+    "公開診所資料回應格式不符；沒有修改文件抬頭。"
+   );
+  },{redraw:false});
+
+  publicSites=C(config.sites);
+  publicSitesSession=sessionId;
+ }
+
  function readConfig(s=db.settings){
-  if(s.documentLetterheads){
-   return C(s.documentLetterheads);
+  const saved=s.documentLetterheads
+   ?C(s.documentLetterheads)
+   :{
+     version:1,
+     defaultId:"lh-original",
+     profiles:[baseline(s)]
+    };
+
+  // 不沿用上一個登入 session 的暫存資料。
+  const sites=publicSitesSession===sessionId
+   ?publicSites
+   :[];
+
+  const profiles=C(saved.profiles);
+
+  // 保留原有抬頭及任何已另外保存的文件設定。
+  if(!profiles.some(p=>p.id==="lh-original")){
+   profiles.unshift(baseline(s));
   }
 
-  return {
-   version:1,
-   defaultId:"lh-original",
-   profiles:[
-    baseline(s),
-    ...dwRead().clinics.map(c=>({
-     id:"lh-"+c.id,
-     label:c.name,
-     clinicName:c.name,
+  for(const clinic of dwRead().clinics){
+   const id="lh-"+clinic.id;
+
+   let profile=profiles.find(p=>p.id===id);
+
+   if(!profile){
+    profile={
+     id,
+     label:clinic.name,
+     clinicName:clinic.name,
      address:"",
      phone:"",
      email:"",
      whatsapp:""
-    }))
-   ]
+    };
+
+    profiles.push(profile);
+   }
+
+   // 與公開設定使用同一個診所 ID 配對。
+   const site=sites.find(p=>p.id===clinic.id);
+
+   if(!site)continue;
+
+   // 只補空白，不覆蓋已填的文件專用資料。
+   if(!T(profile.address)){
+    profile.address=S(site.address);
+   }
+
+   if(!T(profile.phone)){
+    profile.phone=S(site.phone);
+   }
+
+   if(
+    !T(profile.whatsapp)&&
+    site.whatsapp_enabled===true
+   ){
+    /*
+     * 公開設定保存時已整理 WhatsApp 號碼。
+     * 舊資料如果没有獨立號碼，且勾選同電話，
+     * 才使用公開電話。
+     */
+    const number=T(site.whatsapp_number);
+
+    profile.whatsapp=number||(
+     site.whatsapp_same_as_phone!==false
+      ?S(site.phone)
+      :""
+    );
+   }
+  }
+
+  return {
+   ...saved,
+   profiles
   };
  }
 
@@ -10429,8 +10519,17 @@ function installBar(){
   if(db)syncBar();
  };
 
- async function chooseHeader(id){
+async function chooseHeader(id){
   assert(editable(),"請返回本次未完成診症");
+
+  if(id!=="lh-original"){
+   await loadPublicContacts();
+
+   assert(
+    editable(),
+    "診症狀態已改變，請返回本次未完成診症。"
+   );
+  }
 
   const config=readConfig();
   const p=config.profiles.find(p=>p.id===id);
@@ -10536,11 +10635,14 @@ function installBar(){
   `;
  }
 
- function openSettings(){
+
+ async function openSettings(){
   assert(
    db&&!conflict&&!uncertain,
    "請先登入並處理儲存問題"
   );
+
+  await loadPublicContacts();
 
   const config=readConfig();
 
@@ -10569,9 +10671,10 @@ function installBar(){
     </div>
 
     <p class="small">
-     未填齊地址及電話的診所可以暫存，
-     但不能選作預設或套用到診症。
-     地址及電話請自行核實，系統不會從公開排班猜測。
+空白的地址、電話及已啟用 WhatsApp，
+已按診所 ID 從雲端公開排班設定帶入，
+不需要重複輸入。已填的文件專用資料會保留。
+請核對後保存；此處修改不會更改公開排班設定。
     </p>
 
     ${config.profiles.map(profileHTML).join("")}
@@ -10657,8 +10760,8 @@ function installBar(){
 
  dispatch=async function(act,node=null){
   switch(act){
-   case "lhSettings":
-    openSettings();
+case "lhSettings":
+    await openSettings();
     return;
 
    case "lhSaveSettings":
