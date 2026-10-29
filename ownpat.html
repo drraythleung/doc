@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
@@ -9985,49 +9985,43 @@ const sites=[
  }
 }
 </style>
- <style id="ray-document-letterhead-style">
+<style id="ray-document-letterhead-style">
 @media screen {
- #lhBar {
-  margin-top:9px;
-  padding:9px 11px;
-  border:1px solid var(--line);
-  border-radius:8px;
-  background:#fff;
+ #lhClinicMenu > summary {
+  white-space:nowrap;
  }
 
- #lhButtons {
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  margin-top:7px;
+ #lhClinicMenu .menu-panel {
+  width:290px;
+  max-width:85vw;
  }
 
- #lhButtons button {
-  min-height:32px;
-  padding:5px 10px;
-  font-size:12px;
- }
-
- #lhButtons button.active {
-  background:var(--accent);
-  border-color:var(--accent);
-  color:#fff;
- }
-
- #lhCurrent {
-  font-weight:bold;
-  line-height:1.6;
- }
-
- #lhHint {
-  margin-top:5px;
-  font-size:12px;
-  color:var(--muted);
-  line-height:1.65;
- }
-
- #modal .lh-profile {
+ #lhClinicMenu .menu-panel button {
   white-space:normal;
+  overflow-wrap:anywhere;
+ }
+
+ #lhClinicMenu .menu-panel button.active {
+  background:var(--soft);
+  border-color:#8bb6a4;
+  color:var(--accent);
+  font-weight:bold;
+ }
+
+ #lhClinicMenu .menu-panel button.active::before {
+  content:"✓ ";
+ }
+
+ #lhClinicMenu .lh-settings-button {
+  margin-top:9px;
+  border-top:1px solid var(--line);
+ }
+
+ #lhClinicMenu .lh-menu-hint {
+  margin:9px 3px 3px;
+  font-size:11px;
+  color:var(--muted);
+  line-height:1.6;
  }
 }
 </style>
@@ -10315,72 +10309,114 @@ function lhOutputSettings(e,s){
   `;
  };
 
- function installBar(){
-  if($("lhBar"))return;
+function installBar(){
+  // 移除舊版放於診症分頁上方的大框。
+  $("lhBar")?.remove();
 
-  const bar=document.createElement("section");
-  bar.id="lhBar";
-  bar.hidden=true;
+  if($("lhClinicMenu"))return;
 
-  bar.innerHTML=`
-   <div id="lhCurrent"></div>
-   <div id="lhButtons" aria-label="選擇文件抬頭診所"></div>
-   <div id="lhHint"></div>
+  const nav=document.querySelector(
+   'header.appbar nav[aria-label="全診所功能"]'
+  );
+
+  if(!nav)return;
+
+  // 找出原本「管理及設定」選單。
+  const adminMenu=[...nav.children].find(
+   element=>
+    element.matches("details.menu")&&
+    element.id!=="lhClinicMenu"
+  );
+
+  const menu=document.createElement("details");
+  menu.id="lhClinicMenu";
+  menu.className="menu";
+
+  menu.innerHTML=`
+   <summary id="lhCurrent">應診診所</summary>
+
+   <div class="menu-panel">
+    <div id="lhButtons"></div>
+    <p id="lhHint" class="lh-menu-hint"></p>
+   </div>
   `;
 
-  $("workActions").before(bar);
+  // 放於「管理及設定」左邊。
+  nav.insertBefore(menu,adminMenu||null);
  }
 
  function syncBar(){
   installBar();
 
+  const menu=$("lhClinicMenu");
+  if(!menu)return;
+
   const e=current();
-  const bar=$("lhBar");
-
-  bar.hidden=!e;
-
-  if(!e)return;
-
   const config=readConfig();
-  const h=e.documentHeader;
-  const displayed=source();
-  const historical=displayed.kind!=="live";
+  const header=e?.documentHeader;
+  const canChoose=editable();
 
-  $("lhCurrent").textContent=historical
-   ?"正在檢視已保存抬頭："+(
-     T(displayed.settings.clinicName)||
-     "原有抬頭／未記錄診所名稱"
-    )
-   :"本次文件抬頭："+(
-     h?.label||"舊診症未指定（沿用工作區設定）"
-    );
+  // 按鈕保持簡潔；目前診所於 tooltip 顯示，
+  // 並在下拉列表內用剔號標示。
+  $("lhCurrent").textContent="應診診所";
 
-  const buttons=config.profiles.map(p=>`
-   <button
-    type="button"
-    data-act="lhChoose"
-    data-id="${E(p.id)}"
-    class="${h?.id===p.id?"active":""}"
-    aria-pressed="${h?.id===p.id?"true":"false"}"
-    ${!editable()?"disabled":""}
-   >${E(p.label)}</button>
-  `).join("");
+  $("lhCurrent").title=e
+   ?"本次診症抬頭："+
+     (
+      header?.label||
+      "未指定（沿用工作區設定）"
+     )
+   :"請先開啟診症，再選擇應診診所";
 
-  $("lhButtons").innerHTML=buttons+`
+  const profileButtons=config.profiles.map(p=>{
+   const active=header?.id===p.id;
+
+   return `
+    <button
+     type="button"
+     data-act="lhChoose"
+     data-id="${E(p.id)}"
+     class="${active?"active":""}"
+     aria-pressed="${active?"true":"false"}"
+     ${canChoose?"":"disabled"}
+    >${E(p.label)}</button>
+   `;
+  }).join("");
+
+  const settingsBlocked=
+   busy||
+   printing||
+   composing||
+   conflict||
+   uncertain;
+
+  const html=profileButtons+`
    <button
     type="button"
     data-act="lhSettings"
-    ${busy||printing||composing||conflict||uncertain
-     ?"disabled":""
-    }
+    class="lh-settings-button"
+    ${settingsBlocked?"disabled":""}
    >文件抬頭設定</button>
   `;
 
-  $("lhHint").textContent=historical
-   ?"已簽發文件及完成快照保留當時資料。請返回未完成診症，才可切換草稿抬頭。"
-   :"切換會套用於本次全部文件草稿。已簽發版本不會改寫；如要出具新抬頭文件，須另行簽發修訂版。";
+  // 相同內容不重建，避免選單焦點無故消失。
+  const buttons=$("lhButtons");
+
+  if(buttons.innerHTML!==html){
+   buttons.innerHTML=html;
+  }
+
+  $("lhHint").textContent=!e
+   ?"請先開啟診症，再選擇應診診所。"
+   :view
+    ?"目前正在檢視歷史紀錄，請先返回本次未完成診症。"
+    :e.status==="completed"
+     ?"診症已完成；如需切換抬頭，請先重新開啟診症。"
+     :"只切換本次文件草稿；已簽發版本保留原有抬頭。";
  }
 
+
+ 
  refreshHeader=function(){
   original.refreshHeader();
 
