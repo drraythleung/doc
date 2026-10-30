@@ -3893,101 +3893,187 @@ window.addEventListener("DOMContentLoaded", () => {
   controls();
 });
 </script>
-  <script>
+<script>
 window.addEventListener("DOMContentLoaded", () => {
-  if (!client || !initialized) return;
-
-  let checkingCloud = false;
-
-  function hasOpenDialog() {
-    return Boolean(document.querySelector("dialog[open]"));
+  if (!client || !initialized || !window.supabase?.createClient) {
+    return;
   }
 
-  async function checkCloudUpdate() {
-    // 保護本頁草稿及尚未套用的表單。
-    if (
-      checkingCloud ||
-      busy ||
-      !currentUser ||
-      !ready ||
-      dirty ||
-      hasOpenDialog() ||
-      document.visibilityState !== "visible"
-    ) return;
-
-    checkingCloud = true;
-
-    await task(async () => {
-      const user = await requireUser();
-      const document = await fetchDocument(user.id);
-
-      if (!document) {
-        throw new Error(
-          "找不到此帳戶的雲端清單，已保留目前畫面，沒有重新建立或覆蓋資料。"
-        );
+  // 獨立匿名 client：公開預覽不使用編輯帳戶的登入。
+  const previewClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        storageKey: "four-clinic-public-preview"
       }
-
-      if (!Number.isSafeInteger(document.revision)) {
-        throw new Error("雲端版本號不正確，已停止自動更新。");
-      }
-
-      // 相同版本不用重新繪製，避免影響閱讀位置。
-      if (document.revision === revision) return;
-
-      // 再檢查一次，避免讀取期間覆蓋新開的表單。
-      if (dirty || hasOpenDialog()) return;
-
-      acceptDocument(document);
-      message("已自動讀取最新雲端清單。", "success");
-    });
-
-    checkingCloud = false;
-  }
-
-  // 開頁時恢復此瀏覽器已保存的登入。
-  task(async () => {
-    const { data, error } = await client.auth.getSession();
-    if (error) throw error;
-    if (!data.session) return;
-
-    currentUser = data.session.user;
-    await loadCloud();
-  });
-
-  // 每 30 秒檢查；背景分頁不讀取。
-  setInterval(checkCloudUpdate, 30000);
-
-  // 切返分頁／視窗或網絡恢復時，再檢查。
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      checkCloudUpdate();
     }
-  });
+  );
 
-  window.addEventListener("focus", checkCloudUpdate);
-  window.addEventListener("online", checkCloudUpdate);
+  let checking = false;
+  let previewEntries = null;
+  let previewRevision = null;
+  let previewUpdatedAt = null;
 
-  // 未登入時清楚標示資料來源，避免以為係雲端版本。
   const previousControls = controls;
 
   controls = function() {
     previousControls();
 
-    if (!currentUser) {
-      $("account").textContent =
-        "未登入：目前不是雲端清單；內嵌預覽不會自動更新。";
+    // 登入後沿用原本私人帳戶的控制邏輯。
+    if (currentUser) return;
 
-      $("sync").textContent =
-        "內嵌預覽｜未連接帳戶雲端清單";
+    const showingCloud =
+      previewEntries !== null && entries === previewEntries;
 
-      const state = $("workspaceState");
-      if (state) {
-        state.textContent = "內嵌預覽 · 非雲端";
-      }
+    $("account").textContent = showingCloud
+      ? "未登入：正在顯示公開雲端唯讀清單。登入後才可修改帳戶清單。"
+      : "未登入：目前是內嵌備用資料，公開雲端清單尚未成功載入。";
+
+    $("sync").textContent = showingCloud
+      ? `公開雲端版本 ${previewRevision}｜${
+          previewUpdatedAt
+            ? new Date(previewUpdatedAt).toLocaleString()
+            : "已讀取"
+        }`
+      : "內嵌備用資料｜公開雲端尚未載入";
+
+    const state = $("workspaceState");
+    if (state) {
+      state.textContent = showingCloud
+        ? "✓ 雲端唯讀"
+        : "內嵌備用 · 非最新雲端";
+      state.className = showingCloud
+        ? "stateSaved"
+        : "stateWarning";
     }
+
+    // 公開頁面仍然禁止提交及編輯。
+    $("saveCloud").disabled = true;
+    $("reloadCloud").disabled = checking || busy;
   };
 
+  function mayReadPreview() {
+    return (
+      !currentUser &&
+      !busy &&
+      !dirty &&
+      !document.querySelector("dialog[open]")
+    );
+  }
+
+  async function loadPublicPreview(manual = false) {
+    if (checking || !mayReadPreview()) return;
+
+    if (
+      !manual &&
+      document.visibilityState !== "visible"
+    ) return;
+
+    checking = true;
+    controls();
+
+    try {
+      const { data, error } = await previewClient
+        .from("four_clinic_public_preview")
+        .select("entries,revision,updated_at")
+        .eq("id", "main")
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          "公開雲端清單尚未發佈。請檢查 SQL、主帳戶 UID 及雲端清單。"
+        );
+      }
+
+      if (!Number.isSafeInteger(data.revision)) {
+        throw new Error("公開雲端版本號不正確。");
+      }
+
+      // 讀取期間若已登入或開啟表單，唔覆蓋畫面。
+      if (!mayReadPreview()) return;
+
+      const alreadyShowing =
+        entries === previewEntries &&
+        data.revision === previewRevision &&
+        data.updated_at === previewUpdatedAt;
+
+      if (alreadyShowing) {
+        if (manual) {
+          message("目前已是最新公開雲端清單。", "success");
+        }
+        return;
+      }
+
+      // 沿用原本的結構驗證，失敗時保留目前資料。
+      const checked = validateEntries(data.entries);
+
+      entries = checked;
+      baseline = copy(checked);
+
+      // 公開版不是可修改的私人帳戶文件。
+      ready = false;
+      revision = null;
+      updatedAt = null;
+      dirty = false;
+
+      selected.clear();
+      undoStack = [];
+      redoStack = [];
+
+      previewEntries = entries;
+      previewRevision = data.revision;
+      previewUpdatedAt = data.updated_at;
+
+      render();
+      message("已讀取最新公開雲端清單。", "success");
+
+    } catch (error) {
+      message(
+        "公開雲端讀取失敗；目前畫面未更新。\n" +
+        errorText(error),
+        "error"
+      );
+    } finally {
+      checking = false;
+      controls();
+    }
+  }
+
+  // 原按鈕：未登入讀公開版；已登入沿用原本讀取帳戶清單。
+  $("reloadCloud").addEventListener("click", event => {
+    if (currentUser) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    loadPublicPreview(true);
+  }, true);
+
+  // 登出完成後立即由內嵌備用資料切回公開版。
+  client.auth.onAuthStateChange(event => {
+    if (event === "SIGNED_OUT") {
+      setTimeout(() => loadPublicPreview(), 300);
+    }
+  });
+
+  setInterval(() => loadPublicPreview(), 30000);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      loadPublicPreview();
+    }
+  });
+
+  window.addEventListener("focus", () => loadPublicPreview());
+  window.addEventListener("online", () => loadPublicPreview());
+
   controls();
+  loadPublicPreview();
 });
 </script>
 </body>
