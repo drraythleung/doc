@@ -2736,7 +2736,7 @@ function initialize() {
       SUPABASE_URL, SUPABASE_KEY,
       {
         auth: {
-          persistSession: false,
+          persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: false
         }
@@ -3890,6 +3890,103 @@ window.addEventListener("DOMContentLoaded", () => {
   `;
 
   document.head.append(style);
+  controls();
+});
+</script>
+  <script>
+window.addEventListener("DOMContentLoaded", () => {
+  if (!client || !initialized) return;
+
+  let checkingCloud = false;
+
+  function hasOpenDialog() {
+    return Boolean(document.querySelector("dialog[open]"));
+  }
+
+  async function checkCloudUpdate() {
+    // 保護本頁草稿及尚未套用的表單。
+    if (
+      checkingCloud ||
+      busy ||
+      !currentUser ||
+      !ready ||
+      dirty ||
+      hasOpenDialog() ||
+      document.visibilityState !== "visible"
+    ) return;
+
+    checkingCloud = true;
+
+    await task(async () => {
+      const user = await requireUser();
+      const document = await fetchDocument(user.id);
+
+      if (!document) {
+        throw new Error(
+          "找不到此帳戶的雲端清單，已保留目前畫面，沒有重新建立或覆蓋資料。"
+        );
+      }
+
+      if (!Number.isSafeInteger(document.revision)) {
+        throw new Error("雲端版本號不正確，已停止自動更新。");
+      }
+
+      // 相同版本不用重新繪製，避免影響閱讀位置。
+      if (document.revision === revision) return;
+
+      // 再檢查一次，避免讀取期間覆蓋新開的表單。
+      if (dirty || hasOpenDialog()) return;
+
+      acceptDocument(document);
+      message("已自動讀取最新雲端清單。", "success");
+    });
+
+    checkingCloud = false;
+  }
+
+  // 開頁時恢復此瀏覽器已保存的登入。
+  task(async () => {
+    const { data, error } = await client.auth.getSession();
+    if (error) throw error;
+    if (!data.session) return;
+
+    currentUser = data.session.user;
+    await loadCloud();
+  });
+
+  // 每 30 秒檢查；背景分頁不讀取。
+  setInterval(checkCloudUpdate, 30000);
+
+  // 切返分頁／視窗或網絡恢復時，再檢查。
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      checkCloudUpdate();
+    }
+  });
+
+  window.addEventListener("focus", checkCloudUpdate);
+  window.addEventListener("online", checkCloudUpdate);
+
+  // 未登入時清楚標示資料來源，避免以為係雲端版本。
+  const previousControls = controls;
+
+  controls = function() {
+    previousControls();
+
+    if (!currentUser) {
+      $("account").textContent =
+        "未登入：目前不是雲端清單；內嵌預覽不會自動更新。";
+
+      $("sync").textContent =
+        "內嵌預覽｜未連接帳戶雲端清單";
+
+      const state = $("workspaceState");
+      if (state) {
+        state.textContent = "內嵌預覽 · 非雲端";
+      }
+    }
+  };
+
   controls();
 });
 </script>
