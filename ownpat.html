@@ -10805,5 +10805,914 @@ case "lhSettings":
  }
 })();
 </script>
+ <style id="ray-clinic-followup-style">
+.cf-toolbar{
+ display:flex;
+ gap:8px;
+ align-items:flex-end;
+ flex-wrap:wrap;
+ margin:12px 0;
+}
+.cf-toolbar .field{
+ flex:1;
+ min-width:150px;
+ margin:0;
+}
+.cf-meta{
+ display:flex;
+ gap:6px;
+ flex-wrap:wrap;
+ margin:8px 0;
+}
+.cf-tag{
+ padding:3px 8px;
+ border:1px solid var(--line);
+ border-radius:6px;
+ background:#f1f6f8;
+ font-size:12px;
+}
+.cf-tag.overdue{
+ background:var(--badbg);
+ border-color:#e2b3b8;
+ color:var(--bad);
+}
+.cf-tag.priority{
+ background:var(--warnbg);
+ border-color:#dfd0a4;
+ color:var(--warn);
+}
+.cf-log{
+ border-left:3px solid #8bb6a4;
+ padding:10px 13px;
+ margin:12px 0;
+ background:#f7faf9;
+ border-radius:0 7px 7px 0;
+}
+.cf-text{
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+ line-height:1.75;
+}
+.cf-root .notice{
+ white-space:normal;
+}
+.cf-root .cf-log small{
+ display:block;
+ margin-bottom:6px;
+}
+</style>
+
+<script id="ray-clinic-followup-script">
+"use strict";
+
+(function installClinicFollowups(){
+ if(window.__rayClinicFollowupsInstalled)return;
+
+ const original={
+  checkDB,
+  dispatch,
+  patientProfile,
+  counts,
+  updateButtons
+ };
+
+ const CATEGORY={
+  enquiry:"一般查詢",
+  document:"補文件／修改文件要求",
+  medication:"藥物查詢／改藥要求",
+  appointment:"預約／覆診安排",
+  report:"報告查詢",
+  complaint:"投訴",
+  other:"其他"
+ };
+
+ const CHANNEL={
+  phone:"電話",
+  whatsapp:"WhatsApp",
+  email:"電郵",
+  inperson:"親身",
+  other:"其他"
+ };
+
+ const STATE={
+  open:"新事項／待處理",
+  doctor:"待醫生處理",
+  working:"處理中",
+  client:"待病人／client 回覆",
+  external:"待外間回覆",
+  closed:"已結案",
+  cancelled:"已取消／作廢事項"
+ };
+
+ const KIND={
+  note:"處理紀錄",
+  contact:"聯絡／回覆結果",
+  doctor:"醫生處理紀錄",
+  correction:"更正先前紀錄"
+ };
+
+ const FILTER={
+  active:"所有未結案",
+  due:"今日到期／逾期",
+  priority:"優先處理且未結案",
+  all:"全部（包括已結案）"
+ };
+
+ let listPatient="";
+ let listSession="";
+ let listFilter="active";
+ let listQuery="";
+
+ const tickets=(d=db)=>d?.clinicFollowups?.tickets||[];
+ const latest=t=>t.logs.at(-1);
+ const active=t=>!["closed","cancelled"].includes(latest(t).state);
+
+ function requireRead(){
+  assert(db&&cloud.session,"請先登入。");
+ }
+
+ function requireWrite(){
+  requireRead();
+  assert(
+   !busy&&!printing&&!composing&&!conflict&&!uncertain,
+   "目前不能保存；請先完成輸入或處理儲存問題。"
+  );
+ }
+
+ function patientById(id,d=db){
+  return d.patients.find(p=>p.id===id);
+ }
+
+ function subject(t){
+  const p=patientById(t.patientId);
+  return p
+   ?p.mrn+" · "+pname(p.data)
+   :t.subjectName+"（未連結主檔）";
+ }
+
+ function overdue(t){
+  const l=latest(t);
+  return active(t)&&!!l.due&&l.due<today();
+ }
+
+ function textField(label,id,value="",type="text",extra=""){
+  return dwField(label,id,value,type,extra);
+ }
+
+ function textarea(label,id,value="",max=10000){
+  return `
+   <div class="field">
+    <label for="${id}">${E(label)}</label>
+    <textarea id="${id}" maxlength="${max}">${E(value)}</textarea>
+   </div>`;
+ }
+
+ function limited(value,label,max,required=false){
+  str(value,label);
+  assert(value.length<=max,label+"超出長度上限。");
+  if(required)assert(T(value),label+"不可空白。");
+ }
+
+ function iso(value,label){
+  str(value,label);
+  assert(
+   /^\d{4}-\d{2}-\d{2}T/.test(value)&&
+   Number.isFinite(Date.parse(value)),
+   label+"無效。"
+  );
+ }
+
+ /*
+  * 舊資料没有 clinicFollowups 仍可載入。
+  * 本模組在登入、保存、備份及還原時驗證。
+  */
+ checkDB=function(d){
+  original.checkDB(d);
+
+  if(d.clinicFollowups===undefined)return d;
+
+  const w=d.clinicFollowups;
+  assert(O(w)&&w.version===1,"診所跟進資料版本不支援。");
+  arr(w.tickets,"診所跟進事項");
+
+  w.tickets.forEach(t=>assert(O(t),"跟進事項格式無效。"));
+  unique(w.tickets.map(t=>t.id),"跟進事項 ID");
+
+  for(const t of w.tickets){
+   limited(t.id,"事項 ID",100,true);
+   limited(t.patientId,"病人連結",100);
+   limited(t.encounterId,"診症連結",100);
+   limited(t.subjectName,"病人／client 名稱",200,true);
+   limited(t.caller,"聯絡人及關係",300,true);
+   limited(t.phone,"回覆電話／聯絡資料",300);
+   limited(t.verification,"身份／授權核對摘要",1000);
+   limited(t.title,"事項標題",200,true);
+   limited(t.request,"原始要求",10000,true);
+   choice(t.category,Object.keys(CATEGORY),"事項分類");
+   choice(t.channel,Object.keys(CHANNEL),"接收渠道");
+   choice(t.priority,["normal","priority"],"優先程度");
+   iso(t.createdAt,"建立時間");
+   limited(t.createdBy,"建立帳戶",300,true);
+
+   if(t.patientId){
+    assert(patientById(t.patientId,d),"跟進連結病人不存在。");
+   }
+
+   if(t.encounterId){
+    const e=d.encounters.find(e=>e.id===t.encounterId);
+    assert(
+     t.patientId&&e&&e.patientId===t.patientId,
+     "跟進連結診症與病人不符。"
+    );
+   }
+
+   arr(t.logs,"跟進 log");
+   assert(t.logs.length>0,"事項須有建立紀錄。");
+   t.logs.forEach(l=>assert(O(l),"跟進 log 格式無效。"));
+   unique(t.logs.map(l=>l.id),"跟進 log ID");
+
+   for(let n=0;n<t.logs.length;n++){
+    const l=t.logs[n];
+    limited(l.id,"log ID",100,true);
+    iso(l.at,"log 保存時間");
+    limited(l.actor,"log 帳戶",300,true);
+    limited(l.sessionId,"log session",100,true);
+    choice(
+     l.kind,
+     ["received",...Object.keys(KIND)],
+     "log 類別"
+    );
+    choice(l.state,Object.keys(STATE),"跟進狀態");
+    limited(l.text,"log 內容",10000,true);
+    limited(l.owner,"負責人",200);
+    limited(l.next,"下一步",2000);
+    limited(l.due,"跟進日期",10);
+    limited(l.corrects,"更正對象",100);
+
+    if(l.due)assert(dateOK(l.due),"跟進日期無效。");
+
+    assert(
+     n===0?l.kind==="received":l.kind!=="received",
+     "建立紀錄位置不符。"
+    );
+
+    if(l.kind==="correction"){
+     assert(
+      t.logs.slice(0,n).some(x=>x.id===l.corrects),
+      "更正紀錄須指向較早 log。"
+     );
+    }else{
+     assert(!l.corrects,"非更正紀錄不應有更正對象。");
+    }
+   }
+  }
+
+  return d;
+ };
+
+ function logEntry(kind,text,state,owner,due,next,corrects=""){
+  return {
+   id:uid(),
+   at:now(),
+   actor,
+   sessionId,
+   kind,
+   text,
+   state,
+   owner,
+   due,
+   next,
+   corrects
+  };
+ }
+
+ function ensureModule(d){
+  d.clinicFollowups??={version:1,tickets:[]};
+  return d.clinicFollowups;
+ }
+
+ function listHTML(){
+  return `
+   <div class="cf-root">
+    <p class="small">
+     聯絡及工作跟進獨立於診症。
+     不會自動改藥、簽發文件、發送訊息或判斷臨床緊急程度。
+    </p>
+
+    <div class="row">
+     <button data-act="cfNew" class="primary"
+      ${conflict||uncertain?"disabled":""}>＋ 新增事項</button>
+     ${listPatient?`
+      <button data-act="cfAll">查看全部病人／client</button>
+     `:""}
+    </div>
+
+    <div class="cf-toolbar">
+     ${dwSelect("顯示","cfFilter",listFilter,FILTER)}
+     ${textField(
+      "搜尋姓名、電話、標題、內容或負責人",
+      "cfSearch",listQuery,"search"
+     )}
+    </div>
+
+    <div id="cfResults"></div>
+   </div>`;
+ }
+
+ function openList(pid=""){
+  requireRead();
+
+  if(listSession!==sessionId){
+   listSession=sessionId;
+   listFilter="active";
+   listQuery="";
+  }
+
+  assert(!pid||patientById(pid),"找不到病人。");
+  listPatient=pid;
+
+  openModal(
+   pid?"診所跟進 · "+pname(patientById(pid).data):"診所跟進／聯絡紀錄",
+   listHTML(),
+   "cfList"
+  );
+
+  drawList();
+ }
+
+ function drawList(){
+  if(modalState?.mode!=="cfList")return;
+
+  listFilter=$("cfFilter").value;
+  listQuery=$("cfSearch").value;
+
+  const q=T(listQuery).toLowerCase();
+  const base=tickets().filter(t=>!listPatient||t.patientId===listPatient);
+
+  const rows=base.filter(t=>{
+   const l=latest(t);
+
+   if(listFilter==="active"&&!active(t))return false;
+   if(listFilter==="due"&&!(
+    active(t)&&l.due&&l.due<=today()
+   ))return false;
+   if(listFilter==="priority"&&!(
+    active(t)&&t.priority==="priority"
+   ))return false;
+
+   const searchable=[
+    subject(t),t.caller,t.phone,t.title,t.request,
+    ...t.logs.flatMap(x=>[x.text,x.owner,x.next])
+   ].join(" ").toLowerCase();
+
+   return !q||searchable.includes(q);
+  }).sort((a,b)=>
+   Number(active(b))-Number(active(a))||
+   Number(overdue(b))-Number(overdue(a))||
+   (latest(a).due||"9999").localeCompare(latest(b).due||"9999")||
+   latest(b).at.localeCompare(latest(a).at)
+  );
+
+  $("cfResults").innerHTML=`
+   <p class="small">
+    此範圍未結案 ${base.filter(active).length} 件；
+    逾期 ${base.filter(overdue).length} 件。
+    符合篩選 ${rows.length} 件，最多顯示 100 件。
+   </p>
+
+   ${rows.slice(0,100).map(t=>{
+    const l=latest(t);
+
+    return `
+     <section class="item">
+      <h3>${E(t.title)}</h3>
+      <div>${E(subject(t))}</div>
+
+      <div class="cf-meta">
+       <span class="cf-tag">${E(CATEGORY[t.category])}</span>
+       <span class="cf-tag">${E(STATE[l.state])}</span>
+       ${t.priority==="priority"?`
+        <span class="cf-tag priority">優先處理</span>
+       `:""}
+       ${overdue(t)?`
+        <span class="cf-tag overdue">已逾期</span>
+       `:""}
+      </div>
+
+      <p class="small">
+       負責人：${E(l.owner||"未指定")} ·
+       跟進日期：${E(l.due||"未設定")}<br>
+       最後保存：${E(stamp(l.at))}
+      </p>
+
+      <div class="cf-text">${E(l.next||"尚未記錄下一步")}</div>
+
+      <button data-act="cfView" data-id="${E(t.id)}"
+       style="margin-top:10px">查看／新增跟進 log</button>
+     </section>`;
+   }).join("")||"<p>沒有符合條件的事項。</p>"}
+  `;
+ }
+
+ function encounterOptions(pid){
+  return {
+   "":"不連結特定診症",
+   ...Object.fromEntries(
+    db.encounters.filter(e=>e.patientId===pid)
+     .slice().sort((a,b)=>b.date.localeCompare(a.date))
+     .map(e=>[
+      e.id,
+      e.date+" · "+(e.diagnosis||"未填診斷")+
+      " · "+(e.status==="completed"?"已完成":"未完成")
+     ])
+   )
+  };
+ }
+
+ function openNew(pid=listPatient){
+  requireWrite();
+  assert(!pid||patientById(pid),"找不到病人。");
+
+  const p=pid?patientById(pid):null;
+
+  openModal("新增診所跟進事項",`
+   <div class="cf-root">
+    <div class="notice">
+     請先核對病人身份、來電者關係及回覆授權。
+     未連結主檔的 client 不會因此建立病人或診症。
+     「优先處理」只是工作標記，不是臨床分流。
+    </div>
+
+    ${dwSelect("連結已登記病人（可不選）","cfPatient",pid,{
+     "":"未登記 client／不連結主檔",
+     ...Object.fromEntries(
+      db.patients.map(p=>[p.id,p.mrn+" · "+pname(p.data)])
+     )
+    })}
+
+    ${dwSelect(
+     "相關診症（選填）","cfEncounter","",
+     encounterOptions(pid)
+    )}
+
+    <div class="grid">
+     ${textField(
+      "病人／client 名稱（保存當時名稱）",
+      "cfName",p?pname(p.data):"","text",'maxlength="200"'
+     )}
+     ${textField(
+      "來電／聯絡人及關係","cfCaller","","text",
+      'maxlength="300" placeholder="例如：病人本人／陳女士，病人母親"'
+     )}
+    </div>
+
+    ${textField(
+     "實際回覆電話／聯絡資料","cfPhone",p?.data.phone||"",
+     "text",'maxlength="300"'
+    )}
+
+    ${textarea(
+     "身份／授權核對摘要（選填；勿記密碼或完整證件號碼）",
+     "cfVerification","",1000
+    )}
+
+    <div class="grid">
+     ${dwSelect("事項分類","cfCategory","enquiry",CATEGORY)}
+     ${dwSelect("接收渠道","cfChannel","phone",CHANNEL)}
+     ${dwSelect("優先程度","cfPriority","normal",{
+      normal:"一般",priority:"優先處理"
+     })}
+     ${dwSelect("初始狀態","cfState","open",
+      Object.fromEntries(
+       Object.entries(STATE).filter(([k])=>
+        !["closed","cancelled"].includes(k)
+       )
+      )
+     )}
+    </div>
+
+    ${textField(
+     "事項標題","cfTitle","","text",'maxlength="200"'
+    )}
+    ${textarea(
+     "收到的查詢／要求（原始內容；可註明實際聯絡時間）",
+     "cfRequest"
+    )}
+
+    <div class="grid">
+     ${textField(
+      "負責人（工作安排，不代表帳戶授權）",
+      "cfOwner","","text",'maxlength="200"'
+     )}
+     ${textField("下次跟進日期","cfDue","","date")}
+    </div>
+
+    ${textarea("下一步安排","cfNext","",2000)}
+
+    <p class="small">
+     藥物、症狀及報告問題應交醫生按臨床情況處理。
+     此表單不會自動更新處方或已完成病歷。
+    </p>
+
+    <div class="modal-footer">
+     <button data-act="closeModal">取消</button>
+     <button data-act="cfCreate" class="primary">保存新事項</button>
+    </div>
+   </div>
+  `,"cfNew",{editable:true,saveAction:"cfCreate"});
+ }
+
+ async function createTicket(){
+  requireWrite();
+  assert(modalState?.mode==="cfNew","表單已離開。");
+
+  const t={
+   id:uid(),
+   patientId:$("cfPatient").value,
+   encounterId:$("cfEncounter").value,
+   subjectName:T($("cfName").value),
+   caller:T($("cfCaller").value),
+   phone:T($("cfPhone").value),
+   verification:T($("cfVerification").value),
+   category:$("cfCategory").value,
+   channel:$("cfChannel").value,
+   priority:$("cfPriority").value,
+   title:T($("cfTitle").value),
+   request:T($("cfRequest").value),
+   createdAt:now(),
+   createdBy:actor,
+   logs:[]
+  };
+
+  assert(
+   t.subjectName&&t.caller&&t.title&&t.request,
+   "請填寫病人／client 名稱、聯絡人、事項標題及原始要求。"
+  );
+
+  const due=$("cfDue").value;
+  assert(!due||dateOK(due),"跟進日期無效。");
+
+  t.logs.push(logEntry(
+   "received",t.request,$("cfState").value,
+   T($("cfOwner").value),due,T($("cfNext").value)
+  ));
+
+  const p=t.patientId?patientById(t.patientId):null;
+
+  if(!confirm(
+   "確認保存此事項？\n\n"+
+   (p?p.mrn+" · "+pname(p.data):t.subjectName+"（未連結主檔）")+
+   "\n"+t.title+
+   "\n\n不會自動建立診症、改藥或簽發文件。"
+  ))return;
+
+  await run(()=>commit(d=>{
+   ensureModule(d).tickets.push(C(t));
+  }),{redraw:false});
+
+  openTicket(t.id);
+  message("跟進事項已保存；未改動病歷、處方或文件。");
+ }
+
+ function openTicket(id){
+  requireRead();
+
+  const t=tickets().find(t=>t.id===id);
+  assert(t,"找不到跟進事項。");
+
+  const l=latest(t);
+  const writable=!conflict&&!uncertain;
+  const linked=t.encounterId
+   ?db.encounters.find(e=>e.id===t.encounterId)
+   :null;
+
+  openModal("跟進事項 · "+t.title,`
+   <div class="cf-root">
+    <section class="card">
+     <h3>${E(subject(t))}</h3>
+     <p class="small">
+      保存當時名称：${E(t.subjectName)}<br>
+      聯絡人：${E(t.caller)}<br>
+      回覆聯絡資料：${E(t.phone||"未記錄")}<br>
+      ${E(CHANNEL[t.channel])} · ${E(CATEGORY[t.category])}
+      · ${t.priority==="priority"?"優先處理":"一般"}<br>
+      建立：${E(stamp(t.createdAt))} · ${E(t.createdBy)}
+     </p>
+     ${t.verification?`
+      <div class="cf-text">身份／授權核對：${E(t.verification)}</div>
+     `:""}
+     <h4 style="margin-top:12px">原始查詢／要求</h4>
+     <div class="cf-text">${E(t.request)}</div>
+    </section>
+
+    <div class="row">
+     <button data-act="cfList">返回跟進清單</button>
+     ${t.patientId?`
+      <button data-act="patientProfile"
+       data-patient="${E(t.patientId)}">病人主檔</button>
+     `:""}
+     ${linked?`
+      <button data-act="openEncounter"
+       data-id="${E(linked.id)}">開啟相關診症：${E(linked.date)}</button>
+     `:""}
+    </div>
+
+    <section class="card" style="margin-top:12px">
+     <h3>目前安排</h3>
+     <p>
+      ${E(STATE[l.state])}<br>
+      負責人：${E(l.owner||"未指定")}<br>
+      跟進日期：${E(l.due||"未設定")}
+     </p>
+     <div class="cf-text">${E(l.next||"未記錄下一步")}</div>
+    </section>
+
+    <details class="card">
+     <summary>全部跟進紀錄（${t.logs.length}）</summary>
+     ${t.logs.map((x,n)=>`
+      <section class="cf-log">
+       <strong>#${n+1} · ${
+        x.kind==="received"?"收到事項":E(KIND[x.kind])
+       }</strong>
+       <small>${E(stamp(x.at))} · ${E(x.actor)}</small>
+       ${x.corrects?`
+        <small>更正對象：#${t.logs.findIndex(y=>y.id===x.corrects)+1}</small>
+       `:""}
+       <div class="cf-text">${E(x.text)}</div>
+       <p class="small" style="margin:8px 0 0">
+        保存後狀態：${E(STATE[x.state])}<br>
+        負責人：${E(x.owner||"未指定")} ·
+        跟進日期：${E(x.due||"未設定")}<br>
+        下一步：${E(x.next||"未記錄")}
+       </p>
+      </section>
+     `).join("")}
+    </details>
+
+    ${writable?`
+     <section class="card">
+      <h3>新增跟進 log／更新安排</h3>
+      <p class="small">
+       保存會新增紀錄，不覆蓋原文。
+       結案填實際處理結果；重開填原因。
+       更正 log 不會撤銷已實際發出的處方或文件。
+      </p>
+
+      <div class="grid">
+       ${dwSelect("紀錄類別","cfLogKind","note",KIND)}
+       ${dwSelect("保存後狀態","cfLogState",l.state,STATE)}
+      </div>
+
+      ${dwSelect("更正對象（更正紀錄必選）","cfCorrects","",{
+       "":"不是更正／請選擇",
+       ...Object.fromEntries(t.logs.map((x,n)=>[
+        x.id,"#"+(n+1)+" · "+stamp(x.at)+" · "+x.text.slice(0,45)
+       ]))
+      })}
+
+      ${textarea(
+       "本次跟進內容／回覆結果／結案或重開原因",
+       "cfLogText"
+      )}
+
+      <div class="grid">
+       ${textField(
+        "保存後負責人","cfLogOwner",l.owner,
+        "text",'maxlength="200"'
+       )}
+       ${textField("下次跟進日期","cfLogDue",l.due,"date")}
+      </div>
+
+      ${textarea("保存後下一步安排","cfLogNext",l.next,2000)}
+
+      <label class="check">
+       <input id="cfCloseConfirm" type="checkbox">
+       <span>
+        如選結案／取消：我已核對處理結果，
+        不把「已嘗試聯絡」當成「已成功回覆」。
+       </span>
+      </label>
+
+      <div class="notice">
+       記錄「醫生處理」不會自動改藥或簽發文件，
+       亦不代表系統已驗證臨床決定。
+       如涉及臨床處理，請另在適當診症留下正式紀錄。
+      </div>
+
+      <div class="modal-footer">
+       <button data-act="cfAppend" class="primary">保存新增 log</button>
+      </div>
+     </section>
+    `:`
+     <div class="notice error">
+      工作區有衝突或寫入結果不明，目前只供查看。
+     </div>
+    `}
+   </div>
+  `,"cfTicket",{
+   editable:writable,
+   saveAction:writable?"cfAppend":""
+  });
+
+  modalState.cfExpected=C(t);
+ }
+
+ async function appendLog(){
+  requireWrite();
+  assert(modalState?.mode==="cfTicket","表單已離開。");
+
+  const before=modalState.cfExpected;
+  assert(before,"沒有待保存事項。");
+
+  const text=T($("cfLogText").value);
+  const kind=$("cfLogKind").value;
+  const state=$("cfLogState").value;
+  const corrects=$("cfCorrects").value;
+  const due=$("cfLogDue").value;
+
+  assert(text,"請填寫本次跟進內容／結果或原因。");
+  assert(!due||dateOK(due),"跟進日期無效。");
+
+  if(kind==="correction"){
+   assert(corrects,"請選擇要更正的 log。");
+  }else{
+   assert(!corrects,"如要更正舊 log，請選「更正先前紀錄」。");
+  }
+
+  if(["closed","cancelled"].includes(state)){
+   assert(
+    $("cfCloseConfirm").checked,
+    "結案／取消前請勾選處理結果核對。"
+   );
+  }
+
+  const entry=logEntry(
+   kind,text,state,T($("cfLogOwner").value),
+   due,T($("cfLogNext").value),corrects
+  );
+
+  if(state!==latest(before).state&&!confirm(
+   "確認更改跟進狀態？\n"+
+   STATE[latest(before).state]+" → "+STATE[state]+
+   "\n\n原有紀錄會保留；不會自動發送回覆。"
+  ))return;
+
+  await run(()=>commit(d=>{
+   const t=tickets(d).find(t=>t.id===before.id);
+   assert(
+    t&&equal(t,before),
+    "事項已改變；請重新開啟核對，未保存此 log。"
+   );
+   t.logs.push(C(entry));
+  }),{redraw:false});
+
+  openTicket(before.id);
+  message("新增跟進 log 已保存；原有紀錄保留。");
+ }
+
+ /*
+  * 接入病人主檔及備份數量。
+  */
+ patientProfile=function(id=current()?.patientId){
+  original.patientProfile(id);
+
+  const row=$("modalBody").querySelector(".card .row");
+  if(!row)return;
+
+  const count=tickets().filter(t=>t.patientId===id&&active(t)).length;
+
+  row.insertAdjacentHTML("beforeend",`
+   <button data-act="cfPatient" data-patient="${E(id)}">
+    診所跟進（未結案 ${count}）
+   </button>
+   <button data-act="cfNew" data-patient="${E(id)}"
+    ${conflict||uncertain?"disabled":""}>＋ 跟進事項</button>
+  `);
+ };
+
+ counts=function(d){
+  return {
+   ...original.counts(d),
+   診所跟進事項:tickets(d).length,
+   診所跟進Log:tickets(d).reduce((n,t)=>n+t.logs.length,0)
+  };
+ };
+
+ updateButtons=function(){
+  original.updateButtons();
+  if(!$("cfMainButton"))return;
+
+  $("cfMainButton").disabled=busy||printing||composing;
+
+  if(db){
+   $("cfMainButton").textContent=
+    "診所跟進（"+tickets().filter(active).length+"）";
+  }else{
+   $("cfMainButton").textContent="診所跟進";
+  }
+ };
+
+ ["cfCreate","cfAppend"].forEach(x=>modalSaveActions.add(x));
+
+ dispatch=async function(act,node=null){
+  switch(act){
+   case "cfList":
+    openList(listPatient);
+    return;
+   case "cfAll":
+    openList("");
+    return;
+   case "cfPatient":
+    openList(node?.dataset.patient||"");
+    return;
+   case "cfNew":
+    openNew(node?.dataset.patient||listPatient||"");
+    return;
+   case "cfCreate":
+    await createTicket();
+    return;
+   case "cfView":
+    openTicket(node?.dataset.id);
+    return;
+   case "cfAppend":
+    await appendLog();
+    return;
+   default:
+    return original.dispatch(act,node);
+  }
+ };
+
+ $("modalBody").addEventListener("input",event=>{
+  if(
+   modalState?.mode==="cfList"&&
+   event.target.id==="cfSearch"&&
+   !composing&&!event.isComposing
+  ){
+   drawList();
+  }
+ });
+
+ $("modalBody").addEventListener("compositionend",event=>{
+  if(
+   modalState?.mode==="cfList"&&
+   event.target.id==="cfSearch"
+  ){
+   drawList();
+  }
+ });
+
+ $("modalBody").addEventListener("change",event=>{
+  if(busy||printing||composing)return;
+
+  if(
+   modalState?.mode==="cfList"&&
+   event.target.id==="cfFilter"
+  ){
+   drawList();
+  }
+
+  if(
+   modalState?.mode==="cfNew"&&
+   event.target.id==="cfPatient"
+  ){
+   const pid=event.target.value;
+   const p=pid?patientById(pid):null;
+
+   $("cfEncounter").innerHTML=Object.entries(
+    encounterOptions(pid)
+   ).map(([id,label])=>
+    `<option value="${E(id)}">${E(label)}</option>`
+   ).join("");
+
+   /*
+    * 切換病人只更新身份及相關診症；
+    * 已輸入要求／備註等仍保留，保存前必須核對。
+    */
+   $("cfName").value=p?pname(p.data):"";
+   $("cfPhone").value=p?.data.phone||"";
+   $("cfVerification").value="";
+  }
+ });
+
+ const nav=document.querySelector(
+  'header.appbar nav[aria-label="全診所功能"]'
+ );
+
+ if(nav){
+  const button=document.createElement("button");
+  button.id="cfMainButton";
+  button.type="button";
+  button.dataset.act="cfAll";
+  button.textContent="診所跟進";
+
+  const reference=nav.querySelector('[data-act="followups"]');
+  nav.insertBefore(button,reference||nav.firstChild);
+ }
+
+ window.__rayClinicFollowupsInstalled=true;
+
+ if(db)updateButtons();
+})();
+</script>
 </body>
 </html>
