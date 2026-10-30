@@ -104,6 +104,113 @@ dialog input:not([type=checkbox]),dialog select{width:100%}
 <script
   src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"
   defer></script>
+  <style>
+/* 批量操作：按鈕可換行 */
+#workspaceBulk .bulkTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+#workspaceBulk #bulkQuick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 取消選取放右邊 */
+#workspaceBulk #clearSelectionSlot {
+  margin-left: auto;
+  order: 5;
+}
+
+/* 收起時，維持普通按鈕位置 */
+#workspaceBulk .bulkSettings {
+  min-width: 0;
+}
+
+#workspaceBulk .bulkSettings > summary {
+  cursor: pointer;
+  width: fit-content;
+}
+
+/* 展開後獨立佔一行，唔再擠喺按鈕中間 */
+#workspaceBulk .bulkSettings[open] {
+  display: block;
+  order: 10;
+  flex: 1 1 100%;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid #d6e0f0;
+}
+
+/* 分類、收錄狀態：兩欄卡片 */
+#workspaceBulk #bulkFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+#workspaceBulk #bulkFields > .bulkGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  align-content: flex-start;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  box-sizing: border-box;
+  border: 1px solid #dce4ef;
+  border-radius: 12px;
+  background: #fff;
+}
+
+/* 欄位標籤同輸入框 */
+#workspaceBulk #bulkFields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+#workspaceBulk #bulkFields select {
+  min-height: 42px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+#workspaceBulk #bulkFields button {
+  min-height: 42px;
+  white-space: normal;
+}
+
+/* 說明文字獨立一行 */
+#workspaceBulk #bulkFields .small {
+  flex: 1 1 100%;
+  margin: 2px 0 0;
+  line-height: 1.5;
+  color: #718096;
+}
+
+/* 已選項目提示 */
+#workspaceBulk #bulkSelectionDetail {
+  margin-top: 12px;
+}
+
+/* 手機／窄視窗改成上下排列 */
+@media (max-width: 800px) {
+  #workspaceBulk #bulkFields {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
 </head>
 <body>
 <header>
