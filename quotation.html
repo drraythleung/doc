@@ -232,13 +232,8 @@ body.dark .locked{background:#183c32;color:#a5efc9}
      </div>
 
      <div id="paperSection" hidden style="margin-top:12px">
-      <p class="muted">
-       Print this revision, obtain the paper signature, then attach the signed
-       scan or photograph. The recording staff must verify that the attachment
-       matches the quotation number, revision, services and charges shown.
-      </p>
       <button id="printPaperButton" type="button">Print paper confirmation</button>
-      <label class="field" style="margin-top:12px">Signed document * — PDF, PNG or JPEG; maximum 8 MB
+      <label class="field" style="margin-top:12px">Signed document — PDF, PNG or JPEG; maximum 8 MB
        <input id="paperFile" type="file" accept=".pdf,.png,.jpg,.jpeg">
       </label>
       <label class="field" style="margin-top:10px">Paper signature date *
@@ -247,7 +242,7 @@ body.dark .locked{background:#183c32;color:#a5efc9}
       <p id="paperFileName" class="muted"></p>
       <label class="checkline">
        <input id="paperVerified" type="checkbox">
-       <span>I have verified the signed document against this quotation revision.</span>
+       <span>I confirm that the paper form has been signed, matches this quotation revision, and is retained in the clinic records.</span>
       </label>
      </div>
      <button id="confirmButton" type="button" class="success">Record confirmation and lock revision</button>
@@ -1429,7 +1424,6 @@ function validation(){
  const mode=document.querySelector('[name="signatureMode"]:checked').value;
  if(mode==="tablet"&&!hasInk)return"Capture a visible signature before confirmation.";
  if(mode==="paper"){
-  if(!paperAttachment)return"Attach the signed paper document.";
   if(!$("paperSignedDate").value)return"Enter the paper signature date.";
   if($("paperSignedDate").value>localDate())return"The paper signature date cannot be in the future.";
   if($("paperSignedDate").value<m.quoteDate)
@@ -1453,27 +1447,65 @@ $("confirmButton").addEventListener("click",()=>{
   signaturePNG:mode==="tablet"?canvas.toDataURL("image/png"):null,
   paperSignedDate:mode==="paper"?$("paperSignedDate").value:null,
   paperVerified:mode==="paper",
-  attachment:mode==="paper"?clone(paperAttachment):null,
+attachment:mode==="paper"&&paperAttachment
+ ?clone(paperAttachment)
+ :null,
  };
  lockedSnapshot=clone(snapshot);dirty=true;
  render();message("Confirmation recorded. Export JSON and save or print the confirmed document.");
 });
 function confirmationHTML(s){
- const c=s.confirmation;if(!c)return"";
+ const c=s.confirmation;
+ if(!c)return"";
+
+ const attachment=c.attachment;
+
  return `<div class="confirmation-record">
   <h3>Recorded confirmation</h3>
-  <p><strong>${esc(c.signerName)}</strong> · ${esc(c.signerRole)}
-   ${c.relationship?" · "+esc(c.relationship):""}</p>
-  <p>Method: ${c.mode==="tablet"?"Tablet signature":"Paper signature"}</p>
-  <p>Handling staff: ${esc(c.witness)}<br>
-   Recorded time: ${esc(new Date(c.recordedAt).toLocaleString("en-GB"))}</p>
-  ${c.mode==="tablet"?`<img class="signature-preview" src="${c.signaturePNG}" alt="Recorded signature">`:
-   `<p>Paper signed: ${dateLabel(c.paperSignedDate)}<br>
-    Attachment: ${esc(c.attachment.name)}<br>
-    Staff verification recorded.</p>
-    ${c.attachment.type.startsWith("image/")?
-     `<img class="signature-preview" src="${c.attachment.data}" alt="Signed paper document">`:
-     "<p class='muted'>The PDF attachment is included in JSON export, but is not merged into the printed quotation.</p>"}`}
+
+  <p>
+   <strong>${esc(c.signerName)}</strong> · ${esc(c.signerRole)}
+   ${c.relationship?" · "+esc(c.relationship):""}
+  </p>
+
+  <p>
+   Method: ${c.mode==="tablet"?"Tablet signature":"Paper signature"}
+  </p>
+
+  <p>
+   Recording staff: ${esc(c.witness)}<br>
+   Recorded: ${esc(new Date(c.recordedAt).toLocaleString("en-GB"))}
+  </p>
+
+  ${c.mode==="tablet"
+   ? `<img
+       class="signature-preview"
+       src="${c.signaturePNG}"
+       alt="Recorded signature"
+      >`
+   : `
+      <p>
+       Paper signed: ${dateLabel(c.paperSignedDate)}<br>
+       Staff confirmation: Signed paper verified and retained
+       in clinic records.<br>
+       ${attachment
+        ? "Attachment: "+esc(attachment.name)
+        : "No digital attachment uploaded."}
+      </p>
+
+      ${attachment
+       ? attachment.type.startsWith("image/")
+        ? `<img
+            class="signature-preview"
+            src="${attachment.data}"
+            alt="Signed paper document"
+           >`
+        : `<p class="muted">
+            The PDF attachment is included in JSON export,
+            but is not merged into the printed quotation.
+           </p>`
+       : ""}
+     `}
  </div>`;
 }
 $("newRevisionButton").addEventListener("click",()=>{
