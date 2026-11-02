@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Adventist Medical Centre — Quotation</title>
+<style>
+:root{
+ --bg:#eef2f7;--panel:#fff;--soft:#f7f9fc;--text:#152338;
+ --muted:#526579;--line:#d8e1eb;--blue:#1755cb;--green:#087a55;
+ --red:#b42318;--amber:#946200;--shadow:0 8px 28px #13213a0b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Arial,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.5}
+button,input,select,textarea{border-radius:9px}
+button{padding:9px 13px;border:1px solid var(--line);background:var(--panel);color:var(--text)}
+button:hover:not(:disabled){border-color:var(--blue)}
+button.primary{background:var(--blue);border-color:var(--blue);color:white}
+button.success{background:var(--green);border-color:var(--green);color:white}
+button.danger{color:var(--red)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+ outline:3px solid #88b5ff;outline-offset:2px
+}
+input,select,textarea{padding:9px 10px;border:1px solid var(--line);background:var(--panel);color:var(--text)}
+input[type=checkbox]{width:18px;height:18px;vertical-align:middle;accent-color:var(--blue)}
+input[type=radio]{accent-color:var(--blue)}
+textarea{width:100%;resize:vertical}
+label.field{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:bold}
+small,.muted{color:var(--muted)}
+h1,h2,h3,p{margin:0 0 10px}
+h1{font-size:25px}
+h2{font-size:19px}
+h3{font-size:15px}
+.wrap{max-width:1320px;margin:auto;padding:20px}
+.card{padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:15px}
+.header-row,.actions,.stats,.tabs{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.header-row{justify-content:space-between}
+.badge{display:inline-block;background:#e6efff;color:#164bab;padding:5px 10px;border-radius:30px;font-size:11px;font-weight:bold;letter-spacing:.05em;margin-bottom:9px}
+.notice{padding:12px 15px;border-radius:10px;background:#fff4d9;border:1px solid #ead39a;margin:12px 0;color:#684a0b}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.full{grid-column:1/-1}
+.workspace{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(390px,.9fr);gap:16px;align-items:start}
+.search{width:100%;margin:0 0 12px}
+.tabs{margin:0 0 12px}
+.tabs button{padding:7px 10px;font-size:12px}
+.tabs button.active{background:var(--blue);color:white;border-color:var(--blue)}
+.catalog-scroll{max-height:670px;overflow:auto}
+table{border-collapse:collapse;width:100%}
+th,td{padding:9px 7px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;text-transform:uppercase;color:var(--muted)}
+thead{position:sticky;top:0;background:var(--panel);z-index:1}
+.price{text-align:right;white-space:nowrap;font-weight:bold}
+.code{font-family:monospace;color:var(--muted);font-size:11px}
+.selected{background:#eaf8f1}
+.catalog-name{font-weight:600}
+.category-label{font-size:11px;color:var(--muted)}
+.warning-label{display:block;color:var(--red);font-size:11px;margin-top:4px}
+.chip{padding:6px 10px;border-radius:25px;border:1px solid var(--line);font-size:12px}
+.quote-item{padding:12px 0;border-bottom:1px solid var(--line)}
+.item-top{display:flex;justify-content:space-between;gap:10px}
+.item-name{font-weight:bold}
+.item-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.qty{width:65px}
+.status-select{max-width:145px;padding:6px}
+.remove{padding:4px 9px;color:var(--red)}
+.summary{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:14px;margin:15px 0}
+.summary div{display:flex;justify-content:space-between;gap:12px;margin:5px 0}
+.summary .grand{font-size:19px;font-weight:bold;color:var(--green);border-top:1px solid var(--line);padding-top:10px}
+.confirmation{border-top:1px solid var(--line);padding-top:16px;margin-top:18px}
+.mode-options{display:flex;gap:18px;margin:12px 0}
+.signature-box{border:1px dashed #8aa2bc;background:white;border-radius:12px;overflow:hidden}
+#signatureCanvas{display:block;width:100%;height:170px;touch-action:none}
+.checkline{display:flex;align-items:flex-start;gap:9px;margin:12px 0}
+.checkline input{flex-shrink:0;margin-top:2px}
+.locked{padding:12px;background:#e7f7ee;color:#075b3d;border-radius:10px;margin-bottom:12px}
+#message{min-height:24px;margin:7px 0;font-weight:bold;color:var(--blue)}
+.review-list{max-height:300px;overflow:auto;font-size:12px}
+.review-list li{margin:9px 0}
+details summary{cursor:pointer;font-weight:bold}
+.signature-preview{max-width:100%;max-height:170px;background:white}
+#printArea{display:none}
+body.dark{
+ --bg:#101727;--panel:#1a2438;--soft:#202e46;--text:#e8eef8;
+ --muted:#adbed4;--line:#364660;--blue:#3678ed;--green:#128360;
+}
+body.dark .selected{background:#183c32}
+body.dark .badge{background:#243e68;color:#bfd4ff}
+body.dark .notice{background:#3a301b;color:#ffe2a0;border-color:#66542b}
+body.dark .locked{background:#183c32;color:#a5efc9}
+@media(max-width:950px){.workspace{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:550px){
+ .wrap{padding:10px}.card{padding:14px}.grid{grid-template-columns:1fr}
+ h1{font-size:21px}.item-top{flex-wrap:wrap}.catalog-scroll{max-height:480px}
+}
+@media print{
+ @page{margin:15mm}
+ body{background:white;color:#111;font-size:11px}
+ #app{display:none!important}
+ #printArea{display:block}
+ #printArea h1{font-size:21px}
+ #printArea table{font-size:10px}
+ #printArea thead{position:static;background:white}
+ #printArea tr{break-inside:avoid}
+ #printArea th,#printArea td{border-bottom:1px solid #ccc}
+ #printArea .print-meta{display:grid;grid-template-columns:1fr 1fr;gap:5px 20px;margin:15px 0}
+ #printArea .print-total{font-size:15px;font-weight:bold;text-align:right;margin:14px 0}
+ #printArea .print-footer{font-size:10px;border-top:1px solid #ccc;margin-top:18px;padding-top:10px}
+ #printArea .signature-lines{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-top:30px}
+ #printArea .signature-lines div{border-top:1px solid #777;padding-top:7px}
+ #printArea img{max-width:100%;max-height:180px}
+ #printArea .confirmation-record{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div id="app" class="wrap">
+ <header class="card">
+  <div class="badge">Adventist Medical Centre</div>
+  <div class="header-row">
+   <div>
+    <h1>Combined Service Quotation</h1>
+    <p class="muted">Laboratory, medical imaging and patient confirmation</p>
+   </div>
+   <button id="themeButton" type="button">Dark mode</button>
+  </div>
+  <small>Laboratory source: 03 Sep 2026 · Imaging source: 13 Jul 2026 · Currency: HKD</small>
+  <div class="notice">
+   <strong>Prototype — demonstration use only.</strong>
+   No authentication, server storage or follow-up system is included.
+   Information remains in this page until it is reset or closed.
+   Exported and printed documents must be handled securely.
+   Listed availability and appointment suitability have not been verified.
+  </div>
+ </header>
+
+ <section class="card">
+  <h2>Quotation details</h2>
+  <div class="stats" id="quoteMeta"></div>
+  <br>
+  <div class="grid">
+   <label class="field">Patient name *
+    <input id="patientName" maxlength="100" autocomplete="off">
+   </label>
+   <label class="field">Patient reference *
+    <input id="patientReference" maxlength="60" autocomplete="off" placeholder="Clinic record number">
+   </label>
+   <label class="field">Referring clinician
+    <input id="clinician" maxlength="100" autocomplete="off">
+   </label>
+   <label class="field">Prepared by *
+    <input id="preparedBy" maxlength="100" autocomplete="off">
+   </label>
+   <label class="field">Quotation date
+    <input id="quoteDate" type="date">
+   </label>
+   <label class="field">Valid until
+    <input id="validUntil" type="date">
+   </label>
+   <label class="field">Service location
+    <input id="location" maxlength="100" value="CWB — subject to booking confirmation">
+   </label>
+   <label class="field">Availability check
+    <select id="availability">
+     <option value="Not verified">Not verified</option>
+     <option value="Confirmed by staff">Confirmed by staff</option>
+    </select>
+   </label>
+   <label class="field full">Quotation notes
+    <textarea id="notes" rows="2" maxlength="2000" placeholder="Document booking conditions or quotation-specific information."></textarea>
+   </label>
+  </div>
+ </section>
+
+ <div class="workspace">
+  <section class="card">
+   <h2>Service catalogue</h2>
+   <label class="field" for="search">Search names, codes or aliases</label>
+   <input id="search" class="search" type="search" placeholder="For example: CBC, chest, thyroid, MRI brain">
+   <div id="categoryTabs" class="tabs" aria-label="Catalogue categories"></div>
+   <p id="catalogCount" class="muted"></p>
+   <div class="catalog-scroll">
+    <table>
+     <thead><tr><th>Select</th><th>Service</th><th class="price">HKD</th></tr></thead>
+     <tbody id="catalogBody"></tbody>
+    </table>
+   </div>
+   <details style="margin-top:15px">
+    <summary>Source review and import notes</summary>
+    <p class="muted" style="margin-top:10px">
+     The laboratory working sheet and the dated imaging worksheets are used.
+     The older imaging Sheet2 is not used for prices. Empty placeholders are excluded.
+     Repeated codes are preserved as supplier codes, not unique service identifiers.
+    </p>
+    <ul id="reviewList" class="review-list"></ul>
+   </details>
+  </section>
+
+  <section class="card">
+   <h2>Quotation and decisions</h2>
+   <div id="lockBanner"></div>
+   <div id="quoteItems"></div>
+   <div id="totals" class="summary"></div>
+   <p class="muted">
+    Fixed examination prices include the views described in the catalogue.
+    View counts are not multiplied automatically.
+    Packages are quoted as supplied; their component tests are not inferred.
+   </p>
+   <div class="actions" style="margin-top:13px">
+    <button id="printButton" type="button" class="primary">Print / Save PDF</button>
+    <button id="copyButton" type="button">Copy quotation</button>
+    <button id="exportButton" type="button">Export JSON</button>
+    <button id="clearItemsButton" type="button" class="danger">Clear items</button>
+   </div>
+
+   <section class="confirmation">
+    <h3>Patient confirmation</h3>
+    <p class="muted">
+     Decide each item before confirmation. Only accepted items are included in
+     the accepted total. This records acceptance of listed services and charges;
+     it does not replace any required clinical informed-consent process.
+    </p>
+    <div id="confirmationEditor">
+     <div class="mode-options">
+      <label><input type="radio" name="signatureMode" value="tablet" checked> Tablet signature</label>
+      <label><input type="radio" name="signatureMode" value="paper"> Paper signature</label>
+     </div>
+     <div class="grid" style="grid-template-columns:1fr 1fr">
+      <label class="field">Signer name *
+       <input id="signerName" maxlength="100" autocomplete="off">
+      </label>
+      <label class="field">Signer role *
+       <select id="signerRole">
+        <option value="Patient">Patient</option>
+        <option value="Representative">Representative</option>
+       </select>
+      </label>
+      <label class="field full">Relationship / authority, if representative
+       <input id="signerRelationship" maxlength="200" autocomplete="off">
+      </label>
+      <label class="field full">Witness / recording staff *
+       <input id="witness" maxlength="100" autocomplete="off">
+      </label>
+     </div>
+
+     <div id="tabletSection" style="margin-top:12px">
+      <label class="field" for="signatureCanvas">Sign below *</label>
+      <div class="signature-box">
+       <canvas id="signatureCanvas" aria-label="Patient signature drawing area"></canvas>
+      </div>
+      <div class="actions" style="margin-top:7px">
+       <button id="clearSignatureButton" type="button">Clear signature</button>
+      </div>
+     </div>
+
+     <div id="paperSection" hidden style="margin-top:12px">
+      <p class="muted">
+       Print this revision, obtain the paper signature, then attach the signed
+       scan or photograph. The recording staff must verify that the attachment
+       matches the quotation number, revision, decisions and charges shown.
+      </p>
+      <button id="printPaperButton" type="button">Print paper confirmation</button>
+      <label class="field" style="margin-top:12px">Signed document * — PDF, PNG or JPEG; maximum 8 MB
+       <input id="paperFile" type="file" accept=".pdf,.png,.jpg,.jpeg">
+      </label>
+      <label class="field" style="margin-top:10px">Paper signature date *
+       <input id="paperSignedDate" type="date">
+      </label>
+      <p id="paperFileName" class="muted"></p>
+      <label class="checkline">
+       <input id="paperVerified" type="checkbox">
+       <span>I have verified the signed document against this quotation revision.</span>
+      </label>
+     </div>
+
+     <label class="checkline">
+      <input id="acceptance" type="checkbox">
+      <span>
+       The signer has reviewed the accepted services and charges.
+       Declined and deferred services are not authorized by this confirmation.
+      </span>
+     </label>
+     <button id="confirmButton" type="button" class="success">Record confirmation and lock revision</button>
+    </div>
+    <div id="confirmationRecord"></div>
+   </section>
+
+   <div class="actions" style="margin-top:20px">
+    <button id="newRevisionButton" type="button" hidden>Create new revision</button>
+    <button id="resetButton" type="button" class="danger">Start new quotation</button>
+   </div>
+   <div id="message" role="status" aria-live="polite"></div>
+  </section>
+ </div>
+
+ <footer class="card muted">
+  <strong>Quotation terms:</strong>
+  Charges are taken from the supplied AMC charge slips and are patient-facing
+  prices in HKD. Confirm availability and any quotation-specific conditions
+  before booking. No unlisted surcharge is added automatically.
+  Changes after confirmation require a new revision and renewed confirmation.
+  This prototype does not verify identity, representative authority or clinical
+  suitability, and its timestamps and staff names are not authenticated.
+ </footer>
+</div>
+
+<div id="printArea"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   CATALOGUE
+   Each imported record receives a separate internal identifier.
+   Supplier codes are not treated as unique.
+   Source descriptions are retained; abbreviations and spelling
+   are minimally standardized for readability.
+   Review flags are deliberately not silently corrected.
+   ============================================================ */
+
+const CATEGORIES = [
+ ["all","All services"],["lab","Laboratory"],["packages","Packages"],
+ ["allergy","Allergy"],["otherlab","Special tests"],["xr","X-ray"],
+ ["dxa","DXA"],["us","Ultrasound"],["breast","Breast imaging"],
+ ["ct","CT"],["pet","PET-CT"],["mri","MRI"],["fees","Additional items"]
+];
+const catalogue=[];
+const importNotes=[
+ "Laboratory filename and sheet date differ. The working sheet states 03 Sep 2026; the filename is retained as source metadata.",
+ "Laboratory Table 1 has different codes and additional unpriced services. Only Table 1_working prices are used; absent services are not assumed unavailable.",
+ "P-CSTURINE appears twice at HKD 280. One catalogue entry retains both MSU and urine-culture search aliases.",
+ "P-VDRL appears twice at HKD 120. One entry retains both descriptions.",
+ "Generic supplier codes identify many distinct services. They must be checked with the provider when submitting an order.",
+ "The HKD 520 sacroiliac-joint line also appears at the top of CT and MRI sheets. It is held for review rather than imported into those modalities.",
+ "MRI spinal rows repeated across pages are consolidated where description, code and price agree.",
+ "Breast MRI and ultrasound rows repeated in the Breast worksheet remain searchable through category aliases rather than creating duplicate billable services.",
+ "The US and Breast worksheets use different generic codes for some breast intervention services. Those mappings are held for review.",
+ "US LGB is expanded inconsistently in the source. The affected combinations are held for review until their organ coverage is confirmed.",
+ "PET-CT trunk descriptions do not identify a tracer. No FDG tracer is inferred by this prototype.",
+ "SafeT21 and health-check packages have no component breakdown in the supplied working sheet. Their contents and eligibility require provider confirmation.",
+ "Nursing Procedure is an optional listed fee, not an automatically applied charge.",
+ "Additional fees do not create clinical report-tracking expectations.",
+ "All supplied prices are patient-facing charges. Availability and turnaround times are not supplied."
+];
+let sourceCounter={};
+function add(cat,code,name,price,opts={}){
+ const source=opts.source||(["lab","packages","allergy","otherlab"].includes(cat)?"LAB_WORKING":cat.toUpperCase());
+ sourceCounter[source]=(sourceCounter[source]||0)+1;
+ const id=source+"-"+String(sourceCounter[source]).padStart(4,"0");
+ catalogue.push({
+  id,cat,code,name,price,
+  variable:!!opts.variable,
+  unit:opts.unit||"item",
+  aliases:opts.aliases||"",
+  review:opts.review||"",
+  source,
+  sourceFile:source==="LAB_WORKING"
+   ?"AMC Lab Items Charge Slip _20060903.xlsx"
+   :"DI Charge Slip_CWB_20260713.xlsx",
+  sourceDate:source==="LAB_WORKING"?"2026-09-03":"2026-07-13"
+ });
+}
+function rows(cat,text,opts={}){
+ text.trim().split("\n").forEach(line=>{
+  const [code,name,price]=line.split("|");
+  if(code&&name&&price!==undefined)add(cat,code.trim(),name.trim(),Number(price),opts);
+ });
+}
+
+/* LABORATORY — priced working sheet */
+rows("lab",`
+P-BREATH|13C breath test for Helicobacter pylori|940
+P-ABO|ABO grouping + Rh(D)|150
+P-ALB|Albumin|120
+P-A/G|Albumin / Globulin (A/G) ratio|180
+P-ALP|Alkaline phosphatase|120
+P-THAAG|Alpha thalassaemia carrier genotyping|1520
+P-AFP|Alpha-fetoprotein (AFP — liver)|370
+P-ALT|ALT / SGPT|120
+P-OVA|Amoeba trophozoite and cyst, stool|170
+P-AMY|Amylase|170
+P-ANA|Anti-nuclear factor (ANF / ANA)|390
+P-AST|AST / SGOT|120
+P-THAAB|Beta thalassaemia carrier genotyping|1720
+P-BHCG|Beta-hCG, quantitative|370
+P-BICAR|Bicarbonate|140
+P-DBILI|Bilirubin, direct|120
+P-TBILI|Bilirubin, total|120
+P-IBILI|Bilirubin, total, direct and indirect|160
+P-BSM|Blood smear|140
+P-CSTURINE|Culture and sensitivity, urine / MSU|280
+P-CSTSTOOL|Culture and sensitivity, stool|330
+P-CSTHVS|Culture and sensitivity, high vaginal swab|330
+P-CSTSPU|Culture and sensitivity, sputum|330
+P-C3|C3 complement|310
+P-C4|C4 complement|310
+P-CADBL|Cadmium, blood|910
+P-CAL|Calcium|120
+P-CA125|Cancer antigen CA 125 — ovary|530
+P-CA153|Cancer antigen CA 15.3 — breast|530
+P-CA199|Cancer antigen CA 19.9 — pancreas|500
+P-CA724|Cancer antigen CA 72.4 — stomach|500
+P-CEA|Carcinoembryonic antigen (CEA — colorectal)|470
+P-CL|Chloride|120
+P-HDL|Cholesterol — HDL|210
+P-LDL|Cholesterol — LDL, direct|290
+P-CHOL|Cholesterol — total|120
+P-CHLADNA|Chlamydia trachomatis (CT) DNA|530
+P-CBC|Complete blood count (CBC)|160
+P-CBP|Complete blood picture (CBP)|170
+P-CU|Copper (Cu)|860
+P-CORTM|Cortisol AM (9–10 a.m.)|525
+P-CORTP|Cortisol PM (5–7 p.m.)|525
+P-CK|Creatine phosphokinase (CK / CPK)|170
+P-CREAT|Creatinine, blood|120
+P-UCREAT|Creatinine, urine|300
+P-CTGCDNA|CT + GC DNA|1350
+P-CMVIGG|Cytomegalovirus (CMV) antibody IgG|675
+P-CMVGM|Cytomegalovirus (CMV) antibodies IgG and IgM|880
+P-CMVIGM|Cytomegalovirus (CMV) antibody IgM|900
+P-ELECT|Electrolytes (Na, K, Cl, bicarbonate)|330
+P-EBVQN|Epstein-Barr virus DNA, NPC screening, quantitative|780
+P-ESR|Erythrocyte sedimentation rate (ESR)|120
+P-E2|Estradiol (E2)|440
+P-E3|Estriol (E3)|940
+P-EST|Estrogens, E1 and E2 fractionated|1170
+P-FEL|Ferritin|440
+P-RFO|Folate, RBC|600
+P-SFO|Folate, serum|440
+P-FSH|Follicle-stimulating hormone (FSH)|370
+P-G6PD|G6PD, qualitative|300
+P-G6PDQ|G6PD, quantitative|1170
+P-GGT|Gamma-glutamyl transferase (GGT)|140
+P-GACAG|Giardia, Entamoeba and Cryptosporidium triple antigens, stool|830
+P-GLOB|Globulin|160
+P-OGTT2|Glucose tolerance test (OGTT)|400
+P-GLUF|Glucose, fasting|120
+P-GCS|Gonococcus (GC), smear|140
+P-GH|Growth hormone|770
+P-HB|Haemoglobin|150
+P-HBP|Haemoglobin pattern|660
+P-HBPP|Haemoglobin pattern with pathologist report|1760
+P-A1C|HbA1c|270
+P-HBSAGO|HBsAg, quantitative|390
+P-HPG|Helicobacter pylori antibody IgG|480
+P-HAVG|Hepatitis A virus antibody IgG|350
+P-HAVM|Hepatitis A virus antibody IgM|550
+P-HBSAB|Hepatitis B surface antibody (HBsAb)|350
+P-HBVDNA|Hepatitis B virus DNA, quantitative|1080
+P-HCVRNA|Hepatitis C virus RNA, quantitative|1100
+P-HSV1|Herpes simplex virus type 1 IgG|520
+P-HSV2|Herpes simplex virus type 2 IgG|500
+P-HIV|HIV 1 and 2 antibodies and p24 antigen|470
+P-HPVDNA|HPV DNA detection — 33 genotyping|880
+P-IGA|Immunoglobulin IgA|330
+P-IGE|Immunoglobulin IgE|440
+P-IGG|Immunoglobulin IgG|330
+P-IGP|Immunoglobulin profile (IgA, IgG and IgM)|1050
+P-FLUAB|Influenza virus A and B antigen|850
+P-INSU|Insulin|660
+P-FE|Iron|190
+P-FETIBC|Iron and total iron-binding capacity (TIBC)|390
+P-LH|Luteinizing hormone (LH)|370
+P-MG|Magnesium|280
+P-MEA|Measles antibody IgG|500
+P-MEAM|Measles antibody IgM|800
+P-MA|Microalbumin, urine|280
+P-MACR|Microalbumin / creatinine ratio, urine|500
+P-TBDNA|MTB DNA (Mycobacterium tuberculosis)|990
+P-MUM|Mumps antibody IgG|500
+P-MUMGM|Mumps antibodies IgG and IgM|990
+P-MUMM|Mumps antibody IgM|830
+P-MYURDNA|Mycoplasma and Ureaplasma species DNA — 4 types|1170
+P-GCDNA|Neisseria gonorrhoeae (GC) DNA|530
+P-NICO|Nicotine (cotinine), urine|390
+P-SOB|Occult blood, qualitative|200
+P-PHOS|Phosphate, inorganic|120
+P-PLT|Platelet count|150
+P-K|Potassium|120
+P-PGT|Pregnancy test, urine|170
+P-PRO|Prolactin|390
+P-PSAP|Prostate-specific antigen ratio (PSA + free PSA)|820
+P-PSAF|Prostate-specific antigen, free PSA|550
+P-PSA|Prostate-specific antigen, total PSA|530
+P-UPRO-R|Protein total, urine|300
+P-TP|Protein, total|120
+P-UPCR|Protein / creatinine ratio, urine|390
+P-PT|Prothrombin time + INR (PT)|200
+P-RH|Rh antibodies|310
+P-RF|Rheumatoid factor, quantitative|250
+P-VDRL|VDRL / RPR — source descriptions require method confirmation|120
+P-RUB|Rubella antibody IgG|350
+P-RUBM|Rubella antibody IgM|640
+P-SE|Semen analysis|400
+P-STB|AFB smear|170
+P-NA|Sodium|120
+P-STD9P|STD DNA — 9 types|1720
+P-SR|Stool routine with ova and parasites|150
+P-FT3|T3, free|280
+P-T3|T3, total|280
+P-FT4|T4, free|280
+P-T4|T4, total|200
+P-TBCS|TB culture and smear|550
+P-FTESTO|Testosterone, free|990
+P-TTESTO|Testosterone, total|480
+P-THINHPV|Thin Pap + HPV DNA genotyping|1060
+P-THINPAP|Thin Prep — cytology only|390
+P-TT|Thrombin time|250
+P-TPO|Thyroid peroxidase antibodies (anti-TPO)|440
+P-TSH|Thyroid-stimulating hormone (TSH)|400
+P-TIBC|Total iron-binding capacity (TIBC)|220
+P-TRIG|Triglyceride|140
+P-UREA|Urea (BUN)|120
+P-UTD9|Urethritis DNA — 9 types|1720
+P-UA|Uric acid|120
+P-UR|Urinalysis / urine routine|150
+P-UURO|Urobilinogen (Ehrlich's), urine|140
+P-B12|Vitamin B12|440
+P-VITD|Vitamin D, 25-OH total|880
+P-VITD2D3|Vitamin D, 25-OH total, D2 and D3|1490
+P-UZN|Zinc, urine|990
+`);
+add("lab","P-HCVG","HGV genotyping — source wording",2310,
+ {review:"The source says HGV but the code says HCVG. Confirm the intended virus and test.",source:"LAB_WORKING"});
+add("lab","P-HBSAG","Hepatitis B surface antibody (HbSAg) — source wording",170,
+ {review:"Antibody and HBsAg are inconsistent. Confirm whether this is surface antigen testing.",source:"LAB_WORKING"});
+add("lab","P-HCV","Hepatitis C virus antibody (Anti-HGV) — source wording",580,
+ {review:"Hepatitis C and Anti-HGV are inconsistent. Confirm the intended antibody test.",source:"LAB_WORKING"});
+rows("packages",`
+P-P04|Antenatal test|830
+P-P27|Diabetes monitoring|330
+P-P07|Fertility test — 6 items|1980
+P-P10|Free thyroid test|750
+P-P13|HBV vaccine profile|390
+P-P11|Lipid profile test|390
+P-P01|Liver function test|420
+P-P02|Renal function test|280
+P-P03|Renal function test — advanced|440
+P-P19|Sexually transmitted disease profile 1|760
+P-P20|Sexually transmitted disease profile 2|1100
+P-PLANJ|ProCare HC Plan J|2800
+P-PLANK|ProCare HC Plan K|2300
+P-PLANL|ProCare HC Plan L|1800
+P-PLANM|ProCare HC Plan M|1550
+P-PLANN|ProCare HC Plan N|1150
+P-PLANP|ProCare HC Plan P|1000
+`);
+rows("otherlab",`
+X-T21|SafeT21 Express|5040
+X-T21A|SafeT21 Express Advance Level|6340
+PCR01|Gut microbiome qPCR test — 12P qPCR|1200
+PCR02|qPCR Platinum testing panel|2400
+PCR03|Gut microbiome DNA test — 18B qPCR|1800
+PCR04|TGS 3rd-generation gut microbiome sequencing system|3800
+QFTB|TB QuantiFERON|2300
+PL-Y13825|p-TAU217, plasma (CL) — Path Lab|3200
+`);
+rows("allergy",`
+ALEX2|Allergy Explorer II — send SR|4800
+ALGEN|Allergy general panel — send SR|2200
+FOOD|Food panel — send SR|2400
+SCA|South China allergy — send SR|3200
+`);
+add("fees","NP110","Nursing procedure",100,{source:"LAB_WORKING"});
+
+/* X-RAY — current XR worksheet */
+rows("xr",`
+AM2DR015|XR Skull (PA and lateral), 2 views|760
+AM2DR016|XR Skull (PA and lateral), 3 views|1140
+AM2DR999|XR Facial bone — OM view, 1 view|380
+AM2DR002|XR Facial bone — lateral, OM and OF, 3 views|1140
+AM2DR008|XR Nasal bone — lateral and OM, 2 views|760
+AM2DR999|XR Pituitary fossa, 1 view|380
+AM2DR999|XR Orbits — lateral and OM, 2 views|760
+AM2DR999|XR Orbits — lateral, OM and OF, 3 views|1140
+AM2DR004|XR Mandible, one side, 2 views|760
+AM2DR005|XR Mandible, both sides, 3 views|1140
+AM2DR017|XR TM joint, one side, 2 views|760
+AM2DR017|XR TM joint, both sides, 3 views|1140
+AM2DR999|XR Soft tissue neck, 1 view|380
+AM2DR101|XR Chest (PA or lateral), 1 view|380
+AM2DR102|XR Chest (PA and lateral), 2 views|760
+AM2DR999|XR Sternum — lateral / oblique, 1 view|380
+AM2DR131|XR Sternum — lateral and oblique, 2 views|760
+AM2DR999|XR Clavicle — PA / lordotic, 1 view|380
+AM2DR999|XR Clavicle — PA and lordotic, 2 views|760
+AM2DR999|XR Sternoclavicular joint, both sides, 3 views|1140
+AM2DR122|XR Ribs (PA and oblique), left, 2 views|760
+AM2DR121|XR Ribs (PA and oblique), right, 2 views|760
+AM2DR999|XR Thoracic inlet (AP and lateral), 2 views|760
+AM2DR211|XR KUB, 1 view|380
+AM2DR221|XR Pelvis, 1 view|380
+AM2DR302|XR Cervical spine (AP and lateral), 2 views|760
+AM2DR303|XR Cervical spine (AP, lateral and both obliques), 4 views|1520
+AM2DR999|XR Cervical spine (AP, lateral, flexion and extension), 4 views|1520
+AM2DR999|XR Cervical spine (open-mouth view and lateral), 2 views|760
+AM2DR305|XR Thoracic spine (AP and lateral), 2 views|760
+AM2DR999|XR Thoracolumbar junction (AP and lateral), 2 views|760
+AM2DR308|XR Lumbar spine (AP and lateral), 2 views|760
+AM2DR310|XR Lumbar spine (AP, lateral and both obliques), 4 views|1520
+AM2DR309|XR Lumbosacral spine (AP and lateral), 3 views|1140
+AM2DR311|XR Sacrum / coccyx (AP and lateral), 2 views|760
+AM2DR999|XR Sacroiliac joints (AP and obliques), both sides, 3 views|1140
+AM2DR232|XR Pelvimetry (AP and lateral), 2 views|780
+AM2DR999|XR Whole spine (AP), 3 views|1140
+AM2DR322|XR Whole spine (AP and lateral), 6 views|2280
+AM2DR471|XR Bone age (AP left hand and wrist)|700
+AM2DR401|XR Shoulder / clavicle, right, 1 view|380
+AM2DR402|XR Shoulder / clavicle, left, 1 view|380
+AM2DR403|XR Shoulder (AP and lateral), right, 2 views|760
+AM2DR404|XR Shoulder (AP and lateral), left, 2 views|760
+AM2DR405|XR Humerus (AP and lateral), right, 2 views|760
+AM2DR406|XR Humerus (AP and lateral), left, 2 views|760
+AM2DR407|XR Elbow (AP and lateral), right, 2 views|760
+AM2DR408|XR Elbow (AP and lateral), left, 2 views|760
+AM2DR409|XR Forearm (AP and lateral), right, 2 views|760
+AM2DR410|XR Forearm (AP and lateral), left, 2 views|760
+AM2DR411|XR Wrist (AP and lateral), right, 2 views|760
+AM2DR412|XR Wrist (AP and lateral), left, 2 views|760
+AM2DR415|XR Hand (PA and oblique), right, 2 views|760
+AM2DR416|XR Hand (PA and oblique), left, 2 views|760
+AM2DR417|XR Finger (AP and lateral), right, 2 views|760
+AM2DR418|XR Finger (AP and lateral), left, 2 views|760
+AM2DR433|XR Hip (AP and oblique), right, 2 views|760
+AM2DR434|XR Hip (AP and oblique), left, 2 views|760
+AM2DR435|XR Femur (AP and lateral), right, 2 views|760
+AM2DR436|XR Femur (AP and lateral), left, 2 views|760
+AM2DR437|XR Knee (AP and lateral), right, 2 views|760
+AM2DR438|XR Knee (AP and lateral), left, 2 views|760
+AM2DR443|XR Leg (AP and lateral), right, 2 views|760
+AM2DR444|XR Leg (AP and lateral), left, 2 views|760
+AM2DR447|XR Ankle (AP and lateral), right, 2 views|760
+AM2DR448|XR Ankle (AP and lateral), left, 2 views|760
+AM2DR451|XR Foot (AP and lateral), right, 2 views|760
+AM2DR452|XR Foot (AP and lateral), left, 2 views|760
+AM2DR453|XR Heel (AP and lateral), right, 2 views|760
+AM2DR454|XR Heel (AP and lateral), left, 2 views|760
+AM2DR456|XR Toe, right, 2 views|760
+AM2DR455|XR Toe, left, 2 views|760
+AM2DR999|XR Bone age, 1 view|700
+AM2DR321|XR Full spine long film (AP)|1400
+AM2DR999|XR Full spine long film (AP and lateral)|2800
+AM2DR999|XR Full lower limb long film, hip to foot (AP)|1400
+AM2DR999|XR Full lower limb long film, hip to foot (AP and lateral)|2800
+`);
+[
+ ["AM2DR201","XR Abdomen, 2 views",380,"The current sheet lists 2 views at HKD 380, while the older sheet describes a single-position examination. Confirm description and charge."],
+ ["AM2DR202","XR Abdomen, 1 view",760,"The current sheet lists 1 view at HKD 760, while the older sheet describes erect and supine. Confirm description and charge."],
+ ["AM2DR312","XR Sacroiliac joints, one side — header entry",520,"Conflicts with the one-side, 2-view entry at HKD 760."],
+ ["AM2DR312","XR Sacroiliac joints, one side, 2 views",760,"Another current-sheet entry uses this code at HKD 520. Confirm the applicable variant."],
+ ["AM2DR999","XR Sternoclavicular joint, one side, 1 view",760,"The description lists 1 view at HKD 760. Confirm the view count and charge."],
+ ["AM2DR432","XR Both hips (AP and lateral) — left",760,"Both hips and left are inconsistent. Confirm examination scope."],
+ ["AM2DR431","XR Both hips (AP and lateral) — right",760,"Both hips and right are inconsistent. Confirm examination scope."],
+ ["AM2DR439","XR Knee AP lateral + patella, right, 2 views",760,"AP, lateral and patella may not match the stated 2 views. Confirm the protocol."],
+ ["AM2DR440","XR Knee AP lateral + patella, left, 2 views",760,"AP, lateral and patella may not match the stated 2 views. Confirm the protocol."]
+].forEach(([c,n,p,r])=>add("xr",c,n,p,{review:r}));
+add("fees","AM2DR499","XR Extremity — each additional view",380,
+ {variable:true,unit:"additional view",source:"XR"});
+
+rows("dxa",`
+AM2DR999|DXA — spine or hip or wrist|800
+AM2DR331|DXA spine and hip, one side|1200
+AM2DR999|DXA spine and hip, both sides|1800
+AM2DR999|DXA spine, hip and wrist|1800
+AM2DR999|DXA body composition analysis — fat analysis only|1800
+AM2DR333|DXA whole body|2500
+`,{source:"XR"});
+
+/* ULTRASOUND */
+rows("us",`
+AM2DU002|US Thyroid|1450
+RA99|US Salivary glands|1450
+AM2DU003|US Neck — thyroid, lymph nodes and salivary glands|1900
+AM2DU101|US Breasts, both sides|1750
+AM2DU103|US Breast, one side|1200
+RA99|US Axilla, one side|900
+RA99|US Axilla, both sides|1200
+AM2DU210|US Liver|1200
+RA99|US Gallbladder|1050
+RA99|US Spleen|1050
+RA99|US Pancreas|1050
+RA99|US Kidneys|1250
+RA99|US Urinary bladder|1050
+RA99|US Liver and spleen|1300
+RA99|US Kidneys and pancreas|1700
+AM2DU204|US Kidneys and urinary bladder — urinary system / KUB|1700
+AM2DU201|US Upper abdomen|2600
+RA99|US Prostate, transabdominal|1300
+AM2DU207|US Prostate, transrectal|1450
+RA99|US Prostate, transabdominal and transrectal|1950
+AM2DU211|US Scrotum / testes|1450
+AM2DU209|US Prostate (TA) and urinary bladder|1550
+RA99|US Prostate (transrectal) and urinary bladder|2050
+RA99|US Prostate (TA and transrectal) and urinary bladder|2050
+RA99|US Kidneys, urinary bladder and prostate (TA)|2500
+RA99|US Kidneys, urinary bladder and prostate (transrectal)|2950
+RA99|US Kidneys, urinary bladder and prostate (TA and transrectal)|2950
+AM2DU205|US Pelvis, transabdominal|1350
+AM2DU206|US Pelvis, transvaginal|1850
+RA99|US Pelvis, TA and TV|2150
+AM2DU202|US Whole abdomen and pelvis (TA)|3200
+RA99|US Whole abdomen and pelvis (TA and TV)|3950
+RA99|US Whole abdomen and prostate (TA)|3200
+RA99|US Whole abdomen and prostate (TA and transrectal)|3950
+RA99|US Chest wall|2200
+RA99|US Abdominal wall|2200
+AM2DU203|US Appendix|2200
+AM2DU217|US Groin, one side|1600
+AM2DU217|US Groin, both sides|2300
+AM2DU401|US Shoulder, right|2200
+AM2DU402|US Shoulder, left|2200
+AM2DU403|US Elbow, right|2200
+AM2DU404|US Elbow, left|2200
+AM2DU413|US Knee, right|2200
+AM2DU414|US Knee, left|2200
+RA99|US Ankle, one side|2200
+AM2DU405|US Wrist, right|2200
+AM2DU406|US Wrist, left|2200
+AM2DU407|US Finger|2200
+AM2DU412|US Hip, left|2200
+AM2DU411|US Hip, right|2200
+AM2DU416|US Achilles tendon, left|2200
+AM2DU415|US Achilles tendon, right|2200
+AM2DU410|US Both hips|4400
+RA99|US Carotid intima-media thickness (IMT), both sides|1050
+AM2DU501|US Carotid arteries Doppler, both sides|4750
+AM2DU505|US Renal arteries Doppler, both sides|4750
+AM2DU506|US Abdominal Doppler|1650
+RA99|US Transplant kidney and Doppler|3000
+AM2DU511|US Leg venous Doppler, right|3100
+AM2DU512|US Leg venous Doppler, left|3100
+AM2DU513|US Both legs venous Doppler|5400
+AM2DU514|US Leg arterial Doppler, right|3100
+AM2DU515|US Leg arterial Doppler, left|3100
+AM2DU516|US Both legs arterial Doppler|5400
+RA99|US Doppler varicose vein, one side|4500
+RA99|US Doppler varicose vein, both sides|8500
+RA99|US Doppler varicose vein and lower limb DVT, one side|6000
+RA99|US Doppler varicose vein and lower limb DVT, both sides|10000
+P-FIBROSCA|US Fibroscan|1600
+`);
+[
+ ["AM2DU251","US Liver, gallbladder, spleen (LGB)",1300],
+ ["RA99","US LGB and spleen",1450],
+ ["RA99","US LGB and pancreas",1450],
+ ["RA99","US LGB and kidneys",1600],
+ ["RA99","US LGB, spleen and pancreas",2000],
+ ["RA99","US LGB, spleen and kidneys",2000]
+].forEach(([c,n,p])=>add("us",c,n,p,{
+ review:"LGB is expanded inconsistently across the source descriptions. Confirm the organs included."
+}));
+[
+ ["RA99","US Chest wall after mastectomy, including axillae",1750],
+ ["AM2DU537","US-guided FNA and cytology, first lesion",3500],
+ ["RA99","US-guided FNA and cytology, each extra lesion, same side only",2600],
+ ["RA99","US-guided core biopsy and histology, first lesion",4800],
+ ["RA99","US-guided core biopsy and histology, each extra lesion, same side only",4500]
+].forEach(([c,n,p])=>add("us",c,n,p,{
+ aliases:"breast intervention",
+ variable:n.includes("extra lesion"),unit:"extra lesion",
+ review:n.includes("first lesion")&&c==="AM2DU537"?""
+ :"Different generic codes are used in the US and Breast sheets. Confirm the supplier code before use."
+}));
+
+/* BREAST IMAGING — breast MRI added below under MRI */
+rows("breast",`
+AM2DR124|3D mammogram, bilateral|3300
+AM2DR999|3D mammogram and US breasts, bilateral|4200
+AM2DR999|3D mammogram, unilateral|2400
+AM2DR999|3D mammogram and US breast, unilateral|3150
+AM2DR111|2D mammogram, bilateral|2000
+AM2DR999|2D mammogram and US breasts, bilateral|3000
+AM2DR112|2D mammogram, right|1500
+AM2DR113|2D mammogram, left|1500
+AM2DR999|2D mammogram and US breast, unilateral|2200
+AM2DR999|Mammogram additional charge for breast augmentation, bilateral|1100
+AM2DR999|Mammogram additional charge for breast augmentation, unilateral|600
+AM2DR999|US-guided vacuum-assisted biopsy, histology and marker insertion, first lesion|26000
+AM2DR999|3D stereotactic-guided core biopsy and histology, first lesion|16500
+AM2DR999|3D stereotactic-guided vacuum-assisted biopsy, histology and marker insertion, first lesion|28000
+`,{source:"US"});
+add("breast","AM2DR999","Mammogram magnified / cone view, per film",1100,
+ {variable:true,unit:"film",source:"US"});
+[
+ ["US-guided vacuum-assisted biopsy, histology and marker insertion, each extra lesion",25000],
+ ["3D stereotactic-guided core biopsy and histology, each extra lesion",15500],
+ ["3D stereotactic-guided vacuum-assisted biopsy, histology and marker insertion, each extra lesion",25000]
+].forEach(([n,p])=>add("breast","AM2DR999",n,p,
+ {variable:true,unit:"extra lesion",source:"US"}));
+
+/* CT — paired examinations are generated from explicit source prices */
+function pair(cat,codeP,codeC,name,plain,contrast,opts={}){
+ add(cat,codeP,name+" (Plain)",plain,opts);
+ add(cat,codeC,name+" (Plain and contrast)",contrast,opts);
+}
+[
+ ["AM2DC001","AM2DC002","CT Brain",2000,3500],
+ ["AM2DC999","AM2DC999","CT Pituitary gland",2400,4000],
+ ["AM2DC027","AM2DC028","CT Orbits",2400,4000],
+ ["AM2DC023","AM2DC024","CT Paranasal sinuses (PNS)",2400,4000],
+ ["AM2DC017","AM2DC018","CT Nasopharynx (NP)",2400,4000],
+ ["AM2DC999","AM2DC999","CT Internal acoustic meatus (IAM)",2400,4000],
+ ["AM2DC999","AM2DC999","CT Temporal bone",2400,4000],
+ ["AM2DC014","AM2DC015","CT Facial bone",2400,4000],
+ ["AM2DC999","AM2DC999","CT Maxilla",2400,4000],
+ ["AM2DC999","AM2DC999","CT Submandibular",2400,4000],
+ ["AM2DC061","AM2DC062","CT Neck",3000,4500],
+ ["AM2DC117","AM2DC118","CT Neck and nasopharynx",4200,6050],
+ ["AM2DC999","AM2DC999","CT Brain and pituitary gland",3300,4950],
+ ["AM2DC020","AM2DC021","CT Brain and orbits",3300,4950],
+ ["AM2DC999","AM2DC999","CT Brain and paranasal sinuses",3300,4950],
+ ["AM2DC999","AM2DC999","CT Brain and nasopharynx",3300,4950],
+ ["AM2DC999","AM2DC999","CT Brain and internal acoustic meatus",3300,4950],
+ ["AM2DC033","AM2DC034","CT Brain and facial bone",3300,4950],
+ ["AM2DC999","AM2DC999","CT Paranasal sinuses and nasopharynx",3300,4950],
+ ["AM2DC999","AM2DC999","CT Nasopharynx and pituitary gland",3300,4950],
+ ["AM2DC999","AM2DC999","CT Brain, IAM and paranasal sinuses",4200,6050],
+ ["AM2DC999","AM2DC999","CT Brain, nasopharynx and pituitary gland",4200,6050],
+ ["AM2DC999","AM2DC999","CT Brain, neck and thorax",6600,9700],
+ ["AM2DC111","AM2DC112","CT Thorax",3000,4500],
+ ["AM2DC224","AM2DC226","CT Thorax and upper abdomen",4500,7700],
+ ["AM2DC999","AM2DC999","CT Thorax and whole abdomen",7050,10450],
+ ["AM2DC201","AM2DC202","CT Upper abdomen",3000,4800],
+ ["AM2DC204","AM2DC205","CT Pelvis",3000,4600],
+ ["AM2DC999","AM2DC505","CT Whole abdomen",4400,7500],
+ ["AM2DC999","AM2DC999","CT Adrenal glands",3000,4600],
+ ["AM2DC261","AM2DC262","CT Urogram",3000,5800],
+ ["AM2DC301","AM2DC307","CT Cervical spine",4400,6300],
+ ["AM2DC303","AM2DC309","CT Lumbar spine",4400,6300],
+ ["AM2DC999","AM2DC999","CT Sacrum, SI joints and coccyx",3200,4800],
+ ["AM2DC999","AM2DC999","CT Lumbosacral spine",6000,8000],
+ ["AM2DC463","AM2DC465","CT One ankle",3000,4600],
+ ["AM2DC440","AM2DC442","CT One elbow",3000,4600],
+ ["AM2DC469","AM2DC471","CT One foot",3000,4600],
+ ["AM2DC431","AM2DC433","CT One hand",3000,4600],
+ ["AM2DC451","AM2DC453","CT One hip",3000,4600],
+ ["AM2DC457","AM2DC459","CT One knee",3000,4600],
+ ["AM2DC443","AM2DC445","CT One shoulder",3000,4600],
+ ["AM2DC434","AM2DC436","CT One wrist",3000,4600],
+ ["AM2DC401","AM2DC403","CT Upper extremity, each area",3000,4600],
+ ["AM2DC404","AM2DC406","CT Lower extremity, each area",3000,4600]
+].forEach(a=>pair("ct",...a,{source:"CT_PET"}));
+pair("ct","AM2DM999","AM2DM999","CT Thoracic spine",4400,6300,{
+ source:"CT_PET",review:"The source uses an MRI-prefix code for a CT examination. Confirm the supplier code."
+});
+pair("ct","AM2DC999","AM2DC999","CT Additional vertebra / disc",1500,2500,
+ {source:"CT_PET",variable:true,unit:"additional vertebra / disc"});
+rows("ct",`
+AM2DC999|CT Brain and cerebral angiogram (Plain and contrast)|9350
+AM2DC999|CT Brain, cerebral angiogram and neck angiogram (Plain and contrast)|11550
+AM2DC517|CT Coronary angiogram and calcium score (Plain and contrast)|6400
+AM2DC999|CT Coronary angiogram, calcium score and low-dose thorax (Plain and contrast)|8000
+AM2DC510|CT Calcium score (Plain)|2500
+AM2DC501|CT Cerebral angiogram (Plain and contrast)|5800
+AM2DC999|CT Neck angiogram (Plain and contrast)|6500
+AM2DC999|CT Cerebral and neck angiogram (Plain and contrast)|9500
+AM2DC503|CT Aortic / thoracic angiogram (Contrast)|5800
+AM2DC999|CT Pulmonary angiogram (Plain and contrast)|6200
+AM2DC506|CT Renal angiogram (Plain and contrast)|5800
+AM2DC504|CT Upper abdomen angiogram (Plain and contrast)|5800
+AM2DC507|CT Pelvis angiogram (Plain and contrast)|5800
+AM2DC999|CT Upper limb angiogram, one side (Plain and contrast)|5800
+AM2DC999|CT Lower limbs angiogram, both sides (Plain and contrast)|7500
+AM2DC999|CT Whole abdomen angiogram and thorax angiogram (Plain and contrast)|10500
+AM2DC999|CT Whole abdomen angiogram and lower limb angiogram (Plain and contrast)|11500
+AM2DC999|CT Pulmonary angiogram and lower limb venogram (Plain and contrast)|11500
+AM2DC999|CT Hypertension package — kidneys, adrenals and renal angiogram (Plain and contrast)|7200
+AM2DC999|CT Triple rule out — pulmonary, coronary and thoracic angiograms (Plain and contrast)|11500
+AM2DC102|CT Low-dose thorax (Plain)|2000
+AM2DC101|CT Thorax high resolution (Plain)|3000
+AM2DC999|CT Liver volumetry (Plain)|2000
+AM2DC999|CT Dental bone, upper jaw (Plain)|2200
+AM2DC999|CT Dental bone, lower jaw (Plain)|2200
+AM2DC999|CT Dental bone, upper and lower jaw (Plain)|4000
+`,{source:"CT_PET"});
+[
+ ["AM2DC515","CT Coronary angiogram (Plain and contrast)",6000],
+ ["AM2DC515","CT One-region angiogram (Plain and contrast)",5800],
+ ["AM2DC505","CT Whole abdomen angiogram (Plain and contrast)",7500]
+].forEach(([c,n,p])=>add("ct",c,n,p,{
+ source:"CT_PET",
+ review:"The supplier code is also used for a different CT examination. Confirm the correct code and scope."
+}));
+
+/* PET-CT */
+[
+ ["PET-CT Whole body trunk",15900,16900],
+ ["PET-CT Whole body trunk and brain",17900,18900],
+ ["PET-CT Whole body trunk and upper limbs",18400,19400],
+ ["PET-CT Whole body trunk and lower limbs",18400,19400],
+ ["PET-CT Whole body trunk, upper limbs and lower limbs",20900,21900],
+ ["PET-CT Whole body trunk, brain, upper limbs and lower limbs",22900,23900],
+ ["F18 / Ga68 PSMA whole body trunk, skull vertex to upper thighs",19700,21000],
+ ["F18 Amyloid brain",24300,25800]
+].forEach(([n,p,c])=>pair("pet","AM2DM999","AM2DM999",n,p,c,{
+ source:"CT_PET",review:n.startsWith("PET-CT")
+ ?"The source does not specify the tracer. Confirm tracer and examination scope before quoting.":""
+}));
+
+/* MRI */
+[
+ ["AM2DM001","AM2DM002","MR Brain",5400,7600],
+ ["AM2DM011","AM2DM012","MR Brain and brain angiogram",7200,9700],
+ ["AM2DM999","AM2DM999","MR Brain and brain venogram",7200,9700],
+ ["AM2DM013","AM2DM014","MR Brain, brain angiogram and brain venogram",9500,11900],
+ ["AM2DM999","AM2DM999","MR Brain and internal acoustic meatus",7500,9900],
+ ["AM2DM999","AM2DM999","MR Brain and pituitary gland",8900,11300],
+ ["AM2DM999","AM2DM999","MR Brain and paranasal sinuses",8900,11300],
+ ["AM2DM037","AM2DM038","MR Brain and orbits",8900,11300],
+ ["AM2DM999","AM2DM999","MR Brain and nasopharynx",8900,11300],
+ ["AM2DM999","AM2DM999","MR Brain and brain stem",8900,11300],
+ ["AM2DM999","AM2DM999","MR Skull base",5400,7600],
+ ["AM2DM999","AM2DM999","MR Skull base and nasopharynx",8900,11300],
+ ["AM2DM999","AM2DM999","MR Internal acoustic meatus",4100,6300],
+ ["AM2DM009","AM2DM010","MR Pituitary gland",5400,7600],
+ ["AM2DM999","AM2DM999","MR Paranasal sinuses",5400,7600],
+ ["AM2DM999","AM2DM999","MR Orbits",5400,7600],
+ ["AM2DM999","AM2DM999","MR Salivary glands — parotid and submandibular",5400,7600],
+ ["AM2DM999","AM2DM999","MR Face",5400,7600],
+ ["AM2DM999","AM2DM999","MR Temporomandibular joint (TM joint)",5400,7600],
+ ["AM2DM999","AM2DM999","MR Mandible",5400,7600],
+ ["AM2DM007","AM2DM008","MR Nasopharynx including neck",6500,7600],
+ ["AM2DM031","AM2DM032","MR Neck",5400,7600],
+ ["AM2DM999","AM2DM999","MR Neck and oral cavity",8900,11300],
+ ["AM2DM999","AM2DM999","MR Brachial plexus, one side",5400,7600],
+ ["AM2DM999","AM2DM999","MR Brachial plexus, both sides",10800,15200],
+ ["AM2DM999","AM2DM999","MR Oropharynx — oral cavity and tongue",5400,7600],
+ ["AM2DM103","AM2DM104","MR Breasts",7800,10800],
+ ["AM2DM999","AM2DM999","MR Augmented breasts with implant",13800,15300],
+ ["AM2DM999","AM2DM999","MR Axilla, one side",5400,7600],
+ ["AM2DM999","AM2DM999","MR Axilla, both sides",10800,15200],
+ ["AM2DM101","AM2DM102","MR Thorax",6300,8500],
+ ["AM2DM999","AM2DM999","MR Chest wall",5400,7600],
+ ["AM2DM999","AM2DM999","MR Abdominal wall",6300,8500],
+ ["AM2DM206","AM2DM207","MR Upper abdomen",6300,8500],
+ ["AM2DM999","AM2DM999","MR Upper abdomen and MRCP",9100,11700],
+ ["AM2DM208","AM2DM209","MR Pelvis",6300,8500],
+ ["AM2DM231","AM2DM232","MR Prostate",7000,9300],
+ ["AM2DM999","AM2DM999","MR Penis",5800,8100],
+ ["AM2DM999","AM2DM999","MR Scrotum / testicle",5800,8100],
+ ["AM2DM999","AM2DM999","MR Anal canal (FIA) and perineum",6300,8500],
+ ["AM2DM999","AM2DM999","MR Groin, one side",5400,7600],
+ ["AM2DM999","AM2DM999","MR Groin, both sides",10800,15200],
+ ["AM2DM999","AM2DM999","MR Buttock, one side",5400,7600],
+ ["AM2DM999","AM2DM999","MR Buttock, both sides",10800,15200],
+ ["AM2DM210","AM2DM211","MR Whole abdomen",11300,13600],
+ ["AM2DM999","AM2DM999","MR Back mass",5400,7600],
+ ["AM2DM999","AM2DM999","MR Sternum",5400,7600],
+ ["AM2DM999","AM2DM999","MR Cervical spine",5400,7600],
+ ["AM2DM999","AM2DM999","MR Thoracic spine",5400,7600],
+ ["AM2DM999","AM2DM999","MR Lumbar spine",5400,7600],
+ ["AM2DM999","AM2DM999","MR Sacrum, sacroiliac joints and coccyx",5400,7600],
+ ["AM2DM999","AM2DM999","MR Lumbosacral spine — lumbar, sacrum, SI joints and coccyx",9800,11800],
+ ["AM2DM999","AM2DM999","MR Cervical and thoracic spine",10000,12000],
+ ["AM2DM999","AM2DM999","MR Cervical and lumbar spine",10000,12000],
+ ["AM2DM999","AM2DM999","MR Thoracic and lumbar spine",10000,12000],
+ ["AM2DM999","AM2DM999","MR Soft tissue, each region",5400,7600],
+ ["AM2DM999","AM2DM999","MR Pelvic girdle",6300,8500],
+ ["AM2DM401","AM2DM402","MR Right shoulder",5400,7600],
+ ["AM2DM403","AM2DM404","MR Left shoulder",5400,7600],
+ ["AM2DM405","AM2DM406","MR Right elbow",5400,7600],
+ ["AM2DM407","AM2DM408","MR Left elbow",5400,7600],
+ ["AM2DM409","AM2DM410","MR Right wrist",5400,7600],
+ ["AM2DM411","AM2DM412","MR Left wrist",5400,7600],
+ ["AM2DM421","AM2DM422","MR Right hip",5400,7600],
+ ["AM2DM423","AM2DM424","MR Left hip",5400,7600],
+ ["AM2DM429","AM2DM430","MR Right knee",5400,7600],
+ ["AM2DM431","AM2DM432","MR Left knee",5400,7600],
+ ["AM2DM433","AM2DM434","MR Right ankle",5400,7600],
+ ["AM2DM435","AM2DM436","MR Left ankle",5400,7600],
+ ["AM2DM413","AM2DM414","MR Right clavicle",5400,7600],
+ ["AM2DM415","AM2DM416","MR Left clavicle",5400,7600],
+ ["AM2DM999","AM2DM999","MR Acromioclavicular joint",5400,7600],
+ ["AM2DM999","AM2DM999","MR Sternoclavicular joint",5400,7600],
+ ["AM2DM999","AM2DM999","MR Scapula",5400,7600],
+ ["AM2DM425","AM2DM426","MR Right thigh",5400,7600],
+ ["AM2DM427","AM2DM428","MR Left thigh",5400,7600],
+ ["AM2DM437","AM2DM438","MR Right leg",5400,7600],
+ ["AM2DM439","AM2DM440","MR Left leg",5400,7600],
+ ["AM2DM441","AM2DM442","MR Right foot",5400,7600],
+ ["AM2DM443","AM2DM444","MR Left foot",5400,7600],
+ ["AM2DM445","AM2DM446","MR Extremity, each region, one side",5400,7600],
+ ["AM2DM999","AM2DM999","MR Extremity, each region, both sides",10800,15200],
+ ["AM2DM999","AM2DM999","MR Whole spine screening — sagittal only",7600,9800],
+ ["AM2DM311","AM2DM312","MR Whole spine — cervical, thoracic, lumbar, sacrum, SI joints and coccyx",15800,18800],
+ ["AM2DM999","AM2DM999","MR Brain angiogram",4800,7000],
+ ["AM2DM999","AM2DM999","MR Brain venogram",4800,7000],
+ ["AM2DM999","AM2DM999","MR Neck angiogram — carotid and vertebral arteries",5400,7600],
+ ["AM2DM999","AM2DM999","MR Brain and neck angiogram",5700,7600],
+ ["AM2DM999","AM2DM999","MR Stroke package — brain, brain angiogram and neck angiogram",9000,11000],
+ ["AM2DM999","AM2DM999","MR Whole body screening, including brain",16500,22000],
+ ["AM2DM999","AM2DM999","MR Hypertension package — kidneys, adrenal glands and renal angiogram",7600,9800]
+].forEach(a=>pair("mri",...a));
+rows("mri",`
+AM2DM999|MR 3D AI volumetric brain scan for Alzheimer's disease|3000
+AM2DM999|MR Salivary glands with sialogram|4200
+AM2DM999|MR Cardiac — function and anatomy (Plain)|10000
+AM2DM999|MR Cardiac — function and viability (Plain and contrast)|12000
+AM2DM999|MRCP (Plain)|4200
+AM2DM999|MR Upper abdomen — Primovist liver contrast|12800
+AM2DM999|MR Liver iron overload (Plain)|2000
+AM2DM999|MR Thoracic aortogram (Plain and contrast)|7600
+AM2DM999|MR Pulmonary angiogram (Plain and contrast)|7600
+AM2DM999|MR Abdomen aortogram (Plain and contrast)|7600
+AM2DM999|MR Whole abdomen aortogram (Plain and contrast)|8500
+AM2DM999|MR Upper limb angiogram, one side — contrast specification not supplied|8500
+AM2DM999|MR Lower limbs angiogram, both sides — contrast specification not supplied|8500
+AM2DM521|MR Angiogram, each region — contrast specification not supplied|7600
+AM2DM999|MR Aortogram, each region — contrast specification not supplied|7600
+`);
+
+/* Explicit extra fees; no automatic additions */
+add("fees","XX001","Additional X-ray film, per film",200,{source:"XR",variable:true,unit:"film"});
+add("fees","XX001","Additional certified true copy of report, per item",300,
+ {source:"XR",variable:true,unit:"copy",aliases:"US CT MRI PET"});
+add("fees","XX001","Additional CD / USB, per disc / USB",300,
+ {source:"US",variable:true,unit:"disc / USB",aliases:"CT MRI PET"});
+
+/* Search aliases */
+catalogue.forEach(t=>{
+ if(t.name.includes("XR Chest"))t.aliases+=" CXR chest xray";
+ if(t.name.includes("Complete blood count"))t.aliases+=" full blood count FBC";
+ if(t.name.includes("Urinalysis"))t.aliases+=" urine routine";
+ if(t.name.includes("Breast")||t.name.includes("breast"))t.aliases+=" breast";
+ if(t.name.includes("MR "))t.aliases+=" MRI magnetic resonance";
+ if(t.cat==="packages")t.aliases+=" profile package";
+ if(t.code==="P-VDRL")t.review="The source conflates RPR and VDRL. Confirm the actual assay and reporting method.";
+ if(t.cat==="mri"&&t.name.includes("contrast specification not supplied"))
+  t.review="The source does not specify contrast use. Confirm protocol before quoting.";
+ if(t.name.includes("MR Anal canal (FIA)"))
+  t.review="FIA is not defined in the source. Confirm examination scope.";
+});
+const byId=new Map(catalogue.map(t=>[t.id,t]));
+
+/* ============================================================
+   QUOTATION STATE — memory only, deliberately no localStorage
+   ============================================================ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+}[c]));
+const money=n=>"HKD "+Number(n).toLocaleString("en-HK",{minimumFractionDigits:2,maximumFractionDigits:2});
+const clone=o=>JSON.parse(JSON.stringify(o));
+function localDate(d=new Date()){
+ return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+}
+function dateLabel(v){
+ if(!v)return"Not specified";
+ const [y,m,d]=v.split("-");
+ return d+"/"+m+"/"+y;
+}
+function number(){
+ const part=globalThis.crypto?.randomUUID?.().slice(0,8).toUpperCase()
+ ||Math.random().toString(36).slice(2,10).toUpperCase();
+ return "AMC-Q-"+localDate().replaceAll("-","")+"-"+part;
+}
+let quoteNumber=number(),revision=1,items=[];
+let category="all",lockedSnapshot=null,history=[];
+let paperAttachment=null,attachmentVersion=0;
+let dirty=false,hasInk=false,signatureDistance=0;
+const metadataIds=[
+ "patientName","patientReference","clinician","preparedBy","quoteDate",
+ "validUntil","location","availability","notes"
+];
+function initDates(){
+ $("quoteDate").value=localDate();
+ const d=new Date();d.setDate(d.getDate()+30);
+ $("validUntil").value=localDate(d);
+ $("paperSignedDate").value=localDate();
+}
+initDates();
+function metadata(){
+ return Object.fromEntries(metadataIds.map(id=>[id,$(id).value.trim()]));
+}
+function amounts(list=items){
+ const result={offered:0,accepted:0,declined:0,deferred:0,pending:0};
+ list.forEach(i=>{
+  const amount=i.price*i.qty;
+  result.offered+=amount;
+  result[i.decision]+=amount;
+ });
+ return result;
+}
+function currentSnapshot(){
+ return{
+  schemaVersion:1,prototype:true,clinic:"Adventist Medical Centre",
+  quotationNumber:quoteNumber,revision,currency:"HKD",
+  createdAt:new Date().toISOString(),metadata:metadata(),
+  items:clone(items),totals:amounts(),confirmation:null,
+  terms:[
+   "Patient-facing prices in HKD from the supplied AMC charge slips.",
+   "Availability and quotation-specific conditions must be confirmed before booking.",
+   "No unlisted surcharge is added automatically.",
+   "Fixed examination charges include the described views; view counts are not multiplied.",
+   "Only accepted items are authorized by the recorded confirmation.",
+   "This confirmation does not replace required clinical informed consent.",
+   "Changes after confirmation require a new revision and renewed confirmation."
+  ],
+  sourceDates:{laboratory:"2026-09-03",imaging:"2026-07-13"}
+ };
+}
+function getDocument(){return lockedSnapshot||currentSnapshot();}
+function message(text,error=false){
+ $("message").textContent=text;
+ $("message").style.color=error?"var(--red)":"var(--blue)";
+}
+function invalidateConfirmation(){
+ if(lockedSnapshot)return;
+ clearInk();
+ $("acceptance").checked=false;
+ $("paperVerified").checked=false;
+ paperAttachment=null;
+ attachmentVersion++;
+ $("paperFile").value="";
+ $("paperFileName").textContent="";
+ dirty=true;
+}
+function categoryName(cat){return CATEGORIES.find(c=>c[0]===cat)?.[1]||cat;}
+function match(t,q){
+ return (t.name+" "+t.code+" "+t.aliases+" "+categoryName(t.cat)).toLowerCase().includes(q);
+}
+function inCategory(t){
+ return category==="all"||t.cat===category||
+ (category==="breast"&&t.aliases.includes("breast"));
+}
+function renderCatalogue(){
+ const q=$("search").value.toLowerCase().trim();
+ const filtered=catalogue.filter(t=>inCategory(t)&&match(t,q));
+ $("catalogCount").textContent=
+  filtered.length+" matching services · "+
+  catalogue.filter(t=>t.review).length+" catalogue entries held for review";
+ $("catalogBody").innerHTML=filtered.map(t=>{
+  const chosen=items.some(i=>i.id===t.id);
+  const disabled=!!lockedSnapshot||!!t.review;
+  return `<tr class="${chosen?"selected":""}">
+   <td><input type="checkbox" data-service="${esc(t.id)}"
+    aria-label="${esc("Select "+t.name)}" ${chosen?"checked":""}
+    ${disabled?"disabled":""}></td>
+   <td><div class="catalog-name">${esc(t.name)}</div>
+    <div class="code">${esc(t.code)} · ${esc(t.id)}</div>
+    <div class="category-label">${esc(categoryName(t.cat))}
+     ${t.variable?" · Per "+esc(t.unit):" · Fixed examination / item price"}</div>
+    ${t.review?`<span class="warning-label">Held for review: ${esc(t.review)}</span>`:""}
+   </td>
+   <td class="price">${money(t.price)}</td>
+  </tr>`;
+ }).join("");
+}
+function renderTabs(){
+ $("categoryTabs").innerHTML=CATEGORIES.map(([id,label])=>
+  `<button type="button" data-category="${id}" class="${category===id?"active":""}"
+   aria-pressed="${category===id}">${esc(label)}</button>`).join("");
+}
+function renderQuote(){
+ const disabled=lockedSnapshot?"disabled":"";
+ $("quoteMeta").innerHTML=
+ `<span class="chip">${esc(quoteNumber)}</span>
+  <span class="chip">Revision ${revision}</span>
+  <span class="chip">${lockedSnapshot?"Confirmed":"Draft"}</span>`;
+ $("quoteItems").innerHTML=items.length?items.map((i,index)=>
+ `<div class="quote-item">
+  <div class="item-top">
+   <div><div class="item-name">${esc(i.name)}</div>
+    <div class="code">${esc(i.code)} · ${esc(i.id)}</div>
+    <small>Unit price: ${money(i.price)}</small>
+   </div>
+   <strong>${money(i.price*i.qty)}</strong>
+  </div>
+  <div class="item-controls">
+   ${i.variable?`<label>Quantity:
+    <input class="qty" type="number" min="1" max="20" step="1"
+     data-qty="${index}" value="${i.qty}" aria-label="${esc("Quantity for "+i.name)}" ${disabled}>
+    <small>${esc(i.unit)}</small></label>`:"<small>Quantity: 1 · Fixed price</small>"}
+   <label>Decision:
+    <select class="status-select" data-decision="${index}" ${disabled}>
+     ${["pending","accepted","declined","deferred"].map(v=>
+      `<option value="${v}" ${i.decision===v?"selected":""}>${v[0].toUpperCase()+v.slice(1)}</option>`).join("")}
+    </select>
+   </label>
+   <button type="button" class="remove" data-remove="${index}" ${disabled}
+    aria-label="${esc("Remove "+i.name)}">Remove</button>
+  </div>
+ </div>`).join(""):'<p class="muted">No services selected. Search the catalogue to build a quotation.</p>';
+ const t=amounts();
+ $("totals").innerHTML=`
+  <div><span>All quoted items</span><strong>${money(t.offered)}</strong></div>
+  <div><span>Pending decision</span><span>${money(t.pending)}</span></div>
+  <div><span>Declined</span><span>${money(t.declined)}</span></div>
+  <div><span>Deferred</span><span>${money(t.deferred)}</span></div>
+  <div class="grand"><span>Accepted total</span><span>${money(t.accepted)}</span></div>`;
+ $("lockBanner").innerHTML=lockedSnapshot?
+  `<div class="locked">Revision ${revision} is locked. Create a new revision to change details, items or decisions.</div>`:"";
+ $("clearItemsButton").disabled=!!lockedSnapshot||!items.length;
+ $("newRevisionButton").hidden=!lockedSnapshot;
+ $("confirmationEditor").hidden=!!lockedSnapshot;
+ metadataIds.forEach(id=>$(id).disabled=!!lockedSnapshot);
+ $("confirmationRecord").innerHTML=lockedSnapshot?confirmationHTML(lockedSnapshot):"";
+}
+function render(){renderTabs();renderCatalogue();renderQuote();}
+function choose(id){
+ if(lockedSnapshot)return;
+ const t=byId.get(id);if(!t||t.review)return;
+ const pos=items.findIndex(i=>i.id===id);
+ if(pos>=0)items.splice(pos,1);
+ else items.push({...clone(t),qty:1,decision:"pending"});
+ invalidateConfirmation();render();
+}
+$("catalogBody").addEventListener("change",e=>{
+ if(e.target.dataset.service)choose(e.target.dataset.service);
+});
+$("categoryTabs").addEventListener("click",e=>{
+ const b=e.target.closest("[data-category]");
+ if(b){category=b.dataset.category;renderTabs();renderCatalogue();}
+});
+$("search").addEventListener("input",renderCatalogue);
+$("quoteItems").addEventListener("click",e=>{
+ const b=e.target.closest("[data-remove]");
+ if(b&&!lockedSnapshot){
+  items.splice(Number(b.dataset.remove),1);
+  invalidateConfirmation();render();
+ }
+});
+$("quoteItems").addEventListener("change",e=>{
+ if(lockedSnapshot)return;
+ if(e.target.dataset.qty!==undefined){
+  const i=items[Number(e.target.dataset.qty)];
+  const v=Number(e.target.value);
+  if(!Number.isInteger(v)||v<1||v>20){
+   e.target.value=i.qty;message("Quantity must be an integer from 1 to 20.",true);return;
+  }
+  i.qty=v;invalidateConfirmation();render();
+ }
+ if(e.target.dataset.decision!==undefined){
+  items[Number(e.target.dataset.decision)].decision=e.target.value;
+  invalidateConfirmation();renderQuote();
+ }
+});
+metadataIds.forEach(id=>$(id).addEventListener("input",()=>{invalidateConfirmation();}));
+["signerName","signerRole","signerRelationship","witness"].forEach(id=>{
+ $(id).addEventListener("input",()=>{
+  clearInk();$("acceptance").checked=false;$("paperVerified").checked=false;
+ });
+});
+$("paperSignedDate").addEventListener("change",()=>{$("paperVerified").checked=false;});
+$("clearItemsButton").addEventListener("click",()=>{
+ if(!lockedSnapshot&&items.length&&confirm("Remove all services from this draft?")){
+  items=[];invalidateConfirmation();render();
+ }
+});
+
+/* ============================================================
+   SIGNATURE — normalized paths preserve strokes on resizing
+   ============================================================ */
+const canvas=$("signatureCanvas"),ctx=canvas.getContext("2d");
+let strokes=[],drawing=false,lastPoint=null;
+function resizeCanvas(){
+ const rect=canvas.getBoundingClientRect();
+ if(!rect.width)return;
+ const ratio=window.devicePixelRatio||1;
+ canvas.width=Math.round(rect.width*ratio);
+ canvas.height=Math.round(170*ratio);
+ ctx.setTransform(ratio,0,0,ratio,0,0);
+ redraw();
+}
+function redraw(){
+ const width=canvas.clientWidth;
+ ctx.clearRect(0,0,width,170);
+ ctx.fillStyle="white";ctx.fillRect(0,0,width,170);
+ ctx.strokeStyle="#111";ctx.lineWidth=2;ctx.lineCap="round";ctx.lineJoin="round";
+ strokes.forEach(s=>{
+  if(!s.length)return;
+  ctx.beginPath();ctx.moveTo(s[0].x*width,s[0].y*170);
+  s.slice(1).forEach(p=>ctx.lineTo(p.x*width,p.y*170));
+  ctx.stroke();
+ });
+}
+function clearInk(){
+ strokes=[];hasInk=false;signatureDistance=0;drawing=false;lastPoint=null;
+ redraw();
+}
+function point(e){
+ const r=canvas.getBoundingClientRect();
+ return{x:Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),
+        y:Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))};
+}
+canvas.addEventListener("pointerdown",e=>{
+ if(lockedSnapshot)return;
+ e.preventDefault();canvas.setPointerCapture(e.pointerId);
+ drawing=true;lastPoint=point(e);strokes.push([lastPoint]);$("acceptance").checked=false;
+});
+canvas.addEventListener("pointermove",e=>{
+ if(!drawing)return;
+ e.preventDefault();const p=point(e);
+ signatureDistance+=Math.hypot((p.x-lastPoint.x)*canvas.clientWidth,(p.y-lastPoint.y)*170);
+ strokes[strokes.length-1].push(p);lastPoint=p;hasInk=signatureDistance>25;redraw();
+});
+["pointerup","pointercancel","lostpointercapture"].forEach(name=>
+ canvas.addEventListener(name,()=>{drawing=false;lastPoint=null;}));
+$("clearSignatureButton").addEventListener("click",()=>{clearInk();$("acceptance").checked=false;});
+new ResizeObserver(resizeCanvas).observe(canvas);
+document.querySelectorAll('[name="signatureMode"]').forEach(r=>{
+ r.addEventListener("change",()=>{
+  invalidateConfirmation();
+  const paper=r.value==="paper"&&r.checked;
+  $("tabletSection").hidden=paper;$("paperSection").hidden=!paper;
+  if(!paper)requestAnimationFrame(resizeCanvas);
+ });
+});
+
+/* Paper attachment is stored in memory and included in JSON export */
+$("paperFile").addEventListener("change",async()=>{
+ paperAttachment=null;$("paperVerified").checked=false;
+ const version=++attachmentVersion;
+ const file=$("paperFile").files[0];
+ if(!file){$("paperFileName").textContent="";return;}
+ if(file.size>8*1024*1024){
+  $("paperFile").value="";message("The signed attachment must not exceed 8 MB.",true);return;
+ }
+ const allowed=["application/pdf","image/png","image/jpeg"];
+ if(!allowed.includes(file.type)){
+  $("paperFile").value="";message("Use a PDF, PNG or JPEG attachment.",true);return;
+ }
+ try{
+  const data=await new Promise((resolve,reject)=>{
+   const reader=new FileReader();
+   reader.onload=()=>resolve(reader.result);
+   reader.onerror=()=>reject(new Error("File read failed"));
+   reader.readAsDataURL(file);
+  });
+  if(version!==attachmentVersion)return;
+  paperAttachment={name:file.name,type:file.type,size:file.size,data};
+  $("paperFileName").textContent="Attached: "+file.name;
+  dirty=true;
+ }catch{message("The attachment could not be read.",true);}
+});
+
+/* ============================================================
+   VALIDATION AND LOCKED CONFIRMATION
+   ============================================================ */
+function validation(){
+ const m=metadata();
+ if(!items.length)return"Select at least one service.";
+ if(!m.patientName)return"Enter the patient name.";
+ if(!m.patientReference)return"Enter the patient reference.";
+ if(!m.preparedBy)return"Enter the preparing staff member.";
+ if(!m.quoteDate||!m.validUntil)return"Enter quotation and validity dates.";
+ if(m.validUntil<m.quoteDate)return"The validity date cannot precede the quotation date.";
+ if(m.validUntil<localDate())return"The quotation has expired. Update the validity date before confirmation.";
+ if(items.some(i=>i.decision==="pending"))return"Choose Accepted, Declined or Deferred for every item.";
+ if(!items.some(i=>i.decision==="accepted"))return"At least one accepted item is required to record a service confirmation.";
+ if(!$("signerName").value.trim())return"Enter the signer name.";
+ if($("signerRole").value==="Representative"&&!$("signerRelationship").value.trim())
+  return"Document the representative's relationship or authority.";
+ if(!$("witness").value.trim())return"Enter the witness or recording staff member.";
+ if(!$("acceptance").checked)return"Complete the acceptance acknowledgement.";
+ const mode=document.querySelector('[name="signatureMode"]:checked').value;
+ if(mode==="tablet"&&!hasInk)return"Capture a visible signature before confirmation.";
+ if(mode==="paper"){
+  if(!paperAttachment)return"Attach the signed paper document.";
+  if(!$("paperSignedDate").value)return"Enter the paper signature date.";
+  if($("paperSignedDate").value>localDate())return"The paper signature date cannot be in the future.";
+  if($("paperSignedDate").value<m.quoteDate||$("paperSignedDate").value>m.validUntil)
+   return"The paper signature date must be within the quotation's validity period.";
+  if(!$("paperVerified").checked)return"Verify the signed paper document against this revision.";
+ }
+ return"";
+}
+$("confirmButton").addEventListener("click",()=>{
+ if(lockedSnapshot)return;
+ const error=validation();if(error){message(error,true);return;}
+ const mode=document.querySelector('[name="signatureMode"]:checked').value;
+ const snapshot=currentSnapshot();
+ snapshot.confirmation={
+  mode,recordedAt:new Date().toISOString(),
+  signerName:$("signerName").value.trim(),
+  signerRole:$("signerRole").value,
+  relationship:$("signerRelationship").value.trim(),
+  witness:$("witness").value.trim(),
+  acceptedTotal:snapshot.totals.accepted,
+  acknowledged:true,
+  signaturePNG:mode==="tablet"?canvas.toDataURL("image/png"):null,
+  paperSignedDate:mode==="paper"?$("paperSignedDate").value:null,
+  paperVerified:mode==="paper",
+  attachment:mode==="paper"?clone(paperAttachment):null,
+  authentication:"Not authenticated — prototype"
+ };
+ lockedSnapshot=clone(snapshot);dirty=true;
+ render();message("Confirmation recorded. Export JSON and save or print the confirmed document.");
+});
+function confirmationHTML(s){
+ const c=s.confirmation;if(!c)return"";
+ return `<div class="confirmation-record">
+  <h3>Recorded confirmation</h3>
+  <p><strong>${esc(c.signerName)}</strong> · ${esc(c.signerRole)}
+   ${c.relationship?" · "+esc(c.relationship):""}</p>
+  <p>Method: ${c.mode==="tablet"?"Tablet signature":"Paper signature"}</p>
+  <p>Recording staff: ${esc(c.witness)}<br>
+   Recorded: ${esc(new Date(c.recordedAt).toLocaleString("en-GB"))}</p>
+  ${c.mode==="tablet"?`<img class="signature-preview" src="${c.signaturePNG}" alt="Recorded signature">`:
+   `<p>Paper signed: ${dateLabel(c.paperSignedDate)}<br>
+    Attachment: ${esc(c.attachment.name)}<br>
+    Staff verification recorded.</p>
+    ${c.attachment.type.startsWith("image/")?
+     `<img class="signature-preview" src="${c.attachment.data}" alt="Signed paper document">`:
+     "<p class='muted'>The PDF attachment is included in JSON export, but is not merged into the printed quotation.</p>"}`}
+  <small>Staff names and timestamps are self-entered or device-generated and are not authenticated.</small>
+ </div>`;
+}
+$("newRevisionButton").addEventListener("click",()=>{
+ if(!lockedSnapshot)return;
+ if(!confirm("Create a new revision? Existing confirmation will remain in the exported history. New decisions and a new signature will be required."))return;
+ history.push(clone(lockedSnapshot));
+ revision++;lockedSnapshot=null;
+ items.forEach(i=>i.decision="pending");
+ clearInk();paperAttachment=null;attachmentVersion++;
+ $("paperFile").value="";$("paperFileName").textContent="";
+ $("acceptance").checked=false;$("paperVerified").checked=false;
+ ["signerName","signerRelationship","witness"].forEach(id=>$(id).value="");
+ $("paperSignedDate").value=localDate();
+ dirty=true;render();message("New draft revision created. Confirm all decisions again.");
+});
+$("resetButton").addEventListener("click",()=>{
+ if((items.length||dirty||history.length)&&!confirm("Start a new quotation? Unsaved data and confirmation history will be discarded. Export first if needed."))return;
+ quoteNumber=number();revision=1;items=[];history=[];lockedSnapshot=null;
+ metadataIds.forEach(id=>{
+  if(!["location","availability"].includes(id))$(id).value="";
+ });
+ $("location").value="CWB — subject to booking confirmation";
+ $("availability").value="Not verified";
+ ["signerName","signerRelationship","witness"].forEach(id=>$(id).value="");
+ $("signerRole").value="Patient";
+ $("acceptance").checked=false;$("paperVerified").checked=false;
+ paperAttachment=null;attachmentVersion++;$("paperFile").value="";$("paperFileName").textContent="";
+ clearInk();initDates();dirty=false;render();message("New quotation started.");
+});
+
+/* ============================================================
+   PRINT, COPY AND EXPORT — all use the locked snapshot if present
+   ============================================================ */
+function printable(s,paperForm=false){
+ const m=s.metadata;
+ const status=s.confirmation?"CONFIRMED":paperForm?"PAPER CONFIRMATION FORM — NOT YET RECORDED":"DRAFT — NOT CONFIRMED";
+ return `<h1>Adventist Medical Centre</h1>
+  <h2>Combined Service Quotation</h2>
+  <p><strong>${status}</strong> · ${esc(s.quotationNumber)} · Revision ${s.revision}</p>
+  <div class="print-meta">
+   <div>Patient: <strong>${esc(m.patientName||"Not entered")}</strong></div>
+   <div>Patient reference: ${esc(m.patientReference||"Not entered")}</div>
+   <div>Referring clinician: ${esc(m.clinician||"Not entered")}</div>
+   <div>Prepared by: ${esc(m.preparedBy||"Not entered")}</div>
+   <div>Quotation date: ${dateLabel(m.quoteDate)}</div>
+   <div>Valid until: ${dateLabel(m.validUntil)}</div>
+   <div>Location: ${esc(m.location)}</div>
+   <div>Availability: ${esc(m.availability)}</div>
+  </div>
+  <table><thead><tr>
+   <th>#</th><th>AMC code</th><th>Service</th><th>Qty</th>
+   <th>Decision</th><th class="price">Unit HKD</th><th class="price">Amount HKD</th>
+  </tr></thead><tbody>
+  ${s.items.map((i,n)=>`<tr>
+   <td>${n+1}</td><td>${esc(i.code)}</td><td>${esc(i.name)}</td>
+   <td>${i.qty}${i.variable?" "+esc(i.unit):""}</td>
+   <td>${esc(i.decision.toUpperCase())}</td>
+   <td class="price">${Number(i.price).toFixed(2)}</td>
+   <td class="price">${Number(i.price*i.qty).toFixed(2)}</td>
+  </tr>`).join("")}
+  </tbody></table>
+  <div class="print-total">All quoted items: ${money(s.totals.offered)}<br>
+   Accepted total: ${money(s.totals.accepted)}</div>
+  <p>Pending: ${money(s.totals.pending)} · Declined: ${money(s.totals.declined)}
+   · Deferred: ${money(s.totals.deferred)}</p>
+  ${m.notes?`<p><strong>Notes:</strong><br>${esc(m.notes).replaceAll("\n","<br>")}</p>`:""}
+  ${s.confirmation?confirmationHTML(s):paperForm?`
+   <div class="confirmation-record">
+    <h3>Patient / representative acknowledgement</h3>
+    <p>I have reviewed this quotation and accept only the services marked ACCEPTED
+     and their stated charges. Declined and deferred services are not authorized.
+     This acknowledgement does not replace any required clinical informed consent.</p>
+    <p>Signer name: __________________________________________</p>
+    <p>Signer role: Patient / Representative</p>
+    <p>Relationship / authority, if applicable: ______________________________</p>
+    <div class="signature-lines">
+     <div>Patient / representative signature</div><div>Date</div>
+     <div>Witness / recording staff name</div><div>Witness signature</div>
+    </div>
+   </div>`:""}
+  <div class="print-footer">
+   ${s.terms.map(t=>"• "+esc(t)).join("<br>")}
+   <br>Laboratory source: 03 Sep 2026 · Imaging source: 13 Jul 2026.
+   <br>Prototype document. Device timestamps and staff identities are not authenticated.
+  </div>`;
+}
+function printDoc(paperForm=false){
+ const s=getDocument();
+ if(!s.items.length){message("Select services before printing.",true);return;}
+ if(paperForm&&!lockedSnapshot){
+  const m=metadata();
+  if(!m.patientName||!m.patientReference||!m.preparedBy){
+   message("Enter patient name, patient reference and preparing staff before printing a signature form.",true);return;
+  }
+  if(items.some(i=>i.decision==="pending")||!items.some(i=>i.decision==="accepted")){
+   message("Resolve all item decisions and accept at least one item before printing a signature form.",true);return;
+  }
+  if(!m.quoteDate||!m.validUntil||m.validUntil<m.quoteDate||m.validUntil<localDate()){
+   message("Check the quotation and validity dates before printing a signature form.",true);return;
+  }
+ }
+ $("printArea").innerHTML=printable(s,paperForm);
+ const oldTitle=document.title;
+ document.title=s.quotationNumber+"-R"+s.revision+"-"+(s.confirmation?"Confirmed":"Draft");
+ const images=[...$("printArea").querySelectorAll("img")];
+ Promise.all(images.map(im=>im.decode?.().catch(()=>{})||Promise.resolve())).then(()=>{
+  window.print();document.title=oldTitle;
+ });
+}
+$("printButton").addEventListener("click",()=>printDoc(false));
+$("printPaperButton").addEventListener("click",()=>printDoc(true));
+function textQuote(s){
+ const m=s.metadata;
+ let text=[
+  "ADVENTIST MEDICAL CENTRE",
+  "COMBINED SERVICE QUOTATION",
+  `${s.quotationNumber} | Revision ${s.revision} | ${s.confirmation?"CONFIRMED":"DRAFT"}`,
+  `Patient: ${m.patientName||"Not entered"} | Reference: ${m.patientReference||"Not entered"}`,
+  `Prepared by: ${m.preparedBy||"Not entered"}`,
+  `Referring clinician: ${m.clinician||"Not entered"}`,
+  `Date: ${dateLabel(m.quoteDate)} | Valid until: ${dateLabel(m.validUntil)}`,
+  `Location: ${m.location} | Availability: ${m.availability}`,
+  "--------------------------------------------------"
+ ];
+ s.items.forEach((i,n)=>text.push(
+  `${n+1}. [${i.code}] ${i.name} | Qty ${i.qty} | ${i.decision.toUpperCase()} | ${money(i.price*i.qty)}`
+ ));
+ text.push("--------------------------------------------------",
+  "All quoted items: "+money(s.totals.offered),
+  "ACCEPTED TOTAL: "+money(s.totals.accepted),
+  "Pending: "+money(s.totals.pending),
+  "Declined: "+money(s.totals.declined),
+  "Deferred: "+money(s.totals.deferred));
+ if(m.notes)text.push("Notes: "+m.notes);
+ if(s.confirmation){
+  const c=s.confirmation;
+  text.push(`Confirmation: ${c.mode} | Signer: ${c.signerName} (${c.signerRole})`,
+   `Recording staff: ${c.witness} | Recorded: ${c.recordedAt}`,
+   "Signature / signed attachment is not included in clipboard text.");
+ }
+ text.push("",...s.terms,
+  "Laboratory source: 03 Sep 2026. Imaging source: 13 Jul 2026.",
+  "Prototype: identities and timestamps are not authenticated.");
+ return text.join("\n");
+}
+$("copyButton").addEventListener("click",async()=>{
+ if(!items.length){message("Select services before copying.",true);return;}
+ const text=textQuote(getDocument());
+ try{
+  if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);
+  else{
+   const ta=document.createElement("textarea");ta.value=text;
+   ta.style.position="fixed";ta.style.left="-10000px";document.body.appendChild(ta);
+   ta.select();const ok=document.execCommand("copy");ta.remove();
+   if(!ok)throw new Error("Copy failed");
+  }
+  message("Quotation copied. Signature images and attachments are not copied.");
+ }catch{message("Clipboard access failed. Use Print / Save PDF or Export JSON instead.",true);}
+});
+$("exportButton").addEventListener("click",()=>{
+ if(!items.length){message("Select services before exporting.",true);return;}
+ const bundle={
+  application:"AMC Quotation Prototype",
+  exportedAt:new Date().toISOString(),
+  current:getDocument(),previousConfirmedRevisions:clone(history),
+  warning:"Contains patient information if entered. Handle securely. Prototype identities and timestamps are not authenticated."
+ };
+ const blob=new Blob([JSON.stringify(bundle,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download=quoteNumber+"-R"+revision+".json";a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),5000);
+ message("JSON exported, including any signature or signed attachment and prior confirmed revisions.");
+});
+$("themeButton").addEventListener("click",()=>{
+ const dark=document.body.classList.toggle("dark");
+ $("themeButton").textContent=dark?"Light mode":"Dark mode";
+});
+window.addEventListener("beforeunload",e=>{
+ if(dirty||lockedSnapshot){e.preventDefault();e.returnValue="";}
+});
+$("reviewList").innerHTML=importNotes.map(n=>`<li>${esc(n)}</li>`).join("")+
+ catalogue.filter(t=>t.review).map(t=>
+ `<li><strong>${esc(t.code)} — ${esc(t.name)}</strong>: ${esc(t.review)}</li>`).join("");
+render();
+requestAnimationFrame(resizeCanvas);
+</script>
+</body>
+</html>
