@@ -180,7 +180,7 @@ body.dark .locked{background:#183c32;color:#a5efc9}
   </section>
 
   <section class="card">
-   <h2>Quotation and decisions</h2>
+   <h2>Quotation Summary</h2>
    <div id="lockBanner"></div>
    <div id="quoteItems"></div>
    <div id="totals" class="summary"></div>
@@ -240,7 +240,7 @@ body.dark .locked{background:#183c32;color:#a5efc9}
       <p class="muted">
        Print this revision, obtain the paper signature, then attach the signed
        scan or photograph. The recording staff must verify that the attachment
-       matches the quotation number, revision, decisions and charges shown.
+       matches the quotation number, revision, services and charges shown.
       </p>
       <button id="printPaperButton" type="button">Print paper confirmation</button>
       <label class="field" style="margin-top:12px">Signed document * — PDF, PNG or JPEG; maximum 8 MB
@@ -1166,25 +1166,23 @@ function renderQuote(){
     <input class="qty" type="number" min="1" max="20" step="1"
      data-qty="${index}" value="${i.qty}" aria-label="${esc("Quantity for "+i.name)}" ${disabled}>
     <small>${esc(i.unit)}</small></label>`:"<small>Quantity: 1 · Fixed price</small>"}
-   <label>Decision:
-    <select class="status-select" data-decision="${index}" ${disabled}>
-     ${["pending","accepted","declined","deferred"].map(v=>
-      `<option value="${v}" ${i.decision===v?"selected":""}>${v[0].toUpperCase()+v.slice(1)}</option>`).join("")}
-    </select>
-   </label>
    <button type="button" class="remove" data-remove="${index}" ${disabled}
     aria-label="${esc("Remove "+i.name)}">Remove</button>
   </div>
  </div>`).join(""):'<p class="muted">No services selected. Search the catalogue to build a quotation.</p>';
+
  const t=amounts();
  $("totals").innerHTML=`
-  <div><span>All quoted items</span><strong>${money(t.offered)}</strong></div>
-  <div><span>Pending decision</span><span>${money(t.pending)}</span></div>
-  <div><span>Declined</span><span>${money(t.declined)}</span></div>
-  <div><span>Deferred</span><span>${money(t.deferred)}</span></div>
-  <div class="grand"><span>Accepted total</span><span>${money(t.accepted)}</span></div>`;
+  <div>
+   <span>Selected services</span>
+   <strong>${items.length}</strong>
+  </div>
+  <div class="grand">
+   <span>${lockedSnapshot?"Confirmed total":"Quotation total"}</span>
+   <span>${money(t.offered)}</span>
+  </div>`;
  $("lockBanner").innerHTML=lockedSnapshot?
-  `<div class="locked">Revision ${revision} is locked. Create a new revision to change details, items or decisions.</div>`:"";
+  `<div class="locked">Revision ${revision} is locked. Create a new revision to change details or services.</div>`:"";
  $("clearItemsButton").disabled=!!lockedSnapshot||!items.length;
  $("newRevisionButton").hidden=!lockedSnapshot;
  $("confirmationEditor").hidden=!!lockedSnapshot;
@@ -1198,7 +1196,7 @@ function choose(id){
  const t=byId.get(id);if(!t||t.review)return;
  const pos=items.findIndex(i=>i.id===id);
  if(pos>=0)items.splice(pos,1);
- else items.push({...clone(t),qty:1,decision:"pending"});
+ else items.push({...clone(t),qty:1,decision:"accepted"});
  invalidateConfirmation();render();
 }
 $("catalogBody").addEventListener("change",e=>{
@@ -1225,10 +1223,6 @@ $("quoteItems").addEventListener("change",e=>{
    e.target.value=i.qty;message("Quantity must be an integer from 1 to 20.",true);return;
   }
   i.qty=v;invalidateConfirmation();render();
- }
- if(e.target.dataset.decision!==undefined){
-  items[Number(e.target.dataset.decision)].decision=e.target.value;
-  invalidateConfirmation();renderQuote();
  }
 });
 metadataIds.forEach(id=>$(id).addEventListener("input",()=>{invalidateConfirmation();}));
@@ -1351,8 +1345,6 @@ function validation(){
  if(!m.patientReference)return"Enter the patient reference.";
  if(!m.preparedBy)return"Enter the preparing staff member.";
  if(!m.quoteDate)return"Enter the quotation date.";
- if(items.some(i=>i.decision==="pending"))return"Choose Accepted, Declined or Deferred for every item.";
- if(!items.some(i=>i.decision==="accepted"))return"At least one accepted item is required to record a service confirmation.";
  if(!$("signerName").value.trim())return"Enter the signer name.";
  if($("signerRole").value==="Representative"&&!$("signerRelationship").value.trim())
   return"Document the representative's relationship or authority.";
@@ -1414,7 +1406,7 @@ $("newRevisionButton").addEventListener("click",()=>{
  if(!confirm("Create a new revision? Existing confirmation will remain in the exported history. New decisions and a new signature will be required."))return;
  history.push(clone(lockedSnapshot));
  revision++;lockedSnapshot=null;
- items.forEach(i=>i.decision="pending");
+ items.forEach(i=>i.decision="accepted");
  clearInk();paperAttachment=null;attachmentVersion++;
  $("paperFile").value="";$("paperFileName").textContent="";
  $("paperVerified").checked=false;
@@ -1456,20 +1448,20 @@ function printable(s,paperForm=false){
   </div>
   <table><thead><tr>
    <th>#</th><th>AMC code</th><th>Service</th><th>Qty</th>
-   <th>Decision</th><th class="price">Unit HKD</th><th class="price">Amount HKD</th>
+   <th class="price">Unit HKD</th><th class="price">Amount HKD</th>
   </tr></thead><tbody>
   ${s.items.map((i,n)=>`<tr>
    <td>${n+1}</td><td>${esc(i.code)}</td><td>${esc(i.name)}</td>
    <td>${i.qty}${i.variable?" "+esc(i.unit):""}</td>
-   <td>${esc(i.decision.toUpperCase())}</td>
    <td class="price">${Number(i.price).toFixed(2)}</td>
    <td class="price">${Number(i.price*i.qty).toFixed(2)}</td>
   </tr>`).join("")}
   </tbody></table>
-  <div class="print-total">All quoted items: ${money(s.totals.offered)}<br>
-   Accepted total: ${money(s.totals.accepted)}</div>
-  <p>Pending: ${money(s.totals.pending)} · Declined: ${money(s.totals.declined)}
-   · Deferred: ${money(s.totals.deferred)}</p>
+<div class="print-total">
+   ${s.confirmation?"Confirmed total":"Quotation total"}:
+   ${money(s.totals.offered)}
+  </div>
+  
   ${m.notes?`<p><strong>Notes:</strong><br>${esc(m.notes).replaceAll("\n","<br>")}</p>`:""}
   ${s.confirmation?confirmationHTML(s):paperForm?`
    <div class="confirmation-record">
@@ -1499,9 +1491,6 @@ function printDoc(paperForm=false){
   if(!m.patientName||!m.patientReference||!m.preparedBy){
    message("Enter patient name, patient reference and preparing staff before printing a signature form.",true);return;
   }
-  if(items.some(i=>i.decision==="pending")||!items.some(i=>i.decision==="accepted")){
-   message("Resolve all item decisions and accept at least one item before printing a signature form.",true);return;
-  }
 if(!m.quoteDate){
    message("Enter the quotation date before printing a signature form.",true);return;
   }
@@ -1529,14 +1518,15 @@ function textQuote(s){
   "--------------------------------------------------"
  ];
  s.items.forEach((i,n)=>text.push(
-  `${n+1}. [${i.code}] ${i.name} | Qty ${i.qty} | ${i.decision.toUpperCase()} | ${money(i.price*i.qty)}`
+`${n+1}. [${i.code}] ${i.name} | Qty ${i.qty} | ${money(i.price*i.qty)}`
  ));
- text.push("--------------------------------------------------",
-  "All quoted items: "+money(s.totals.offered),
-  "ACCEPTED TOTAL: "+money(s.totals.accepted),
-  "Pending: "+money(s.totals.pending),
-  "Declined: "+money(s.totals.declined),
-  "Deferred: "+money(s.totals.deferred));
+
+
+
+ text.push(
+  "--------------------------------------------------",
+  (s.confirmation?"CONFIRMED TOTAL: ":"QUOTATION TOTAL: ")+money(s.totals.offered)
+ );
  if(m.notes)text.push("Notes: "+m.notes);
  if(s.confirmation){
   const c=s.confirmation;
@@ -2082,18 +2072,15 @@ body.dark button.success{
   patientDetails.append(patientSummary, detailsCard);
   quotationCard.prepend(patientDetails);
 
-  quotationCard.querySelector("h2").textContent =
-    "Quotation Summary";
+quotationCard.querySelector(":scope > h2").textContent =
+  "Quotation Summary";
 
   /* Keep the existing rendering functions. */
   const originalRenderCatalogue = renderCatalogue;
   const originalRenderQuote = renderQuote;
 
-  function renderInfoBar(){
+ function renderInfoBar(){
     const totals = amounts();
-    const pendingCount = items.filter(
-      item => item.decision === "pending"
-    ).length;
 
     infoBar.innerHTML = `
       <span class="chip status-chip">
@@ -2103,17 +2090,10 @@ body.dark button.success{
       <span class="chip items-chip">
         ${items.length} service${items.length === 1 ? "" : "s"} selected
       </span>
-      <span class="chip">
-        Quoted: ${money(totals.offered)}
-      </span>
       <span class="chip total-chip">
-        Accepted: ${money(totals.accepted)}
+        ${lockedSnapshot ? "Confirmed total" : "Quotation total"}:
+        ${money(totals.offered)}
       </span>
-      ${pendingCount ? `
-        <span class="chip pending-chip">
-          ${pendingCount} pending decision${pendingCount === 1 ? "" : "s"}
-        </span>
-      ` : ""}
     `;
   }
 
