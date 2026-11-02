@@ -199,6 +199,11 @@ body.dark .locked{background:#183c32;color:#a5efc9}
 
    <section class="confirmation">
     <h3>Patient confirmation</h3>
+    <p class="muted">
+ Signing confirms all services and charges listed in this quotation.
+ Remove any unwanted services before signing.
+ This confirmation does not replace any required clinical informed consent.
+</p>
     <div id="confirmationEditor">
      <div class="mode-options">
       <label><input type="radio" name="signatureMode" value="tablet" checked> Tablet signature</label>
@@ -209,10 +214,10 @@ body.dark .locked{background:#183c32;color:#a5efc9}
        <input id="signerName" maxlength="100" autocomplete="off">
       </label>
       <label class="field">Signer role *
-       <select id="signerRole">
-        <option value="Patient">Patient</option>
-        <option value="Representative">Representative</option>
-       </select>
+<select id="signerRole">
+ <option value="Patient">Patient</option>
+ <option value="Representative">Representative</option>
+</select>
       </label>
       <label class="field full">Relationship / authority, if representative
        <input id="signerRelationship" maxlength="200" autocomplete="off">
@@ -251,14 +256,6 @@ body.dark .locked{background:#183c32;color:#a5efc9}
        <span>I have verified the signed document against this quotation revision.</span>
       </label>
      </div>
-
-     <label class="checkline">
-      <input id="acceptance" type="checkbox">
-      <span>
-       The signer has reviewed the accepted services and charges.
-       Declined and deferred services are not authorized by this confirmation.
-      </span>
-     </label>
      <button id="confirmButton" type="button" class="success">Record confirmation and lock revision</button>
     </div>
     <div id="confirmationRecord"></div>
@@ -1033,6 +1030,36 @@ const metadataIds=[
  "patientName","patientReference","clinician","preparedBy","quoteDate",
  "notes"
 ];
+let lastAutoSignerName = "";
+let lastAutoWitness = "";
+
+function syncConfirmationDefaults(){
+ const signer = $("signerName");
+ const witness = $("witness");
+ const isPatient = $("signerRole").value === "Patient";
+
+ if(isPatient){
+  const patientName = $("patientName").value.trim();
+
+  if(!signer.value.trim() || signer.value === lastAutoSignerName){
+   signer.value = patientName;
+   lastAutoSignerName = patientName;
+  }
+ }else{
+  // 清除由病人姓名自動帶入嘅值，但保留手動輸入。
+  if(lastAutoSignerName && signer.value === lastAutoSignerName){
+   signer.value = "";
+  }
+  lastAutoSignerName = "";
+ }
+
+ const preparedBy = $("preparedBy").value.trim();
+
+ if(!witness.value.trim() || witness.value === lastAutoWitness){
+  witness.value = preparedBy;
+  lastAutoWitness = preparedBy;
+ }
+}
 function initDates(){
  $("quoteDate").value=localDate();
  $("paperSignedDate").value=localDate();
@@ -1061,7 +1088,7 @@ function currentSnapshot(){
    "Availability and quotation-specific conditions must be confirmed before booking.",
    "No unlisted surcharge is added automatically.",
    "Fixed examination charges include the described views; view counts are not multiplied.",
-   "Only accepted items are authorized by the recorded confirmation.",
+   "Signing confirms all services and charges listed in this quotation revision.",
    "This confirmation does not replace required clinical informed consent.",
    "Changes after confirmation require a new revision and renewed confirmation."
   ],
@@ -1076,7 +1103,7 @@ function message(text,error=false){
 function invalidateConfirmation(){
  if(lockedSnapshot)return;
  clearInk();
- $("acceptance").checked=false;
+ 
  $("paperVerified").checked=false;
  paperAttachment=null;
  attachmentVersion++;
@@ -1164,6 +1191,7 @@ function renderQuote(){
  $("confirmationEditor").hidden=!!lockedSnapshot;
  metadataIds.forEach(id=>$(id).disabled=!!lockedSnapshot);
  $("confirmationRecord").innerHTML=lockedSnapshot?confirmationHTML(lockedSnapshot):"";
+ if(!lockedSnapshot)syncConfirmationDefaults();
 }
 function render(){renderTabs();renderCatalogue();renderQuote();}
 function choose(id){
@@ -1205,9 +1233,20 @@ $("quoteItems").addEventListener("change",e=>{
  }
 });
 metadataIds.forEach(id=>$(id).addEventListener("input",()=>{invalidateConfirmation();}));
-["signerName","signerRole","signerRelationship","witness"].forEach(id=>{
+// 病人姓名／Prepared by 改動時，自動同步簽署資料
+["patientName","preparedBy"].forEach(id=>{
  $(id).addEventListener("input",()=>{
-  clearInk();$("acceptance").checked=false;$("paperVerified").checked=false;
+  if(!lockedSnapshot)syncConfirmationDefaults();
+ });
+});
+
+// 切換 Patient／Representative 時，同步簽署人姓名
+$("signerRole").addEventListener("change",()=>{
+ if(!lockedSnapshot)syncConfirmationDefaults();
+});
+ ["signerName","signerRole","signerRelationship","witness"].forEach(id=>{
+ $(id).addEventListener("input",()=>{
+  clearInk();$("paperVerified").checked=false;
  });
 });
 $("paperSignedDate").addEventListener("change",()=>{$("paperVerified").checked=false;});
@@ -1255,7 +1294,7 @@ function point(e){
 canvas.addEventListener("pointerdown",e=>{
  if(lockedSnapshot)return;
  e.preventDefault();canvas.setPointerCapture(e.pointerId);
- drawing=true;lastPoint=point(e);strokes.push([lastPoint]);$("acceptance").checked=false;
+ drawing=true;lastPoint=point(e);strokes.push([lastPoint]);
 });
 canvas.addEventListener("pointermove",e=>{
  if(!drawing)return;
@@ -1265,7 +1304,7 @@ canvas.addEventListener("pointermove",e=>{
 });
 ["pointerup","pointercancel","lostpointercapture"].forEach(name=>
  canvas.addEventListener(name,()=>{drawing=false;lastPoint=null;}));
-$("clearSignatureButton").addEventListener("click",()=>{clearInk();$("acceptance").checked=false;});
+$("clearSignatureButton").addEventListener("click",()=>{clearInk();});
 new ResizeObserver(resizeCanvas).observe(canvas);
 document.querySelectorAll('[name="signatureMode"]').forEach(r=>{
  r.addEventListener("change",()=>{
@@ -1319,7 +1358,6 @@ function validation(){
  if($("signerRole").value==="Representative"&&!$("signerRelationship").value.trim())
   return"Document the representative's relationship or authority.";
  if(!$("witness").value.trim())return"Enter the witness or recording staff member.";
- if(!$("acceptance").checked)return"Complete the acceptance acknowledgement.";
  const mode=document.querySelector('[name="signatureMode"]:checked').value;
  if(mode==="tablet"&&!hasInk)return"Capture a visible signature before confirmation.";
  if(mode==="paper"){
@@ -1344,7 +1382,6 @@ $("confirmButton").addEventListener("click",()=>{
   relationship:$("signerRelationship").value.trim(),
   witness:$("witness").value.trim(),
   acceptedTotal:snapshot.totals.accepted,
-  acknowledged:true,
   signaturePNG:mode==="tablet"?canvas.toDataURL("image/png"):null,
   paperSignedDate:mode==="paper"?$("paperSignedDate").value:null,
   paperVerified:mode==="paper",
@@ -1381,7 +1418,7 @@ $("newRevisionButton").addEventListener("click",()=>{
  items.forEach(i=>i.decision="pending");
  clearInk();paperAttachment=null;attachmentVersion++;
  $("paperFile").value="";$("paperFileName").textContent="";
- $("acceptance").checked=false;$("paperVerified").checked=false;
+ $("paperVerified").checked=false;
  ["signerName","signerRelationship","witness"].forEach(id=>$(id).value="");
  $("paperSignedDate").value=localDate();
  dirty=true;render();message("New draft revision created. Confirm all decisions again.");
@@ -1392,9 +1429,12 @@ $("resetButton").addEventListener("click",()=>{
  metadataIds.forEach(id=>{
   $(id).value="";
  });
+ 
  ["signerName","signerRelationship","witness"].forEach(id=>$(id).value="");
  $("signerRole").value="Patient";
- $("acceptance").checked=false;$("paperVerified").checked=false;
+ lastAutoSignerName="";
+lastAutoWitness="";
+ $("paperVerified").checked=false;
  paperAttachment=null;attachmentVersion++;$("paperFile").value="";$("paperFileName").textContent="";
  clearInk();initDates();dirty=false;render();message("New quotation started.");
 });
@@ -1435,9 +1475,9 @@ function printable(s,paperForm=false){
   ${s.confirmation?confirmationHTML(s):paperForm?`
    <div class="confirmation-record">
     <h3>Patient / representative acknowledgement</h3>
-    <p>I have reviewed this quotation and accept only the services marked ACCEPTED
-     and their stated charges. Declined and deferred services are not authorized.
-     This acknowledgement does not replace any required clinical informed consent.</p>
+<p>I have reviewed this quotation and accept all listed services
+     and their stated charges. This acknowledgement does not replace
+     any required clinical informed consent.</p>
     <p>Signer name: __________________________________________</p>
     <p>Signer role: Patient / Representative</p>
     <p>Relationship / authority, if applicable: ______________________________</p>
