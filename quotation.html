@@ -275,10 +275,16 @@ body.dark .locked{background:#183c32;color:#a5efc9}
 </div>
 <section id="demoRecordsPanel" class="wrap" hidden>
  <div class="card">
-  <div class="header-row">
-   <h2>Saved demo drafts</h2>
-   <button id="demoCloseRecordsButton" type="button">Close</button>
-  </div>
+<div class="header-row">
+ <div>
+  <span class="badge">RECORDS</span>
+  <h2 id="demoRecordsHeading" tabindex="-1">Saved quotations</h2>
+ </div>
+
+ <button id="demoCloseRecordsButton" type="button">
+  ← Back to quotation
+ </button>
+</div>
 
   <p class="muted">
    Shared test records. This first-stage list shows saved drafts;
@@ -2175,8 +2181,18 @@ body.dark button.success{
     color:#111;
   }
 }
- #demoRecordsPanel[hidden]{
+/* 同一時間只顯示一個頁面 */
+#app[hidden],
+#demoRecordsPanel[hidden]{
  display:none!important;
+}
+
+#demoRecordsPanel{
+ min-height:100vh;
+}
+
+#demoRecordsPanel h2:focus{
+ outline:none;
 }
 
 @media print{
@@ -2740,15 +2756,60 @@ quotationCard.querySelector(":scope > h2").textContent =
   }
  }
 
- recordsButton.addEventListener("click", ()=>{
-  recordsPanel.hidden = false;
-  recordsPanel.scrollIntoView({ behavior:"smooth", block:"start" });
-  void loadRecords();
+// 返回報價頁時，保留之前嘅捲動位置。
+let quotationScrollY = 0;
+
+function showRecordsPage(){
+ quotationScrollY = window.scrollY;
+
+ // 隱藏整個報價頁，顯示獨立 Records 版面。
+ el("app").hidden = true;
+ recordsPanel.hidden = false;
+
+ window.scrollTo({
+  top:0,
+  left:0,
+  behavior:"instant"
  });
 
- el("demoCloseRecordsButton").addEventListener("click", ()=>{
-  recordsPanel.hidden = true;
+ el("demoRecordsHeading").focus({
+  preventScroll:true
  });
+}
+
+function showQuotationPage(openedRecord = false){
+ recordsPanel.hidden = true;
+ el("app").hidden = false;
+
+ // 畫布重新顯示後，更新尺寸；現有筆劃會保留。
+ requestAnimationFrame(()=>{
+  resizeCanvas();
+
+  window.scrollTo({
+   top:openedRecord ? 0 : quotationScrollY,
+   left:0,
+   behavior:"instant"
+  });
+
+  const focusTarget = openedRecord
+   ? el("patientName")
+   : recordsButton;
+
+  focusTarget.focus({
+   preventScroll:true
+  });
+ });
+}
+
+recordsButton.addEventListener("click", ()=>{
+ showRecordsPage();
+ void loadRecords();
+});
+
+el("demoCloseRecordsButton").addEventListener("click", ()=>{
+ // 只切換頁面，唔清除目前報價內容。
+ showQuotationPage();
+});
 
  el("demoRefreshRecordsButton").addEventListener("click", ()=>{
   void loadRecords();
@@ -2842,11 +2903,12 @@ quotationCard.querySelector(":scope > h2").textContent =
    const details = document.querySelector(".amc-patient-details");
    if(details) details.open = true;
 
-   recordsPanel.hidden = true;
-   requestAnimationFrame(resizeCanvas);
+   
+// 開啟已儲存草稿後，切換返回報價頁頂部。
+showQuotationPage(true);
 
-   el("app").scrollIntoView({ behavior:"smooth", block:"start" });
-   message("Saved draft opened. Signature fields have been reset.");
+message("Saved draft opened. Signature fields have been reset.");
+   
   }catch(error){
    console.error("Open draft failed:", error);
    el("demoRecordsStatus").textContent =
