@@ -126,7 +126,26 @@ body.dark .locked{background:#183c32;color:#a5efc9}
    <button id="themeButton" type="button">Dark mode</button>
   </div>
   <small>Laboratory source: 03 Sep 2026 · Imaging source: 13 Jul 2026</small>
+<div class="notice">
+ <strong>Shared public demo — test data only.</strong><br>
+ Do not enter real patient information, signatures or documents.
+ Demo drafts are shared with other visitors.
+ Signed confirmations are not yet saved to the backend.
+</div>
 
+<div class="actions">
+ <button id="demoSaveButton" type="button" class="primary" disabled>
+  Save draft
+ </button>
+ <button id="demoRecordsButton" type="button" disabled>
+  Records
+ </button>
+</div>
+
+<p id="demoConnectionStatus" class="muted" role="status"
+   aria-live="polite" style="margin-top:10px">
+ Connecting to demo backend…
+</p>
  </header>
 
  <section class="card">
@@ -260,7 +279,48 @@ body.dark .locked{background:#183c32;color:#a5efc9}
 
 
 </div>
+<section id="demoRecordsPanel" class="wrap" hidden>
+ <div class="card">
+  <div class="header-row">
+   <h2>Saved demo drafts</h2>
+   <button id="demoCloseRecordsButton" type="button">Close</button>
+  </div>
 
+  <p class="muted">
+   Shared test records. This first-stage list shows saved drafts;
+   signed-date filters will be added with backend confirmation.
+  </p>
+
+  <label class="field">
+   Search loaded records
+   <input id="demoRecordsSearch" type="search"
+          placeholder="Patient, reference or quotation number">
+  </label>
+
+  <div class="actions" style="margin:12px 0">
+   <button id="demoRefreshRecordsButton" type="button">
+    Refresh records
+   </button>
+  </div>
+
+  <p id="demoRecordsStatus" role="status" aria-live="polite"></p>
+
+  <div style="overflow:auto">
+   <table>
+    <thead>
+     <tr>
+      <th>Quotation</th>
+      <th>Test patient</th>
+      <th>Last saved</th>
+      <th>Investigations</th>
+      <th>Open</th>
+     </tr>
+    </thead>
+    <tbody id="demoRecordsBody"></tbody>
+   </table>
+  </div>
+ </div>
+</section>
 <div id="printArea"></div>
 
 <script>
@@ -2121,7 +2181,15 @@ body.dark button.success{
     color:#111;
   }
 }
- 
+ #demoRecordsPanel[hidden]{
+ display:none!important;
+}
+
+@media print{
+ #demoRecordsPanel{
+  display:none!important;
+ }
+}
 </style>
 
 <script>
@@ -2425,6 +2493,407 @@ quotationCard.querySelector(":scope > h2").textContent =
 
   category = "all";
   render();
+})();
+</script>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+"use strict";
+
+(function setupDemoDraftBackend(){
+ const el = id => document.getElementById(id);
+
+ const connectionStatus = el("demoConnectionStatus");
+ const saveButton = el("demoSaveButton");
+ const recordsButton = el("demoRecordsButton");
+ const recordsPanel = el("demoRecordsPanel");
+
+ let client = null;
+ let ready = false;
+ let saving = false;
+ let savedRevisionId = null;
+ let savedEditVersion = null;
+ let loadedRecords = [];
+ let recordsRun = 0;
+
+ function connectionMessage(text){
+  connectionStatus.textContent = text;
+ }
+
+ function updateButtons(){
+  saveButton.disabled = !ready || saving;
+  recordsButton.disabled = !ready;
+  saveButton.textContent = saving ? "Saving…" : "Save draft";
+ }
+
+ if(!window.supabase?.createClient){
+  connectionMessage(
+   "Backend library could not load. Refresh to retry."
+  );
+  return;
+ }
+
+ client = window.supabase.createClient(
+  "https://ypictveubevkggsmgyzk.supabase.co",
+  "sb_publishable_soGHa4Gfy7Ig2OCB50vNxw_jIAbQ4XS",
+  {
+   auth:{
+    persistSession:true,
+    autoRefreshToken:true,
+    detectSessionInUrl:false,
+    storageKey:"amc-public-demo-auth"
+   }
+  }
+ );
+
+ async function connect(){
+  try{
+   const sessionResult = await client.auth.getSession();
+
+   if(sessionResult.error) throw sessionResult.error;
+
+   if(!sessionResult.data.session){
+    const signInResult = await client.auth.signInAnonymously();
+
+    if(signInResult.error) throw signInResult.error;
+   }
+
+   ready = true;
+   connectionMessage(
+    "Demo backend connected · Shared drafts · Test data only"
+   );
+  }catch(error){
+   console.error("Demo connection failed:", error);
+   connectionMessage(
+    "Cannot connect. Check Anonymous Sign-ins and project settings, then refresh."
+   );
+  }
+
+  updateButtons();
+ }
+
+ saveButton.addEventListener("click", async ()=>{
+  if(!ready || saving) return;
+
+  if(lockedSnapshot){
+   message(
+    "Backend confirmation is not connected yet. This confirmed document can only be exported or printed.",
+    true
+   );
+   return;
+  }
+
+  if(revision !== 1){
+   message(
+    "Backend creation of new revisions will be added with the confirmation workflow.",
+    true
+   );
+   return;
+  }
+
+  if(!items.length){
+   message("Select at least one investigation before saving.", true);
+   return;
+  }
+
+  const documentToSave = currentSnapshot();
+  const startingNumber = quoteNumber;
+  const startingRevision = revision;
+
+  saving = true;
+  updateButtons();
+
+  try{
+   const { data, error } = await client.rpc("demo_save_draft", {
+    p_document:documentToSave,
+    p_revision_id:savedRevisionId,
+    p_expected_version:savedEditVersion
+   });
+
+   if(error) throw error;
+
+   // 不將舊報價的儲存結果綁到使用者剛建立的新報價。
+   if(
+    quoteNumber !== startingNumber ||
+    revision !== startingRevision
+   ){
+    connectionMessage(
+     "The previous draft was saved. The current quotation is separate."
+    );
+    return;
+   }
+
+   savedRevisionId = data.revision_id;
+   savedEditVersion = data.edit_version;
+
+   // 儲存期間可能仍有編輯，甚至已經在前端簽署。
+   const unchanged =
+    !lockedSnapshot &&
+    JSON.stringify(metadata()) ===
+      JSON.stringify(documentToSave.metadata) &&
+    JSON.stringify(items) ===
+      JSON.stringify(documentToSave.items);
+
+   if(unchanged) dirty = false;
+
+   message(
+    unchanged
+     ? "Draft saved to backend."
+     : "Draft saved. Later changes or confirmation have not been saved."
+   );
+  }catch(error){
+   console.error("Save draft failed:", error);
+   message(
+    "Draft was not saved: " + (error.message || "Please retry."),
+    true
+   );
+  }finally{
+   saving = false;
+   updateButtons();
+  }
+ });
+
+ function renderRecords(){
+  const query = el("demoRecordsSearch").value.trim().toLowerCase();
+
+  const filtered = loadedRecords.filter(record=>{
+   const s = record.document;
+   const m = s.metadata || {};
+
+   return [
+    s.quotationNumber,
+    m.patientName,
+    m.patientReference
+   ].join(" ").toLowerCase().includes(query);
+  });
+
+  el("demoRecordsBody").innerHTML = filtered.length
+   ? filtered.map(record=>{
+      const s = record.document;
+      const m = s.metadata || {};
+      const investigations = s.items || [];
+
+      return `
+       <tr>
+        <td>
+         ${esc(s.quotationNumber)}<br>
+         <small>Revision ${esc(record.revision)} · Draft</small>
+        </td>
+        <td>
+         ${esc(m.patientName || "Not entered")}<br>
+         <small>${esc(m.patientReference || "")}</small>
+        </td>
+        <td>
+         ${esc(new Date(record.updated_at).toLocaleString(
+          "en-GB", { timeZone:"Asia/Hong_Kong" }
+         ))}
+         <br><small>Hong Kong time</small>
+        </td>
+        <td>
+         ${investigations.length} item(s)
+         <details>
+          <summary>View investigations</summary>
+          <ul>
+           ${investigations.map(item=>`
+            <li>${esc(item.name)} · Qty ${esc(item.qty)}</li>
+           `).join("")}
+          </ul>
+         </details>
+        </td>
+        <td>
+         <button type="button" data-demo-open="${esc(record.id)}">
+          Open
+         </button>
+        </td>
+       </tr>
+      `;
+     }).join("")
+   : `<tr><td colspan="5">No matching saved drafts.</td></tr>`;
+ }
+
+ async function loadRecords(){
+  const run = ++recordsRun;
+  el("demoRecordsStatus").textContent = "Loading…";
+
+  try{
+   const { data, error } = await client
+    .from("demo_quotation_revisions")
+    .select("id, revision, status, document, edit_version, updated_at")
+    .eq("status", "draft")
+    .order("updated_at", { ascending:false })
+    .limit(100);
+
+   if(run !== recordsRun) return;
+   if(error) throw error;
+
+   loadedRecords = data || [];
+   renderRecords();
+
+   el("demoRecordsStatus").textContent =
+    loadedRecords.length +
+    " draft(s) loaded · Latest 100 maximum · Shared public demo";
+  }catch(error){
+   if(run !== recordsRun) return;
+
+   console.error("Records load failed:", error);
+
+   // 唔保留舊表格扮成已成功更新。
+   loadedRecords = [];
+   el("demoRecordsBody").innerHTML = "";
+
+   el("demoRecordsStatus").textContent =
+    "Could not load records: " + (error.message || "Please retry.");
+  }
+ }
+
+ recordsButton.addEventListener("click", ()=>{
+  recordsPanel.hidden = false;
+  recordsPanel.scrollIntoView({ behavior:"smooth", block:"start" });
+  void loadRecords();
+ });
+
+ el("demoCloseRecordsButton").addEventListener("click", ()=>{
+  recordsPanel.hidden = true;
+ });
+
+ el("demoRefreshRecordsButton").addEventListener("click", ()=>{
+  void loadRecords();
+ });
+
+ el("demoRecordsSearch").addEventListener("input", renderRecords);
+
+ el("demoRecordsBody").addEventListener("click", async event=>{
+  const button = event.target.closest("[data-demo-open]");
+  if(!button || saving) return;
+
+  if(
+   (dirty || lockedSnapshot) &&
+   !window.confirm(
+    "Open this saved draft? Current unsaved changes or local confirmation will be discarded."
+   )
+  ) return;
+
+  button.disabled = true;
+
+  try{
+   // 重新讀取，唔直接開列表載入時的舊快照。
+   const { data:record, error } = await client
+    .from("demo_quotation_revisions")
+    .select("id, revision, status, document, edit_version")
+    .eq("id", button.dataset.demoOpen)
+    .single();
+
+   if(error) throw error;
+
+   if(record.status !== "draft"){
+    throw new Error("This record is no longer a draft.");
+   }
+
+   const s = record.document;
+
+   if(
+    !s ||
+    !s.metadata ||
+    !Array.isArray(s.items) ||
+    s.confirmation
+   ){
+    throw new Error("Unsupported document format.");
+   }
+
+   quoteNumber = s.quotationNumber;
+   revision = record.revision;
+   items = clone(s.items);
+   history = [];
+   lockedSnapshot = null;
+
+   metadataIds.forEach(id=>{
+    el(id).value = s.metadata[id] || "";
+   });
+
+   clearInk();
+   paperAttachment = null;
+   attachmentVersion++;
+
+   el("paperFile").value = "";
+   el("paperFileName").textContent = "";
+   el("paperVerified").checked = false;
+   el("paperSignedDate").value = localDate();
+
+   ["signerName","signerRelationship","witness"].forEach(id=>{
+    el(id).value = "";
+   });
+
+   el("signerRole").value = "Patient";
+   lastAutoSignerName = "";
+   lastAutoWitness = "";
+
+   document.querySelector(
+    '[name="signatureMode"][value="tablet"]'
+   ).checked = true;
+
+   el("tabletSection").hidden = false;
+   el("paperSection").hidden = true;
+
+   // 清除上一張已準備列印的文件。
+   el("printArea").innerHTML = "";
+
+   savedRevisionId = record.id;
+   savedEditVersion = record.edit_version;
+
+   category = "quotation";
+   dirty = false;
+
+   render();
+
+   const details = document.querySelector(".amc-patient-details");
+   if(details) details.open = true;
+
+   recordsPanel.hidden = true;
+   requestAnimationFrame(resizeCanvas);
+
+   el("app").scrollIntoView({ behavior:"smooth", block:"start" });
+   message("Saved draft opened. Signature fields have been reset.");
+  }catch(error){
+   console.error("Open draft failed:", error);
+   el("demoRecordsStatus").textContent =
+    "Could not open draft: " + (error.message || "Please retry.");
+  }finally{
+   button.disabled = false;
+  }
+ });
+
+ // 只有實際產生新 quotation number，先解除舊 backend 草稿綁定。
+ el("resetButton").addEventListener("click", ()=>{
+  if(saving) return;
+
+  if(
+   savedRevisionId &&
+   !items.length &&
+   !lockedSnapshot &&
+   !dirty
+  ){
+   savedRevisionId = null;
+   savedEditVersion = null;
+  }
+ });
+
+ // 同步偵測報價號碼改變，涵蓋儲存期間 Start new quotation。
+ let boundQuotationNumber = quoteNumber;
+
+ const observer = new MutationObserver(()=>{
+  if(quoteNumber !== boundQuotationNumber){
+   boundQuotationNumber = quoteNumber;
+   savedRevisionId = null;
+   savedEditVersion = null;
+  }
+ });
+
+ observer.observe(el("quoteMeta"), {
+  childList:true,
+  subtree:true
+ });
+
+ void connect();
 })();
 </script>
 </body>
