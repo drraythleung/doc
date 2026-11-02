@@ -126,12 +126,6 @@ body.dark .locked{background:#183c32;color:#a5efc9}
    <button id="themeButton" type="button">Dark mode</button>
   </div>
   <small>Laboratory source: 03 Sep 2026 · Imaging source: 13 Jul 2026</small>
-<div class="notice">
- <strong>Shared public demo — test data only.</strong><br>
- Do not enter real patient information, signatures or documents.
- Demo drafts are shared with other visitors.
- Signed confirmations are not yet saved to the backend.
-</div>
 
 <div class="actions">
  <button id="demoSaveButton" type="button" class="primary" disabled>
@@ -2560,7 +2554,7 @@ quotationCard.querySelector(":scope > h2").textContent =
 
    ready = true;
    connectionMessage(
-    "Demo backend connected · Shared drafts · Test data only"
+    ""
    );
   }catch(error){
    console.error("Demo connection failed:", error);
