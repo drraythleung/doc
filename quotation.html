@@ -1083,10 +1083,7 @@ function currentSnapshot(){
   createdAt:new Date().toISOString(),metadata:metadata(),
   items:clone(items),totals:amounts(),confirmation:null,
   terms:[
-   "Patient-facing prices in HKD from the supplied AMC charge slips.",
    "Availability and quotation-specific conditions must be confirmed before booking.",
-   "No unlisted surcharge is added automatically.",
-   "Fixed examination charges include the described views; view counts are not multiplied.",
    "Signing confirms all services and charges listed in this quotation revision.",
    "This confirmation does not replace required clinical informed consent.",
    "Changes after confirmation require a new revision and renewed confirmation."
@@ -1479,8 +1476,6 @@ function printable(s,paperForm=false){
    </div>`:""}
   <div class="print-footer">
    ${s.terms.map(t=>"• "+esc(t)).join("<br>")}
-   <br>Laboratory source: 03 Sep 2026 · Imaging source: 13 Jul 2026.
-   <br>Prototype document. Device timestamps and staff identities are not authenticated.
   </div>`;
 }
 function printDoc(paperForm=false){
