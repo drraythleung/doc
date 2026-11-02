@@ -2530,11 +2530,16 @@ quotationCard.querySelector(":scope > h2").textContent =
   connectionStatus.textContent = text;
  }
 
- function updateButtons(){
-  saveButton.disabled = !ready || saving;
-  recordsButton.disabled = !ready;
-  saveButton.textContent = saving ? "Saving…" : "Save draft";
- }
+function updateButtons(){
+ saveButton.disabled = !ready || saving;
+ recordsButton.disabled = !ready;
+
+ saveButton.textContent = saving
+  ? "Saving…"
+  : lockedSnapshot
+   ? "Save confirmed quotation"
+   : "Save draft";
+}
 
  if(!window.supabase?.createClient){
   connectionMessage(
@@ -2582,86 +2587,111 @@ quotationCard.querySelector(":scope > h2").textContent =
   updateButtons();
  }
 
+ 
  saveButton.addEventListener("click", async ()=>{
-  if(!ready || saving) return;
+ if(!ready || saving) return;
 
-  if(lockedSnapshot){
-   message(
-    "Backend confirmation is not connected yet. This confirmed document can only be exported or printed.",
-    true
+ if(revision !== 1){
+  message(
+   "Backend saving currently supports revision 1 only. Export this new revision as JSON for now.",
+   true
+  );
+  return;
+ }
+
+ if(!items.length){
+  message("Select at least one investigation before saving.", true);
+  return;
+ }
+
+ const isConfirmed = !!lockedSnapshot;
+
+ // 已確認時必須用鎖定快照，包含簽名及附件。
+ const documentToSave = clone(
+  isConfirmed ? lockedSnapshot : currentSnapshot()
+ );
+
+ const startingNumber = quoteNumber;
+ const startingRevision = revision;
+ const startingRevisionId = savedRevisionId;
+ const startingVersion = savedEditVersion;
+
+ saving = true;
+ updateButtons();
+
+ try{
+  const functionName = isConfirmed
+   ? "demo_confirm_quotation"
+   : "demo_save_draft";
+
+  const { data, error } = await client.rpc(functionName, {
+   p_document:documentToSave,
+   p_revision_id:startingRevisionId,
+   p_expected_version:startingVersion
+  });
+
+  if(error) throw error;
+
+  if(!data?.revision_id || data.edit_version == null){
+   throw new Error("Backend returned an incomplete save result.");
+  }
+
+  // 儲存期間若已建立另一張報價，唔綁定舊結果。
+  if(
+   quoteNumber !== startingNumber ||
+   revision !== startingRevision
+  ){
+   connectionMessage(
+    "The previous quotation was saved. The current quotation is separate."
    );
    return;
   }
 
-  if(revision !== 1){
+  savedRevisionId = data.revision_id;
+  savedEditVersion = data.edit_version;
+
+  const unchanged = isConfirmed
+   ? (
+      !!lockedSnapshot &&
+      JSON.stringify(lockedSnapshot) ===
+       JSON.stringify(documentToSave)
+     )
+   : (
+      !lockedSnapshot &&
+      JSON.stringify(metadata()) ===
+       JSON.stringify(documentToSave.metadata) &&
+      JSON.stringify(items) ===
+       JSON.stringify(documentToSave.items)
+     );
+
+  if(unchanged) dirty = false;
+
+  if(isConfirmed){
    message(
-    "Backend creation of new revisions will be added with the confirmation workflow.",
-    true
+    unchanged
+     ? "Confirmed quotation saved to backend, including its signature or uploaded attachment."
+     : "The confirmed snapshot was saved. Later local changes have not been saved."
    );
-   return;
-  }
-
-  if(!items.length){
-   message("Select at least one investigation before saving.", true);
-   return;
-  }
-
-  const documentToSave = currentSnapshot();
-  const startingNumber = quoteNumber;
-  const startingRevision = revision;
-
-  saving = true;
-  updateButtons();
-
-  try{
-   const { data, error } = await client.rpc("demo_save_draft", {
-    p_document:documentToSave,
-    p_revision_id:savedRevisionId,
-    p_expected_version:savedEditVersion
-   });
-
-   if(error) throw error;
-
-   // 不將舊報價的儲存結果綁到使用者剛建立的新報價。
-   if(
-    quoteNumber !== startingNumber ||
-    revision !== startingRevision
-   ){
-    connectionMessage(
-     "The previous draft was saved. The current quotation is separate."
-    );
-    return;
-   }
-
-   savedRevisionId = data.revision_id;
-   savedEditVersion = data.edit_version;
-
-   // 儲存期間可能仍有編輯，甚至已經在前端簽署。
-   const unchanged =
-    !lockedSnapshot &&
-    JSON.stringify(metadata()) ===
-      JSON.stringify(documentToSave.metadata) &&
-    JSON.stringify(items) ===
-      JSON.stringify(documentToSave.items);
-
-   if(unchanged) dirty = false;
-
+  }else{
    message(
     unchanged
      ? "Draft saved to backend."
-     : "Draft saved. Later changes or confirmation have not been saved."
+     : "Draft saved. Later changes or local confirmation have not been saved."
    );
-  }catch(error){
-   console.error("Save draft failed:", error);
-   message(
-    "Draft was not saved: " + (error.message || "Please retry."),
-    true
-   );
-  }finally{
-   saving = false;
-   updateButtons();
   }
- });
+ }catch(error){
+  console.error("Save quotation failed:", error);
+
+  message(
+   "Quotation was not saved: " +
+    (error.message || "Please retry."),
+   true
+  );
+ }finally{
+  saving = false;
+  updateButtons();
+ }
+});
 
  function renderRecords(){
   const query = el("demoRecordsSearch").value.trim().toLowerCase();
@@ -2687,7 +2717,10 @@ quotationCard.querySelector(":scope > h2").textContent =
        <tr>
         <td>
          ${esc(s.quotationNumber)}<br>
-         <small>Revision ${esc(record.revision)} · Draft</small>
+<small>
+ Revision ${esc(record.revision)} ·
+ ${record.status === "confirmed" ? "Confirmed" : "Draft"}
+</small>
         </td>
         <td>
          ${esc(m.patientName || "Not entered")}<br>
@@ -2729,7 +2762,7 @@ quotationCard.querySelector(":scope > h2").textContent =
    const { data, error } = await client
     .from("demo_quotation_revisions")
     .select("id, revision, status, document, edit_version, updated_at")
-    .eq("status", "draft")
+.in("status", ["draft", "confirmed"])
     .order("updated_at", { ascending:false })
     .limit(100);
 
@@ -2739,9 +2772,9 @@ quotationCard.querySelector(":scope > h2").textContent =
    loadedRecords = data || [];
    renderRecords();
 
-   el("demoRecordsStatus").textContent =
-    loadedRecords.length +
-    " draft(s) loaded · Latest 100 maximum · Shared public demo";
+el("demoRecordsStatus").textContent =
+ loadedRecords.length +
+ " record(s) loaded · Drafts and confirmed quotations · Latest 100 maximum · Shared public demo";
   }catch(error){
    if(run !== recordsRun) return;
 
@@ -2840,26 +2873,46 @@ el("demoCloseRecordsButton").addEventListener("click", ()=>{
 
    if(error) throw error;
 
-   if(record.status !== "draft"){
-    throw new Error("This record is no longer a draft.");
-   }
+  
 
-   const s = record.document;
 
-   if(
-    !s ||
-    !s.metadata ||
-    !Array.isArray(s.items) ||
-    s.confirmation
-   ){
-    throw new Error("Unsupported document format.");
-   }
+   if(!["draft", "confirmed"].includes(record.status)){
+ throw new Error("Unsupported record status.");
+}
+
+const s = record.document;
+const openingConfirmed = record.status === "confirmed";
+
+if(
+ !s ||
+ !s.metadata ||
+ !Array.isArray(s.items)
+){
+ throw new Error("Unsupported document format.");
+}
+
+if(
+ openingConfirmed &&
+ (
+  !s.confirmation ||
+  !["tablet", "paper"].includes(s.confirmation.mode)
+ )
+){
+ throw new Error("This confirmed record has invalid confirmation data.");
+}
+
+if(!openingConfirmed && s.confirmation){
+ throw new Error("This draft unexpectedly contains confirmation data.");
+}
 
    quoteNumber = s.quotationNumber;
    revision = record.revision;
    items = clone(s.items);
-   history = [];
-   lockedSnapshot = null;
+history = [];
+
+// 已確認報價恢復鎖定快照。
+// render() 會顯示保存嘅簽名／附件，並停用編輯。
+lockedSnapshot = openingConfirmed ? clone(s) : null;
 
    metadataIds.forEach(id=>{
     el(id).value = s.metadata[id] || "";
@@ -2905,10 +2958,15 @@ el("demoCloseRecordsButton").addEventListener("click", ()=>{
 
    
 // 開啟已儲存草稿後，切換返回報價頁頂部。
-showQuotationPage(true);
 
-message("Saved draft opened. Signature fields have been reset.");
-   
+   showQuotationPage(true);
+updateButtons();
+
+message(
+ openingConfirmed
+  ? "Confirmed quotation opened. Its saved signature or attachment is displayed, and this revision remains locked."
+  : "Saved draft opened. Signature fields have been reset."
+);   
   }catch(error){
    console.error("Open draft failed:", error);
    el("demoRecordsStatus").textContent =
@@ -2936,13 +2994,16 @@ message("Saved draft opened. Signature fields have been reset.");
  // 同步偵測報價號碼改變，涵蓋儲存期間 Start new quotation。
  let boundQuotationNumber = quoteNumber;
 
+
  const observer = new MutationObserver(()=>{
-  if(quoteNumber !== boundQuotationNumber){
-   boundQuotationNumber = quoteNumber;
-   savedRevisionId = null;
-   savedEditVersion = null;
-  }
- });
+ if(quoteNumber !== boundQuotationNumber){
+  boundQuotationNumber = quoteNumber;
+  savedRevisionId = null;
+  savedEditVersion = null;
+ }
+
+ updateButtons();
+});
 
  observer.observe(el("quoteMeta"), {
   childList:true,
