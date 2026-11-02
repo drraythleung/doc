@@ -1522,9 +1522,8 @@ message("New quotation started.");
    ============================================================ */
 function printable(s,paperForm=false){
  const m=s.metadata;
- const status=s.confirmation?"CONFIRMED":paperForm?"PAPER CONFIRMATION FORM — NOT YET RECORDED":"DRAFT — NOT CONFIRMED";
- return `<h1>Adventist Medical Centre</h1>
-  <h2>Combined Service Quotation</h2>
+ 
+ return `<h1>Adventist Medical Centre Combined Service Quotation</h1>
   <p><strong>${status}</strong> · ${esc(s.quotationNumber)} · Revision ${s.revision}</p>
   <div class="print-meta">
    <div>Patient: <strong>${esc(m.patientName||"Not entered")}</strong></div>
