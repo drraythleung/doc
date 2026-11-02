@@ -1454,7 +1454,6 @@ $("confirmButton").addEventListener("click",()=>{
   paperSignedDate:mode==="paper"?$("paperSignedDate").value:null,
   paperVerified:mode==="paper",
   attachment:mode==="paper"?clone(paperAttachment):null,
-  authentication:"Not authenticated — prototype"
  };
  lockedSnapshot=clone(snapshot);dirty=true;
  render();message("Confirmation recorded. Export JSON and save or print the confirmed document.");
@@ -1466,8 +1465,8 @@ function confirmationHTML(s){
   <p><strong>${esc(c.signerName)}</strong> · ${esc(c.signerRole)}
    ${c.relationship?" · "+esc(c.relationship):""}</p>
   <p>Method: ${c.mode==="tablet"?"Tablet signature":"Paper signature"}</p>
-  <p>Recording staff: ${esc(c.witness)}<br>
-   Recorded: ${esc(new Date(c.recordedAt).toLocaleString("en-GB"))}</p>
+  <p>Handling staff: ${esc(c.witness)}<br>
+   Recorded time: ${esc(new Date(c.recordedAt).toLocaleString("en-GB"))}</p>
   ${c.mode==="tablet"?`<img class="signature-preview" src="${c.signaturePNG}" alt="Recorded signature">`:
    `<p>Paper signed: ${dateLabel(c.paperSignedDate)}<br>
     Attachment: ${esc(c.attachment.name)}<br>
@@ -1619,8 +1618,7 @@ function textQuote(s){
    "Signature / signed attachment is not included in clipboard text.");
  }
  text.push("",...s.terms,
-  "Laboratory source: 03 Sep 2026. Imaging source: 13 Jul 2026.",
-  "Prototype: identities and timestamps are not authenticated.");
+  "Laboratory source: 03 Sep 2026. Imaging source: 13 Jul 2026.");
  return text.join("\n");
 }
 $("copyButton").addEventListener("click",async()=>{
@@ -1643,7 +1641,6 @@ $("exportButton").addEventListener("click",()=>{
   application:"AMC Quotation Prototype",
   exportedAt:new Date().toISOString(),
   current:getDocument(),previousConfirmedRevisions:clone(history),
-  warning:"Contains patient information if entered. Handle securely. Prototype identities and timestamps are not authenticated."
  };
  const blob=new Blob([JSON.stringify(bundle,null,2)],{type:"application/json"});
  const url=URL.createObjectURL(blob),a=document.createElement("a");
