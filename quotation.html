@@ -200,7 +200,7 @@ body.dark .locked{background:#183c32;color:#a5efc9}
    <div class="actions" style="margin-top:13px">
     <button id="printButton" type="button" class="primary">Print / Save PDF</button>
     <button id="copyButton" type="button">Copy quotation</button>
-    <button id="exportButton" type="button">Export JSON</button>
+
     <button id="clearItemsButton" type="button" class="danger">Clear items</button>
    </div>
 
@@ -1598,8 +1598,7 @@ function confirmationHTML(s){
             alt="Signed paper document"
            >`
         : `<p class="muted">
-            The PDF attachment is included in JSON export,
-            but is not merged into the printed quotation.
+            The PDF attachment is not merged into the printed quotation.
            </p>`
        : ""}
      `}
@@ -1619,7 +1618,7 @@ $("newRevisionButton").addEventListener("click",()=>{
  dirty=true; render(); message("New draft revision created. Review the services and sign again.");
 });
 $("resetButton").addEventListener("click",()=>{
- if((items.length||dirty||history.length)&&!confirm("Start a new quotation? Unsaved data and confirmation history will be discarded. Export first if needed."))return;
+ if(  (items.length||dirty||history.length) &&  !confirm(   "Start a new quotation? Unsaved changes, signatures and attachments on this page will be discarded. Saved backend records will remain available in Records."  ) )return;
  quoteNumber=number();revision=1;items=[];history=[];lockedSnapshot=null;
  metadataIds.forEach(id=>{
   $(id).value="";
@@ -1762,25 +1761,15 @@ $("copyButton").addEventListener("click",async()=>{
    if(!ok)throw new Error("Copy failed");
   }
   message("Quotation copied. Signature images and attachments are not copied.");
- }catch{message("Clipboard access failed. Use Print / Save PDF or Export JSON instead.",true);}
+ }catch{
+ message(
+  "Clipboard access failed. Use Print / Save PDF instead.",
+  true
+ );
+}
 });
-$("exportButton").addEventListener("click",()=>{
- if(!items.length){message("Select services before exporting.",true);return;}
- const bundle={
-  application:"AMC Quotation Prototype",
-  exportedAt:new Date().toISOString(),
-  current:getDocument(),previousConfirmedRevisions:clone(history),
- };
- const blob=new Blob([JSON.stringify(bundle,null,2)],{type:"application/json"});
- const url=URL.createObjectURL(blob),a=document.createElement("a");
- a.href=url;a.download=quoteNumber+"-R"+revision+".json";a.click();
- setTimeout(()=>URL.revokeObjectURL(url),5000);
- message("JSON exported, including any signature or signed attachment and prior confirmed revisions.");
-});
-$("themeButton").addEventListener("click",()=>{
- const dark=document.body.classList.toggle("dark");
- $("themeButton").textContent=dark?"Light mode":"Dark mode";
-});
+
+ 
 
 window.addEventListener("beforeunload",e=>{
  const unsavedConfirmation =
@@ -2715,7 +2704,7 @@ let client = null;
    autoStatus.textContent =
     savedRevisionId
      ? "Empty draft not saved. Backend still contains the last saved version."
-     : "Draft autosave: every 30 seconds after services and required details are entered.";
+     : "";
   }else{
    const problem = draftProblem();
 
