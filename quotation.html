@@ -150,18 +150,6 @@ body.dark .locked{background:#183c32;color:#a5efc9}
    <label class="field">Quotation date
     <input id="quoteDate" type="date">
    </label>
-   <label class="field">Valid until
-    <input id="validUntil" type="date">
-   </label>
-   <label class="field">Service location
-    <input id="location" maxlength="100" value="CWB — subject to booking confirmation">
-   </label>
-   <label class="field">Availability check
-    <select id="availability">
-     <option value="Not verified">Not verified</option>
-     <option value="Confirmed by staff">Confirmed by staff</option>
-    </select>
-   </label>
    <label class="field full">Quotation notes
     <textarea id="notes" rows="2" maxlength="2000" placeholder="Document booking conditions or quotation-specific information."></textarea>
    </label>
@@ -1048,12 +1036,10 @@ let paperAttachment=null,attachmentVersion=0;
 let dirty=false,hasInk=false,signatureDistance=0;
 const metadataIds=[
  "patientName","patientReference","clinician","preparedBy","quoteDate",
- "validUntil","location","availability","notes"
+ "notes"
 ];
 function initDates(){
  $("quoteDate").value=localDate();
- const d=new Date();d.setDate(d.getDate()+30);
- $("validUntil").value=localDate(d);
  $("paperSignedDate").value=localDate();
 }
 initDates();
@@ -1331,9 +1317,7 @@ function validation(){
  if(!m.patientName)return"Enter the patient name.";
  if(!m.patientReference)return"Enter the patient reference.";
  if(!m.preparedBy)return"Enter the preparing staff member.";
- if(!m.quoteDate||!m.validUntil)return"Enter quotation and validity dates.";
- if(m.validUntil<m.quoteDate)return"The validity date cannot precede the quotation date.";
- if(m.validUntil<localDate())return"The quotation has expired. Update the validity date before confirmation.";
+ if(!m.quoteDate)return"Enter the quotation date.";
  if(items.some(i=>i.decision==="pending"))return"Choose Accepted, Declined or Deferred for every item.";
  if(!items.some(i=>i.decision==="accepted"))return"At least one accepted item is required to record a service confirmation.";
  if(!$("signerName").value.trim())return"Enter the signer name.";
@@ -1347,8 +1331,8 @@ function validation(){
   if(!paperAttachment)return"Attach the signed paper document.";
   if(!$("paperSignedDate").value)return"Enter the paper signature date.";
   if($("paperSignedDate").value>localDate())return"The paper signature date cannot be in the future.";
-  if($("paperSignedDate").value<m.quoteDate||$("paperSignedDate").value>m.validUntil)
-   return"The paper signature date must be within the quotation's validity period.";
+  if($("paperSignedDate").value<m.quoteDate)
+  return"The paper signature date cannot precede the quotation date.";
   if(!$("paperVerified").checked)return"Verify the signed paper document against this revision.";
  }
  return"";
@@ -1411,10 +1395,8 @@ $("resetButton").addEventListener("click",()=>{
  if((items.length||dirty||history.length)&&!confirm("Start a new quotation? Unsaved data and confirmation history will be discarded. Export first if needed."))return;
  quoteNumber=number();revision=1;items=[];history=[];lockedSnapshot=null;
  metadataIds.forEach(id=>{
-  if(!["location","availability"].includes(id))$(id).value="";
+  $(id).value="";
  });
- $("location").value="CWB — subject to booking confirmation";
- $("availability").value="Not verified";
  ["signerName","signerRelationship","witness"].forEach(id=>$(id).value="");
  $("signerRole").value="Patient";
  $("acceptance").checked=false;$("paperVerified").checked=false;
@@ -1437,9 +1419,6 @@ function printable(s,paperForm=false){
    <div>Referring clinician: ${esc(m.clinician||"Not entered")}</div>
    <div>Prepared by: ${esc(m.preparedBy||"Not entered")}</div>
    <div>Quotation date: ${dateLabel(m.quoteDate)}</div>
-   <div>Valid until: ${dateLabel(m.validUntil)}</div>
-   <div>Location: ${esc(m.location)}</div>
-   <div>Availability: ${esc(m.availability)}</div>
   </div>
   <table><thead><tr>
    <th>#</th><th>AMC code</th><th>Service</th><th>Qty</th>
@@ -1489,8 +1468,8 @@ function printDoc(paperForm=false){
   if(items.some(i=>i.decision==="pending")||!items.some(i=>i.decision==="accepted")){
    message("Resolve all item decisions and accept at least one item before printing a signature form.",true);return;
   }
-  if(!m.quoteDate||!m.validUntil||m.validUntil<m.quoteDate||m.validUntil<localDate()){
-   message("Check the quotation and validity dates before printing a signature form.",true);return;
+if(!m.quoteDate){
+   message("Enter the quotation date before printing a signature form.",true);return;
   }
  }
  $("printArea").innerHTML=printable(s,paperForm);
@@ -1512,8 +1491,7 @@ function textQuote(s){
   `Patient: ${m.patientName||"Not entered"} | Reference: ${m.patientReference||"Not entered"}`,
   `Prepared by: ${m.preparedBy||"Not entered"}`,
   `Referring clinician: ${m.clinician||"Not entered"}`,
-  `Date: ${dateLabel(m.quoteDate)} | Valid until: ${dateLabel(m.validUntil)}`,
-  `Location: ${m.location} | Availability: ${m.availability}`,
+  `Date: ${dateLabel(m.quoteDate)}`,
   "--------------------------------------------------"
  ];
  s.items.forEach((i,n)=>text.push(
@@ -2013,9 +1991,6 @@ body.dark button.success{
 
   header.querySelector("h1").textContent =
     "AMC Combined Service Quotation";
-
-  header.querySelector(".header-row p").textContent =
-    "Laboratory and medical imaging quotations with patient confirmation";
 
   /* Move search into the header. */
   const searchInput = document.getElementById("search");
