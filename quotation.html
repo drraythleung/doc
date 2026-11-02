@@ -1062,11 +1062,60 @@ function dateLabel(v){
  const [y,m,d]=v.split("-");
  return d+"/"+m+"/"+y;
 }
-function number(){
- const part=globalThis.crypto?.randomUUID?.().slice(0,8).toUpperCase()
- ||Math.random().toString(36).slice(2,10).toUpperCase();
- return "AMC-Q-"+localDate().replaceAll("-","")+"-"+part;
+
+
+// 隨機尾碼：7 位數字 + 1 位大寫英文字母
+function quotationSuffix(){
+ const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+ const combinations = 10000000 * letters.length;
+
+ // 排除少量數值，確保每個組合嘅生成機會相同。
+ const limit =
+  Math.floor(4294967296 / combinations) * combinations;
+
+ const cryptoAPI = globalThis.crypto;
+
+ if(!cryptoAPI?.getRandomValues){
+  throw new Error(
+   "Secure random generation is unavailable in this browser."
+  );
+ }
+
+ let value;
+
+ do{
+  if(typeof cryptoAPI.randomUUID === "function"){
+   // 繼續用 UUID 做隨機來源。
+   const uuid = cryptoAPI.randomUUID();
+   value = parseInt(uuid.slice(0,8),16);
+  }else{
+   // 唔支援 randomUUID 時，仍使用安全隨機來源。
+   const buffer = new Uint32Array(1);
+   cryptoAPI.getRandomValues(buffer);
+   value = buffer[0];
+  }
+ }while(value >= limit);
+
+ const index = value % combinations;
+
+ const digits = String(
+  Math.floor(index / letters.length)
+ ).padStart(7,"0");
+
+ const letter = letters[index % letters.length];
+
+ return digits + letter;
 }
+
+function number(){
+ return (
+  "AMC-Q-" +
+  localDate().replaceAll("-","") +
+  "-" +
+  quotationSuffix()
+ );
+}
+ 
 let quoteNumber=number(),revision=1,items=[];
 let category="all",lockedSnapshot=null,history=[];
 let paperAttachment=null,attachmentVersion=0;
