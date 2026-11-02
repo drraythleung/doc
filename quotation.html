@@ -1592,5 +1592,736 @@ $("reviewList").innerHTML=importNotes.map(n=>`<li>${esc(n)}</li>`).join("")+
 render();
 requestAnimationFrame(resizeCanvas);
 </script>
+ <!-- AMC interface update: insert after the original application script -->
+<style>
+:root{
+  --bg:#eef2f7;
+  --panel:#ffffff;
+  --soft:#f8fafc;
+  --text:#12202f;
+  --muted:#5b6b7c;
+  --line:#d9e2ec;
+  --blue:#1d4ed8;
+  --green:#059669;
+  --red:#b91c1c;
+  --shadow:0 8px 24px rgba(15,23,42,.06);
+}
+body{
+  background:radial-gradient(
+    circle at top left,
+    #f8fbff 0%,
+    #eef2f7 42%,
+    #e4ebf5 100%
+  );
+  font-family:Inter,Tahoma,Arial,sans-serif;
+  font-size:15px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:1200px;
+  padding:20px;
+}
+.card{
+  border-radius:18px;
+  padding:22px;
+  box-shadow:var(--shadow);
+}
+#app > header{
+  background:linear-gradient(135deg,#fff,#f6f9fc);
+  padding:22px 24px;
+}
+h1{
+  font-size:26px;
+  font-weight:800;
+  letter-spacing:-.02em;
+}
+h2{font-size:19px}
+.badge{
+  background:#dbeafe;
+  border:1px solid #bfdbfe;
+  color:#1d4ed8;
+  padding:7px 12px;
+  font-size:12px;
+  letter-spacing:.08em;
+}
+button{
+  font-weight:700;
+  border-radius:12px;
+  transition:transform .16s,box-shadow .16s,background .16s;
+}
+button:hover:not(:disabled){
+  transform:translateY(-1px);
+}
+button.primary{
+  background:linear-gradient(135deg,#1d4ed8,#2563eb);
+  box-shadow:0 4px 12px rgba(37,99,235,.2);
+}
+button.success{
+  background:linear-gradient(135deg,#059669,#10b981);
+  box-shadow:0 4px 12px rgba(5,150,105,.2);
+}
+input,select,textarea{
+  border-radius:12px;
+}
+input:disabled,select:disabled,textarea:disabled{
+  opacity:.85;
+}
+#themeButton{
+  background:var(--soft);
+}
+
+/* Header search */
+.amc-search-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:16px;
+}
+.amc-search-row .search{
+  flex:1;
+  min-width:0;
+  margin:0;
+  padding:12px 16px;
+  font-size:15px;
+}
+.amc-search-label{
+  display:block;
+  margin-top:14px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+}
+
+/* Persistent quotation summary */
+.amc-info-bar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:16px;
+}
+.amc-info-bar .chip{
+  background:var(--panel);
+  border:1px solid var(--line);
+  padding:8px 16px;
+  font-size:13px;
+  font-weight:700;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.amc-info-bar .items-chip{color:#b45309}
+.amc-info-bar .total-chip{color:var(--green)}
+.amc-info-bar .pending-chip{color:#7c3aed}
+.amc-info-bar .status-chip{color:var(--blue)}
+
+/* Category tabs */
+#categoryTabs{
+  gap:5px;
+  margin-bottom:0;
+}
+#categoryTabs button{
+  padding:11px 15px;
+  border-radius:12px 12px 0 0;
+  border:1px solid var(--line);
+  border-bottom:0;
+  background:var(--soft);
+  color:var(--muted);
+  font-size:13px;
+}
+#categoryTabs button.active{
+  background:var(--panel);
+  color:var(--text);
+  border-color:#c4d0dd;
+  box-shadow:0 -4px 12px rgba(15,23,42,.04);
+}
+.amc-tab-count{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:20px;
+  height:20px;
+  margin-left:6px;
+  padding:0 5px;
+  background:#dbeafe;
+  color:#1d4ed8;
+  border-radius:999px;
+  font-size:11px;
+}
+.amc-selected-count{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:18px;
+  height:18px;
+  margin-left:5px;
+  padding:0 5px;
+  background:linear-gradient(135deg,#10b981,#059669);
+  color:white;
+  border-radius:999px;
+  font-size:10px;
+}
+
+/* One main panel instead of two columns */
+.amc-main-panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:0 18px 18px 18px;
+  padding:22px;
+  box-shadow:var(--shadow);
+  margin-bottom:16px;
+  min-height:240px;
+}
+.amc-main-panel > .card{
+  padding:0;
+  margin:0;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  background:transparent;
+}
+.amc-main-panel > [hidden]{
+  display:none!important;
+}
+.catalog-scroll{
+  max-height:640px;
+}
+#catalogBody tr:not(.amc-held){
+  cursor:pointer;
+}
+#catalogBody tr:hover{
+  background:var(--soft);
+}
+#catalogBody tr.selected{
+  background:linear-gradient(135deg,#ecfdf5,#d1fae5);
+}
+#catalogBody tr.selected:hover{
+  background:linear-gradient(135deg,#d1fae5,#a7f3d0);
+}
+#catalogBody tr.amc-held{
+  cursor:default;
+}
+#catalogBody input[type="checkbox"]{
+  width:20px;
+  height:20px;
+  accent-color:#059669;
+}
+.catalog-name{
+  font-weight:700;
+}
+.price{
+  color:var(--blue);
+}
+th,td{
+  padding:11px 12px;
+}
+th{
+  letter-spacing:.06em;
+}
+#catalogCount{
+  font-size:13px;
+}
+
+/* Patient details inside quotation tab */
+.amc-patient-details{
+  background:var(--soft);
+  border:1px solid var(--line);
+  border-radius:14px;
+  margin-bottom:18px;
+  padding:16px;
+}
+.amc-patient-details > summary{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  font-weight:800;
+}
+.amc-patient-details > summary::after{
+  content:"Expand";
+  color:var(--blue);
+  font-size:12px;
+}
+.amc-patient-details[open] > summary::after{
+  content:"Collapse";
+}
+.amc-patient-details .card{
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  padding:16px 0 0;
+  margin:0;
+}
+.amc-patient-details .card h2{
+  display:none;
+}
+#quoteMeta{
+  margin-bottom:4px;
+}
+
+/* Quotation styling */
+#quoteItems{
+  max-height:480px;
+  overflow:auto;
+}
+.quote-item{
+  background:var(--soft);
+  border:1px solid var(--line);
+  border-radius:12px;
+  margin-bottom:8px;
+  padding:12px 14px;
+}
+.item-name{
+  font-weight:700;
+}
+.item-top > strong{
+  color:var(--blue);
+  white-space:nowrap;
+}
+.item-controls{
+  margin-top:10px;
+}
+#totals{
+  background:linear-gradient(135deg,#ecfdf5,#d1fae5);
+  border:1px solid #6ee7b7;
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 4px 12px rgba(16,185,129,.1);
+}
+#totals .grand{
+  background:var(--panel);
+  border:2px solid #10b981;
+  border-radius:12px;
+  padding:13px 15px;
+  margin-top:12px;
+  font-size:20px;
+}
+.confirmation{
+  background:var(--soft);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:18px;
+  margin-top:20px;
+}
+.confirmation h3{
+  font-size:17px;
+}
+.amc-empty{
+  text-align:center;
+  padding:40px 20px;
+  color:var(--muted);
+}
+.amc-empty strong{
+  display:block;
+  color:var(--text);
+  font-size:17px;
+  margin-bottom:8px;
+}
+.amc-empty button{
+  margin-top:14px;
+}
+
+/* Dark mode */
+body.dark{
+  --bg:#111420;
+  --panel:#1c2035;
+  --soft:#242940;
+  --text:#e8ecf4;
+  --muted:#adbad0;
+  --line:#333a55;
+  --blue:#60a5fa;
+  --green:#55efc4;
+  --red:#fda4af;
+  background:radial-gradient(
+    circle at top left,
+    #161926 0%,
+    #111420 42%,
+    #0d1017 100%
+  );
+}
+body.dark #app > header{
+  background:linear-gradient(135deg,#1c2035,#181c2e);
+}
+body.dark .badge{
+  background:rgba(59,130,246,.15);
+  border-color:rgba(59,130,246,.3);
+  color:#7cb3f4;
+}
+body.dark #categoryTabs button.active{
+  border-color:#4a5580;
+}
+body.dark .amc-tab-count{
+  background:rgba(59,130,246,.15);
+  color:#7cb3f4;
+}
+body.dark #catalogBody tr.selected{
+  background:rgba(16,185,129,.1);
+}
+body.dark #catalogBody tr.selected:hover{
+  background:rgba(16,185,129,.16);
+}
+body.dark #totals{
+  background:linear-gradient(
+    135deg,
+    rgba(16,185,129,.08),
+    rgba(5,150,105,.05)
+  );
+  border-color:rgba(16,185,129,.35);
+}
+body.dark .locked{
+  color:#a5efc9;
+}
+body.dark button.primary{
+  background:linear-gradient(135deg,#1d4ed8,#2563eb);
+}
+body.dark button.success{
+  background:linear-gradient(135deg,#047857,#059669);
+}
+
+@media(max-width:650px){
+  .wrap{padding:10px}
+  #app > header{padding:16px}
+  h1{font-size:21px}
+  .amc-main-panel{padding:14px}
+  #categoryTabs button{
+    padding:8px 10px;
+    font-size:11px;
+  }
+  .amc-search-row{flex-wrap:wrap}
+  .amc-search-row .search{flex-basis:100%}
+  .amc-info-bar{gap:7px}
+  .amc-info-bar .chip{
+    padding:7px 10px;
+    font-size:12px;
+  }
+  th,td{padding:9px 6px}
+  #totals .grand{font-size:17px}
+  .confirmation{padding:14px}
+}
+
+@media print{
+  body,body.dark{
+    background:#fff;
+    color:#111;
+  }
+  #app{display:none!important}
+  #printArea{display:block}
+}
+</style>
+
+<script>
+/*
+  This adapter uses the existing AMC application's catalogue,
+  state, validation, signature capture, printing and export.
+  It does not import the separate pathology catalogue.
+*/
+(function applyAMCInterface(){
+  const app = document.getElementById("app");
+  const header = app.querySelector("header");
+  const workspace = app.querySelector(".workspace");
+
+  if (!workspace || app.dataset.interfaceUpdated === "true") return;
+  app.dataset.interfaceUpdated = "true";
+
+  const catalogueCard = workspace.children[0];
+  const quotationCard = workspace.children[1];
+  const detailsCard = app.querySelector("section.card");
+
+  header.querySelector("h1").textContent =
+    "AMC Combined Service Quotation";
+
+  header.querySelector(".header-row p").textContent =
+    "Laboratory and medical imaging quotations with patient confirmation";
+
+  /* Move search into the header. */
+  const searchInput = document.getElementById("search");
+  const originalSearchLabel = catalogueCard.querySelector('label[for="search"]');
+
+  if (originalSearchLabel) originalSearchLabel.remove();
+
+  const searchLabel = document.createElement("label");
+  searchLabel.className = "amc-search-label";
+  searchLabel.htmlFor = "search";
+  searchLabel.textContent = "Search all AMC services";
+
+  const searchRow = document.createElement("div");
+  searchRow.className = "amc-search-row";
+
+  searchInput.placeholder =
+    "Search service names, AMC codes or aliases";
+
+  const clearSearchButton = document.createElement("button");
+  clearSearchButton.type = "button";
+  clearSearchButton.textContent = "Clear Search";
+
+  clearSearchButton.addEventListener("click", function(){
+    searchInput.value = "";
+    render();
+    searchInput.focus();
+  });
+
+  searchRow.append(searchInput, clearSearchButton);
+  header.append(searchLabel, searchRow);
+
+  /* Persistent summary chips. */
+  const infoBar = document.createElement("div");
+  infoBar.className = "amc-info-bar";
+  infoBar.id = "amcInfoBar";
+
+  /* Move category tabs outside the service card. */
+  const tabs = document.getElementById("categoryTabs");
+
+  const mainPanel = document.createElement("div");
+  mainPanel.className = "amc-main-panel";
+
+  workspace.before(infoBar, tabs, mainPanel);
+  mainPanel.append(catalogueCard, quotationCard);
+  workspace.remove();
+
+  /* Move patient details into the quotation tab. */
+  const patientDetails = document.createElement("details");
+  patientDetails.className = "amc-patient-details";
+  patientDetails.open = true;
+
+  const patientSummary = document.createElement("summary");
+  patientSummary.textContent = "Patient and quotation details";
+
+  patientDetails.append(patientSummary, detailsCard);
+  quotationCard.prepend(patientDetails);
+
+  quotationCard.querySelector("h2").textContent =
+    "Quotation Summary";
+
+  /* Keep the existing rendering functions. */
+  const originalRenderCatalogue = renderCatalogue;
+  const originalRenderQuote = renderQuote;
+
+  function renderInfoBar(){
+    const totals = amounts();
+    const pendingCount = items.filter(
+      item => item.decision === "pending"
+    ).length;
+
+    infoBar.innerHTML = `
+      <span class="chip status-chip">
+        ${esc(quoteNumber)} · Revision ${revision}
+        · ${lockedSnapshot ? "Confirmed" : "Draft"}
+      </span>
+      <span class="chip items-chip">
+        ${items.length} service${items.length === 1 ? "" : "s"} selected
+      </span>
+      <span class="chip">
+        Quoted: ${money(totals.offered)}
+      </span>
+      <span class="chip total-chip">
+        Accepted: ${money(totals.accepted)}
+      </span>
+      ${pendingCount ? `
+        <span class="chip pending-chip">
+          ${pendingCount} pending decision${pendingCount === 1 ? "" : "s"}
+        </span>
+      ` : ""}
+    `;
+  }
+
+  function syncPanelVisibility(){
+    const showQuotation = category === "quotation";
+    catalogueCard.hidden = showQuotation;
+    quotationCard.hidden = !showQuotation;
+  }
+
+  /* Add Quotation as the first tab, with counts on service tabs. */
+  renderTabs = function(){
+    const definitions = [
+      ["quotation", "Quotation"],
+      ...CATEGORIES
+    ];
+
+    tabs.innerHTML = definitions.map(function([id, label]){
+      let catalogueCount = 0;
+      let selectedCount = 0;
+
+      if (id === "quotation"){
+        selectedCount = items.length;
+      } else {
+        const belongs = service =>
+          id === "all" ||
+          service.cat === id ||
+          (
+            id === "breast" &&
+            service.aliases.includes("breast")
+          );
+
+        catalogueCount = catalogue.filter(belongs).length;
+        selectedCount = items.filter(belongs).length;
+      }
+
+      return `
+        <button
+          type="button"
+          data-category="${esc(id)}"
+          class="${category === id ? "active" : ""}"
+          aria-pressed="${category === id}"
+        >
+          ${esc(label)}
+          ${id !== "quotation" ? `
+            <span class="amc-tab-count">${catalogueCount}</span>
+          ` : ""}
+          ${selectedCount ? `
+            <span class="amc-selected-count">${selectedCount}</span>
+          ` : ""}
+        </button>
+      `;
+    }).join("");
+
+    syncPanelVisibility();
+  };
+
+  renderCatalogue = function(){
+    originalRenderCatalogue();
+
+    document.querySelectorAll(
+      "#catalogBody tr"
+    ).forEach(function(row){
+      const checkbox = row.querySelector("[data-service]");
+      if (!checkbox) return;
+
+      const service = byId.get(checkbox.dataset.service);
+
+      if (service && service.review){
+        row.classList.add("amc-held");
+      }
+    });
+
+    if (
+      category !== "quotation" &&
+      !document.getElementById("catalogBody").children.length
+    ){
+      document.getElementById("catalogBody").innerHTML = `
+        <tr>
+          <td colspan="3">
+            <div class="amc-empty">
+              <strong>No matching services</strong>
+              Try another search term or select All services.
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    syncPanelVisibility();
+    renderInfoBar();
+  };
+
+  renderQuote = function(){
+    originalRenderQuote();
+
+    if (!items.length){
+      document.getElementById("quoteItems").innerHTML = `
+        <div class="amc-empty">
+          <strong>No services selected yet</strong>
+          Browse the catalogue to build the quotation.
+          <br>
+          <button type="button" id="amcBrowseServices" class="primary">
+            Browse Services
+          </button>
+        </div>
+      `;
+
+      document.getElementById("amcBrowseServices")
+        .addEventListener("click", function(){
+          category = "all";
+          render();
+        });
+    }
+
+    renderInfoBar();
+  };
+
+  /* Click anywhere on a service row to add or remove it.
+     Native checkboxes retain their original keyboard behavior. */
+  document.getElementById("catalogBody")
+    .addEventListener("click", function(event){
+      if (
+        event.target.closest(
+          "input, button, a, select, textarea, label"
+        )
+      ) return;
+
+      const row = event.target.closest("tr");
+      const checkbox = row && row.querySelector("[data-service]");
+
+      if (!checkbox || checkbox.disabled) return;
+
+      choose(checkbox.dataset.service);
+    });
+
+  /* Search all services rather than silently choosing one category. */
+  searchInput.addEventListener("input", function(){
+    if (searchInput.value.trim()){
+      category = "all";
+    }
+    render();
+  });
+
+  /* Open the quotation tab when creating a revision or resetting. */
+  document.getElementById("newRevisionButton")
+    .addEventListener("click", function(){
+      if (!lockedSnapshot){
+        category = "quotation";
+        patientDetails.open = true;
+        render();
+        requestAnimationFrame(resizeCanvas);
+      }
+    });
+
+  document.getElementById("resetButton")
+    .addEventListener("click", function(){
+      if (!items.length && !lockedSnapshot){
+        category = "quotation";
+        patientDetails.open = true;
+        render();
+        requestAnimationFrame(resizeCanvas);
+      }
+    });
+
+  /* Refresh signature dimensions when the quotation tab becomes visible. */
+  tabs.addEventListener("click", function(){
+    if (category === "quotation"){
+      requestAnimationFrame(resizeCanvas);
+    }
+  });
+
+  /* Persist only the display preference, not patient information. */
+  try {
+    if (localStorage.getItem("amcQuote_theme") === "dark"){
+      document.body.classList.add("dark");
+    }
+  } catch (_) {}
+
+  function refreshThemeLabel(){
+    const dark = document.body.classList.contains("dark");
+    document.getElementById("themeButton").textContent =
+      dark ? "Light mode" : "Dark mode";
+  }
+
+  refreshThemeLabel();
+
+  document.getElementById("themeButton")
+    .addEventListener("click", function(){
+      const dark = document.body.classList.contains("dark");
+
+      try {
+        localStorage.setItem(
+          "amcQuote_theme",
+          dark ? "dark" : "light"
+        );
+      } catch (_) {}
+
+      refreshThemeLabel();
+    });
+
+  category = "all";
+  render();
+})();
+</script>
 </body>
 </html>
