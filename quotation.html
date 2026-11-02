@@ -286,10 +286,6 @@ body.dark .locked{background:#183c32;color:#a5efc9}
  </button>
 </div>
 
-  <p class="muted">
-   Shared test records. This first-stage list shows saved drafts;
-   signed-date filters will be added with backend confirmation.
-  </p>
 
   <label class="field">
    Search loaded records
@@ -1492,28 +1488,69 @@ function validation(){
  }
  return"";
 }
-$("confirmButton").addEventListener("click",()=>{
+
+ $("confirmButton").addEventListener("click",async()=>{
  if(lockedSnapshot)return;
- const error=validation();if(error){message(error,true);return;}
- const mode=document.querySelector('[name="signatureMode"]:checked').value;
+
+ if(typeof window.amcConfirmQuotation !== "function"){
+  message("Backend is not ready. Please wait or refresh.",true);
+  return;
+ }
+
+ if(drawing){
+  message("Finish drawing the signature before confirming.",true);
+  return;
+ }
+
+ // 避免附件仲讀取緊，就提交咗冇附件嘅確認。
+ const mode=document.querySelector(
+  '[name="signatureMode"]:checked'
+ ).value;
+
+ if(
+  mode==="paper" &&
+  $("paperFile").files.length &&
+  !paperAttachment
+ ){
+  message(
+   "The attachment is still loading or could not be read. Wait, or select the file again.",
+   true
+  );
+  return;
+ }
+
+ const error=validation();
+ if(error){
+  message(error,true);
+  return;
+ }
+
  const snapshot=currentSnapshot();
+
  snapshot.confirmation={
-  mode,recordedAt:new Date().toISOString(),
+  mode,
+  recordedAt:new Date().toISOString(),
   signerName:$("signerName").value.trim(),
   signerRole:$("signerRole").value,
   relationship:$("signerRelationship").value.trim(),
   witness:$("witness").value.trim(),
   acceptedTotal:snapshot.totals.accepted,
-  signaturePNG:mode==="tablet"?canvas.toDataURL("image/png"):null,
-  paperSignedDate:mode==="paper"?$("paperSignedDate").value:null,
+  signaturePNG:mode==="tablet"
+   ?canvas.toDataURL("image/png")
+   :null,
+  paperSignedDate:mode==="paper"
+   ?$("paperSignedDate").value
+   :null,
   paperVerified:mode==="paper",
-attachment:mode==="paper"&&paperAttachment
- ?clone(paperAttachment)
- :null,
+  attachment:mode==="paper"&&paperAttachment
+   ?clone(paperAttachment)
+   :null
  };
- lockedSnapshot=clone(snapshot);dirty=true;
- render();message("Confirmation recorded. Export JSON and save or print the confirmed document.");
+
+ // Backend 成功後，下面嘅 backend function 先會鎖定。
+ await window.amcConfirmQuotation(snapshot);
 });
+ 
 function confirmationHTML(s){
  const c=s.confirmation;
  if(!c)return"";
@@ -1744,9 +1781,27 @@ $("themeButton").addEventListener("click",()=>{
  const dark=document.body.classList.toggle("dark");
  $("themeButton").textContent=dark?"Light mode":"Dark mode";
 });
+
 window.addEventListener("beforeunload",e=>{
- if(dirty||lockedSnapshot){e.preventDefault();e.returnValue="";}
+ const unsavedConfirmation =
+  !lockedSnapshot &&
+  (
+   hasInk ||
+   !!paperAttachment ||
+   $("paperVerified").checked
+  );
+
+ if(
+  dirty ||
+  unsavedConfirmation ||
+  window.amcBackendBusy
+ ){
+  e.preventDefault();
+  e.returnValue="";
+ }
 });
+
+ 
 $("reviewList").innerHTML=importNotes.map(n=>`<li>${esc(n)}</li>`).join("")+
  catalogue.filter(t=>t.review).map(t=>
  `<li><strong>${esc(t.code)} — ${esc(t.name)}</strong>: ${esc(t.review)}</li>`).join("");
@@ -2518,28 +2573,173 @@ quotationCard.querySelector(":scope > h2").textContent =
  const recordsButton = el("demoRecordsButton");
  const recordsPanel = el("demoRecordsPanel");
 
- let client = null;
+
+let client = null;
  let ready = false;
  let saving = false;
+ let confirming = false;
+ let opening = false;
+
+ let draftInFlight = null;
+ let pendingConfirmation = null;
+
  let savedRevisionId = null;
  let savedEditVersion = null;
+ let lastSavedDraftKey = null;
+ let lastSavedAt = null;
+ let saveError = "";
+
  let loadedRecords = [];
  let recordsRun = 0;
+
+ // Save 按鈕改為自動儲存狀態。
+ saveButton.hidden = true;
+
+ const autoStatus = document.createElement("p");
+ autoStatus.id = "demoAutoSaveStatus";
+ autoStatus.className = "muted";
+ autoStatus.setAttribute("role","status");
+ autoStatus.setAttribute("aria-live","polite");
+ autoStatus.style.marginTop = "10px";
+
+ connectionStatus.after(autoStatus);
+
+ window.amcBackendBusy = false;
 
  function connectionMessage(text){
   connectionStatus.textContent = text;
  }
 
-function updateButtons(){
- saveButton.disabled = !ready || saving;
- recordsButton.disabled = !ready;
+ // 排除每次 currentSnapshot() 都唔同嘅 createdAt。
+ function draftKey(s = currentSnapshot()){
+  return JSON.stringify({
+   quotationNumber:s.quotationNumber,
+   revision:s.revision,
+   metadata:s.metadata,
+   items:s.items
+  });
+ }
 
- saveButton.textContent = saving
-  ? "Saving…"
-  : lockedSnapshot
-   ? "Save confirmed quotation"
-   : "Save draft";
-}
+ // 同一份確認重試時，沿用原本 timestamps 同 payload。
+ function confirmationKey(s){
+  const copy = clone(s);
+  delete copy.createdAt;
+
+  if(copy.confirmation){
+   delete copy.confirmation.recordedAt;
+  }
+
+  return JSON.stringify(copy);
+ }
+
+ function savedTime(){
+  return lastSavedAt
+   ? new Date(lastSavedAt).toLocaleTimeString(
+      "en-GB",
+      {
+       timeZone:"Asia/Hong_Kong",
+       hour:"2-digit",
+       minute:"2-digit",
+       second:"2-digit"
+      }
+     )
+   : "";
+ }
+
+ function draftProblem(){
+  const m = metadata();
+
+  if(revision !== 1){
+   return "Backend saving supports revision 1 only.";
+  }
+
+  if(!items.length){
+   return "Select at least one service.";
+  }
+
+  if(
+   !m.patientName ||
+   !m.patientReference ||
+   !m.preparedBy ||
+   !m.quoteDate
+  ){
+   return "Enter patient name, reference, preparing staff and quotation date.";
+  }
+
+  return "";
+ }
+
+ function updateButtons(){
+  const busy = saving || confirming || opening;
+
+  window.amcBackendBusy = busy;
+
+  recordsButton.disabled = !ready || busy;
+  el("confirmButton").disabled =
+   !ready || confirming || opening || !!lockedSnapshot;
+
+  el("confirmButton").textContent = confirming
+   ? "Saving confirmation…"
+   : "Record confirmation and lock revision";
+
+  el("resetButton").disabled = busy;
+
+  // 新 revision 嘅 backend 尚未接駁，避免誤以為會自動保存。
+  el("newRevisionButton").disabled = true;
+  el("newRevisionButton").title =
+   "Backend saving of new revisions is not connected yet.";
+
+  // 確認期間凍結報價頁；成功／失敗後都會解除。
+  el("app").inert = confirming;
+
+  if(!ready){
+   autoStatus.textContent =
+    "Automatic saving is unavailable until the backend connects.";
+  }else if(confirming){
+   autoStatus.textContent =
+    "Saving quotation and confirmation… Do not close this page.";
+  }else if(opening){
+   autoStatus.textContent = "Opening saved quotation…";
+  }else if(saving){
+   autoStatus.textContent = "Saving draft…";
+  }else if(lockedSnapshot){
+   autoStatus.textContent =
+    "Confirmed quotation saved · Revision locked";
+  }else if(pendingConfirmation){
+   autoStatus.textContent =
+    "Confirmation was not acknowledged. Retry confirmation, or check Records.";
+  }else if(saveError){
+   autoStatus.textContent =
+    "Automatic saving failed: " + saveError;
+  }else if(!items.length){
+   autoStatus.textContent =
+    savedRevisionId
+     ? "Empty draft not saved. Backend still contains the last saved version."
+     : "Draft autosave: every 30 seconds after services and required details are entered.";
+  }else{
+   const problem = draftProblem();
+
+   if(problem){
+    autoStatus.textContent =
+     "Draft not saved: " + problem;
+   }else if(draftKey() !== lastSavedDraftKey){
+    autoStatus.textContent =
+     "Unsaved draft changes · Autosave checks every 30 seconds";
+   }else{
+    autoStatus.textContent =
+     "Draft saved" +
+     (lastSavedAt ? " · " + savedTime() + "HKT" : "") +
+     " · Signature/attachment is saved only when you confirm.";
+   }
+  }
+
+  autoStatus.style.color =
+   saveError || pendingConfirmation
+    ? "var(--red)"
+    : "var(--muted)";
+ }
+
+ 
 
  if(!window.supabase?.createClient){
   connectionMessage(
@@ -2587,111 +2787,280 @@ function updateButtons(){
   updateButtons();
  }
 
- 
- saveButton.addEventListener("click", async ()=>{
- if(!ready || saving) return;
 
- if(revision !== 1){
-  message(
-   "Backend saving currently supports revision 1 only. Export this new revision as JSON for now.",
-   true
-  );
-  return;
+// 同步檢查綁定，唔單靠 MutationObserver。
+ function ensureBinding(){
+  if(quoteNumber !== boundQuotationNumber){
+   boundQuotationNumber = quoteNumber;
+
+   savedRevisionId = null;
+   savedEditVersion = null;
+   lastSavedDraftKey = null;
+   lastSavedAt = null;
+   saveError = "";
+   pendingConfirmation = null;
+  }
  }
 
- if(!items.length){
-  message("Select at least one investigation before saving.", true);
-  return;
- }
+ function saveDraft(forConfirmation = false){
+  if(draftInFlight)return draftInFlight;
 
- const isConfirmed = !!lockedSnapshot;
-
- // 已確認時必須用鎖定快照，包含簽名及附件。
- const documentToSave = clone(
-  isConfirmed ? lockedSnapshot : currentSnapshot()
- );
-
- const startingNumber = quoteNumber;
- const startingRevision = revision;
- const startingRevisionId = savedRevisionId;
- const startingVersion = savedEditVersion;
-
- saving = true;
- updateButtons();
-
- try{
-  const functionName = isConfirmed
-   ? "demo_confirm_quotation"
-   : "demo_save_draft";
-
-  const { data, error } = await client.rpc(functionName, {
-   p_document:documentToSave,
-   p_revision_id:startingRevisionId,
-   p_expected_version:startingVersion
-  });
-
-  if(error) throw error;
-
-  if(!data?.revision_id || data.edit_version == null){
-   throw new Error("Backend returned an incomplete save result.");
+  if(
+   !ready ||
+   opening ||
+   lockedSnapshot ||
+   (confirming && !forConfirmation) ||
+   (pendingConfirmation && !forConfirmation)
+  ){
+   return Promise.resolve(false);
   }
 
-  // 儲存期間若已建立另一張報價，唔綁定舊結果。
-  if(
-   quoteNumber !== startingNumber ||
-   revision !== startingRevision
-  ){
-   connectionMessage(
-    "The previous quotation was saved. The current quotation is separate."
+  ensureBinding();
+
+  const problem = draftProblem();
+
+  if(problem){
+   updateButtons();
+   return Promise.resolve(false);
+  }
+
+  const documentToSave = clone(currentSnapshot());
+  const key = draftKey(documentToSave);
+
+  if(savedRevisionId && key === lastSavedDraftKey){
+   updateButtons();
+   return Promise.resolve(true);
+  }
+
+  const startingNumber = quoteNumber;
+  const startingRevision = revision;
+
+  saving = true;
+  saveError = "";
+  updateButtons();
+
+  draftInFlight = (async()=>{
+   try{
+    const {data,error} = await client.rpc(
+     "demo_save_draft",
+     {
+      p_document:documentToSave,
+      p_revision_id:savedRevisionId,
+      p_expected_version:savedEditVersion
+     }
+    );
+
+    if(error)throw error;
+
+    if(!data?.revision_id || data.edit_version == null){
+     throw new Error("Backend returned an incomplete save result.");
+    }
+
+    if(
+     quoteNumber !== startingNumber ||
+     revision !== startingRevision
+    ){
+     return false;
+    }
+
+    savedRevisionId = data.revision_id;
+    savedEditVersion = data.edit_version;
+    lastSavedDraftKey = key;
+    lastSavedAt = new Date().toISOString();
+
+    // 儲存期間如有新修改，保留未保存狀態。
+    dirty = draftKey() !== key;
+
+    return true;
+   }catch(error){
+    console.error("Automatic draft save failed:",error);
+
+    saveError = error.message || "Please retry.";
+    return false;
+   }finally{
+    saving = false;
+    draftInFlight = null;
+    updateButtons();
+   }
+  })();
+
+  return draftInFlight;
+ }
+
+ window.amcConfirmQuotation = async snapshot=>{
+  if(confirming || opening || lockedSnapshot)return false;
+
+  if(!ready){
+   message("Backend is not connected. Please retry after connecting.",true);
+   return false;
+  }
+
+  if(revision !== 1){
+   message(
+    "Backend confirmation currently supports revision 1 only.",
+    true
    );
+   return false;
+  }
+
+  ensureBinding();
+
+  const startingNumber = quoteNumber;
+  const startingRevision = revision;
+
+  confirming = true;
+  saveError = "";
+  updateButtons();
+
+  try{
+   // 等候之前嘅草稿儲存，取得最新 edit_version。
+   if(draftInFlight){
+    const previousSaveOK = await draftInFlight;
+
+    if(!previousSaveOK){
+     throw new Error(
+      "The draft save failed. Confirmation was not submitted. " +
+      (saveError || "")
+     );
+    }
+   }
+
+   /*
+    第一次確認前先確保有 revision ID。
+    確認重試沿用同一 ID，唔建立另一張 confirmed quotation。
+   */
+   if(!pendingConfirmation){
+    const draftSaved = await saveDraft(true);
+
+    if(!draftSaved || !savedRevisionId){
+     throw new Error(
+      "The draft could not be saved before confirmation. " +
+      (saveError || "")
+     );
+    }
+   }
+
+   if(
+    quoteNumber !== startingNumber ||
+    revision !== startingRevision
+   ){
+    throw new Error("The current quotation changed. Please retry.");
+   }
+
+   if(
+    !pendingConfirmation ||
+    confirmationKey(pendingConfirmation) !== confirmationKey(snapshot)
+   ){
+    pendingConfirmation = clone(snapshot);
+   }
+
+   const documentToConfirm = clone(pendingConfirmation);
+
+   const {data,error} = await client.rpc(
+    "demo_confirm_quotation",
+    {
+     p_document:documentToConfirm,
+     p_revision_id:savedRevisionId,
+     p_expected_version:savedEditVersion
+    }
+   );
+
+   if(error)throw error;
+
+   if(
+    !data?.revision_id ||
+    data.edit_version == null ||
+    data.status !== "confirmed"
+   ){
+    throw new Error("Backend returned an incomplete confirmation result.");
+   }
+
+   savedRevisionId = data.revision_id;
+   savedEditVersion = data.edit_version;
+   lastSavedAt = data.confirmed_at || new Date().toISOString();
+
+   // 成功先鎖定，並顯示 backend 已保存嘅同一份快照。
+   lockedSnapshot = clone(documentToConfirm);
+   pendingConfirmation = null;
+   saveError = "";
+   dirty = false;
+
+   render();
+
+   message(
+    "Confirmed quotation saved to backend, including its signature or uploaded attachment. This revision is now locked."
+   );
+
+   return true;
+  }catch(error){
+   console.error("Confirmation save failed:",error);
+
+   dirty = true;
+
+   message(
+    "Confirmation was not completed in this page: " +
+    (error.message || "Please retry.") +
+    " Your signature remains on screen. If the connection was interrupted, retry the same confirmation or check Records.",
+    true
+   );
+
+   return false;
+  }finally{
+   confirming = false;
+   updateButtons();
+  }
+ };
+
+ // 每 30 秒檢查；冇修改就唔發送儲存請求。
+ setInterval(()=>{
+  if(
+   !ready ||
+   saving ||
+   confirming ||
+   opening ||
+   lockedSnapshot ||
+   pendingConfirmation ||
+   recordsPanel.hidden === false
+  ){
    return;
   }
 
-  savedRevisionId = data.revision_id;
-  savedEditVersion = data.edit_version;
+  void saveDraft();
+ },30000);
 
-  const unchanged = isConfirmed
-   ? (
-      !!lockedSnapshot &&
-      JSON.stringify(lockedSnapshot) ===
-       JSON.stringify(documentToSave)
-     )
-   : (
-      !lockedSnapshot &&
-      JSON.stringify(metadata()) ===
-       JSON.stringify(documentToSave.metadata) &&
-      JSON.stringify(items) ===
-       JSON.stringify(documentToSave.items)
-     );
-
-  if(unchanged) dirty = false;
-
-  if(isConfirmed){
-   message(
-    unchanged
-     ? "Confirmed quotation saved to backend, including its signature or uploaded attachment."
-     : "The confirmed snapshot was saved. Later local changes have not been saved."
-   );
-  }else{
-   message(
-    unchanged
-     ? "Draft saved to backend."
-     : "Draft saved. Later changes or local confirmation have not been saved."
-   );
+ // 更新狀態文字，唔係每次輸入都立即儲存。
+ el("app").addEventListener("input",()=>{
+  if(!saving && !confirming){
+   saveError = "";
   }
- }catch(error){
-  console.error("Save quotation failed:", error);
 
-  message(
-   "Quotation was not saved: " +
-    (error.message || "Please retry."),
-   true
-  );
- }finally{
-  saving = false;
   updateButtons();
- }
-});
+ });
+
+ el("app").addEventListener("change",()=>{
+  updateButtons();
+ });
+
+ /*
+  舊嘅 reset / new revision handlers 在前面已經註冊。
+  Capture guard 確保儲存／開啟期間唔會先執行佢哋。
+ */
+ ["resetButton","newRevisionButton"].forEach(id=>{
+  el(id).addEventListener("click",event=>{
+   if(
+    saving ||
+    confirming ||
+    opening ||
+    id === "newRevisionButton"
+   ){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+   }
+  },true);
+ });
+
+
+ 
 
  function renderRecords(){
   const query = el("demoRecordsSearch").value.trim().toLowerCase();
@@ -2751,7 +3120,7 @@ function updateButtons(){
        </tr>
       `;
      }).join("")
-   : `<tr><td colspan="5">No matching saved drafts.</td></tr>`;
+   : `<tr><td colspan="5">No matching saved quotations.</td></tr>`;
  }
 
  async function loadRecords(){
@@ -2852,16 +3221,31 @@ el("demoCloseRecordsButton").addEventListener("click", ()=>{
 
  el("demoRecordsBody").addEventListener("click", async event=>{
   const button = event.target.closest("[data-demo-open]");
-  if(!button || saving) return;
+if(!button || saving || confirming || opening) return;
 
-  if(
-   (dirty || lockedSnapshot) &&
-   !window.confirm(
-    "Open this saved draft? Current unsaved changes or local confirmation will be discarded."
-   )
-  ) return;
 
-  button.disabled = true;
+
+if(
+ (
+  dirty ||
+  pendingConfirmation ||
+  (!lockedSnapshot && (
+   hasInk ||
+   paperAttachment ||
+   el("paperVerified").checked
+  ))
+ ) &&
+ !window.confirm(
+  "Open this saved quotation? Unsaved changes, signature or attachment on this page will be discarded."
+ )
+) return;
+
+opening = true;
+button.disabled = true;
+updateButtons();
+
+
+  
 
   try{
    // 重新讀取，唔直接開列表載入時的舊快照。
@@ -2945,11 +3329,22 @@ lockedSnapshot = openingConfirmed ? clone(s) : null;
    // 清除上一張已準備列印的文件。
    el("printArea").innerHTML = "";
 
-   savedRevisionId = record.id;
-   savedEditVersion = record.edit_version;
 
-   category = "quotation";
-   dirty = false;
+savedRevisionId = record.id;
+savedEditVersion = record.edit_version;
+
+// 先更新 bound number，避免 observer 清走剛開啟嘅 ID。
+boundQuotationNumber = quoteNumber;
+
+lastSavedDraftKey = draftKey(s);
+lastSavedAt = null;
+saveError = "";
+pendingConfirmation = null;
+
+category = "quotation";
+dirty = false;
+
+   
 
    render();
 
@@ -2971,9 +3366,13 @@ message(
    console.error("Open draft failed:", error);
    el("demoRecordsStatus").textContent =
     "Could not open draft: " + (error.message || "Please retry.");
-  }finally{
-   button.disabled = false;
-  }
+
+}finally{
+ opening = false;
+ button.disabled = false;
+ updateButtons();
+}
+   
  });
 
  // 只有實際產生新 quotation number，先解除舊 backend 草稿綁定。
@@ -2995,15 +3394,12 @@ message(
  let boundQuotationNumber = quoteNumber;
 
 
- const observer = new MutationObserver(()=>{
- if(quoteNumber !== boundQuotationNumber){
-  boundQuotationNumber = quoteNumber;
-  savedRevisionId = null;
-  savedEditVersion = null;
- }
+const observer = new MutationObserver(()=>{
+  ensureBinding();
+  updateButtons();
+ });
 
- updateButtons();
-});
+ 
 
  observer.observe(el("quoteMeta"), {
   childList:true,
