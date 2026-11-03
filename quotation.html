@@ -107,14 +107,57 @@ details summary{cursor:pointer;font-weight:bold}
  #printArea .confirmation-record{break-inside:avoid}
 }
 </style>
+ <style>
+/* 網頁：Logo 放喺標題上面，靠左。 */
+.amc-brand{
+ min-width:0;
+ max-width:100%;
+}
+
+.amc-logo{
+ display:block;
+ width:190px;
+ max-width:100%;
+ height:auto;
+ margin:0 0 14px;
+}
+
+@media screen and (max-width:650px){
+ .amc-logo{
+  width:155px;
+  margin-bottom:12px;
+ }
+}
+
+/* 列印：保留 logo 原本比例。 */
+@media print{
+ #printArea .print-brand{
+  break-inside:avoid;
+ }
+
+ #printArea .amc-logo{
+  display:block;
+  width:45mm;
+  max-width:100%;
+  height:auto;
+  max-height:none;
+  margin:0 0 5mm;
+ }
+}
+</style>
 </head>
 <body>
 <div id="app" class="wrap">
  <header class="card">
-  <div class="header-row">
-   <div>
+<div class="header-row">
+   <div class="amc-brand">
+    <img
+     class="amc-logo"
+     src="./amclogo.png"
+     alt="Adventist Medical Centre logo"
+     decoding="async"
+    >
     <h1>Combined Service Quotation</h1>
-   
    </div>
   </div>
   <small>Laboratory source: 03 Sep 2026 · Imaging source: 13 Jul 2026</small>
@@ -1690,8 +1733,15 @@ message("New quotation started.");
    ============================================================ */
 function printable(s,paperForm=false){
  const m=s.metadata;
- 
- return `<h1>Adventist Medical Centre Combined Service Quotation</h1>
+
+ return `<div class="print-brand">
+   <img
+    class="amc-logo"
+    src="./amclogo.png"
+    alt="Adventist Medical Centre logo"
+   >
+   <h1>Adventist Medical Centre Combined Service Quotation</h1>
+  </div>
   <p>${esc(s.quotationNumber)} · Revision ${s.revision}</p>
   <div class="print-meta">
    <div>Patient: <strong>${esc(m.patientName||"Not entered")}</strong></div>
@@ -2510,31 +2560,7 @@ quotationCard.querySelector(":scope > h2").textContent =
   render();
 })();
 
-  function refreshThemeLabel(){
-    const dark = document.body.classList.contains("dark");
-    document.getElementById("themeButton").textContent =
-      dark ? "Light mode" : "Dark mode";
-  }
-
-  refreshThemeLabel();
-
-  document.getElementById("themeButton")
-    .addEventListener("click", function(){
-      const dark = document.body.classList.contains("dark");
-
-      try {
-        localStorage.setItem(
-          "amcQuote_theme",
-          dark ? "dark" : "light"
-        );
-      } catch (_) {}
-
-      refreshThemeLabel();
-    });
-
-  category = "all";
-  render();
-})();
+  
 </script>
  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
