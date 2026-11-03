@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Adventist Medical Centre — Quotation</title>
+<title>Adventist Medical Center — Quotation</title>
 <style>
 :root{
  --bg:#eef2f7;--panel:#fff;--soft:#f7f9fc;--text:#152338;
@@ -154,7 +154,7 @@ details summary{cursor:pointer;font-weight:bold}
     <img
      class="amc-logo"
      src="./amclogo.png"
-     alt="Adventist Medical Centre logo"
+     alt="Adventist Medical Center logo"
      decoding="async"
     >
     <h1>Combined Service Quotation</h1>
@@ -1208,7 +1208,7 @@ function amounts(list=items){
 }
 function currentSnapshot(){
  return{
-  schemaVersion:1,prototype:true,clinic:"Adventist Medical Centre",
+  schemaVersion:1,prototype:true,clinic:"Adventist Medical Center",
   quotationNumber:quoteNumber,revision,currency:"HKD",
   createdAt:new Date().toISOString(),metadata:metadata(),
   items:clone(items),totals:amounts(),confirmation:null,
@@ -1726,9 +1726,9 @@ function printable(s,paperForm=false){
    <img
     class="amc-logo"
     src="./amclogo.png"
-    alt="Adventist Medical Centre logo"
+    alt="Adventist Medical Center logo"
    >
-   <h1>Adventist Medical Centre Combined Service Quotation</h1>
+   <h1>Adventist Medical Center Combined Service Quotation</h1>
   </div>
   <p>${esc(s.quotationNumber)} · Revision ${s.revision}</p>
   <div class="print-meta">
@@ -1798,7 +1798,7 @@ $("printPaperButton").addEventListener("click",()=>printDoc(true));
 function textQuote(s){
  const m=s.metadata;
  let text=[
-  "ADVENTIST MEDICAL CENTRE",
+  "Adventist Medical Center",
   "COMBINED SERVICE QUOTATION",
   `${s.quotationNumber} | Revision ${s.revision} | ${s.confirmation?"CONFIRMED":"DRAFT"}`,
   `Patient: ${m.patientName||"Not entered"} | Reference: ${m.patientReference||"Not entered"}`,
@@ -2285,7 +2285,7 @@ th{
   const detailsCard = app.querySelector("section.card");
 
   header.querySelector("h1").textContent =
-    "Adventist Medical Centre Combined Service Quotation";
+    "Adventist Medical Center Combined Service Quotation";
 
   /* Move search into the header. */
   const searchInput = document.getElementById("search");
