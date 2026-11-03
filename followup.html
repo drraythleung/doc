@@ -24,13 +24,13 @@ body{
  margin:0;
  background:var(--bg);
  color:var(--text);
- font:15px/1.6 Arial,sans-serif;
+ font:14px/1.5 Arial,sans-serif;
 }
 button,input,select,textarea{font:inherit}
 button{
  border:1px solid var(--line);
- border-radius:9px;
- padding:9px 14px;
+ border-radius:8px;
+ padding:8px 12px;
  background:#fff;
  color:var(--text);
  font-weight:700;
@@ -38,376 +38,522 @@ button{
 }
 button:hover:not(:disabled){background:#f1f5f9}
 button:disabled{opacity:.45;cursor:not-allowed}
-button.primary{
- background:var(--blue);
- border-color:var(--blue);
- color:#fff;
-}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
 button.primary:hover:not(:disabled){background:#1d4ed8}
 button.danger{color:var(--red)}
-button.small{font-size:13px;padding:6px 10px}
+button.small{font-size:12px;padding:6px 9px}
 button:focus-visible,input:focus-visible,select:focus-visible,
 textarea:focus-visible,summary:focus-visible{
  outline:3px solid #93c5fd;
- outline-offset:3px;
+ outline-offset:2px;
 }
 input,select,textarea{
  width:100%;
  border:1px solid #cbd5e1;
  border-radius:8px;
- padding:10px 11px;
+ padding:9px 10px;
  background:#fff;
  color:var(--text);
 }
 input[type=checkbox],input[type=radio]{
- width:19px;
- height:19px;
+ width:18px;
+ height:18px;
  accent-color:var(--blue);
  flex-shrink:0;
 }
 textarea{resize:vertical}
-h1,h2,h3,p{margin:0 0 10px}
-h1{font-size:23px;line-height:1.35}
-h2{font-size:20px}
+h1,h2,h3,p{margin:0 0 8px}
+h1{font-size:19px;line-height:1.3}
+h2{font-size:18px}
 h3{font-size:17px}
-small,.muted{color:var(--muted)}
-.wrap{max-width:1180px;margin:auto;padding:20px}
-.card{
- background:var(--panel);
- border:1px solid var(--line);
- border-radius:14px;
- padding:22px;
- margin-bottom:16px;
-}
-.brand,.row,.actions,.tabs{
+small,.muted,.small-text{color:var(--muted)}
+.small-text{font-size:12px}
+.name{font-weight:700}
+.note{white-space:pre-wrap;overflow-wrap:anywhere}
+.row,.actions,.tabs{
  display:flex;
  align-items:center;
- gap:10px;
+ gap:8px;
  flex-wrap:wrap;
 }
-.brand,.row{justify-content:space-between}
-.brand{margin-bottom:18px}
-.brand img{width:170px;max-width:35%;height:auto}
-.brand h1{text-align:right;margin:0}
-.actions{margin:10px 0}
+.row{justify-content:space-between}
+.actions{margin:8px 0}
 .field{
  display:flex;
  flex-direction:column;
- gap:6px;
+ gap:5px;
  font-weight:700;
 }
 .field small{font-weight:400}
-.operator{width:min(100%,300px)}
-.search-row{
- display:flex;
- gap:10px;
- align-items:flex-end;
- margin-top:14px;
-}
-.search-row .field{flex:1}
-.small-text{font-size:13px;color:var(--muted)}
-.note{white-space:pre-wrap;overflow-wrap:anywhere}
-.code{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
-.notice{
- border:1px solid #ead39a;
- border-radius:9px;
- background:#fff8e5;
- color:#684a0b;
- padding:12px 14px;
- margin:12px 0;
-}
-.notice.red{
- border-color:#fecaca;
- background:#fff1f2;
- color:var(--red);
-}
-.notice.blue{
- border-color:#bfdbfe;
- background:#eff6ff;
- color:#164bab;
-}
-#message{min-height:24px;font-size:14px;margin-top:12px}
-.tabs{margin:12px 0}
-.tabs button{font-size:14px}
-.tabs button.active{
- background:var(--blue);
- border-color:var(--blue);
- color:#fff;
-}
-.table-wrap{
- overflow:auto;
- border:1px solid var(--line);
- border-radius:10px;
-}
-table{width:100%;border-collapse:collapse}
-th,td{
- text-align:left;
- padding:14px;
- border-bottom:1px solid var(--line);
- vertical-align:top;
-}
-th{background:var(--soft);font-size:13px;color:var(--muted)}
-tbody tr:last-child td{border-bottom:0}
-.name{font-weight:700}
-.badge{
- display:inline-block;
- border:1px solid var(--line);
- border-radius:6px;
- padding:4px 9px;
- background:var(--soft);
- font-size:13px;
-}
-.badge.blue{
- color:var(--blue);
- background:#eff6ff;
- border-color:#bfdbfe;
-}
-.badge.green{
- color:var(--green);
- background:#ecfdf5;
- border-color:#a7e3c9;
-}
-.badge.amber{
- color:var(--amber);
- background:#fff8e5;
- border-color:#ead39a;
-}
-.badge.red{
- color:var(--red);
- background:#fff1f2;
- border-color:#fecaca;
-}
-.empty{padding:24px;text-align:center;color:var(--muted)}
-.section{
- border-top:1px solid var(--line);
- margin-top:22px;
- padding-top:20px;
-}
-.patient-strip{
- padding:16px;
- background:var(--soft);
- border:1px solid var(--line);
- border-radius:10px;
- margin:14px 0;
-}
-.patient-strip .name{font-size:22px}
-.patient-meta{
- display:grid;
- grid-template-columns:1fr 1fr;
- gap:10px 20px;
-}
-.meta-label{display:block;font-size:12px;color:var(--muted)}
-.summary-line{margin:14px 0;font-size:15px}
-.report-table th:first-child{width:45%}
-.report-table th:nth-child(2){width:33%}
-.report-table td:last-child{white-space:nowrap}
-.urgent-row{background:#fff8f8}
-.warning{
- font-size:13px;
- color:var(--red);
- margin-top:6px;
- font-weight:700;
-}
-.archive{margin-top:14px}
-summary{cursor:pointer}
-.archive>summary,.other-tools>summary{
- color:var(--muted);
- padding:7px 0;
-}
-.archive[open]>summary{margin-bottom:8px}
-.appointment-overview{
- display:flex;
- gap:12px 30px;
- flex-wrap:wrap;
- padding:14px;
- background:var(--soft);
- border:1px solid var(--line);
- border-radius:10px;
-}
-#actionWorkspace{
- margin-top:18px;
- border:2px solid #93b4ff;
- border-radius:12px;
- padding:22px;
- background:#fff;
- scroll-margin-top:16px;
-}
-#actionWorkspace h3{font-size:20px}
-#actionSubtitle{margin-bottom:18px}
 .form-grid{
  display:grid;
  grid-template-columns:1fr 1fr;
- gap:16px;
- margin:14px 0;
+ gap:12px;
+ margin:12px 0;
 }
 .full{grid-column:1/-1}
 .checkline{
  display:flex;
  align-items:flex-start;
- gap:9px;
+ gap:8px;
  font-weight:400;
 }
-.checkline input{margin-top:4px}
+.checkline input{margin-top:3px}
 .choice{
  display:flex;
  align-items:center;
  gap:10px;
  border:1px solid var(--line);
- padding:12px;
- border-radius:9px;
- margin:8px 0;
+ padding:10px 12px;
+ border-radius:8px;
+ margin:7px 0;
  cursor:pointer;
 }
-.choice:has(input:checked){
- background:#eff6ff;
- border-color:#93b4ff;
-}
+.choice:has(input:checked){background:#eff6ff;border-color:#93b4ff}
 .choice input{margin:0}
 .choice small{display:block}
-.form-error{
- color:var(--red);
- font-weight:700;
- margin:12px 0;
-}
-.log{padding:13px 0;border-bottom:1px solid var(--line)}
-.log:last-child{border-bottom:0}
-.log .note{margin-top:5px}
-.tool-list{
- display:flex;
- gap:10px;
- flex-wrap:wrap;
+.notice{
+ border:1px solid #ead39a;
+ border-radius:8px;
+ background:#fff8e5;
+ color:#684a0b;
+ padding:10px 12px;
  margin:10px 0;
 }
-.other-tools{
- margin-top:22px;
- border-top:1px solid var(--line);
- padding-top:12px;
+.notice.red{border-color:#fecaca;background:#fff1f2;color:var(--red)}
+.notice.blue{border-color:#bfdbfe;background:#eff6ff;color:#164bab}
+.warning{color:var(--red);font-size:12px;font-weight:700}
+.badge{
+ display:inline-block;
+ border:1px solid var(--line);
+ border-radius:6px;
+ padding:3px 7px;
+ background:var(--soft);
+ font-size:12px;
 }
-.manage-row{
- padding:12px 0;
+.badge.blue{color:var(--blue);background:#eff6ff;border-color:#bfdbfe}
+.badge.green{color:var(--green);background:#ecfdf5;border-color:#a7e3c9}
+.badge.amber{color:var(--amber);background:#fff8e5;border-color:#ead39a}
+.badge.red{color:var(--red);background:#fff1f2;border-color:#fecaca}
+
+#app{
+ max-width:1480px;
+ margin:auto;
+ height:100dvh;
+ padding:12px;
+ display:flex;
+ flex-direction:column;
+ gap:10px;
+}
+.app-header{
+ background:#fff;
+ border:1px solid var(--line);
+ border-radius:12px;
+ padding:12px 16px;
+ flex-shrink:0;
+}
+.header-line{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:16px;
+}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.brand img{width:125px;height:auto}
+.brand h1{margin:0}
+.header-controls{
+ display:flex;
+ align-items:center;
+ justify-content:flex-end;
+ gap:10px;
+ flex-wrap:wrap;
+}
+.operator{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ font-size:12px;
+ font-weight:700;
+}
+.operator input{width:175px;padding:7px 9px}
+.header-tools{position:relative}
+summary{cursor:pointer}
+.header-tools>summary{color:var(--muted);font-size:12px}
+.tools-menu{
+ position:absolute;
+ right:0;
+ top:28px;
+ z-index:20;
+ min-width:245px;
+ padding:12px;
+ border:1px solid var(--line);
+ border-radius:10px;
+ background:#fff;
+ box-shadow:0 10px 30px #17233420;
+}
+.tools-menu button{width:100%;margin-bottom:7px;text-align:left}
+.tools-menu p{margin:8px 0 0}
+.search-row{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ margin-top:10px;
+}
+.search-row input{flex:1}
+#message{
+ font-size:12px;
+ margin-top:6px;
+ overflow-wrap:anywhere;
+}
+#message:empty{display:none}
+#writeNotice{margin:8px 0 0}
+#writeNotice p{margin:0}
+#writeNotice .actions{margin-bottom:0}
+.tabs{flex-shrink:0}
+.tabs button{font-size:12px}
+.tabs button.active{background:var(--blue);border-color:var(--blue);color:#fff}
+
+.main-panel{
+ flex:1;
+ min-height:0;
+ display:flex;
+ flex-direction:column;
+}
+#listPanel{
+ flex:1;
+ min-height:0;
+ background:#fff;
+ border:1px solid var(--line);
+ border-radius:12px;
+ padding:18px;
+ display:flex;
+ flex-direction:column;
+}
+#listCount{margin:0 0 10px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:9px}
+#listPanel>.table-wrap{flex:1;min-height:0}
+table{width:100%;border-collapse:collapse}
+th,td{
+ text-align:left;
+ padding:12px;
+ border-bottom:1px solid var(--line);
+ vertical-align:top;
+}
+th{background:var(--soft);font-size:12px;color:var(--muted)}
+#caseBody td:last-child{white-space:nowrap}
+thead th{position:sticky;top:0;z-index:1}
+tbody tr:last-child td{border-bottom:0}
+.empty{padding:24px;text-align:center;color:var(--muted)}
+
+#detailPanel{
+ flex:1;
+ min-height:0;
+ display:flex;
+ flex-direction:column;
+ gap:10px;
+}
+.patient-bar{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:16px;
+ background:#fff;
+ border:1px solid var(--line);
+ border-radius:12px;
+ padding:12px 16px;
+ flex-shrink:0;
+}
+.patient-identity{min-width:0}
+#detailTitle{font-size:21px;margin:0;overflow-wrap:anywhere}
+#patientReference{margin-top:2px}
+#caseSummary{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ flex-wrap:wrap;
+ margin-top:6px;
+}
+.patient-bar .actions{margin:0}
+#caseEditor{
+ flex:1;
+ min-height:0;
+ display:grid;
+ grid-template-columns:minmax(0,3fr) minmax(350px,2fr);
+ gap:12px;
+}
+.overview-column,.work-column{
+ min-width:0;
+ min-height:0;
+ background:#fff;
+ border:1px solid var(--line);
+ border-radius:12px;
+ overflow:hidden;
+}
+.overview-column{display:flex;flex-direction:column}
+.column-heading{
+ flex-shrink:0;
+ padding:14px 16px 10px;
  border-bottom:1px solid var(--line);
 }
+.column-heading h2{margin:0}
+.overview-scroll{
+ flex:1;
+ min-height:0;
+ overflow:auto;
+ overscroll-behavior:contain;
+ padding:12px 16px;
+}
+.report-table th:first-child{width:36%}
+.report-table th:nth-child(2){width:36%}
+.report-table td:last-child{white-space:nowrap}
+.report-table th,.report-table td{padding:10px}
+.report-table button{font-size:12px;padding:7px 9px}
+.report-table tbody tr.selected-row{
+ background:#eff6ff;
+ box-shadow:inset 3px 0 var(--blue);
+}
+.report-table tbody tr.urgent-row{background:#fff7f7}
+.report-table tbody tr.urgent-row.selected-row{
+ box-shadow:inset 3px 0 var(--red);
+}
+.report-name{font-weight:700;overflow-wrap:anywhere}
+.archive{margin-top:10px}
+.archive>summary{color:var(--muted);font-size:12px;padding:5px 0}
+.archive[open]>summary{margin-bottom:7px}
+.appointment-card{
+ border-top:1px solid var(--line);
+ margin-top:16px;
+ padding-top:14px;
+}
+.appointment-card h3{font-size:15px;margin:0}
+.appointment-overview{
+ display:flex;
+ gap:8px 22px;
+ flex-wrap:wrap;
+ margin-top:10px;
+}
+.meta-label{display:block;font-size:12px;color:var(--muted)}
+.patient-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.compact-note{margin-top:10px}
+.latest-contact{
+ margin-top:10px;
+ padding:9px 10px;
+ border-radius:8px;
+ background:var(--soft);
+ font-size:12px;
+}
+.other-tools{
+ flex-shrink:0;
+ border-top:1px solid var(--line);
+ padding:9px 12px;
+ display:flex;
+ align-items:center;
+ gap:6px;
+ flex-wrap:wrap;
+}
+.other-tools button{
+ border:0;
+ padding:5px 7px;
+ background:transparent;
+ color:var(--muted);
+ font-size:12px;
+}
+.other-tools button:hover:not(:disabled){background:var(--soft);color:var(--blue)}
+
+.work-column{display:flex;flex-direction:column}
+#workspaceIdle{
+ flex:1;
+ display:flex;
+ flex-direction:column;
+ justify-content:center;
+ align-items:center;
+ text-align:center;
+ padding:30px;
+ color:var(--muted);
+}
+#workspaceIdle h3{color:var(--text)}
+.idle-symbol{
+ width:48px;
+ height:48px;
+ border-radius:50%;
+ background:#eff6ff;
+ color:var(--blue);
+ display:grid;
+ place-items:center;
+ font-size:24px;
+ margin-bottom:12px;
+}
+#actionWorkspace{
+ flex:1;
+ min-height:0;
+ display:flex;
+ flex-direction:column;
+}
+.workspace-heading{
+ padding:14px 16px 10px;
+ border-bottom:1px solid var(--line);
+ flex-shrink:0;
+}
+.workspace-heading .row{align-items:flex-start;flex-wrap:nowrap}
+#actionTitle{font-size:18px;margin:0}
+#actionCancel{font-size:12px;padding:5px 8px;flex-shrink:0}
+#actionSubtitle{font-size:12px;margin:6px 0 0;overflow-wrap:anywhere}
+.workspace-scroll{
+ flex:1;
+ min-height:0;
+ overflow:auto;
+ overscroll-behavior:contain;
+ padding:14px 16px;
+}
+#actionForm{margin:0}
+#actionWorkspace .form-grid{grid-template-columns:1fr}
+#actionWorkspace .field{font-size:13px}
+#actionWorkspace textarea{min-height:68px}
+#saveActions{
+ flex-shrink:0;
+ padding:12px 16px;
+ margin:0;
+ border-top:1px solid var(--line);
+ background:#fff;
+}
+#actionSave{min-width:100px}
+.form-error{color:var(--red);font-weight:700;margin:10px 0}
+.log{padding:11px 0;border-bottom:1px solid var(--line)}
+.log:last-child{border-bottom:0}
+.log .note{margin-top:4px;font-size:13px}
+.manage-row{padding:10px 0;border-bottom:1px solid var(--line)}
 .manage-row:last-child{border:0}
-#writeNotice .actions{margin-bottom:0}
+.success-box{
+ border:1px solid #a7e3c9;
+ background:#ecfdf5;
+ border-radius:9px;
+ padding:14px;
+ margin-bottom:14px;
+ color:var(--green);
+}
+.section{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
 #printArea{display:none}
 
-@media(max-width:700px){
- .wrap{padding:10px}
- .card{padding:16px}
- .brand img{width:120px}
- .brand h1{font-size:17px}
- .search-row{flex-wrap:wrap}
- .search-row .field{flex-basis:100%}
- .form-grid,.patient-meta{grid-template-columns:1fr}
- #actionWorkspace{padding:16px}
- .report-table,.report-table tbody,
- .report-table tr,.report-table td{
+@media(max-width:1000px){
+ #caseEditor{grid-template-columns:minmax(0,1fr) minmax(330px,1fr)}
+ .brand img{width:100px}
+ .brand h1{font-size:16px}
+ .report-table,.report-table tbody,.report-table tr,.report-table td{
   display:block;
   width:100%;
  }
  .report-table thead{display:none}
- .report-table tr{
-  padding:14px;
-  border-bottom:1px solid var(--line);
- }
+ .report-table tr{padding:10px;border-bottom:1px solid var(--line)}
  .report-table td{padding:0;border:0}
- .report-table td+td{margin-top:9px}
+ .report-table td+td{margin-top:6px}
  .report-table td:last-child{white-space:normal}
- .report-table td:last-child button{min-height:44px}
- .patient-strip .name{font-size:20px}
+}
+@media(max-width:760px){
+ #app{height:auto;min-height:100dvh;padding:8px}
+ .header-line{align-items:flex-start}
+ .brand{gap:8px}
+ .brand img{width:80px}
+ .brand h1{font-size:14px}
+ .header-controls{gap:6px}
+ .operator{display:block}
+ .operator input{width:130px;padding:6px}
+ .header-controls>#reloadButton{display:none}
+ .app-header{padding:10px}
+ .patient-bar{padding:12px;align-items:flex-start;flex-wrap:wrap}
+ #detailTitle{font-size:19px}
+ #caseEditor{display:flex;flex-direction:column}
+ .overview-column,.work-column{min-height:0}
+ .overview-scroll{overflow:visible;padding:12px}
+ .work-column{min-height:220px}
+ #actionWorkspace{min-height:250px}
+ .workspace-scroll{overflow:visible}
+ .form-grid,.patient-meta{grid-template-columns:1fr}
+ #listPanel{padding:12px}
+ #listPanel>.table-wrap{max-height:65dvh}
+ .tabs{gap:5px}
+ .tabs button{padding:7px 9px}
+ #saveActions{position:sticky;bottom:0;z-index:2}
 }
 @media print{
  @page{margin:15mm}
  body{background:#fff;color:#111;font-size:11px}
  #app{display:none!important}
  #printArea{display:block}
- #printArea .brand img{width:40mm;max-width:none}
- #printArea .brand h1{font-size:18px}
+ #printArea .brand{justify-content:space-between;margin-bottom:16px}
+ #printArea .brand img{width:40mm}
+ #printArea .brand h1{font-size:18px;text-align:right}
  #printArea .patient-meta{grid-template-columns:1fr 1fr}
  #printArea table{width:100%}
+ #printArea thead th{position:static}
  #printArea tr,#printArea .log{break-inside:avoid}
  #printArea th,#printArea td{padding:8px;border-color:#ccc}
  #printArea .table-wrap{overflow:visible}
- #printArea .badge{
-  color:#111;
-  background:white;
-  border-color:#ccc;
- }
+ #printArea .badge{color:#111;background:#fff;border-color:#ccc}
 }
 </style>
 </head>
 
 <body>
-<div id="app" class="wrap">
- <header class="card">
-  <div class="brand">
-   <img src="./amclogo.png" alt="Adventist Medical Center logo">
-   <h1>Adventist Medical Center<br>Report Follow-up</h1>
-  </div>
+<div id="app">
+ <header class="app-header">
+  <div class="header-line">
+   <div class="brand">
+    <img src="./amclogo.png" alt="Adventist Medical Center">
+    <h1>Report Follow-up</h1>
+   </div>
 
-  <div class="row">
-   <div class="actions">
-    <button id="reloadButton" type="button" disabled>
-     Refresh records
+   <div class="header-controls">
+    <label class="operator">
+     Recording staff *
+     <input id="operator" maxlength="100" autocomplete="off"
+      placeholder="Your name">
+    </label>
+
+    <button id="reloadButton" type="button" class="small" disabled>
+     Refresh
     </button>
 
-    <details>
-     <summary class="small-text">Data tools</summary>
-     <div class="actions">
+    <details id="headerTools" class="header-tools">
+     <summary>More</summary>
+     <div class="tools-menu">
       <button id="syncButton" type="button" disabled>
-       Sync confirmed quotations
+       Update from quotations
       </button>
       <button id="quotationButton" type="button">
-       Open quotation
+       Open quotation page
       </button>
+      <p class="small-text">
+       <strong>Test data only.</strong>
+       Staff names are not verified logins.
+       Do not enter real patient information in this demo.
+      </p>
+      <p class="small-text">
+       This page records actions; it does not send messages.
+       Urgent results require the clinic's usual escalation process.
+      </p>
      </div>
     </details>
    </div>
-
-   <label class="field operator">
-    Recording staff *
-    <input id="operator" maxlength="100" autocomplete="off"
-     placeholder="Enter your name; update when staff changes">
-   </label>
   </div>
 
   <div id="searchArea" class="search-row">
-   <label class="field">
-    Find a patient
-    <input id="search" type="search" autocomplete="off"
-     placeholder="Name, patient reference, quotation number or investigation">
-   </label>
+   <input id="search" type="search" autocomplete="off"
+    aria-label="Find a patient"
+    placeholder="Find a patient — name, reference or investigation">
    <button id="clearSearchButton" type="button">Clear</button>
   </div>
 
-  <details style="margin-top:12px">
-   <summary class="small-text">Demo information and workflow notes</summary>
-   <div class="notice">
-    <strong>Test data only.</strong>
-    Individual staff authentication, appropriate access controls and
-    server-enforced audit protections are required before using real
-    patient information. Recording staff names are manually entered,
-    not verified identities.
-   </div>
-   <p class="small-text">
-    This page records actions; it does not send messages.
-    Use the clinic's established process for urgent escalation.
-    An outstanding report does not prove that an investigation was
-    performed or that a provider is overdue.
-   </p>
-  </details>
-
   <div id="message" role="status" aria-live="polite">
-   Connecting to the demo backend…
+   Connecting…
   </div>
 
-  <div id="writeNotice" class="notice red" hidden>
+  <div id="writeNotice" class="notice red" role="alert" hidden>
    <p id="writeNoticeText"></p>
    <div class="actions">
     <button id="retryButton" type="button">Retry same save</button>
-    <button id="resolveButton" type="button">Reload and verify</button>
+    <button id="resolveButton" type="button">Reload and check</button>
     <button id="exportPendingButton" type="button">
-     Download save snapshot
+     Download backup
     </button>
    </div>
   </div>
@@ -415,13 +561,12 @@ summary{cursor:pointer}
 
  <nav id="tabs" class="tabs" aria-label="Worklist categories"></nav>
 
- <main class="card">
+ <main class="main-panel">
   <section id="listPanel">
    <div class="row">
     <h2>Patient worklist</h2>
-    <small>Confirmed quotations only</small>
+    <small>Confirmed quotations</small>
    </div>
-
    <p id="listCount" class="small-text"></p>
 
    <div class="table-wrap">
@@ -431,7 +576,7 @@ summary{cursor:pointer}
        <th>Patient</th>
        <th>Outstanding actions</th>
        <th>Appointment / next contact</th>
-       <th>Open</th>
+       <th></th>
       </tr>
      </thead>
      <tbody id="caseBody"></tbody>
@@ -440,74 +585,78 @@ summary{cursor:pointer}
   </section>
 
   <section id="detailPanel" hidden>
-   <div class="row">
-    <h2 id="detailTitle" tabindex="-1">Patient follow-up</h2>
+   <div class="patient-bar">
+    <div class="patient-identity">
+     <h2 id="detailTitle" tabindex="-1"></h2>
+     <div id="patientReference" class="small-text"></div>
+     <div id="caseSummary"></div>
+    </div>
     <div class="actions">
-     <button id="backButton" type="button">← Back to worklist</button>
-     <button id="printButton" type="button">Print / Save PDF</button>
+     <button id="backButton" type="button">← Worklist</button>
+     <button id="printButton" type="button">Print / PDF</button>
     </div>
    </div>
 
-   <div id="patientStrip" class="patient-strip"></div>
-
-   <details id="patientDetails">
-    <summary class="small-text">Patient and quotation details</summary>
-    <div id="patientMeta" class="patient-meta" style="margin-top:12px"></div>
-   </details>
-
-   <div id="caseSummary" class="summary-line"></div>
-
    <div id="caseEditor">
-    <section class="section" style="margin-top:12px">
-     <div class="row">
+    <section class="overview-column" aria-label="Patient overview">
+     <div class="column-heading">
       <h2>Reports</h2>
-      <small>Use the button on the right for the next action</small>
      </div>
-     <div id="groups"></div>
+
+     <div id="overviewScroll" class="overview-scroll">
+      <div id="groups"></div>
+
+      <section class="appointment-card">
+       <div class="row">
+        <h3>Appointment & contact</h3>
+        <button id="contactButton" type="button" class="small">
+         Record contact / appointment
+        </button>
+       </div>
+       <div id="appointmentOverview" class="appointment-overview"></div>
+       <div id="recentContacts"></div>
+      </section>
+     </div>
+
+     <nav class="other-tools" aria-label="Other patient actions">
+      <button id="patientButton" type="button">Patient details</button>
+      <button id="historyButton" type="button">History</button>
+      <button id="correctionButton" type="button">Corrections</button>
+      <button id="manageButton" type="button">Report lists</button>
+     </nav>
     </section>
 
-    <section class="section">
-     <div class="row">
-      <h2>Patient contact and appointment</h2>
-      <button id="contactButton" type="button" class="primary">
-       Record contact / appointment
-      </button>
-     </div>
-     <div id="appointmentOverview" class="appointment-overview"></div>
-     <div id="recentContacts"></div>
-    </section>
-
-    <section id="actionWorkspace" hidden aria-labelledby="actionTitle">
-     <div class="row">
-      <h3 id="actionTitle" tabindex="-1"></h3>
-      <button id="actionCancel" type="button">Cancel / Close</button>
+    <aside class="work-column" aria-label="Action workspace">
+     <div id="workspaceIdle">
+      <div class="idle-symbol" aria-hidden="true">→</div>
+      <h3>Select an action</h3>
+      <p>Choose a report on the left.<br>Complete its next step here.</p>
      </div>
 
-     <p id="actionSubtitle" class="small-text"></p>
-
-     <form id="actionForm">
-      <div id="actionFields"></div>
-      <p id="actionError" class="form-error" role="alert" hidden></p>
-      <div id="saveActions" class="actions">
-       <button id="actionSave" type="submit" class="primary">Save</button>
+     <section id="actionWorkspace" hidden aria-labelledby="actionTitle">
+      <div class="workspace-heading">
+       <div class="row">
+        <h3 id="actionTitle" tabindex="-1"></h3>
+        <button id="actionCancel" type="button">Close</button>
+       </div>
+       <p id="actionSubtitle" class="small-text"></p>
       </div>
-     </form>
 
-     <div id="historyContent"></div>
-    </section>
+      <div id="workspaceScroll" class="workspace-scroll">
+       <form id="actionForm">
+        <div id="actionFields"></div>
+        <p id="actionError" class="form-error" role="alert" hidden></p>
+       </form>
+       <div id="historyContent"></div>
+      </div>
 
-    <details id="otherTools" class="other-tools">
-     <summary>Other actions: history, corrections and report lists</summary>
-     <div class="tool-list">
-      <button id="historyButton" type="button">View history</button>
-      <button id="correctionButton" type="button">Correct a record</button>
-      <button id="manageButton" type="button">Manage report lists</button>
-     </div>
-     <p class="small-text">
-      For routine follow-up, use Reports and Record contact / appointment
-      above. These tools are for checking or correcting records.
-     </p>
-    </details>
+      <div id="saveActions" class="actions">
+       <button id="actionSave" type="submit" form="actionForm"
+        class="primary">Save</button>
+       <span class="small-text">Record completed actions only</span>
+      </div>
+     </section>
+    </aside>
    </div>
   </section>
  </main>
@@ -520,21 +669,17 @@ summary{cursor:pointer}
 <script>
 "use strict";
 
-const SUPABASE_URL = "https://ypictveubevkggsmgyzk.supabase.co";
-const SUPABASE_KEY = "sb_publishable_soGHa4Gfy7Ig2OCB50vNxw_jIAbQ4XS";
+const SUPABASE_URL="https://ypictveubevkggsmgyzk.supabase.co";
+const SUPABASE_KEY="sb_publishable_soGHa4Gfy7Ig2OCB50vNxw_jIAbQ4XS";
 
-const $ = id => document.getElementById(id);
-const clone = value => JSON.parse(JSON.stringify(value));
-
-const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
- "&":"&amp;",
- "<":"&lt;",
- ">":"&gt;",
- '"':"&quot;",
- "'":"&#39;"
+const $=id=>document.getElementById(id);
+const clone=value=>JSON.parse(JSON.stringify(value));
+const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",
+ '"':"&quot;","'":"&#39;"
 })[c]);
 
-const APPOINTMENTS = {
+const APPOINTMENTS={
  unscheduled:"Not arranged",
  booked:"Booked",
  attended:"Attended",
@@ -542,272 +687,236 @@ const APPOINTMENTS = {
  declined:"Patient declined"
 };
 
-const CLASSIFICATIONS = {
+const CLASSIFICATIONS={
  pending:"Awaiting nurse review",
  routine:"Routine",
  doctor:"Priority",
  urgent:"Urgent"
 };
 
-const TABS = [
- ["all","All cases"],
- ["missing","Outstanding reports"],
- ["review","Nurse / doctor review"],
- ["followup","Contacts / appointments"]
+const STEP_LABELS={
+ plan:"Verify reports",
+ received:"Record received",
+ nurse:"Nurse review",
+ doctor:"Record review",
+ patient:"Record contact",
+ filed:"Confirm filing"
+};
+
+const TABS=[
+ ["all","All patients"],
+ ["missing","Awaiting reports"],
+ ["review","Awaiting review"],
+ ["followup","Contact / appointment"]
 ];
 
-let client = null;
-let ready = false;
-let busy = false;
-let records = [];
-let selected = null;
-let activeTab = "all";
-let previousTab = "all";
-let pendingWrite = null;
-let recoverySnapshot = null;
-let blockedReason = "";
-let actionContext = null;
-let actionDirty = false;
-let viewToken = 0;
+let client=null;
+let ready=false;
+let busy=false;
+let records=[];
+let selected=null;
+let activeTab="all";
+let previousTab="all";
+let pendingWrite=null;
+let recoverySnapshot=null;
+let blockedReason="";
+let integrityHold=false;
+let actionContext=null;
+let actionDirty=false;
+let viewToken=0;
+let messageTimer=null;
 
 /* Utilities */
 
 function uuid(){
  if(globalThis.crypto?.randomUUID) return crypto.randomUUID();
-
  if(!globalThis.crypto?.getRandomValues){
-  throw new Error(
-   "Secure IDs are unavailable. Use an updated browser over HTTPS."
-  );
+  throw new Error("This browser cannot create a record. Please use an updated browser.");
  }
-
- const bytes = crypto.getRandomValues(new Uint8Array(16));
- bytes[6] = (bytes[6] & 15) | 64;
- bytes[8] = (bytes[8] & 63) | 128;
-
- const text = [...bytes]
-  .map(value => value.toString(16).padStart(2,"0"))
-  .join("");
-
+ const bytes=crypto.getRandomValues(new Uint8Array(16));
+ bytes[6]=(bytes[6]&15)|64;
+ bytes[8]=(bytes[8]&63)|128;
+ const text=[...bytes].map(x=>x.toString(16).padStart(2,"0")).join("");
  return [
-  text.slice(0,8),
-  text.slice(8,12),
-  text.slice(12,16),
-  text.slice(16,20),
-  text.slice(20)
+  text.slice(0,8),text.slice(8,12),text.slice(12,16),
+  text.slice(16,20),text.slice(20)
  ].join("-");
 }
 
 function today(){
- const parts = new Intl.DateTimeFormat("en-CA",{
+ const parts=new Intl.DateTimeFormat("en-CA",{
   timeZone:"Asia/Hong_Kong",
-  year:"numeric",
-  month:"2-digit",
-  day:"2-digit"
+  year:"numeric",month:"2-digit",day:"2-digit"
  }).formatToParts(new Date());
-
- const values = Object.fromEntries(
-  parts.map(part => [part.type,part.value])
- );
-
- return `${values.year}-${values.month}-${values.day}`;
+ const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));
+ return `${p.year}-${p.month}-${p.day}`;
 }
 
 function validDate(value){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-
- const date = new Date(value + "T00:00:00Z");
-
+ const date=new Date(value+"T00:00:00Z");
  return !Number.isNaN(date.getTime()) &&
-  date.toISOString().slice(0,10) === value;
+  date.toISOString().slice(0,10)===value;
 }
 
 function dateLabel(value){
  if(!value) return "Not set";
-
- const parts = String(value).split("-");
-
- return parts.length === 3
+ const parts=String(value).split("-");
+ return parts.length===3
   ? `${parts[2]}/${parts[1]}/${parts[0]}`
   : String(value);
 }
 
 function timeLabel(value){
  if(!value) return "Time not recorded";
-
- const date = new Date(value);
-
+ const date=new Date(value);
  return Number.isNaN(date.getTime())
   ? "Unknown time"
-  : date.toLocaleString("en-GB",{
-     timeZone:"Asia/Hong_Kong"
-    }) + " HKT";
+  : date.toLocaleString("en-GB",{timeZone:"Asia/Hong_Kong"});
 }
 
-function badge(text,colour = ""){
+function badge(text,colour=""){
  return `<span class="badge ${esc(colour)}">${esc(text)}</span>`;
 }
 
-function message(text,error = false){
- $("message").textContent = text;
- $("message").style.color = error ? "var(--red)" : "var(--blue)";
+function message(text,error=false,temporary=false){
+ clearTimeout(messageTimer);
+ $("message").textContent=text;
+ $("message").style.color=error?"var(--red)":"var(--muted)";
+ if(temporary){
+  messageTimer=setTimeout(()=>{
+   $("message").textContent="";
+  },3500);
+ }
 }
 
 function staffName(){
- const name = $("operator").value.trim();
-
+ const name=$("operator").value.trim();
  if(!name){
   $("operator").focus();
-  throw new Error("Enter the recording staff member's name at the top first.");
+  throw new Error("Enter your name in Recording staff first.");
  }
-
  return name;
 }
 
 function editingLocked(){
- return !ready || busy || !!pendingWrite || !!blockedReason;
+ return !ready||busy||!!pendingWrite||!!blockedReason;
 }
 
 function canonical(value){
  if(Array.isArray(value)){
-  return "[" + value.map(canonical).join(",") + "]";
+  return "["+value.map(canonical).join(",")+"]";
  }
-
- if(value && typeof value === "object"){
-  return "{" + Object.keys(value).sort().map(key =>
-   JSON.stringify(key) + ":" + canonical(value[key])
-  ).join(",") + "}";
+ if(value&&typeof value==="object"){
+  return "{"+Object.keys(value).sort().map(key=>
+   JSON.stringify(key)+":"+canonical(value[key])
+  ).join(",")+"}";
  }
-
  return JSON.stringify(value);
 }
 
-function same(a,b){
- return canonical(a) === canonical(b);
-}
+function same(a,b){return canonical(a)===canonical(b)}
 
 function containsExpected(actual,expected){
- if(expected === null || typeof expected !== "object"){
+ if(expected===null||typeof expected!=="object"){
   return same(actual,expected);
  }
-
  if(Array.isArray(expected)){
-  return Array.isArray(actual) &&
-   actual.length === expected.length &&
-   expected.every((value,index) =>
-    containsExpected(actual[index],value)
-   );
+  return Array.isArray(actual)&&
+   actual.length===expected.length&&
+   expected.every((value,index)=>
+    containsExpected(actual[index],value));
  }
-
- return actual && typeof actual === "object" &&
-  Object.keys(expected).every(key =>
-   Object.hasOwn(actual,key) &&
-   containsExpected(actual[key],expected[key])
-  );
+ return actual&&typeof actual==="object"&&
+  Object.keys(expected).every(key=>
+   Object.hasOwn(actual,key)&&
+   containsExpected(actual[key],expected[key]));
 }
 
 function updateControls(){
- $("reloadButton").disabled = !ready || busy;
- $("syncButton").disabled = editingLocked();
- $("quotationButton").disabled = busy;
- $("backButton").disabled = busy || !!pendingWrite;
- $("printButton").disabled =
-  !selected || editingLocked() || actionDirty;
+ $("reloadButton").disabled=!ready||busy;
+ $("syncButton").disabled=editingLocked();
+ $("quotationButton").disabled=busy;
+ $("backButton").disabled=busy||!!pendingWrite||integrityHold;
+ $("printButton").disabled=!selected||editingLocked()||actionDirty;
+ $("operator").disabled=busy||!!pendingWrite;
+ $("retryButton").disabled=busy;
+ $("resolveButton").disabled=busy||!ready;
+ $("exportPendingButton").disabled=busy;
 
- $("retryButton").disabled = busy;
- $("resolveButton").disabled = busy || !ready;
- $("exportPendingButton").disabled = busy;
+ $("caseEditor").inert=editingLocked();
+ $("caseBody").inert=busy||!!pendingWrite||integrityHold;
+ $("tabs").inert=busy||!!pendingWrite||integrityHold;
 
- $("caseEditor").inert = editingLocked();
- $("caseBody").inert = busy || !!pendingWrite;
- $("tabs").inert = busy || !!pendingWrite;
-
- $("writeNotice").hidden = !pendingWrite && !blockedReason;
- $("retryButton").hidden = !pendingWrite;
- $("exportPendingButton").hidden =
-  !pendingWrite && !recoverySnapshot;
+ $("writeNotice").hidden=!pendingWrite&&!blockedReason;
+ $("retryButton").hidden=!pendingWrite;
+ $("exportPendingButton").hidden=!pendingWrite&&!recoverySnapshot;
 
  if(pendingWrite){
-  $("writeNoticeText").textContent =
-   "The save was not acknowledged and may already have succeeded. " +
-   "Editing is paused. Retry the same save, or reload to inspect " +
-   "the actual saved record. Do not repeat the action as a new save.";
+  $("writeNoticeText").textContent=
+   "Save confirmation has not arrived. The record may already be saved. "+
+   "Retry the same save or reload and check before repeating the action.";
  }else if(blockedReason){
-  $("writeNoticeText").textContent = blockedReason;
+  $("writeNoticeText").textContent=blockedReason;
  }
 }
 
-/* Report state and retained review cycles */
+/* Report state */
 
 function findReport(state,groupId,reportId){
- const group = state.groups.find(item => item.id === groupId);
- const report = group?.reports.find(item => item.id === reportId);
-
- if(!group || !report){
-  throw new Error("The report record could not be found. Refresh the records.");
+ const group=state.groups.find(x=>x.id===groupId);
+ const report=group?.reports.find(x=>x.id===reportId);
+ if(!group||!report){
+  throw new Error("Report not found. Refresh and try again.");
  }
-
  return {group,report};
 }
 
 function entries(state){
- return state.groups.flatMap(group =>
-  group.reports.map(report => ({group,report}))
- );
+ return state.groups.flatMap(group=>
+  group.reports.map(report=>({group,report})));
 }
 
-function cycleId(report){
- return report.reviewCycleId || "legacy";
-}
+function cycleId(report){return report.reviewCycleId||"legacy"}
 
 function nurseDone(report){
  return ["routine","doctor","urgent"].includes(report.triage);
 }
 
 function needsDoctorReview(report){
- return !report.cancelled &&
-  !!report.receivedDate &&
-  (!report.reviewedAt || report.reviewPending === true);
+ return !report.cancelled&&!!report.receivedDate&&
+  (!report.reviewedAt||report.reviewPending===true);
 }
 
 function receiptConfirmed(contact){
- return contact.deliveryStatus === "confirmed" ||
-  !!contact.confirmedAt;
+ return contact.deliveryStatus==="confirmed"||!!contact.confirmedAt;
 }
 
 function patientConfirmed(state,report){
- return state.contacts.some(contact =>
-  contact.audience === "patient" &&
-  contact.reportId === report.id &&
-  (contact.reviewCycleId || "legacy") === cycleId(report) &&
-  receiptConfirmed(contact)
- );
+ return state.contacts.some(contact=>
+  contact.audience==="patient"&&
+  contact.reportId===report.id&&
+  (contact.reviewCycleId||"legacy")===cycleId(report)&&
+  receiptConfirmed(contact));
 }
 
 function patientPending(state,report){
- return !report.cancelled &&
-  !!report.reviewedAt &&
-  !needsDoctorReview(report) &&
-  report.patientContactRequired === true &&
+ return !report.cancelled&&!!report.reviewedAt&&
+  !needsDoctorReview(report)&&
+  report.patientContactRequired===true&&
   !patientConfirmed(state,report);
 }
 
 function preserveLegacyReview(report){
- if(!Array.isArray(report.reviewHistory)){
-  report.reviewHistory = [];
- }
-
- if(report.reviewedAt &&
-  !report.reviewHistory.some(item => item.at === report.reviewedAt)
- ){
+ if(!Array.isArray(report.reviewHistory)) report.reviewHistory=[];
+ if(report.reviewedAt&&
+  !report.reviewHistory.some(x=>x.at===report.reviewedAt)){
   report.reviewHistory.push({
-   id:uuid(),
-   cycleId:cycleId(report),
-   at:report.reviewedAt,
-   doctor:report.reviewDoctorName || report.doctorName || "",
-   recordedBy:report.reviewRecordedBy || "",
-   note:report.reviewNote || "",
-   patientContactRequired:report.patientContactRequired === true,
+   id:uuid(),cycleId:cycleId(report),at:report.reviewedAt,
+   doctor:report.reviewDoctorName||report.doctorName||"",
+   recordedBy:report.reviewRecordedBy||"",
+   note:report.reviewNote||"",
+   patientContactRequired:report.patientContactRequired===true,
    legacy:true
   });
  }
@@ -815,227 +924,121 @@ function preserveLegacyReview(report){
 
 function openNewReviewCycle(report){
  preserveLegacyReview(report);
- report.reviewCycleId = uuid();
- report.reviewPending = true;
+ report.reviewCycleId=uuid();
+ report.reviewPending=true;
 }
 
 function appendNurseNote(report,note,staff){
  if(!note) return;
-
- if(!Array.isArray(report.noteHistory)){
-  report.noteHistory = [];
- }
-
- if(report.nurseNote && !report.noteHistory.length){
+ if(!Array.isArray(report.noteHistory)) report.noteHistory=[];
+ if(report.nurseNote&&!report.noteHistory.length){
   report.noteHistory.push({
-   id:uuid(),
-   at:"",
-   staff:"",
-   note:report.nurseNote,
-   legacy:true
+   id:uuid(),at:"",staff:"",note:report.nurseNote,legacy:true
   });
  }
-
  report.noteHistory.push({
-  id:uuid(),
-  at:new Date().toISOString(),
-  staff,
-  note
+  id:uuid(),at:new Date().toISOString(),staff,note
  });
-
- report.nurseNote =
-  (report.nurseNote ? report.nurseNote + "\n\n" : "") + note;
+ report.nurseNote=(report.nurseNote?report.nurseNote+"\n\n":"")+note;
 }
 
-function recordClassification(report,outcome,staff,reason = ""){
+function recordClassification(report,outcome,staff,reason=""){
  if(!Object.hasOwn(CLASSIFICATIONS,outcome)){
   throw new Error("Select a valid classification.");
  }
+ if((report.triage||"pending")===outcome) return false;
 
- if((report.triage || "pending") === outcome) return false;
-
- if(report.reviewedAt ||
-  (report.triage || "pending") !== "pending"
- ){
+ if(report.reviewedAt||(report.triage||"pending")!=="pending"){
   openNewReviewCycle(report);
  }else if(!report.reviewCycleId){
-  report.reviewCycleId = uuid();
+  report.reviewCycleId=uuid();
  }
 
  if(!Array.isArray(report.nurseReviewHistory)){
-  report.nurseReviewHistory = [];
+  report.nurseReviewHistory=[];
  }
-
- if(report.nurseAt && !report.nurseReviewHistory.length){
+ if(report.nurseAt&&!report.nurseReviewHistory.length){
   report.nurseReviewHistory.push({
-   id:uuid(),
-   at:report.nurseAt,
-   staff:report.nurseName || "",
-   classification:report.triage,
-   legacy:true
+   id:uuid(),at:report.nurseAt,staff:report.nurseName||"",
+   classification:report.triage,legacy:true
   });
  }
 
- const at = new Date().toISOString();
-
+ const at=new Date().toISOString();
  report.nurseReviewHistory.push({
-  id:uuid(),
-  at,
-  staff,
-  classification:outcome,
-  reason,
+  id:uuid(),at,staff,classification:outcome,reason,
   cycleId:cycleId(report)
  });
-
- report.triage = outcome;
- report.nurseName = outcome === "pending" ? "" : staff;
- report.nurseAt = outcome === "pending" ? "" : at;
-
+ report.triage=outcome;
+ report.nurseName=outcome==="pending"?"":staff;
+ report.nurseAt=outcome==="pending"?"":at;
  return true;
 }
 
 function emptyReport(name){
  return {
-  id:uuid(),
-  name,
-  receivedDate:"",
-  archived:false,
-  triage:"pending",
-  nurseName:"",
-  nurseAt:"",
-  nurseNote:"",
-  doctorName:"",
-  notifiedAt:"",
-  reviewedAt:"",
-  reviewNote:"",
-  cancelled:false,
-  cancelReason:"",
-  reviewPending:false,
-  patientContactRequired:false,
-  actionLog:[]
+  id:uuid(),name,receivedDate:"",archived:false,
+  triage:"pending",nurseName:"",nurseAt:"",nurseNote:"",
+  doctorName:"",notifiedAt:"",reviewedAt:"",reviewNote:"",
+  cancelled:false,cancelReason:"",reviewPending:false,
+  patientContactRequired:false,actionLog:[]
  };
 }
 
 function stage(state,group,report){
  if(report.cancelled){
-  return {
-   key:"cancelled",
-   label:"Tracking cancelled",
-   colour:"",
-   order:90
-  };
+  return {key:"cancelled",label:"Cancelled",colour:"",order:90};
  }
-
  if(!group.planReviewed){
-  return {
-   key:"plan",
-   label:"Verify expected reports",
-   colour:"amber",
-   order:10
-  };
+  return {key:"plan",label:"Report list not verified",colour:"amber",order:10};
  }
-
  if(!report.receivedDate){
-  return {
-   key:"received",
-   label:"Awaiting report",
-   colour:"amber",
-   order:50
-  };
+  return {key:"received",label:"Awaiting report",colour:"amber",order:50};
  }
-
  if(!nurseDone(report)){
-  return {
-   key:"nurse",
-   label:"Awaiting nurse review",
-   colour:"blue",
-   order:30
-  };
+  return {key:"nurse",label:"Nurse review pending",colour:"blue",order:30};
  }
-
  if(needsDoctorReview(report)){
   return {
    key:"doctor",
-   label:report.triage === "urgent"
-    ? "Urgent — doctor review pending"
-    : report.triage === "doctor"
-      ? "Priority — doctor review pending"
-      : "Awaiting doctor review",
-   colour:report.triage === "urgent" ? "red" : "blue",
-   order:report.triage === "urgent"
-    ? 0
-    : report.triage === "doctor" ? 20 : 35
+   label:report.triage==="urgent"
+    ? "Urgent · doctor review"
+    : report.triage==="doctor"
+     ? "Priority · doctor review"
+     : "Doctor review pending",
+   colour:report.triage==="urgent"?"red":"blue",
+   order:report.triage==="urgent"?0:report.triage==="doctor"?20:35
   };
  }
-
  if(patientPending(state,report)){
-  return {
-   key:"patient",
-   label:"Patient receipt pending",
-   colour:"amber",
-   order:40
-  };
+  return {key:"patient",label:"Patient receipt pending",colour:"amber",order:40};
  }
-
  if(!report.archived){
-  return {
-   key:"filed",
-   label:"Awaiting filing",
-   colour:"amber",
-   order:60
-  };
+  return {key:"filed",label:"Filing pending",colour:"amber",order:60};
  }
-
- return {
-  key:"complete",
-  label:"Completed",
-  colour:"green",
-  order:80
- };
+ return {key:"complete",label:"Completed",colour:"green",order:80};
 }
 
 function metrics(state){
- const all = entries(state);
- const active = all.filter(item => !item.report.cancelled);
-
- const pending = active.filter(item =>
-  stage(state,item.group,item.report).key !== "complete"
- );
-
- const missing = active.filter(item => !item.report.receivedDate);
-
- const nurse = active.filter(item =>
-  item.report.receivedDate && !nurseDone(item.report)
- );
-
- const doctor = active.filter(item =>
-  nurseDone(item.report) && needsDoctorReview(item.report)
- );
-
- const patient = active.filter(item =>
-  patientPending(state,item.report)
- );
-
- const plans = state.groups.filter(group => !group.planReviewed);
-
- const urgent = active.filter(item =>
-  item.report.triage === "urgent" &&
-  needsDoctorReview(item.report)
- );
-
- const due = !!state.nextFollowupDate &&
-  state.nextFollowupDate <= today();
-
- const missed = state.appointmentStatus === "missed" ||
-  (
-   state.appointmentStatus === "booked" &&
-   !!state.appointmentDate &&
-   state.appointmentDate < today()
-  );
-
- const arrange =
-  (state.appointmentStatus || "unscheduled") === "unscheduled" &&
-  active.some(item => !!item.report.receivedDate);
+ const all=entries(state);
+ const active=all.filter(x=>!x.report.cancelled);
+ const pending=active.filter(x=>
+  stage(state,x.group,x.report).key!=="complete");
+ const missing=active.filter(x=>!x.report.receivedDate);
+ const nurse=active.filter(x=>
+  x.report.receivedDate&&!nurseDone(x.report));
+ const doctor=active.filter(x=>
+  nurseDone(x.report)&&needsDoctorReview(x.report));
+ const patient=active.filter(x=>patientPending(state,x.report));
+ const plans=state.groups.filter(x=>!x.planReviewed);
+ const urgent=active.filter(x=>
+  x.report.triage==="urgent"&&needsDoctorReview(x.report));
+ const due=!!state.nextFollowupDate&&state.nextFollowupDate<=today();
+ const missed=state.appointmentStatus==="missed"||
+  (state.appointmentStatus==="booked"&&
+   !!state.appointmentDate&&state.appointmentDate<today());
+ const arrange=(state.appointmentStatus||"unscheduled")==="unscheduled"&&
+  active.some(x=>!!x.report.receivedDate);
 
  return {
   all,active,pending,missing,nurse,doctor,
@@ -1044,171 +1047,112 @@ function metrics(state){
 }
 
 function matchesTab(state,tab){
- const m = metrics(state);
-
- return tab === "all" ||
-  (tab === "missing" && m.missing.length > 0) ||
-  (
-   tab === "review" &&
-   (m.nurse.length || m.doctor.length || m.plans.length)
-  ) ||
-  (
-   tab === "followup" &&
-   (m.patient.length || m.due || m.missed || m.arrange)
-  );
+ const m=metrics(state);
+ return tab==="all"||
+  (tab==="missing"&&m.missing.length>0)||
+  (tab==="review"&&(m.nurse.length||m.doctor.length||m.plans.length))||
+  (tab==="followup"&&(m.patient.length||m.due||m.missed||m.arrange));
 }
 
 /* Rendering */
 
 function patientHTML(state){
- const metadata = state.metadata || {};
-
- const item = (label,value) => `
+ const m=state.metadata||{};
+ const item=(label,value)=>`
   <div>
    <span class="meta-label">${esc(label)}</span>
-   <strong>${esc(value || "Not entered")}</strong>
-  </div>
- `;
+   <strong>${esc(value||"Not entered")}</strong>
+  </div>`;
 
  return [
-  item("Patient name",metadata.patientName),
-  item("Patient reference",metadata.patientReference),
-  item("Referring clinician",metadata.clinician),
-  item("Quotation prepared by",metadata.preparedBy),
-  item("Quotation date",dateLabel(metadata.quoteDate)),
-  item("Confirmed quotation revision",String(state.sourceRevision ?? "")),
-  metadata.notes ? `
+  item("Patient name",m.patientName),
+  item("Patient reference",m.patientReference),
+  item("Referring clinician",m.clinician),
+  item("Quotation number",state.quotationNumber),
+  item("Quotation date",dateLabel(m.quoteDate)),
+  item("Prepared by",m.preparedBy),
+  m.notes?`
    <div class="full">
     <span class="meta-label">Quotation notes</span>
-    <div class="note">${esc(metadata.notes)}</div>
-   </div>
-  ` : ""
+    <div class="note">${esc(m.notes)}</div>
+   </div>`:""
  ].join("");
 }
 
 function searchMatches(record){
- const query = $("search").value.trim().toLowerCase();
+ const query=$("search").value.trim().toLowerCase();
  if(!query) return true;
-
- const state = record.state;
- const metadata = state.metadata || {};
-
+ const state=record.state,m=state.metadata||{};
  return [
-  state.quotationNumber,
-  metadata.patientName,
-  metadata.patientReference,
-  metadata.clinician,
-  ...state.groups.flatMap(group => [
-   group.name,
-   group.code,
-   ...group.reports.map(report => report.name)
+  state.quotationNumber,m.patientName,m.patientReference,m.clinician,
+  ...state.groups.flatMap(group=>[
+   group.name,group.code,...group.reports.map(report=>report.name)
   ])
  ].join(" ").toLowerCase().includes(query);
 }
 
 function outstandingText(state){
- const m = metrics(state);
- const items = [];
-
- if(m.plans.length){
-  items.push(`Report lists to verify: ${m.plans.length}`);
- }
- if(m.nurse.length){
-  items.push(`Nurse review: ${m.nurse.length}`);
- }
- if(m.doctor.length){
-  items.push(`Doctor review: ${m.doctor.length}`);
- }
- if(m.patient.length){
-  items.push(`Patient receipt: ${m.patient.length}`);
- }
- if(m.missing.length){
-  items.push(`Outstanding reports: ${m.missing.length}`);
- }
-
- const filing = m.active.filter(item =>
-  stage(state,item.group,item.report).key === "filed"
- ).length;
-
+ const m=metrics(state),items=[];
+ if(m.plans.length) items.push(`Verify lists: ${m.plans.length}`);
+ if(m.nurse.length) items.push(`Nurse review: ${m.nurse.length}`);
+ if(m.doctor.length) items.push(`Doctor review: ${m.doctor.length}`);
+ if(m.patient.length) items.push(`Patient receipt: ${m.patient.length}`);
+ if(m.missing.length) items.push(`Awaiting reports: ${m.missing.length}`);
+ const filing=m.active.filter(x=>
+  stage(state,x.group,x.report).key==="filed").length;
  if(filing) items.push(`Filing: ${filing}`);
-
- return items.join(" · ") || "No outstanding report actions";
+ return items.join(" · ")||"No outstanding report actions";
 }
 
 function renderList(){
- const tab = activeTab === "case" ? previousTab : activeTab;
+ const caseView=activeTab==="case";
+ const tab=caseView?previousTab:activeTab;
+ const filtered=records.filter(record=>
+  matchesTab(record.state,tab)&&searchMatches(record));
 
- const filtered = records.filter(record =>
-  matchesTab(record.state,tab) && searchMatches(record)
- );
+ $("tabs").hidden=caseView;
+ $("searchArea").hidden=caseView;
+ $("listPanel").hidden=caseView;
+ $("detailPanel").hidden=!caseView;
 
- $("tabs").hidden = activeTab === "case";
- $("searchArea").hidden = activeTab === "case";
-
- $("tabs").innerHTML = TABS.map(([id,label]) => `
+ $("tabs").innerHTML=TABS.map(([id,label])=>`
   <button type="button" data-tab="${id}"
-   class="${activeTab === id ? "active" : ""}"
-   aria-pressed="${activeTab === id}">
+   class="${activeTab===id?"active":""}"
+   aria-pressed="${activeTab===id}">
    ${esc(label)}
-   (${records.filter(record => matchesTab(record.state,id)).length})
-  </button>
- `).join("");
+   (${records.filter(record=>matchesTab(record.state,id)).length})
+  </button>`).join("");
 
- $("listPanel").hidden = activeTab === "case";
- $("detailPanel").hidden = activeTab !== "case";
+ $("listCount").textContent=`${filtered.length} patient case(s)`;
 
- $("listCount").textContent =
-  `${filtered.length} matching case(s) · ${records.length} cases loaded.`;
-
- $("caseBody").innerHTML = filtered.length
-  ? filtered.map(record => {
-     const state = record.state;
-     const metadata = state.metadata || {};
-     const count = metrics(state);
-
-     return `
-      <tr>
-       <td>
-        <div class="name">
-         ${esc(metadata.patientName || "Name not entered")}
-        </div>
-        <div class="small-text">
-         ${esc(metadata.patientReference || "Patient reference not entered")}
-        </div>
-        <div class="code">${esc(state.quotationNumber)}</div>
-       </td>
-       <td>
-        ${count.urgent.length ? `
-         <div class="warning">Urgent doctor review pending</div>
-        ` : ""}
-        ${esc(outstandingText(state))}
-       </td>
-       <td>
-        <strong>
-         ${esc(APPOINTMENTS[state.appointmentStatus] || "Not arranged")}
-        </strong>
-        ${state.appointmentDate ? `
-         <div class="small-text">
-          ${esc(dateLabel(state.appointmentDate))}
-         </div>
-        ` : ""}
-        <div class="small-text">
-         Next contact: ${esc(dateLabel(state.nextFollowupDate))}
-        </div>
-        ${count.missed ? `
-         <div class="warning">Check appointment attendance</div>
-        ` : ""}
-        ${count.due ? `
-         <div class="warning">Follow-up due</div>
-        ` : ""}
-       </td>
-       <td>
-        <button type="button" data-open="${esc(record.id)}">Open</button>
-       </td>
-      </tr>
-     `;
-    }).join("")
-  : '<tr><td colspan="4" class="empty">No matching cases.</td></tr>';
+ $("caseBody").innerHTML=filtered.length?filtered.map(record=>{
+  const state=record.state,m=state.metadata||{},count=metrics(state);
+  return `
+   <tr>
+    <td>
+     <div class="name">${esc(m.patientName||"Name not entered")}</div>
+     <div class="small-text">
+      ${esc(m.patientReference||"Reference not entered")}
+     </div>
+    </td>
+    <td>
+     ${count.urgent.length?`
+      <div class="warning">Urgent doctor review pending</div>`:""}
+     ${esc(outstandingText(state))}
+    </td>
+    <td>
+     <strong>${esc(APPOINTMENTS[state.appointmentStatus]||"Not arranged")}</strong>
+     ${state.appointmentDate?`
+      <div class="small-text">${esc(dateLabel(state.appointmentDate))}</div>`:""}
+     <div class="small-text">
+      Next contact: ${esc(dateLabel(state.nextFollowupDate))}
+     </div>
+     ${count.missed?'<div class="warning">Check attendance</div>':""}
+     ${count.due?'<div class="warning">Follow-up due</div>':""}
+    </td>
+    <td><button type="button" data-open="${esc(record.id)}">Open</button></td>
+   </tr>`;
+ }).join(""):'<tr><td colspan="4" class="empty">No matching patients.</td></tr>';
 
  updateControls();
 }
@@ -1220,8 +1164,7 @@ function reportButton(group,report,key,label){
    data-group="${esc(group.id)}"
    data-report="${esc(report.id)}">
    ${esc(label)}
-  </button>
- `;
+  </button>`;
 }
 
 function reportTable(state,list){
@@ -1229,1414 +1172,1110 @@ function reportTable(state,list){
   <div class="table-wrap">
    <table class="report-table">
     <thead>
-     <tr>
-      <th>Report</th>
-      <th>Progress</th>
-      <th>Next action</th>
-     </tr>
+     <tr><th>Report</th><th>Progress</th><th>Next action</th></tr>
     </thead>
     <tbody>
-     ${list.map(({group,report}) => {
-      const current = stage(state,group,report);
-
-      const labels = {
-       plan:"Verify reports",
-       received:"Record received",
-       nurse:"Review",
-       doctor:"Record review",
-       patient:"Record contact",
-       filed:"Confirm filing"
-      };
-
-      const urgent = report.triage === "urgent" &&
-       needsDoctorReview(report);
-
+     ${list.map(({group,report})=>{
+      const current=stage(state,group,report);
+      const urgent=report.triage==="urgent"&&needsDoctorReview(report);
       return `
-       <tr class="${urgent ? "urgent-row" : ""}">
+       <tr data-row-group="${esc(group.id)}"
+        data-row-report="${esc(report.id)}"
+        class="${urgent?"urgent-row":""}">
         <td>
-         <div class="name">${esc(report.name || group.name)}</div>
-         <div class="code">${esc(group.code)}</div>
-         ${urgent ? `
-          <div class="warning">
-           Use the clinic's immediate escalation process
-          </div>
-         ` : ""}
+         <div class="report-name">${esc(report.name||group.name)}</div>
+         ${urgent&&current.key!=="doctor"?
+          '<div class="warning">Urgent result — escalate now</div>':""}
         </td>
+        <td>${badge(current.label,current.colour)}</td>
         <td>
-         ${badge(current.label,current.colour)}
-         ${report.receivedDate && current.key !== "complete" ? `
-          <div class="small-text">
-           Received: ${esc(dateLabel(report.receivedDate))}
-          </div>
-         ` : ""}
+         ${STEP_LABELS[current.key]
+          ? reportButton(group,report,current.key,STEP_LABELS[current.key])
+          : '<span class="muted">—</span>'}
         </td>
-        <td>
-         ${labels[current.key]
-           ? reportButton(group,report,current.key,labels[current.key])
-           : '<span class="muted">—</span>'}
-        </td>
-       </tr>
-      `;
+       </tr>`;
      }).join("")}
     </tbody>
    </table>
-  </div>
- `;
+  </div>`;
 }
 
 function groupsHTML(state){
- const all = entries(state);
-
- const pending = all.filter(item =>
-  !["complete","cancelled"].includes(
-   stage(state,item.group,item.report).key
-  )
- ).sort((a,b) => {
-  const urgent = item =>
-   item.report.triage === "urgent" &&
-   needsDoctorReview(item.report);
-
-  return Number(urgent(b)) - Number(urgent(a)) ||
-   stage(state,a.group,a.report).order -
-   stage(state,b.group,b.report).order;
+ const all=entries(state);
+ const pending=all.filter(x=>
+  !["complete","cancelled"].includes(stage(state,x.group,x.report).key)
+ ).sort((a,b)=>{
+  const urgent=x=>x.report.triage==="urgent"&&needsDoctorReview(x.report);
+  return Number(urgent(b))-Number(urgent(a))||
+   stage(state,a.group,a.report).order-stage(state,b.group,b.report).order;
  });
 
- const completed = all.filter(item =>
-  stage(state,item.group,item.report).key === "complete"
- );
-
- const emptyGroups = state.groups.filter(group => !group.reports.length);
+ const completed=all.filter(x=>stage(state,x.group,x.report).key==="complete");
+ const cancelled=all.filter(x=>x.report.cancelled);
+ const emptyGroups=state.groups.filter(group=>!group.reports.length);
 
  return `
-  ${pending.length
-    ? reportTable(state,pending)
-    : '<p class="muted">No outstanding report actions.</p>'}
+  ${pending.length?reportTable(state,pending):
+   '<p class="muted">No outstanding report actions.</p>'}
 
-  ${emptyGroups.length ? `
+  ${emptyGroups.length?`
    <div class="notice">
-    ${emptyGroups.map(group => `
-     <div class="row">
-      <span>${esc(group.name)} — no report entries</span>
-      <button type="button" data-plan="${esc(group.id)}">
-       Verify reports
-      </button>
-     </div>
-    `).join("")}
-   </div>
-  ` : ""}
+    ${emptyGroups.map(group=>`
+     <div class="row" style="margin:6px 0">
+      <span>${esc(group.name)} — report list needed</span>
+      <button type="button" data-plan="${esc(group.id)}">Verify reports</button>
+     </div>`).join("")}
+   </div>`:""}
 
-  ${completed.length ? `
-   <details class="archive">
+  ${completed.length?`
+   <details class="archive" data-archive="completed">
     <summary>Completed reports (${completed.length})</summary>
     ${reportTable(state,completed)}
-   </details>
-  ` : ""}
+   </details>`:""}
+
+  ${cancelled.length?`
+   <details class="archive" data-archive="cancelled">
+    <summary>Cancelled reports (${cancelled.length})</summary>
+    ${reportTable(state,cancelled)}
+   </details>`:""}
  `;
 }
 
 function deliveryLabel(contact){
- if(receiptConfirmed(contact)) return "Receipt explicitly confirmed";
-
+ if(receiptConfirmed(contact)) return "Receipt confirmed";
  return ({
   sent:"Sent — receipt not confirmed",
   connected:"Contact made — receipt not confirmed",
   "no-answer":"No answer",
   voicemail:"Voicemail left"
- })[contact.deliveryStatus] || contact.outcome || "Not recorded";
+ })[contact.deliveryStatus]||contact.outcome||"Not recorded";
 }
 
 function contactHTML(contact){
  return `
   <div class="log">
-   <strong>
-    ${esc(contact.target || "Patient")}
-    · ${esc(contact.method || "")}
-   </strong>
+   <strong>${esc(contact.target||"Patient")} · ${esc(contact.method||"")}</strong>
    <div class="small-text">
     ${esc(deliveryLabel(contact))}
     · ${esc(timeLabel(contact.at))}
-    · ${esc(contact.staff || "Recording staff not entered")}
+    · ${esc(contact.staff||"Staff not recorded")}
    </div>
-   ${contact.reportName ? `
-    <div class="small-text">Report: ${esc(contact.reportName)}</div>
-   ` : ""}
-   ${contact.note ? `
-    <div class="note">${esc(contact.note)}</div>
-   ` : ""}
-   ${contact.nextDate ? `
+   ${contact.reportName?`
+    <div class="small-text">Report: ${esc(contact.reportName)}</div>`:""}
+   ${contact.note?`<div class="note">${esc(contact.note)}</div>`:""}
+   ${contact.nextDate?`
+    <div class="small-text">Next contact: ${esc(dateLabel(contact.nextDate))}</div>`:""}
+   ${contact.confirmedAt?`
     <div class="small-text">
-     Next contact: ${esc(dateLabel(contact.nextDate))}
-    </div>
-   ` : ""}
-   ${contact.confirmedAt ? `
-    <div class="small-text">
-     Receipt confirmation: ${esc(timeLabel(contact.confirmedAt))}
-     · ${esc(contact.confirmedBy || contact.staff || "")}
-    </div>
-   ` : ""}
-  </div>
- `;
+     Receipt confirmed: ${esc(timeLabel(contact.confirmedAt))}
+     · ${esc(contact.confirmedBy||contact.staff||"")}
+    </div>`:""}
+  </div>`;
 }
 
 function recentContactsHTML(state){
- const seen = new Set();
+ const latest=state.contacts[state.contacts.length-1];
+ if(!latest) return "";
+ const linked=latest.communicationId
+  ? state.contacts.filter(x=>x.communicationId===latest.communicationId)
+  : [latest];
+ const names=[...new Set(linked.map(x=>x.reportName).filter(Boolean))];
 
- const unique = [...state.contacts].reverse().filter(contact => {
-  if(!contact.communicationId) return true;
-  if(seen.has(contact.communicationId)) return false;
+ return `
+  <div class="latest-contact">
+   <strong>Latest contact</strong>
+   · ${esc(timeLabel(latest.at))}<br>
+   ${esc(latest.method||"")} · ${esc(deliveryLabel(latest))}
+   ${names.length?`<br>${esc(names.join(", "))}`:""}
+  </div>`;
+}
 
-  seen.add(contact.communicationId);
-  return true;
+function updateSelection(){
+ const target=actionContext?.target;
+ $("groups").querySelectorAll("[data-row-report]").forEach(row=>{
+  row.classList.toggle("selected-row",!!target&&
+   row.dataset.rowGroup===target.groupId&&
+   row.dataset.rowReport===target.reportId);
  });
-
- return unique.slice(0,2).map(contactHTML).join("");
 }
 
 function renderDetail(){
  if(!selected) return;
 
- const state = selected.state;
- const metadata = state.metadata || {};
- const counts = metrics(state);
+ const state=selected.state,m=state.metadata||{},counts=metrics(state);
+ const scroll=$("overviewScroll").scrollTop;
+ const openArchives=new Set(
+  [...$("groups").querySelectorAll("details[open][data-archive]")]
+   .map(x=>x.dataset.archive)
+ );
 
- $("detailTitle").textContent = "Patient follow-up";
+ $("detailTitle").textContent=m.patientName||"Name not entered";
+ $("patientReference").textContent=
+  "Patient reference: "+(m.patientReference||"Not entered");
 
- $("patientStrip").innerHTML = `
-  <div class="name">${esc(metadata.patientName || "Name not entered")}</div>
-  <div>
-   Patient reference: ${esc(metadata.patientReference || "Not entered")}
-  </div>
-  <div class="code">
-   ${esc(state.quotationNumber)}
-   · Quotation revision ${esc(state.sourceRevision)}
-  </div>
+ $("caseSummary").innerHTML=`
+  ${badge(`${counts.pending.length} pending`,
+   counts.pending.length?"amber":"green")}
+  ${counts.urgent.length?badge(`${counts.urgent.length} urgent`,"red"):""}
+  ${counts.urgent.length?
+   '<span class="warning">Escalate urgent results now</span>':""}
  `;
 
- $("patientMeta").innerHTML = patientHTML(state);
+ $("groups").innerHTML=groupsHTML(state);
+ $("groups").querySelectorAll("[data-archive]").forEach(details=>{
+  details.open=openArchives.has(details.dataset.archive);
+ });
 
- $("caseSummary").innerHTML = `
-  <strong>
-   ${counts.pending.length} report(s) with outstanding actions
-  </strong>
-  ${counts.urgent.length ? `
-   <div class="warning">
-    Urgent doctor review pending.
-    Use the clinic's immediate escalation process.
-   </div>
-  ` : ""}
-  <div class="small-text">
-   Last saved: ${esc(timeLabel(selected.updated_at))}
-  </div>
- `;
-
- $("groups").innerHTML = groupsHTML(state);
-
- $("appointmentOverview").innerHTML = `
+ $("appointmentOverview").innerHTML=`
   <div>
    <span class="meta-label">Appointment</span>
-   <strong>
-    ${esc(APPOINTMENTS[state.appointmentStatus] || "Not arranged")}
-   </strong>
-   ${state.appointmentDate
-     ? ` · ${esc(dateLabel(state.appointmentDate))}`
-     : ""}
+   <strong>${esc(APPOINTMENTS[state.appointmentStatus]||"Not arranged")}</strong>
+   ${state.appointmentDate?` · ${esc(dateLabel(state.appointmentDate))}`:""}
   </div>
   <div>
    <span class="meta-label">Next contact</span>
    <strong>${esc(dateLabel(state.nextFollowupDate))}</strong>
   </div>
-  ${state.caseNote ? `
-   <div style="flex-basis:100%">
-    <span class="meta-label">Current follow-up notes</span>
+  ${counts.missed?'<div class="warning">Check appointment attendance</div>':""}
+  ${counts.due?'<div class="warning">Follow-up due</div>':""}
+  ${state.caseNote?`
+   <details class="compact-note" style="flex-basis:100%">
+    <summary class="small-text">Follow-up notes</summary>
     <div class="note">${esc(state.caseNote)}</div>
-   </div>
-  ` : ""}
-  ${counts.missed ? `
-   <div class="warning">Check the patient's appointment attendance.</div>
-  ` : ""}
+   </details>`:""}
  `;
 
- $("recentContacts").innerHTML = recentContactsHTML(state);
-
+ $("recentContacts").innerHTML=recentContactsHTML(state);
+ $("overviewScroll").scrollTop=scroll;
+ updateSelection();
  updateControls();
 }
 
 function replaceRecord(record){
- const index = records.findIndex(item => item.id === record.id);
-
- if(index >= 0) records[index] = record;
+ const index=records.findIndex(x=>x.id===record.id);
+ if(index>=0) records[index]=record;
  else records.push(record);
-
- records.sort((a,b) =>
-  String(b.updated_at).localeCompare(String(a.updated_at))
- );
-
- if(selected?.id === record.id) selected = record;
+ records.sort((a,b)=>
+  String(b.updated_at).localeCompare(String(a.updated_at)));
+ if(selected?.id===record.id) selected=record;
 }
 
-/* Single inline workspace */
+/* Workspace */
 
-function closeWorkspace(force = false){
- if(busy && !force) return false;
-
- if(!force && actionDirty &&
-  !window.confirm("Discard the unsaved changes?")
- ){
+function closeWorkspace(force=false){
+ if(busy&&!force) return false;
+ if(!force&&actionDirty&&!window.confirm("Discard unsaved changes?")){
   return false;
  }
 
  viewToken++;
- actionContext = null;
- actionDirty = false;
-
- $("actionWorkspace").hidden = true;
- $("actionFields").innerHTML = "";
- $("historyContent").innerHTML = "";
- $("actionError").hidden = true;
-
+ actionContext=null;
+ actionDirty=false;
+ $("actionWorkspace").hidden=true;
+ $("workspaceIdle").hidden=false;
+ $("actionFields").innerHTML="";
+ $("historyContent").innerHTML="";
+ $("actionError").hidden=true;
+ updateSelection();
  updateControls();
  return true;
 }
 
-function startWorkspace(title,subtitle,fields,context,readOnly = false){
- if(!selected){
-  throw new Error("Open a patient case first.");
+function startWorkspace(title,subtitle,fields,context,readOnly=false){
+ if(!selected) throw new Error("Open a patient first.");
+ if(editingLocked()){
+  throw new Error("Actions are paused. Check the message above.");
  }
-
- if(!readOnly){
-  if(editingLocked()){
-   throw new Error("Editing is paused. Resolve the warning at the top first.");
-  }
-  staffName();
- }
-
+ if(!readOnly) staffName();
  if(!closeWorkspace()) return false;
 
- actionContext = context;
- actionDirty = false;
+ actionContext=context;
+ actionDirty=false;
+ $("actionTitle").textContent=title;
+ $("actionSubtitle").textContent=subtitle;
+ $("actionSubtitle").hidden=!subtitle;
+ $("actionFields").innerHTML=fields;
+ $("historyContent").innerHTML="";
+ $("saveActions").hidden=readOnly;
+ $("actionSave").textContent="Save";
+ $("actionError").hidden=true;
+ $("workspaceIdle").hidden=true;
+ $("actionWorkspace").hidden=false;
+ $("workspaceScroll").scrollTop=0;
 
- $("actionTitle").textContent = title;
- $("actionSubtitle").textContent = subtitle;
- $("actionFields").innerHTML = fields;
- $("historyContent").innerHTML = "";
- $("saveActions").hidden = readOnly;
- $("actionSave").textContent = "Save";
- $("actionError").hidden = true;
- $("actionWorkspace").hidden = false;
+ updateSelection();
 
- $("actionWorkspace").scrollIntoView({
-  behavior:"smooth",
-  block:"start"
- });
-
+ if(window.matchMedia("(max-width:760px)").matches){
+  $("actionWorkspace").scrollIntoView({behavior:"smooth",block:"start"});
+ }
  $("actionTitle").focus({preventScroll:true});
-
  updateControls();
  return true;
 }
 
-function field(label,html,full = false){
- return `
-  <label class="field ${full ? "full" : ""}">
-   ${esc(label)}
-   ${html}
-  </label>
- `;
+function field(label,html,full=false){
+ return `<label class="field ${full?"full":""}">${esc(label)}${html}</label>`;
 }
 
-function options(list,current = ""){
- return list.map(([value,label]) => `
-  <option value="${esc(value)}"
-   ${value === current ? "selected" : ""}>
+function options(list,current=""){
+ return list.map(([value,label])=>`
+  <option value="${esc(value)}" ${value===current?"selected":""}>
    ${esc(label)}
-  </option>
- `).join("");
+  </option>`).join("");
 }
 
-function doctorInput(value = ""){
- const names = new Set();
-
+function doctorInput(value=""){
+ const names=new Set();
  for(const record of records){
   for(const {report} of entries(record.state)){
    if(report.reviewDoctorName) names.add(report.reviewDoctorName);
    if(report.doctorName) names.add(report.doctorName);
-
-   for(const review of report.reviewHistory || []){
+   for(const review of report.reviewHistory||[]){
     if(review.doctor) names.add(review.doctor);
    }
   }
-
   for(const contact of record.state.contacts){
-   if(contact.audience === "doctor" && contact.target){
-    names.add(contact.target);
-   }
+   if(contact.audience==="doctor"&&contact.target) names.add(contact.target);
   }
  }
-
  return `
-  <input id="actionDoctor" list="doctorNames"
-   maxlength="100" autocomplete="off"
-   value="${esc(value)}" required>
+  <input id="actionDoctor" list="doctorNames" maxlength="100"
+   autocomplete="off" value="${esc(value)}" required>
   <datalist id="doctorNames">
-   ${[...names].sort().map(name =>
-    `<option value="${esc(name)}"></option>`
-   ).join("")}
-  </datalist>
- `;
+   ${[...names].sort().map(name=>
+    `<option value="${esc(name)}"></option>`).join("")}
+  </datalist>`;
 }
 
 function openStep(target,key){
- const {group,report} = findReport(
-  selected.state,target.groupId,target.reportId
- );
-
- const current = stage(selected.state,group,report);
-
- if(current.key !== key){
-  throw new Error(
-   "The report progress has changed. Use the currently displayed next action."
-  );
+ const {group,report}=findReport(
+  selected.state,target.groupId,target.reportId);
+ const current=stage(selected.state,group,report);
+ if(current.key!==key){
+  throw new Error("This report has changed. Use its current next action.");
  }
 
- if(key === "plan"){
-  openPlan(group.id);
-  return;
- }
+ if(key==="plan"){
+  openPlan(group.id,target);
+ }else if(key==="received"){
+  startWorkspace("Record received",report.name,`
+   <div class="form-grid">
+    ${field("Received date *",`
+     <input id="receivedDate" type="date"
+      value="${today()}" max="${today()}" required>`)}
+   </div>
+   <p class="small-text">
+    Use the date the clinic received the report, not the investigation date.
+   </p>`,{type:"received",target});
 
- if(key === "received"){
-  startWorkspace(
-   "Record report received",
-   report.name,
-   `
-    <div class="form-grid">
-     ${field("Actual received date *",`
-      <input id="receivedDate" type="date"
-       value="${today()}" max="${today()}" required>
-     `)}
-    </div>
-    <p class="small-text">
-     Enter the date the clinic actually received the report,
-     not the specimen or investigation date.
-    </p>
-   `,
-   {type:"received",target}
-  );
+ }else if(key==="nurse"){
+  startWorkspace("Nurse review",report.name,`
+   <p class="small-text">Received: ${esc(dateLabel(report.receivedDate))}</p>
+   ${[
+    ["routine","Routine","Doctor review still required"],
+    ["doctor","Priority","Arrange priority doctor review"],
+    ["urgent","Urgent","Escalate immediately using clinic procedure"]
+   ].map(([value,label,help])=>`
+    <label class="choice">
+     <input type="radio" name="classification" value="${value}" required>
+     <span><strong>${esc(label)}</strong><small>${esc(help)}</small></span>
+    </label>`).join("")}
+   <div class="form-grid">
+    ${field("Notes — optional",`
+     <textarea id="nurseNote" rows="2" maxlength="2000"></textarea>`)}
+   </div>
+   <p class="small-text">Classify according to the clinic's established criteria.</p>
+  `,{type:"nurse",target});
 
- }else if(key === "nurse"){
-  startWorkspace(
-   "Nurse review",
-   report.name,
-   `
-    <p class="small-text">
-     Received: ${esc(dateLabel(report.receivedDate))}
-    </p>
-    <p><strong>Select according to the clinic's established criteria:</strong></p>
+ }else if(key==="doctor"){
+  startWorkspace("Record doctor review",report.name,`
+   ${report.triage==="urgent"?`
+    <div class="notice red">Urgent result — use the clinic's immediate escalation process.</div>
+   `:""}
+   <div class="form-grid">
+    ${field("Reviewing doctor *",doctorInput(
+     report.reviewDoctorName||report.doctorName||""))}
+    ${field("Patient contact required? *",`
+     <select id="patientRequired" required>
+      <option value="">Select</option>
+      <option value="no">No</option>
+      <option value="yes">Yes — confirm receipt</option>
+     </select>`)}
+    ${field("Doctor instructions / notes — optional",`
+     <textarea id="reviewNote" rows="3" maxlength="2000"></textarea>`)}
+   </div>
+   <label class="checkline">
+    <input id="reviewConfirmed" type="checkbox" required>
+    <span>
+     The named doctor has actually reviewed this report.
+     Sending a message alone is not a review.
+    </span>
+   </label>
+  `,{type:"review",target});
 
-    ${[
-     ["routine","Routine","Doctor review must still be recorded"],
-     ["doctor","Priority","Arrange priority doctor review according to clinic procedure"],
-     ["urgent","Urgent","Immediately escalate according to clinic procedure"]
-    ].map(([value,label,help]) => `
-     <label class="choice">
-      <input type="radio" name="classification"
-       value="${value}" required>
-      <span>
-       <strong>${esc(label)}</strong>
-       <small>${esc(help)}</small>
-      </span>
-     </label>
-    `).join("")}
-
-    <div class="form-grid">
-     ${field("Notes — optional",`
-      <textarea id="nurseNote" rows="2" maxlength="2000"></textarea>
-     `,true)}
-    </div>
-
-    <p class="small-text">
-     Nurse classification does not mean that a doctor has reviewed the report.
-    </p>
-   `,
-   {type:"nurse",target}
-  );
-
- }else if(key === "doctor"){
-  startWorkspace(
-   "Record doctor review",
-   report.name,
-   `
-    ${report.triage === "urgent" ? `
-     <div class="notice red">
-      Use the clinic's immediate escalation process.
-      This form records a review that has already taken place.
-     </div>
-    ` : ""}
-
-    <div class="form-grid">
-     ${field("Reviewing doctor *",doctorInput(
-      report.reviewDoctorName || report.doctorName || ""
-     ),true)}
-
-     ${field("Did the doctor require patient contact? *",`
-      <select id="patientRequired" required>
-       <option value="">Select an option</option>
-       <option value="no">No</option>
-       <option value="yes">Yes — receipt confirmation required</option>
-      </select>
-     `,true)}
-
-     ${field("Doctor instructions / review notes — optional",`
-      <textarea id="reviewNote" rows="3" maxlength="2000"></textarea>
-     `,true)}
-    </div>
-
-    <label class="checkline">
-     <input id="reviewConfirmed" type="checkbox" required>
-     <span>
-      I have confirmed that the named doctor actually reviewed this report.
-      Sending a message alone does not count as doctor review.
-     </span>
-    </label>
-   `,
-   {type:"review",target}
-  );
-
- }else if(key === "patient"){
+ }else if(key==="patient"){
   openContact(target);
 
- }else if(key === "filed"){
-  startWorkspace(
-   "Confirm report filing",
-   report.name,
-   `
-    <label class="checkline">
-     <input id="filingConfirmed" type="checkbox" required>
-     <span>This report has been filed in the clinic system.</span>
-    </label>
-   `,
-   {type:"filed",target}
-  );
+ }else if(key==="filed"){
+  startWorkspace("Confirm filing",report.name,`
+   <label class="checkline">
+    <input id="filingConfirmed" type="checkbox" required>
+    <span>This report has been filed in the clinic system.</span>
+   </label>
+  `,{type:"filed",target});
  }
 }
 
-/* Patient contact and appointment */
+function openPatientDetails(){
+ startWorkspace("Patient details","",
+  `<div class="patient-meta">${patientHTML(selected.state)}</div>`,
+  {type:"patientDetails"},true);
+}
 
-function openContact(target = null){
- const state = selected.state;
+function showSaved(context){
+ if(!selected||editingLocked()) return;
 
- const pending = entries(state).filter(item =>
-  patientPending(state,item.report)
- );
+ let target=context?.target||null;
+ if(!target&&context?.requiredReportId){
+  const item=entries(selected.state).find(x=>
+   x.report.id===context.requiredReportId);
+  if(item) target={groupId:item.group.id,reportId:item.report.id};
+ }
+
+ let subtitle="";
+ let nextHTML='<p class="muted">Choose another action on the left when ready.</p>';
 
  if(target){
-  const {report} = findReport(
-   state,target.groupId,target.reportId
-  );
+  const {group,report}=findReport(
+   selected.state,target.groupId,target.reportId);
+  const current=stage(selected.state,group,report);
+  subtitle=report.name||group.name;
 
+  nextHTML=`
+   <p>${badge(current.label,current.colour)}</p>
+   ${STEP_LABELS[current.key]?`
+    <div class="actions">
+     ${reportButton(group,report,current.key,STEP_LABELS[current.key])}
+    </div>`:
+    '<p class="muted">No further action is required for this report.</p>'}
+  `;
+ }else if(context?.type==="plan"){
+  nextHTML=`
+   <p class="muted">The report list has been updated.</p>
+   <p class="muted">Choose a report on the left to continue.</p>`;
+ }
+
+ startWorkspace("Saved",subtitle,`
+  <div class="success-box"><strong>✓ Changes saved</strong></div>
+  ${nextHTML}
+ `,{type:"saved",target},true);
+}
+
+/* Contact / appointment */
+
+function openContact(target=null){
+ const state=selected.state;
+ const pending=entries(state).filter(x=>patientPending(state,x.report));
+
+ if(target){
+  const {report}=findReport(state,target.groupId,target.reportId);
   if(!patientPending(state,report)){
-   throw new Error(
-    "This report is not currently awaiting patient receipt confirmation."
-   );
+   throw new Error("This report is not awaiting patient receipt confirmation.");
   }
  }
 
- const opened = startWorkspace(
-  "Record contact / appointment",
-  "Record only what happened this time. Appointment details remain unchanged unless selected.",
+ const opened=startWorkspace(
+  "Contact / appointment",
+  target
+   ? findReport(state,target.groupId,target.reportId).report.name
+   : "Record this contact or arrangement.",
   `
    <label class="checkline">
     <input id="recordContact" type="checkbox" checked>
-    <span>A patient contact attempt or communication took place</span>
+    <span>Patient contact attempted or made</span>
    </label>
 
    <div id="contactFields">
     <div class="form-grid">
      ${field("Contact method *",`
       <select id="contactMethod" required>
-       <option value="">Select a method</option>
+       <option value="">Select</option>
        <option value="Telephone">Telephone</option>
        <option value="Email">Clinic-approved email</option>
        <option value="WhatsApp">Clinic-approved WhatsApp</option>
        <option value="In person">In person</option>
-      </select>
-     `)}
-
-     ${field("Contact result *",`
+      </select>`)}
+     ${field("Result *",`
       <select id="contactDelivery" required>
        <option value="">Select a method first</option>
-      </select>
-     `)}
-
-     ${field("Patient / representative name — optional",`
-      <input id="patientRecipient" maxlength="150">
-     `,true)}
+      </select>`)}
     </div>
 
-    ${pending.length ? `
-     <div class="notice blue">
-      <strong>Reports involved in this contact:</strong>
-      <p class="small-text">
-       Select only reports actually involved.
-       Only explicit receipt confirmation completes their receipt requirement.
-      </p>
+    <details class="archive">
+     <summary>Patient / representative name — optional</summary>
+     <input id="patientRecipient" maxlength="150"
+      aria-label="Patient or representative name">
+    </details>
 
-      ${pending.map(({group,report}) => `
-       <label class="checkline" style="margin:8px 0">
+    ${pending.length?`
+     <div class="notice blue">
+      <strong>Reports involved</strong>
+      <p class="small-text">
+       Select reports involved in this contact.
+       Sending alone does not confirm receipt.
+      </p>
+      ${pending.map(({group,report})=>`
+       <label class="checkline" style="margin:7px 0">
         <input type="checkbox"
          data-contact-report="${esc(report.id)}"
          data-contact-group="${esc(group.id)}"
-         ${target?.reportId === report.id ? "checked" : ""}>
-        <span>${esc(report.name || group.name)}</span>
-       </label>
-      `).join("")}
-     </div>
-    ` : ""}
+         ${target?.reportId===report.id?"checked":""}>
+        <span>${esc(report.name||group.name)}</span>
+       </label>`).join("")}
+     </div>`:""}
    </div>
 
-   <label class="checkline" style="margin-top:18px">
-    <input id="changeAppointment" type="checkbox">
-    <span>Arrange or update the appointment</span>
-   </label>
-
-   <div id="appointmentFields" class="form-grid" hidden>
-    ${field("Appointment status *",`
-     <select id="appointmentStatus">
-      ${options(
-       Object.entries(APPOINTMENTS),
-       state.appointmentStatus || "unscheduled"
-      )}
-     </select>
-    `)}
-
-    ${field("Appointment date",`
-     <input id="appointmentDate" type="date"
-      value="${esc(state.appointmentDate || "")}">
-    `)}
+   <div class="section">
+    <label class="checkline">
+     <input id="changeAppointment" type="checkbox">
+     <span>Arrange / change appointment</span>
+    </label>
+    <div id="appointmentFields" class="form-grid" hidden>
+     ${field("Appointment status *",`
+      <select id="appointmentStatus">
+       ${options(Object.entries(APPOINTMENTS),
+        state.appointmentStatus||"unscheduled")}
+      </select>`)}
+     ${field("Appointment date",`
+      <input id="appointmentDate" type="date"
+       value="${esc(state.appointmentDate||"")}">`)}
+    </div>
    </div>
 
-   <label class="checkline" style="margin-top:18px">
-    <input id="changeFollowup" type="checkbox">
-    <span>Set or update the next contact date</span>
-   </label>
-
-   <div id="followupFields" class="form-grid" hidden>
-    ${field("Next contact date — leave blank to remove the reminder",`
-     <input id="nextFollowupDate" type="date"
-      value="${esc(state.nextFollowupDate || "")}">
-    `)}
+   <div class="section">
+    <label class="checkline">
+     <input id="changeFollowup" type="checkbox">
+     <span>Set / change next contact date</span>
+    </label>
+    <div id="followupFields" class="form-grid" hidden>
+     ${field("Next contact date",`
+      <input id="nextFollowupDate" type="date"
+       value="${esc(state.nextFollowupDate||"")}">
+      <small>Leave blank to remove the reminder.</small>`)}
+    </div>
    </div>
 
    <div class="form-grid">
-    ${field("Notes for this contact / arrangement",`
-     <textarea id="contactNote" rows="3" maxlength="2000"></textarea>
-    `,true)}
+    ${field("Notes",`
+     <textarea id="contactNote" rows="2" maxlength="2000"></textarea>`)}
    </div>
   `,
-  {
-   type:"contact",
-   requiredReportId:target?.reportId || ""
-  }
+  {type:"contact",target,requiredReportId:target?.reportId||""}
  );
 
  if(opened) refreshContactFields();
 }
 
 function refreshContactFields(){
- const contactEnabled = $("recordContact").checked;
- const appointmentEnabled = $("changeAppointment").checked;
- const followupEnabled = $("changeFollowup").checked;
+ const contact=$("recordContact").checked;
+ const appointment=$("changeAppointment").checked;
+ const followup=$("changeFollowup").checked;
 
- $("contactFields").hidden = !contactEnabled;
+ $("contactFields").hidden=!contact;
+ $("contactFields").querySelectorAll("input,select").forEach(el=>{
+  el.disabled=!contact;
+ });
+ $("contactMethod").required=contact;
+ $("contactDelivery").required=contact;
 
- $("contactFields").querySelectorAll("input,select").forEach(element => {
-  element.disabled = !contactEnabled;
+ $("appointmentFields").hidden=!appointment;
+ $("appointmentFields").querySelectorAll("input,select").forEach(el=>{
+  el.disabled=!appointment;
  });
 
- $("contactMethod").required = contactEnabled;
- $("contactDelivery").required = contactEnabled;
-
- $("appointmentFields").hidden = !appointmentEnabled;
- $("appointmentFields").querySelectorAll("input,select").forEach(element => {
-  element.disabled = !appointmentEnabled;
- });
-
- $("followupFields").hidden = !followupEnabled;
- $("followupFields").querySelectorAll("input").forEach(element => {
-  element.disabled = !followupEnabled;
+ $("followupFields").hidden=!followup;
+ $("followupFields").querySelectorAll("input").forEach(el=>{
+  el.disabled=!followup;
  });
 }
 
 function refreshDeliveryOptions(){
- const method = $("contactMethod").value;
-
- const list = method === "Telephone" ? [
-  ["confirmed","Connected — receipt explicitly confirmed"],
+ const method=$("contactMethod").value;
+ const list=method==="Telephone"?[
+  ["confirmed","Connected — receipt confirmed"],
   ["connected","Connected — receipt not confirmed"],
   ["no-answer","No answer"],
   ["voicemail","Voicemail left"]
- ] : method === "In person" ? [
-  ["confirmed","Met in person — receipt explicitly confirmed"],
-  ["connected","Met in person — receipt not confirmed"]
- ] : method ? [
+ ]:method==="In person"?[
+  ["confirmed","Met — receipt confirmed"],
+  ["connected","Met — receipt not confirmed"]
+ ]:method?[
   ["sent","Sent — receipt not confirmed"],
   ["confirmed","Receipt explicitly confirmed"]
- ] : [];
+ ]:[];
 
- $("contactDelivery").innerHTML = options([
-  ["",method ? "Select the actual result" : "Select a method first"],
-  ...list
+ $("contactDelivery").innerHTML=options([
+  ["",method?"Select result":"Select a method first"],...list
  ]);
 }
 
 function arrangementSnapshot(state){
  return {
-  appointmentDate:state.appointmentDate || "",
-  appointmentStatus:state.appointmentStatus || "unscheduled",
-  nextFollowupDate:state.nextFollowupDate || "",
-  caseNote:state.caseNote || ""
+  appointmentDate:state.appointmentDate||"",
+  appointmentStatus:state.appointmentStatus||"unscheduled",
+  nextFollowupDate:state.nextFollowupDate||"",
+  caseNote:state.caseNote||""
  };
 }
 
 function appendArrangement(state,before,staff){
- const after = arrangementSnapshot(state);
-
+ const after=arrangementSnapshot(state);
  if(!same(before,after)){
-  state.arrangementHistory = [
-   ...(state.arrangementHistory || []),
-   {
-    id:uuid(),
-    at:new Date().toISOString(),
-    staff,
-    before,
-    after
-   }
-  ];
+  state.arrangementHistory=[...(state.arrangementHistory||[]),{
+   id:uuid(),at:new Date().toISOString(),staff,before,after
+  }];
  }
 }
 
-/* Secondary tools */
+/* Report lists and corrections */
 
 function openManage(){
- const state = selected.state;
-
- startWorkspace(
-  "Manage report lists",
-  "Verify the reports actually expected for each investigation. This does not need to be repeated every day.",
-  state.groups.map(group => `
+ startWorkspace("Report lists","Verify the expected reports for each investigation.",
+  selected.state.groups.map(group=>`
    <div class="manage-row">
     <div class="row">
-     <div>
-      <strong>${esc(group.name)}</strong>
-      <div class="small-text">
-       ${esc(group.code)} · Quotation quantity: ${esc(group.qty)}
-      </div>
-     </div>
-     <button type="button" data-plan="${esc(group.id)}">
+     <strong>${esc(group.name)}</strong>
+     <button type="button" class="small" data-plan="${esc(group.id)}">
       Verify / Edit
      </button>
     </div>
     <div class="small-text">
-     ${group.planReviewed ? "Verified" : "Not verified"}
-     · ${group.reports.length} report entry/entries
+     ${group.planReviewed?"Verified":"Not verified"}
+     · ${group.reports.length} report(s)
+     · Quotation quantity: ${esc(group.qty)}
     </div>
-   </div>
-  `).join("") || '<p class="muted">No investigation entries.</p>',
-  {type:"manage"},
-  true
- );
+   </div>`).join("")||'<p class="muted">No investigations.</p>',
+  {type:"manage"},true);
 }
 
-function openPlan(groupId){
- const group = selected.state.groups.find(item => item.id === groupId);
+function openPlan(groupId,target=null){
+ const group=selected.state.groups.find(x=>x.id===groupId);
+ if(!group) throw new Error("Investigation not found.");
 
- if(!group){
-  throw new Error("The investigation could not be found.");
- }
+ startWorkspace("Verify report list",group.name,`
+  <p class="small-text">
+   Quotation quantity: ${esc(group.qty)}.
+   Add one entry for each expected report.
+  </p>
 
- startWorkspace(
-  "Verify expected reports",
-  `${group.name} · ${group.code} · Quotation quantity: ${group.qty}`,
-  `
-   <p class="small-text">
-    One investigation may produce more than one report.
-    Retain existing entries and add reports below when needed.
-    Received or cancelled report names cannot be changed.
-   </p>
-
-   ${group.reports.map(report => `
-    <div class="form-grid">
-     ${field("Existing report",`
-      <input data-plan-report="${esc(report.id)}"
-       maxlength="300" value="${esc(report.name)}"
-       ${report.receivedDate || report.cancelled ? "readonly" : ""}
-       required>
-     `,true)}
-    </div>
-   `).join("")}
-
+  ${group.reports.map(report=>`
    <div class="form-grid">
-    ${field("Additional reports — one per line; leave blank if none",`
-     <textarea id="additionalReports" rows="3" maxlength="15000"></textarea>
-    `,true)}
-   </div>
+    ${field("Existing report",`
+     <input data-plan-report="${esc(report.id)}" maxlength="300"
+      value="${esc(report.name)}"
+      ${report.receivedDate||report.cancelled?"readonly":""} required>`)}
+   </div>`).join("")}
 
-   <label class="checkline">
-    <input id="planConfirmed" type="checkbox" required>
-    <span>
-     I have verified the actual expected reports and quantities
-     for this quotation revision.
-    </span>
-   </label>
-  `,
-  {type:"plan",groupId}
- );
+  <div class="form-grid">
+   ${field("Additional reports — one per line",`
+    <textarea id="additionalReports" rows="3" maxlength="15000"></textarea>
+    <small>Leave blank if no additional reports are needed.</small>`)}
+  </div>
+
+  <label class="checkline">
+   <input id="planConfirmed" type="checkbox" required>
+   <span>I have verified the expected reports and quantities.</span>
+  </label>
+ `,{type:"plan",groupId,target});
 }
 
 function openCorrectionChooser(){
- startWorkspace(
-  "Correct a record",
-  "Choose the item that needs correction.",
-  `
+ startWorkspace("Corrections","Choose the record to correct.",`
+  <div class="manage-row">
+   <div class="row">
+    <strong>Appointment / follow-up notes</strong>
+    <button type="button" class="small" data-correct-arrangement>Correct</button>
+   </div>
+  </div>
+  ${entries(selected.state).map(({group,report})=>`
    <div class="manage-row">
     <div class="row">
-     <strong>Appointment / follow-up notes</strong>
-     <button type="button" data-correct-arrangement>Correct</button>
-    </div>
-   </div>
-
-   ${entries(selected.state).map(({group,report}) => `
-    <div class="manage-row">
-     <div class="row">
-      <div>
-       <strong>${esc(report.name || group.name)}</strong>
-       <div class="small-text">
-        ${esc(stage(selected.state,group,report).label)}
-       </div>
+     <div>
+      <strong>${esc(report.name||group.name)}</strong>
+      <div class="small-text">
+       ${esc(stage(selected.state,group,report).label)}
       </div>
-      <button type="button"
-       data-correct-group="${esc(group.id)}"
-       data-correct-report="${esc(report.id)}">
-       ${report.cancelled ? "Restore tracking" : "Correct"}
-      </button>
      </div>
+     <button type="button" class="small"
+      data-correct-group="${esc(group.id)}"
+      data-correct-report="${esc(report.id)}">
+      ${report.cancelled?"Restore":"Correct"}
+     </button>
     </div>
-   `).join("")}
-  `,
-  {type:"correctionChooser"},
-  true
- );
+   </div>`).join("")}
+ `,{type:"correctionChooser"},true);
 }
 
 function openCorrection(target){
- const {report} = findReport(
-  selected.state,target.groupId,target.reportId
- );
-
+ const {report}=findReport(
+  selected.state,target.groupId,target.reportId);
  if(report.cancelled){
   openTracking(target,true);
   return;
  }
 
- startWorkspace(
-  "Correct report record",
-  report.name,
-  `
-   <div class="form-grid">
-    ${field("Received date",`
-     <input id="detailDate" type="date" max="${today()}"
-      value="${esc(report.receivedDate || "")}"
-      ${report.receivedDate ? "required" : ""}>
-    `)}
-
-    ${field("Nurse classification",`
-     <select id="detailTriage">
-      ${options(
-       Object.entries(CLASSIFICATIONS),
-       report.triage || "pending"
-      )}
-     </select>
-    `)}
-
-    <label class="checkline full">
-     <input id="detailFiled" type="checkbox"
-      ${report.archived ? "checked" : ""}>
-     <span>Filed in the clinic system</span>
-    </label>
-
-    <label class="checkline full">
-     <input id="reopenReview" type="checkbox">
-     <span>Require a new doctor review</span>
-    </label>
-
-    ${field("Reason for correction *",`
-     <textarea id="correctionReason" rows="2"
-      maxlength="2000" required></textarea>
-    `,true)}
-   </div>
-
-   <p class="small-text">
-    Changing the classification or requesting another doctor review
-    opens a new review cycle. Previous reviews and notes are retained.
-    Clearing a recorded received date is not supported.
-   </p>
-
-   ${!report.receivedDate ? `
-    <div class="section">
-     <button type="button" class="danger"
-      data-cancel-group="${esc(target.groupId)}"
-      data-cancel-report="${esc(target.reportId)}">
-      Cancel this tracking entry
-     </button>
-    </div>
-   ` : ""}
-  `,
-  {type:"correction",target}
- );
+ startWorkspace("Correct report",report.name,`
+  <div class="form-grid">
+   ${field("Received date",`
+    <input id="detailDate" type="date" max="${today()}"
+     value="${esc(report.receivedDate||"")}"
+     ${report.receivedDate?"required":""}>`)}
+   ${field("Classification",`
+    <select id="detailTriage">
+     ${options(Object.entries(CLASSIFICATIONS),report.triage||"pending")}
+    </select>`)}
+   <label class="checkline">
+    <input id="detailFiled" type="checkbox" ${report.archived?"checked":""}>
+    <span>Filed in the clinic system</span>
+   </label>
+   <label class="checkline">
+    <input id="reopenReview" type="checkbox">
+    <span>Require another doctor review</span>
+   </label>
+   ${field("Correction reason *",`
+    <textarea id="correctionReason" rows="2"
+     maxlength="2000" required></textarea>`)}
+  </div>
+  <p class="small-text">
+   Changing classification requires a new doctor review.
+   Previous reviews are retained.
+   A recorded received date cannot be cleared here.
+  </p>
+  ${!report.receivedDate?`
+   <div class="section">
+    <button type="button" class="danger"
+     data-cancel-group="${esc(target.groupId)}"
+     data-cancel-report="${esc(target.reportId)}">
+     Cancel tracking
+    </button>
+   </div>`:""}
+ `,{type:"correction",target});
 }
 
 function openTracking(target,restore){
- const {report} = findReport(
-  selected.state,target.groupId,target.reportId
- );
-
- if(!restore && report.receivedDate){
+ const {report}=findReport(
+  selected.state,target.groupId,target.reportId);
+ if(!restore&&report.receivedDate){
   throw new Error("A received report cannot be cancelled.");
  }
-
- startWorkspace(
-  restore ? "Restore tracking" : "Cancel tracking",
-  report.name,
-  `
-   <p class="small-text">
-    Proceed only after verification. Historical records will be retained.
-   </p>
-
-   <div class="form-grid">
-    ${field("Verified reason *",`
-     <textarea id="trackingReason" rows="2"
-      maxlength="2000" required></textarea>
-    `,true)}
-   </div>
-  `,
-  {type:restore ? "restore" : "cancel",target}
- );
+ startWorkspace(restore?"Restore tracking":"Cancel tracking",report.name,`
+  <p class="small-text">Verify the reason before proceeding. History is retained.</p>
+  <div class="form-grid">
+   ${field("Verified reason *",`
+    <textarea id="trackingReason" rows="2"
+     maxlength="2000" required></textarea>`)}
+  </div>
+ `,{type:restore?"restore":"cancel",target});
 }
 
 function openArrangementCorrection(){
- const state = selected.state;
-
- startWorkspace(
-  "Correct appointment / follow-up notes",
-  "Previous values will be retained in history.",
-  `
-   <div class="form-grid">
-    ${field("Appointment status",`
-     <select id="correctStatus">
-      ${options(
-       Object.entries(APPOINTMENTS),
-       state.appointmentStatus || "unscheduled"
-      )}
-     </select>
-    `)}
-
-    ${field("Appointment date",`
-     <input id="correctDate" type="date"
-      value="${esc(state.appointmentDate || "")}">
-    `)}
-
-    ${field("Next contact date",`
-     <input id="correctNext" type="date"
-      value="${esc(state.nextFollowupDate || "")}">
-    `)}
-
-    ${field("Follow-up notes",`
-     <textarea id="correctNote" rows="3"
-      maxlength="2000">${esc(state.caseNote || "")}</textarea>
-    `,true)}
-
-    ${field("Reason for correction *",`
-     <textarea id="arrangementReason" rows="2"
-      maxlength="2000" required></textarea>
-    `,true)}
-   </div>
-  `,
-  {type:"arrangementCorrection"}
- );
+ const state=selected.state;
+ startWorkspace("Correct appointment / notes","Previous values are retained.",`
+  <div class="form-grid">
+   ${field("Appointment status",`
+    <select id="correctStatus">
+     ${options(Object.entries(APPOINTMENTS),
+      state.appointmentStatus||"unscheduled")}
+    </select>`)}
+   ${field("Appointment date",`
+    <input id="correctDate" type="date"
+     value="${esc(state.appointmentDate||"")}">`)}
+   ${field("Next contact date",`
+    <input id="correctNext" type="date"
+     value="${esc(state.nextFollowupDate||"")}">`)}
+   ${field("Follow-up notes",`
+    <textarea id="correctNote" rows="3"
+     maxlength="2000">${esc(state.caseNote||"")}</textarea>`)}
+   ${field("Correction reason *",`
+    <textarea id="arrangementReason" rows="2"
+     maxlength="2000" required></textarea>`)}
+  </div>
+ `,{type:"arrangementCorrection"});
 }
 
-/* Human-readable history */
+/* Readable history */
 
 function reportHistoryItems(state){
- const items = [];
+ const items=[];
 
  for(const {group,report} of entries(state)){
-  const title = report.name || group.name;
+  const title=report.name||group.name;
 
-  for(const event of report.actionLog || []){
-   const before = event.before || {};
-   const after = event.after || {};
-   const lines = [];
-
-   if(before.receivedDate !== after.receivedDate){
+  for(const event of report.actionLog||[]){
+   const before=event.before||{},after=event.after||{},lines=[];
+   if(before.receivedDate!==after.receivedDate){
     lines.push(
      `Received date: ${dateLabel(before.receivedDate)} → ${dateLabel(after.receivedDate)}`
     );
    }
-
-   if(before.triage !== after.triage){
+   if(before.triage!==after.triage){
     lines.push(
-     `Classification: ${CLASSIFICATIONS[before.triage] || "Not recorded"} → ` +
-     `${CLASSIFICATIONS[after.triage] || "Not recorded"}`
+     `Classification: ${CLASSIFICATIONS[before.triage]||"Not recorded"} → `+
+     `${CLASSIFICATIONS[after.triage]||"Not recorded"}`
     );
    }
-
-   if(before.archived !== after.archived){
-    lines.push(`Filing: ${after.archived ? "Filed" : "Not filed"}`);
+   if(before.archived!==after.archived){
+    lines.push(`Filing: ${after.archived?"Filed":"Not filed"}`);
    }
-
-   if(before.cancelled !== after.cancelled){
-    lines.push(
-     after.cancelled ? "Tracking cancelled" : "Tracking restored"
-    );
+   if(before.cancelled!==after.cancelled){
+    lines.push(after.cancelled?"Tracking cancelled":"Tracking restored");
    }
-
-   if(before.name !== after.name && after.name){
+   if(before.name!==after.name&&after.name){
     lines.push(`Report name: ${after.name}`);
    }
-
-   if(!before.reviewPending && after.reviewPending && before.reviewedAt){
-    lines.push(
-     "A new doctor review is required; the previous review is retained."
-    );
+   if(!before.reviewPending&&after.reviewPending&&before.reviewedAt){
+    lines.push("Another doctor review required.");
    }
-
    items.push({
-    at:event.at,
-    staff:event.staff,
-    title,
-    text:lines.join("\n") || "Report or related contact record updated",
-    source:"Saved report record — browser-generated event time"
+    at:event.at,staff:event.staff,title,
+    text:lines.join("\n")||"Report or related contact updated"
    });
   }
 
-  const reviews = [...(report.reviewHistory || [])];
-
-  if(report.reviewedAt &&
-   !reviews.some(review => review.at === report.reviewedAt)
-  ){
+  const reviews=[...(report.reviewHistory||[])];
+  if(report.reviewedAt&&!reviews.some(x=>x.at===report.reviewedAt)){
    reviews.push({
     at:report.reviewedAt,
-    doctor:report.reviewDoctorName || report.doctorName || "",
-    recordedBy:report.reviewRecordedBy || "",
-    note:report.reviewNote || ""
+    doctor:report.reviewDoctorName||report.doctorName||"",
+    recordedBy:report.reviewRecordedBy||"",
+    note:report.reviewNote||""
    });
   }
 
   for(const review of reviews){
    items.push({
-    at:review.at,
-    staff:review.recordedBy,
-    title,
-    text:`Doctor review: ${review.doctor || "Doctor not recorded"}` +
-     (review.note ? "\n" + review.note : ""),
-    source:"Saved doctor review record"
+    at:review.at,staff:review.recordedBy,title,
+    text:`Doctor review: ${review.doctor||"Doctor not recorded"}`+
+     (review.note?"\n"+review.note:"")
    });
   }
 
   if(report.nurseNote){
    items.push({
-    at:report.nurseAt || "",
-    staff:report.nurseName || "",
-    title,
-    text:"Nurse / receipt notes:\n" + report.nurseNote,
-    source:"Retained notes"
+    at:report.nurseAt||"",staff:report.nurseName||"",title,
+    text:"Nurse notes:\n"+report.nurseNote
    });
   }
 
-  for(const correction of report.correctionHistory || []){
+  for(const item of report.correctionHistory||[]){
    items.push({
-    at:correction.at,
-    staff:correction.staff,
-    title,
-    text:"Correction reason: " + correction.reason,
-    source:"Saved correction record"
+    at:item.at,staff:item.staff,title,
+    text:"Correction reason: "+item.reason
    });
   }
 
-  for(const tracking of report.trackingHistory || []){
+  for(const item of report.trackingHistory||[]){
    items.push({
-    at:tracking.at,
-    staff:tracking.staff,
-    title,
-    text:(tracking.type === "cancel"
-     ? "Tracking cancelled: "
-     : "Tracking restored: ") + tracking.reason,
-    source:"Saved tracking record"
+    at:item.at,staff:item.staff,title,
+    text:(item.type==="cancel"?"Tracking cancelled: ":"Tracking restored: ")+
+     item.reason
    });
   }
  }
-
  return items;
 }
 
 function readableHistoryHTML(state){
- const items = reportHistoryItems(state);
+ const items=reportHistoryItems(state);
 
  for(const contact of state.contacts){
   items.push({
-   at:contact.at,
-   staff:contact.staff,
-   title:contact.reportName || (
-    contact.audience === "doctor" ? "Doctor contact" : "Patient contact"
-   ),
-   text:`${contact.target || "Recipient"} · ${contact.method || ""} · ` +
-    deliveryLabel(contact) +
-    (contact.note ? "\n" + contact.note : "") +
-    (contact.nextDate
-     ? "\nNext contact: " + dateLabel(contact.nextDate)
-     : "") +
-    (contact.confirmedAt
-     ? "\nReceipt confirmation: " + timeLabel(contact.confirmedAt)
-     : ""),
-   source:"Saved contact record"
+   at:contact.at,staff:contact.staff,
+   title:contact.reportName||
+    (contact.audience==="doctor"?"Doctor contact":"Patient contact"),
+   text:`${contact.target||"Recipient"} · ${contact.method||""} · `+
+    deliveryLabel(contact)+
+    (contact.note?"\n"+contact.note:"")+
+    (contact.nextDate?"\nNext contact: "+dateLabel(contact.nextDate):"")+
+    (contact.confirmedAt?
+     "\nReceipt confirmed: "+timeLabel(contact.confirmedAt):"")
   });
  }
 
- for(const arrangement of state.arrangementHistory || []){
-  const after = arrangement.after || {};
-
+ for(const item of state.arrangementHistory||[]){
+  const after=item.after||{};
   items.push({
-   at:arrangement.at,
-   staff:arrangement.staff,
-   title:"Appointment / follow-up arrangements",
-   text:`${APPOINTMENTS[after.appointmentStatus] || "Not arranged"}` +
-    ` · ${dateLabel(after.appointmentDate)}` +
-    `\nNext contact: ${dateLabel(after.nextFollowupDate)}` +
-    (after.caseNote ? "\nFollow-up notes: " + after.caseNote : "") +
-    (arrangement.reason
-     ? "\nCorrection reason: " + arrangement.reason
-     : ""),
-   source:"Saved arrangement record"
+   at:item.at,staff:item.staff,title:"Appointment / follow-up",
+   text:`${APPOINTMENTS[after.appointmentStatus]||"Not arranged"}`+
+    ` · ${dateLabel(after.appointmentDate)}`+
+    `\nNext contact: ${dateLabel(after.nextFollowupDate)}`+
+    (after.caseNote?"\nNotes: "+after.caseNote:"")+
+    (item.reason?"\nCorrection reason: "+item.reason:"")
   });
  }
 
- for(const note of state.followupNotes || []){
+ for(const item of state.followupNotes||[]){
   items.push({
-   at:note.at,
-   staff:note.staff,
-   title:"Arrangement notes",
-   text:note.note || "",
-   source:"Saved arrangement note"
+   at:item.at,staff:item.staff,title:"Arrangement notes",
+   text:item.note||""
   });
  }
 
- items.sort((a,b) =>
-  String(b.at || "").localeCompare(String(a.at || ""))
- );
+ items.sort((a,b)=>String(b.at||"").localeCompare(String(a.at||"")));
 
- return items.length
-  ? items.map(item => `
-     <div class="log">
-      <strong>${esc(item.title)}</strong>
-      <div class="small-text">
-       ${esc(timeLabel(item.at))}
-       · ${esc(item.staff || "Recording staff not entered")}
-      </div>
-      <div class="note">${esc(item.text)}</div>
-      <div class="small-text">${esc(item.source)}</div>
-     </div>
-    `).join("")
-  : '<p class="muted">No detailed history available in this version yet.</p>';
+ return items.length?items.map(item=>`
+  <div class="log">
+   <strong>${esc(item.title)}</strong>
+   <div class="small-text">
+    ${esc(timeLabel(item.at))}
+    · ${esc(item.staff||"Staff not recorded")}
+   </div>
+   <div class="note">${esc(item.text)}</div>
+  </div>`).join(""):'<p class="muted">No activity recorded yet.</p>';
+}
+
+function savedActivityLabel(action){
+ const labels={
+  "Report receipt recorded":"Report received",
+  "Nurse initial classification recorded":"Nurse review recorded",
+  "Doctor review recorded":"Doctor review recorded",
+  "Report filing recorded":"Report filed",
+  "Patient contact / appointment recorded":"Contact / appointment recorded",
+  "Report tracking plan verified / updated":"Report list updated",
+  "Report correction recorded":"Report corrected",
+  "Report tracking cancelled":"Tracking cancelled",
+  "Report tracking restored":"Tracking restored",
+  "Appointment / follow-up correction recorded":"Appointment / notes corrected"
+ };
+ return labels[action]||"Record updated";
 }
 
 async function openHistory(){
- if(!selected || !ready || busy) return;
+ if(!selected||editingLocked()) return;
+ const caseId=selected.id;
 
- const caseId = selected.id;
+ if(!startWorkspace("History","",
+  "",{type:"history",caseId},true)) return;
 
- if(!startWorkspace(
-  "View history",
-  "Detailed records and server save history are shown separately. Retained records are not a substitute for a protected audit system.",
-  "",
-  {type:"history",caseId},
-  true
- )) return;
-
- const token = viewToken;
-
- $("historyContent").innerHTML = `
-  <h3>Activity records</h3>
+ const token=viewToken;
+ $("historyContent").innerHTML=`
   ${readableHistoryHTML(selected.state)}
-
   <details class="archive">
-   <summary>Server save history — latest 50 actions</summary>
-   <div id="serverHistory">Loading…</div>
-  </details>
- `;
+   <summary>Saved activity</summary>
+   <div id="savedActivity">Loading…</div>
+  </details>`;
 
- const isCurrent = () =>
-  token === viewToken &&
-  selected?.id === caseId &&
-  actionContext?.type === "history";
+ const current=()=>token===viewToken&&
+  selected?.id===caseId&&actionContext?.type==="history";
 
  try{
-  const {data,error} = await client
-   .from("amc_followup_audit")
+  const {data,error}=await client.from("amc_followup_audit")
    .select("id,actor_label,action,created_at")
    .eq("case_id",caseId)
-   .order("id",{ascending:false})
-   .limit(50);
+   .order("id",{ascending:false}).limit(50);
 
-  if(!isCurrent()) return;
+  if(!current()) return;
   if(error) throw error;
 
-  $("serverHistory").innerHTML = data?.length
-   ? data.map(event => `
-      <div class="log">
-       <strong>${esc(event.action)}</strong>
-       <div class="small-text">
-        ${esc(timeLabel(event.created_at))}
-        · ${esc(event.actor_label || "Recording staff not entered")}
-       </div>
-      </div>
-     `).join("")
-   : '<p class="muted">No server save records found.</p>';
+  $("savedActivity").innerHTML=data?.length?data.map(item=>`
+   <div class="log">
+    <strong>${esc(savedActivityLabel(item.action))}</strong>
+    <div class="small-text">
+     ${esc(timeLabel(item.created_at))}
+     · ${esc(item.actor_label||"Staff not recorded")}
+    </div>
+   </div>`).join(""):'<p class="muted">No saved activity.</p>';
 
  }catch(error){
-  if(isCurrent()){
-   $("serverHistory").textContent =
-    "Server history is currently unavailable: " + error.message +
-    ". The saved detailed records above remain available.";
+  console.error("History load failed",error);
+  if(current()){
+   $("savedActivity").textContent=
+    "Additional activity could not be loaded. The history above is still available.";
   }
  }
 }
 
-/* Backend reads — existing tables and RPC signatures */
+/* Backend reads */
 
 function validateRecord(record){
  if(
-  !record?.id ||
-  record.edit_version == null ||
-  record.state?.schemaVersion !== 1 ||
-  !Array.isArray(record.state.groups) ||
-  !Array.isArray(record.state.contacts) ||
-  record.state.groups.some(group =>
-   !group?.id ||
-   !Array.isArray(group.reports) ||
-   group.reports.some(report => !report?.id)
-  )
+  !record?.id||record.edit_version==null||
+  record.state?.schemaVersion!==1||
+  !Array.isArray(record.state.groups)||
+  !Array.isArray(record.state.contacts)||
+  record.state.groups.some(group=>
+   !group?.id||!Array.isArray(group.reports)||
+   group.reports.some(report=>!report?.id))
  ){
-  throw new Error("The backend returned an unsupported record format.");
+  throw new Error("Unsupported record format");
  }
-
  return record;
 }
 
 async function fetchCase(id){
- const {data,error} = await client
-  .from("amc_followup_cases")
-  .select("*")
-  .eq("id",id)
-  .single();
-
+ const {data,error}=await client.from("amc_followup_cases")
+  .select("*").eq("id",id).single();
  if(error) throw error;
  return validateRecord(data);
 }
 
 async function readAllCases(){
- const result = [];
- const size = 200;
-
- for(let offset = 0;;offset += size){
-  const {data,error} = await client
-   .from("amc_followup_cases")
-   .select("*")
-   .order("id",{ascending:true})
-   .range(offset,offset + size - 1);
-
+ const result=[],size=200;
+ for(let offset=0;;offset+=size){
+  const {data,error}=await client.from("amc_followup_cases")
+   .select("*").order("id",{ascending:true})
+   .range(offset,offset+size-1);
   if(error) throw error;
-
-  const page = data || [];
+  const page=data||[];
   page.forEach(validateRecord);
   result.push(...page);
-
-  if(page.length < size) break;
+  if(page.length<size) break;
  }
-
- return result.sort((a,b) =>
-  String(b.updated_at).localeCompare(String(a.updated_at))
- );
+ return result.sort((a,b)=>
+  String(b.updated_at).localeCompare(String(a.updated_at)));
 }
 
-async function refresh(sync = false){
- if(!ready || busy) return;
+async function refresh(sync=false){
+ if(!ready||busy) return;
 
- if(sync && (pendingWrite || blockedReason)){
-  message("Resolve the unacknowledged save or warning before syncing.",true);
+ if(sync&&(pendingWrite||blockedReason)){
+  message("Check the pending save before updating quotations.",true);
   return;
  }
 
- if(actionDirty && !window.confirm(
-  "Refreshing will discard the unsaved input. Continue?"
- )){
-  return;
- }
+ if(actionDirty&&!window.confirm(
+  "Refreshing will discard unsaved changes. Continue?")) return;
 
- if(pendingWrite && !window.confirm(
-  "The unacknowledged save may already have succeeded. " +
-  "Download a snapshot first if needed, then reload to verify. Continue?"
- )){
-  return;
- }
+ if(pendingWrite&&!window.confirm(
+  "The record may already be saved. Download a backup if needed, "+
+  "then reload and check before repeating the action. Continue?")) return;
 
- if(blockedReason && recoverySnapshot && !window.confirm(
-  "Reloading does not repair backend data-preservation settings. " +
-  "Keep the save snapshot. Continue?"
- )){
-  return;
- }
+ if(integrityHold&&!window.confirm(
+  "Some saved information could not be verified. Keep the backup. "+
+  "Reload and check again?")) return;
 
- busy = true;
+ busy=true;
  updateControls();
+ message(sync?"Updating quotations…":"Loading…");
 
- message(sync
-  ? "Synchronising confirmed quotations…"
-  : "Loading records…"
- );
-
- const selectedId = selected?.id;
+ const selectedId=selected?.id;
 
  try{
-  let result = null;
-
   if(sync){
-   const response = await client.rpc("amc_followup_sync");
+   const response=await client.rpc("amc_followup_sync");
    if(response.error) throw response.error;
-   result = response.data;
   }
 
-  const loaded = await readAllCases();
-  const current = selectedId ? await fetchCase(selectedId) : null;
+  const loaded=await readAllCases();
+  const current=selectedId?await fetchCase(selectedId):null;
 
   closeWorkspace(true);
-  records = loaded;
-  selected = current;
-
+  records=loaded;
+  selected=current;
   if(current) replaceRecord(current);
+  pendingWrite=null;
 
-  pendingWrite = null;
-  blockedReason = "";
+  if(integrityHold){
+   const expected=recoverySnapshot;
+   const check=expected
+    ? loaded.find(x=>x.id===expected.caseId)
+    : null;
+   const actual=current?.id===expected?.caseId?current:check;
+
+   if(actual&&expected&&containsExpected(actual.state,expected.state)){
+    integrityHold=false;
+    blockedReason="";
+    recoverySnapshot=null;
+   }
+  }else{
+   blockedReason="";
+  }
 
   if(selected) renderDetail();
   renderList();
 
-  message(sync
-   ? `Sync completed: ${result?.changed || 0} case(s) created or updated.`
-   : `${records.length} case(s) loaded.`
-  );
+  if(integrityHold){
+   message("The record still needs checking. Contact the administrator.",true);
+  }else{
+   message(sync?"Quotations updated.":"Records refreshed.",false,true);
+  }
 
  }catch(error){
-  console.error(error);
-  message("Could not load records: " + (error.message || "Please retry."),true);
-
+  console.error("Refresh failed",error);
+  message("Records could not be loaded. Please try again.",true);
  }finally{
-  busy = false;
+  busy=false;
   updateControls();
  }
 }
 
 async function openCase(id){
- if(!ready || busy || pendingWrite) return;
+ if(!ready||busy||pendingWrite||integrityHold) return;
+ if(actionDirty&&!window.confirm("Discard unsaved changes?")) return;
 
- if(actionDirty &&
-  !window.confirm("Discard the unsaved input?")
- ){
-  return;
- }
-
- busy = true;
+ busy=true;
  updateControls();
- message("Opening the latest saved case…");
+ message("Opening patient…");
 
  try{
-  const record = await fetchCase(id);
-
+  const record=await fetchCase(id);
   closeWorkspace(true);
 
-  if(activeTab !== "case") previousTab = activeTab;
-
-  selected = record;
-  blockedReason = "";
-  activeTab = "case";
-
+  if(activeTab!=="case") previousTab=activeTab;
+  selected=record;
+  blockedReason="";
+  activeTab="case";
   replaceRecord(record);
+
+  $("groups").innerHTML="";
+  $("overviewScroll").scrollTop=0;
   renderDetail();
   renderList();
 
-  $("patientDetails").open = false;
-  $("otherTools").open = false;
-
+  $("headerTools").open=false;
   $("detailTitle").focus({preventScroll:true});
-  window.scrollTo({top:0,behavior:"instant"});
 
-  message("Latest saved case opened.");
+  if(window.matchMedia("(max-width:760px)").matches){
+   window.scrollTo({top:0,behavior:"instant"});
+  }
+  message("");
 
  }catch(error){
-  message("Could not open the case: " + error.message,true);
-
+  console.error("Open case failed",error);
+  message("This patient could not be opened. Please try again.",true);
  }finally{
-  busy = false;
+  busy=false;
   updateControls();
  }
 }
 
-/* Save preparation and preservation checks */
+/* Save protections */
 
 function reportSnapshot(report){
- const copy = clone(report);
+ const copy=clone(report);
  delete copy.actionLog;
  return copy;
 }
 
 function appendReportEvents(beforeState,state,staff,action,requestId){
- const beforeReports = new Map(
-  entries(beforeState).map(({group,report}) => [
-   `${group.id}:${report.id}`,
-   report
-  ])
- );
-
- const at = new Date().toISOString();
+ const previousReports=new Map(entries(beforeState).map(({group,report})=>
+  [`${group.id}:${report.id}`,report]));
+ const at=new Date().toISOString();
 
  for(const {group,report} of entries(state)){
-  const previous = beforeReports.get(`${group.id}:${report.id}`);
+  const previous=previousReports.get(`${group.id}:${report.id}`);
+  const before=previous?reportSnapshot(previous):null;
+  const after=reportSnapshot(report);
+  const oldContacts=beforeState.contacts.filter(x=>x.reportId===report.id);
+  const newContacts=state.contacts.filter(x=>x.reportId===report.id);
 
-  const before = previous ? reportSnapshot(previous) : null;
-  const after = reportSnapshot(report);
+  if(same(before,after)&&same(oldContacts,newContacts)) continue;
 
-  const oldContacts = beforeState.contacts.filter(contact =>
-   contact.reportId === report.id
-  );
-
-  const newContacts = state.contacts.filter(contact =>
-   contact.reportId === report.id
-  );
-
-  if(same(before,after) && same(oldContacts,newContacts)) continue;
-
-  report.actionLog = clone(previous?.actionLog || []);
-
+  report.actionLog=clone(previous?.actionLog||[]);
   report.actionLog.push({
-   id:uuid(),
-   requestId,
-   at,
-   staff,
-   action,
-   before,
-   after,
-   ...(same(oldContacts,newContacts) ? {} : {
-    contactsBefore:oldContacts,
-    contactsAfter:newContacts
+   id:uuid(),requestId,at,staff,action,before,after,
+   ...(same(oldContacts,newContacts)?{}:{
+    contactsBefore:oldContacts,contactsAfter:newContacts
    })
   });
  }
@@ -2644,64 +2283,62 @@ function appendReportEvents(beforeState,state,staff,action,requestId){
 
 function showActionError(text){
  if(!$("actionWorkspace").hidden){
-  $("actionError").textContent = text;
-  $("actionError").hidden = false;
+  $("actionError").textContent=text;
+  $("actionError").hidden=false;
+  $("actionError").scrollIntoView({block:"nearest"});
  }else{
   message(text,true);
  }
 }
 
 async function commit(action,mutator){
- if(!selected || editingLocked()) return false;
+ if(!selected||editingLocked()) return false;
 
  try{
-  const staff = staffName();
-  const before = clone(selected.state);
-  const state = clone(before);
-  const requestId = uuid();
+  const staff=staffName();
+  const before=clone(selected.state);
+  const state=clone(before);
+  const requestId=uuid();
+  const context=clone(actionContext||{});
 
   mutator(state,staff);
 
   if(same(before,state)){
    closeWorkspace(true);
-   message("No changes to save. Existing records and times were retained.");
+   message("No changes to save.",false,true);
    return true;
   }
 
   appendReportEvents(before,state,staff,action,requestId);
 
-  pendingWrite = {
+  pendingWrite={
    caseId:selected.id,
    expectedVersion:selected.edit_version,
-   state,
-   staff,
-   action:action.slice(0,300),
-   requestId
+   state,staff,action:action.slice(0,300),requestId,
+   uiContext:context
   };
-
-  recoverySnapshot = clone(pendingWrite);
-
+  recoverySnapshot=clone(pendingWrite);
   closeWorkspace(true);
-
   return await sendPendingWrite();
 
  }catch(error){
-  showActionError(error.message || "Could not prepare the save.");
+  showActionError(error.message||"The save could not be prepared.");
   return false;
  }
 }
 
 async function sendPendingWrite(){
- if(!pendingWrite || busy) return false;
+ if(!pendingWrite||busy) return false;
 
- const request = pendingWrite;
+ const request=pendingWrite;
+ let confirmed=false;
 
- busy = true;
+ busy=true;
  updateControls();
- message("Saving… Please do not close the page.");
+ message("Saving…");
 
  try{
-  const {data,error} = await client.rpc("amc_followup_save",{
+  const {data,error}=await client.rpc("amc_followup_save",{
    p_case_id:request.caseId,
    p_expected_version:request.expectedVersion,
    p_state:request.state,
@@ -2711,586 +2348,435 @@ async function sendPendingWrite(){
   });
 
   if(error) throw error;
-
-  const saved = validateRecord(data);
-
-  if(saved.id !== request.caseId){
-   throw new Error("The backend acknowledged a different case.");
+  const saved=validateRecord(data);
+  if(saved.id!==request.caseId){
+   throw new Error("Unexpected case acknowledgement");
   }
 
-  pendingWrite = null;
-  selected = saved;
-
+  pendingWrite=null;
+  selected=saved;
   replaceRecord(saved);
   renderDetail();
   renderList();
 
   if(!containsExpected(saved.state,request.state)){
-   blockedReason =
-    "The backend acknowledged the save, but its returned state did not " +
-    "preserve all submitted values or history. Editing is paused. " +
-    "Download the save snapshot and check amc_followup_save / sync SQL. " +
-    "Reloading does not repair the backend configuration.";
-
-   message("Save acknowledged, but data-preservation verification failed.",true);
+   console.error("Saved state did not preserve submitted content",{
+    caseId:request.caseId,requestId:request.requestId
+   });
+   integrityHold=true;
+   blockedReason=
+    "Some saved information could not be verified. "+
+    "Actions are paused. Download a backup and contact the administrator. "+
+    "Do not repeat this action.";
+   message("The saved record needs checking.",true);
    return false;
   }
 
-  blockedReason = "";
-  recoverySnapshot = null;
-
-  message("Saved: " + request.action + ".");
+  blockedReason="";
+  integrityHold=false;
+  recoverySnapshot=null;
+  confirmed=true;
+  message("Saved.",false,true);
   return true;
 
  }catch(error){
-  console.error(error);
+  console.error("Save failed",error);
 
-  if(String(error.message || "").includes("VERSION_CONFLICT")){
-   pendingWrite = null;
-
-   blockedReason =
-    "Another staff member or quotation sync updated this case. " +
-    "This request was not saved. Reload and verify the latest record, " +
-    "then repeat only the action still required.";
-
-   message("Version conflict — reload and verify.",true);
-
+  if(String(error.message||"").includes("VERSION_CONFLICT")){
+   pendingWrite=null;
+   blockedReason=
+    "This patient record was updated elsewhere. Your changes were not saved. "+
+    "Reload and check the latest record before trying again.";
+   message("The record has changed. Reload and check.",true);
   }else{
-   message(
-    "Save not acknowledged: " +
-    (error.message || "Connection problem.") +
-    " Retry the same save or reload to verify.",
-    true
-   );
+   message("Save confirmation has not arrived. Use Retry same save or Reload and check.",true);
   }
-
   return false;
 
  }finally{
-  busy = false;
+  busy=false;
   updateControls();
+  if(confirmed) showSaved(request.uiContext);
  }
 }
 
-/* Read input before commit closes the workspace */
+/* Submit actions */
 
-$("actionForm").addEventListener("submit",async event => {
+$("actionForm").addEventListener("submit",async event=>{
  event.preventDefault();
+ if(!actionContext||editingLocked()) return;
 
- if(!actionContext || editingLocked()) return;
+ $("actionError").hidden=true;
+ const context=clone(actionContext);
+ const value=id=>$(id)?.value.trim()||"";
 
- $("actionError").hidden = true;
+ if(context.type==="received"){
+  const date=value("receivedDate");
 
- const context = clone(actionContext);
- const value = id => $(id)?.value.trim() || "";
-
- if(context.type === "received"){
-  const date = value("receivedDate");
-
-  await commit("Report receipt recorded",(state,staff) => {
-   if(!validDate(date) || date > today()){
+  await commit("Report receipt recorded",(state,staff)=>{
+   if(!validDate(date)||date>today()){
     throw new Error("Enter a valid received date, not in the future.");
    }
+   const {group,report}=findReport(
+    state,context.target.groupId,context.target.reportId);
 
-   const {group,report} = findReport(
-    state,context.target.groupId,context.target.reportId
-   );
-
-   if(report.cancelled || !group.planReviewed){
+   if(report.cancelled||!group.planReviewed){
     throw new Error("Verify the report list and restore tracking first.");
    }
-
    if(report.receivedDate){
-    throw new Error(
-     "Receipt is already recorded. Use Correct a record to change the date."
-    );
+    throw new Error("Receipt is already recorded. Use Corrections to change the date.");
    }
-
-   report.receivedDate = date;
-   report.receivedRecordedAt = new Date().toISOString();
-   report.receivedRecordedBy = staff;
-   report.reviewCycleId = report.reviewCycleId || uuid();
-   report.reviewPending = true;
+   report.receivedDate=date;
+   report.receivedRecordedAt=new Date().toISOString();
+   report.receivedRecordedBy=staff;
+   report.reviewCycleId=report.reviewCycleId||uuid();
+   report.reviewPending=true;
   });
 
- }else if(context.type === "nurse"){
-  const outcome = $("actionFields")
+ }else if(context.type==="nurse"){
+  const outcome=$("actionFields")
    .querySelector('input[name="classification"]:checked')?.value;
+  const note=value("nurseNote");
 
-  const note = value("nurseNote");
-
-  await commit("Nurse initial classification recorded",(state,staff) => {
-   const {report} = findReport(
-    state,context.target.groupId,context.target.reportId
-   );
+  await commit("Nurse initial classification recorded",(state,staff)=>{
+   const {report}=findReport(
+    state,context.target.groupId,context.target.reportId);
 
    if(!["routine","doctor","urgent"].includes(outcome)){
-    throw new Error("Select the nurse review classification.");
+    throw new Error("Select a classification.");
    }
-
-   if(report.cancelled || !report.receivedDate){
+   if(report.cancelled||!report.receivedDate){
     throw new Error("Record receipt first.");
    }
-
-   if((report.triage || "pending") !== "pending" || report.reviewedAt){
-    throw new Error(
-     "A classification or review already exists. Use Correct a record."
-    );
+   if((report.triage||"pending")!=="pending"||report.reviewedAt){
+    throw new Error("A review already exists. Use Corrections.");
    }
-
    recordClassification(report,outcome,staff);
    appendNurseNote(report,note,staff);
   });
 
- }else if(context.type === "review"){
-  const doctor = value("actionDoctor");
-  const requirement = value("patientRequired");
-  const note = value("reviewNote");
-  const confirmed = $("reviewConfirmed").checked;
+ }else if(context.type==="review"){
+  const doctor=value("actionDoctor");
+  const requirement=value("patientRequired");
+  const note=value("reviewNote");
+  const confirmed=$("reviewConfirmed").checked;
 
-  await commit("Doctor review recorded",(state,staff) => {
-   if(!doctor || !["yes","no"].includes(requirement) || !confirmed){
+  await commit("Doctor review recorded",(state,staff)=>{
+   if(!doctor||!["yes","no"].includes(requirement)||!confirmed){
     throw new Error(
-     "Enter the doctor and patient contact requirement, " +
-     "and confirm that the doctor actually reviewed the report."
+     "Enter the doctor, select the contact requirement and confirm the actual review."
     );
    }
+   const {report}=findReport(
+    state,context.target.groupId,context.target.reportId);
 
-   const {report} = findReport(
-    state,context.target.groupId,context.target.reportId
-   );
-
-   if(!needsDoctorReview(report) || !nurseDone(report)){
+   if(!needsDoctorReview(report)||!nurseDone(report)){
     throw new Error("This report is not awaiting doctor review.");
    }
 
    preserveLegacyReview(report);
-   report.reviewCycleId = report.reviewCycleId || uuid();
-
-   const at = new Date().toISOString();
+   report.reviewCycleId=report.reviewCycleId||uuid();
+   const at=new Date().toISOString();
 
    report.reviewHistory.push({
-    id:uuid(),
-    cycleId:cycleId(report),
-    at,
-    doctor,
-    recordedBy:staff,
-    note,
-    patientContactRequired:requirement === "yes"
+    id:uuid(),cycleId:cycleId(report),at,doctor,
+    recordedBy:staff,note,
+    patientContactRequired:requirement==="yes"
    });
-
-   report.reviewDoctorName = doctor;
-   report.doctorName = doctor;
-   report.reviewedAt = at;
-   report.reviewRecordedBy = staff;
-   report.reviewNote = note;
-   report.reviewPending = false;
-   report.patientContactRequired = requirement === "yes";
+   report.reviewDoctorName=doctor;
+   report.doctorName=doctor;
+   report.reviewedAt=at;
+   report.reviewRecordedBy=staff;
+   report.reviewNote=note;
+   report.reviewPending=false;
+   report.patientContactRequired=requirement==="yes";
   });
 
- }else if(context.type === "filed"){
-  const confirmed = $("filingConfirmed").checked;
+ }else if(context.type==="filed"){
+  const confirmed=$("filingConfirmed").checked;
 
-  await commit("Report filing recorded",state => {
-   const {report} = findReport(
-    state,context.target.groupId,context.target.reportId
-   );
+  await commit("Report filing recorded",state=>{
+   const {group,report}=findReport(
+    state,context.target.groupId,context.target.reportId);
 
-   if(!confirmed || report.cancelled || !report.receivedDate){
-    throw new Error("Confirm that the report was received and filed.");
+   if(!confirmed||stage(state,group,report).key!=="filed"){
+    throw new Error("Complete the required reviews and contact before confirming filing.");
    }
-
-   report.archived = true;
+   report.archived=true;
   });
 
- }else if(context.type === "contact"){
-  const recordContact = $("recordContact").checked;
-  const method = value("contactMethod");
-  const delivery = value("contactDelivery");
-  const recipient = value("patientRecipient");
-  const note = value("contactNote");
+ }else if(context.type==="contact"){
+  const recordContact=$("recordContact").checked;
+  const method=value("contactMethod");
+  const delivery=value("contactDelivery");
+  const recipient=value("patientRecipient");
+  const note=value("contactNote");
+  const changeAppointment=$("changeAppointment").checked;
+  const status=value("appointmentStatus");
+  const date=value("appointmentDate");
+  const changeFollowup=$("changeFollowup").checked;
+  const nextDate=value("nextFollowupDate");
 
-  const changeAppointment = $("changeAppointment").checked;
-  const status = value("appointmentStatus");
-  const date = value("appointmentDate");
-
-  const changeFollowup = $("changeFollowup").checked;
-  const nextDate = value("nextFollowupDate");
-
-  const linked = [
+  const linked=[
    ...$("actionFields").querySelectorAll("[data-contact-report]:checked")
-  ].map(element => ({
-   groupId:element.dataset.contactGroup,
-   reportId:element.dataset.contactReport
+  ].map(el=>({
+   groupId:el.dataset.contactGroup,
+   reportId:el.dataset.contactReport
   }));
 
-  await commit("Patient contact / appointment recorded",(state,staff) => {
-   const allowed = {
+  await commit("Patient contact / appointment recorded",(state,staff)=>{
+   const allowed={
     Telephone:["confirmed","connected","no-answer","voicemail"],
     Email:["sent","confirmed"],
     WhatsApp:["sent","confirmed"],
     "In person":["confirmed","connected"]
    };
 
-   if(recordContact && !allowed[method]?.includes(delivery)){
-    throw new Error("Select the contact method and actual result.");
+   if(recordContact&&!allowed[method]?.includes(delivery)){
+    throw new Error("Select a contact method and result.");
    }
-
-   if(!recordContact && !changeAppointment && !changeFollowup){
-    throw new Error("Select what was done this time.");
+   if(!recordContact&&!changeAppointment&&!changeFollowup){
+    throw new Error("Select what was done.");
    }
-
-   if(context.requiredReportId && (
-    !recordContact ||
-    !linked.some(item => item.reportId === context.requiredReportId)
+   if(context.requiredReportId&&(
+    !recordContact||
+    !linked.some(x=>x.reportId===context.requiredReportId)
    )){
-    throw new Error(
-     "This action concerns a specific report. " +
-     "Keep contact recording enabled and select that report."
-    );
+    throw new Error("Keep contact recording enabled and select the report being followed up.");
    }
-
-   if(recordContact && !linked.length && !note){
-    throw new Error("Enter notes for a general patient contact.");
+   if(recordContact&&!linked.length&&!note){
+    throw new Error("Enter notes for this general patient contact.");
    }
-
-   if(!recordContact && !note){
-    throw new Error("Enter notes when recording an arrangement without contact.");
+   if(!recordContact&&!note){
+    throw new Error("Enter notes for this arrangement.");
    }
 
    if(changeAppointment){
     if(!Object.hasOwn(APPOINTMENTS,status)){
      throw new Error("Select a valid appointment status.");
     }
-
-    if(["booked","attended","missed"].includes(status) && !date){
-     throw new Error("Enter the relevant appointment date.");
+    if(["booked","attended","missed"].includes(status)&&!date){
+     throw new Error("Enter the appointment date.");
     }
-
-    if(date && !validDate(date)){
+    if(date&&!validDate(date)){
      throw new Error("Enter a valid appointment date.");
     }
-
-    if(status === "declined" && !note){
-     throw new Error(
-      "Document the reason or circumstances of declining the appointment."
-     );
+    if(status==="declined"&&!note){
+     throw new Error("Record the reason or circumstances of declining.");
     }
    }
 
-   if(changeFollowup && nextDate && !validDate(nextDate)){
+   if(changeFollowup&&nextDate&&!validDate(nextDate)){
     throw new Error("Enter a valid next contact date.");
    }
 
-   const before = arrangementSnapshot(state);
-   const at = new Date().toISOString();
+   const before=arrangementSnapshot(state);
+   const at=new Date().toISOString();
 
    if(recordContact){
-    const reports = linked.map(target => {
-     const {report} = findReport(
-      state,target.groupId,target.reportId
-     );
-
+    const reports=linked.map(target=>{
+     const {report}=findReport(state,target.groupId,target.reportId);
      if(!patientPending(state,report)){
-      throw new Error(
-       "A selected report is no longer awaiting patient receipt confirmation."
-      );
+      throw new Error("A selected report is no longer awaiting receipt confirmation.");
      }
-
      return report;
     });
 
-    const communicationId = uuid();
-    const targets = reports.length ? reports : [null];
+    const communicationId=uuid();
+    const targets=reports.length?reports:[null];
 
     for(const report of targets){
      state.contacts.push({
-      id:uuid(),
-      communicationId,
-      at,
-      staff,
-      audience:"patient",
-      target:recipient || "Patient",
-      method,
-      deliveryStatus:delivery,
-      outcome:deliveryLabel({deliveryStatus:delivery}),
-      note,
-      nextDate:changeFollowup ? nextDate : "",
-      reportId:report?.id || "",
-      reportName:report?.name || "",
-      reviewCycleId:report ? cycleId(report) : "",
-      confirmedAt:delivery === "confirmed" ? at : "",
-      confirmedBy:delivery === "confirmed" ? staff : ""
+      id:uuid(),communicationId,at,staff,audience:"patient",
+      target:recipient||"Patient",method,deliveryStatus:delivery,
+      outcome:deliveryLabel({deliveryStatus:delivery}),note,
+      nextDate:changeFollowup?nextDate:"",
+      reportId:report?.id||"",
+      reportName:report?.name||"",
+      reviewCycleId:report?cycleId(report):"",
+      confirmedAt:delivery==="confirmed"?at:"",
+      confirmedBy:delivery==="confirmed"?staff:""
      });
     }
-
    }else{
-    state.followupNotes = [
-     ...(state.followupNotes || []),
-     {
-      id:uuid(),
-      at,
-      staff,
-      note,
-      type:"arrangement"
-     }
-    ];
+    state.followupNotes=[...(state.followupNotes||[]),{
+     id:uuid(),at,staff,note,type:"arrangement"
+    }];
    }
 
    if(changeAppointment){
-    state.appointmentStatus = status;
-    state.appointmentDate = status === "unscheduled" ? "" : date;
+    state.appointmentStatus=status;
+    state.appointmentDate=status==="unscheduled"?"":date;
    }
-
-   if(changeFollowup){
-    state.nextFollowupDate = nextDate;
-   }
+   if(changeFollowup) state.nextFollowupDate=nextDate;
 
    appendArrangement(state,before,staff);
   });
 
- }else if(context.type === "plan"){
-  const confirmed = $("planConfirmed").checked;
-
-  const existing = [
+ }else if(context.type==="plan"){
+  const confirmed=$("planConfirmed").checked;
+  const existing=[
    ...$("actionFields").querySelectorAll("[data-plan-report]")
-  ].map(element => ({
-   id:element.dataset.planReport,
-   name:element.value.trim()
-  }));
+  ].map(el=>({id:el.dataset.planReport,name:el.value.trim()}));
+  const additional=value("additionalReports").split("\n")
+   .map(x=>x.trim()).filter(Boolean);
 
-  const additional = value("additionalReports")
-   .split("\n")
-   .map(name => name.trim())
-   .filter(Boolean);
+  await commit("Report tracking plan verified / updated",(state,staff)=>{
+   if(!confirmed) throw new Error("Confirm that the report list is verified.");
 
-  await commit("Report tracking plan verified / updated",(state,staff) => {
-   if(!confirmed){
-    throw new Error("Confirm that the report list has been verified.");
-   }
-
-   const group = state.groups.find(item => item.id === context.groupId);
-
-   if(!group){
-    throw new Error("The investigation could not be found.");
-   }
-
-   if(group.reports.length + additional.length > 100){
-    throw new Error("Use a maximum of 100 reports per investigation.");
+   const group=state.groups.find(x=>x.id===context.groupId);
+   if(!group) throw new Error("Investigation not found.");
+   if(group.reports.length+additional.length>100){
+    throw new Error("A maximum of 100 reports is allowed per investigation.");
    }
 
    for(const item of existing){
-    const report = group.reports.find(entry => entry.id === item.id);
-
-    if(!report || !item.name || item.name.length > 300){
+    const report=group.reports.find(x=>x.id===item.id);
+    if(!report||!item.name||item.name.length>300){
      throw new Error("Report names must contain 1–300 characters.");
     }
-
-    if((report.receivedDate || report.cancelled) &&
-     report.name !== item.name
-    ){
+    if((report.receivedDate||report.cancelled)&&report.name!==item.name){
      throw new Error("Received or cancelled report names cannot be changed.");
     }
-
-    report.name = item.name;
+    report.name=item.name;
    }
 
-   if(additional.some(name => name.length > 300)){
+   if(additional.some(name=>name.length>300)){
     throw new Error("Report names must be at most 300 characters.");
    }
-
-   additional.forEach(name => group.reports.push(emptyReport(name)));
+   additional.forEach(name=>group.reports.push(emptyReport(name)));
 
    if(!group.reports.length){
     throw new Error("Add at least one expected report.");
    }
 
-   group.planReviewed = true;
-   group.planVerifiedAt = new Date().toISOString();
-   group.planVerifiedBy = staff;
-   group.planVerifiedSourceRevision = state.sourceRevision;
+   group.planReviewed=true;
+   group.planVerifiedAt=new Date().toISOString();
+   group.planVerifiedBy=staff;
+   group.planVerifiedSourceRevision=state.sourceRevision;
   });
 
- }else if(context.type === "correction"){
-  const date = value("detailDate");
-  const triage = value("detailTriage");
-  const filed = $("detailFiled").checked;
-  const reopen = $("reopenReview").checked;
-  const reason = value("correctionReason");
+ }else if(context.type==="correction"){
+  const date=value("detailDate");
+  const triage=value("detailTriage");
+  const filed=$("detailFiled").checked;
+  const reopen=$("reopenReview").checked;
+  const reason=value("correctionReason");
 
-  await commit("Report correction recorded",(state,staff) => {
-   if(!reason){
-    throw new Error("Enter the correction reason.");
-   }
+  await commit("Report correction recorded",(state,staff)=>{
+   if(!reason) throw new Error("Enter the correction reason.");
 
-   const {group,report} = findReport(
-    state,context.target.groupId,context.target.reportId
-   );
+   const {group,report}=findReport(
+    state,context.target.groupId,context.target.reportId);
 
-   if(report.cancelled){
-    throw new Error("Restore tracking first.");
-   }
-
+   if(report.cancelled) throw new Error("Restore tracking first.");
    if(!Object.hasOwn(CLASSIFICATIONS,triage)){
     throw new Error("Select a valid classification.");
    }
-
-   if(date && (!validDate(date) || date > today())){
+   if(date&&(!validDate(date)||date>today())){
     throw new Error("Enter a valid received date, not in the future.");
    }
-
-   if(report.receivedDate && !date){
-    throw new Error("Clearing a recorded received date is not supported.");
+   if(report.receivedDate&&!date){
+    throw new Error("A recorded received date cannot be cleared here.");
    }
-
-   if(!report.receivedDate && date && !group.planReviewed){
+   if(!report.receivedDate&&date&&!group.planReviewed){
     throw new Error("Verify the report list first.");
    }
-
-   if(!date && (triage !== "pending" || filed || reopen)){
-    throw new Error(
-     "Record receipt before classification, doctor review or filing."
-    );
+   if(!date&&(triage!=="pending"||filed||reopen)){
+    throw new Error("Record receipt before classification, review or filing.");
    }
 
-   if(!report.receivedDate && date){
-    report.reviewCycleId = report.reviewCycleId || uuid();
-    report.reviewPending = true;
-    report.receivedRecordedAt = new Date().toISOString();
-    report.receivedRecordedBy = staff;
+   if(!report.receivedDate&&date){
+    report.reviewCycleId=report.reviewCycleId||uuid();
+    report.reviewPending=true;
+    report.receivedRecordedAt=new Date().toISOString();
+    report.receivedRecordedBy=staff;
    }
 
-   if((report.triage || "pending") !== triage){
+   if((report.triage||"pending")!==triage){
     recordClassification(report,triage,staff,reason);
    }else if(reopen){
     openNewReviewCycle(report);
    }
 
-   report.receivedDate = date;
-   report.archived = filed;
-
-   report.correctionHistory = [
-    ...(report.correctionHistory || []),
-    {
-     id:uuid(),
-     at:new Date().toISOString(),
-     staff,
-     reason,
-     cycleId:cycleId(report)
-    }
-   ];
+   report.receivedDate=date;
+   report.archived=filed;
+   report.correctionHistory=[...(report.correctionHistory||[]),{
+    id:uuid(),at:new Date().toISOString(),staff,reason,
+    cycleId:cycleId(report)
+   }];
   });
 
- }else if(context.type === "cancel" || context.type === "restore"){
-  const reason = value("trackingReason");
+ }else if(context.type==="cancel"||context.type==="restore"){
+  const reason=value("trackingReason");
 
   await commit(
-   context.type === "cancel"
-    ? "Report tracking cancelled"
-    : "Report tracking restored",
-   (state,staff) => {
-    if(!reason){
-     throw new Error("Enter the verified reason.");
-    }
+   context.type==="cancel"?"Report tracking cancelled":"Report tracking restored",
+   (state,staff)=>{
+    if(!reason) throw new Error("Enter the verified reason.");
+    const {report}=findReport(
+     state,context.target.groupId,context.target.reportId);
 
-    const {report} = findReport(
-     state,context.target.groupId,context.target.reportId
-    );
-
-    if(context.type === "cancel" && report.receivedDate){
+    if(context.type==="cancel"&&report.receivedDate){
      throw new Error("A received report cannot be cancelled.");
     }
 
-    if(!Array.isArray(report.trackingHistory)){
-     report.trackingHistory = [];
-    }
+    if(!Array.isArray(report.trackingHistory)) report.trackingHistory=[];
 
-    if(report.cancelled && report.cancelReason &&
-     !report.trackingHistory.length
-    ){
+    if(report.cancelled&&report.cancelReason&&!report.trackingHistory.length){
      report.trackingHistory.push({
-      id:uuid(),
-      type:"cancel",
-      reason:report.cancelReason,
-      at:"",
-      staff:"",
-      legacy:true
+      id:uuid(),type:"cancel",reason:report.cancelReason,
+      at:"",staff:"",legacy:true
      });
     }
 
     report.trackingHistory.push({
-     id:uuid(),
-     type:context.type,
-     reason,
-     at:new Date().toISOString(),
-     staff
+     id:uuid(),type:context.type,reason,
+     at:new Date().toISOString(),staff
     });
 
-    report.cancelled = context.type === "cancel";
-
-    if(context.type === "cancel"){
-     report.cancelReason = reason;
-    }else{
-     report.restoreReason = reason;
-    }
+    report.cancelled=context.type==="cancel";
+    if(context.type==="cancel") report.cancelReason=reason;
+    else report.restoreReason=reason;
    }
   );
 
- }else if(context.type === "arrangementCorrection"){
-  const status = value("correctStatus");
-  const date = value("correctDate");
-  const next = value("correctNext");
-  const note = value("correctNote");
-  const reason = value("arrangementReason");
+ }else if(context.type==="arrangementCorrection"){
+  const status=value("correctStatus");
+  const date=value("correctDate");
+  const next=value("correctNext");
+  const note=value("correctNote");
+  const reason=value("arrangementReason");
 
-  await commit("Appointment / follow-up correction recorded",(state,staff) => {
-   if(!reason){
-    throw new Error("Enter the correction reason.");
-   }
-
+  await commit("Appointment / follow-up correction recorded",(state,staff)=>{
+   if(!reason) throw new Error("Enter the correction reason.");
    if(!Object.hasOwn(APPOINTMENTS,status)){
     throw new Error("Select a valid appointment status.");
    }
-
-   if(["booked","attended","missed"].includes(status) && !date){
+   if(["booked","attended","missed"].includes(status)&&!date){
     throw new Error("Enter the appointment date.");
    }
-
-   if(date && !validDate(date)){
+   if(date&&!validDate(date)){
     throw new Error("Enter a valid appointment date.");
    }
-
-   if(next && !validDate(next)){
+   if(next&&!validDate(next)){
     throw new Error("Enter a valid next contact date.");
    }
-
-   if(status === "declined" && !note){
-    throw new Error(
-     "Document the reason or circumstances of declining the appointment."
-    );
+   if(status==="declined"&&!note){
+    throw new Error("Record the reason or circumstances of declining.");
    }
 
-   const before = arrangementSnapshot(state);
-
-   state.appointmentStatus = status;
-   state.appointmentDate = date;
-   state.nextFollowupDate = next;
-   state.caseNote = note;
-
-   const after = arrangementSnapshot(state);
+   const before=arrangementSnapshot(state);
+   state.appointmentStatus=status;
+   state.appointmentDate=date;
+   state.nextFollowupDate=next;
+   state.caseNote=note;
+   const after=arrangementSnapshot(state);
 
    if(!same(before,after)){
-    state.arrangementHistory = [
-     ...(state.arrangementHistory || []),
-     {
-      id:uuid(),
-      at:new Date().toISOString(),
-      staff,
-      before,
-      after,
-      reason
-     }
-    ];
+    state.arrangementHistory=[...(state.arrangementHistory||[]),{
+     id:uuid(),at:new Date().toISOString(),staff,before,after,reason
+    }];
    }
   });
  }
@@ -3299,44 +2785,47 @@ $("actionForm").addEventListener("submit",async event => {
 /* Events */
 
 function handleUI(fn){
- return async event => {
+ return async event=>{
   try{
    await fn(event);
   }catch(error){
-   showActionError(error.message || "The action could not be completed.");
+   console.error("Action failed",error);
+   showActionError(error.message||"The action could not be completed.");
   }
  };
 }
 
-$("groups").addEventListener("click",handleUI(event => {
+function handleStepClick(event){
  if(editingLocked()) return;
 
- const plan = event.target.closest("[data-plan]");
-
+ const plan=event.target.closest("[data-plan]");
  if(plan){
   openPlan(plan.dataset.plan);
   return;
  }
 
- const button = event.target.closest("[data-step]");
- if(!button) return;
+ const button=event.target.closest("[data-step]");
+ if(button){
+  openStep({
+   groupId:button.dataset.group,
+   reportId:button.dataset.report
+  },button.dataset.step);
+ }
+}
 
- openStep({
-  groupId:button.dataset.group,
-  reportId:button.dataset.report
- },button.dataset.step);
-}));
+$("groups").addEventListener("click",handleUI(handleStepClick));
 
-$("actionFields").addEventListener("click",handleUI(event => {
- const plan = event.target.closest("[data-plan]");
+$("actionFields").addEventListener("click",handleUI(event=>{
+ if(editingLocked()) return;
 
- if(plan){
-  openPlan(plan.dataset.plan);
+ const step=event.target.closest("[data-step]");
+ const plan=event.target.closest("[data-plan]");
+ if(step||plan){
+  handleStepClick(event);
   return;
  }
 
- const correct = event.target.closest("[data-correct-report]");
-
+ const correct=event.target.closest("[data-correct-report]");
  if(correct){
   openCorrection({
    groupId:correct.dataset.correctGroup,
@@ -3345,8 +2834,7 @@ $("actionFields").addEventListener("click",handleUI(event => {
   return;
  }
 
- const cancel = event.target.closest("[data-cancel-report]");
-
+ const cancel=event.target.closest("[data-cancel-report]");
  if(cancel){
   openTracking({
    groupId:cancel.dataset.cancelGroup,
@@ -3360,124 +2848,92 @@ $("actionFields").addEventListener("click",handleUI(event => {
  }
 }));
 
-$("actionFields").addEventListener("input",() => {
- actionDirty = true;
+$("actionFields").addEventListener("input",()=>{
+ actionDirty=true;
  updateControls();
 });
 
-$("actionFields").addEventListener("change",event => {
- actionDirty = true;
-
- if(event.target.id === "contactMethod"){
-  refreshDeliveryOptions();
- }
-
- if([
-  "recordContact",
-  "changeAppointment",
-  "changeFollowup"
- ].includes(event.target.id)){
+$("actionFields").addEventListener("change",event=>{
+ actionDirty=true;
+ if(event.target.id==="contactMethod") refreshDeliveryOptions();
+ if(["recordContact","changeAppointment","changeFollowup"].includes(event.target.id)){
   refreshContactFields();
  }
-
  updateControls();
 });
 
-$("actionCancel").addEventListener("click",() => closeWorkspace());
+$("actionCancel").addEventListener("click",()=>closeWorkspace());
 
-$("contactButton").addEventListener(
- "click",handleUI(() => openContact())
-);
+$("patientButton").addEventListener("click",handleUI(openPatientDetails));
+$("contactButton").addEventListener("click",handleUI(()=>openContact()));
+$("manageButton").addEventListener("click",handleUI(openManage));
+$("correctionButton").addEventListener("click",handleUI(openCorrectionChooser));
+$("historyButton").addEventListener("click",handleUI(openHistory));
 
-$("manageButton").addEventListener(
- "click",handleUI(() => openManage())
-);
-
-$("correctionButton").addEventListener(
- "click",handleUI(() => openCorrectionChooser())
-);
-
-$("historyButton").addEventListener(
- "click",handleUI(() => openHistory())
-);
-
-$("caseBody").addEventListener("click",event => {
- const button = event.target.closest("[data-open]");
+$("caseBody").addEventListener("click",event=>{
+ const button=event.target.closest("[data-open]");
  if(button) void openCase(button.dataset.open);
 });
 
-$("tabs").addEventListener("click",event => {
- const button = event.target.closest("[data-tab]");
-
- if(!button || busy || pendingWrite) return;
-
- activeTab = button.dataset.tab;
- previousTab = activeTab;
-
+$("tabs").addEventListener("click",event=>{
+ const button=event.target.closest("[data-tab]");
+ if(!button||busy||pendingWrite||integrityHold) return;
+ activeTab=button.dataset.tab;
+ previousTab=activeTab;
  renderList();
 });
 
-$("backButton").addEventListener("click",() => {
- if(busy || pendingWrite || !closeWorkspace()) return;
-
- activeTab = previousTab;
+$("backButton").addEventListener("click",()=>{
+ if(busy||pendingWrite||integrityHold||!closeWorkspace()) return;
+ activeTab=previousTab;
  renderList();
-
- window.scrollTo({top:0,behavior:"instant"});
 });
 
 $("search").addEventListener("input",renderList);
 
-$("clearSearchButton").addEventListener("click",() => {
- $("search").value = "";
+$("clearSearchButton").addEventListener("click",()=>{
+ $("search").value="";
  renderList();
  $("search").focus();
 });
 
-$("reloadButton").addEventListener("click",() => void refresh(false));
+$("reloadButton").addEventListener("click",()=>void refresh(false));
 
-$("syncButton").addEventListener("click",() => {
- if(window.confirm(
-  "Sync confirmed quotations? Backend sync must preserve existing " +
-  "reports, history and review-cycle fields."
- )){
+$("syncButton").addEventListener("click",()=>{
+ $("headerTools").open=false;
+ if(window.confirm("Update the worklist from confirmed quotations?")){
   void refresh(true);
  }
 });
 
-$("quotationButton").addEventListener("click",() => {
+$("quotationButton").addEventListener("click",()=>{
+ $("headerTools").open=false;
  window.open("./quotation.html","_blank","noopener");
 });
 
-$("retryButton").addEventListener("click",() => void sendPendingWrite());
+$("retryButton").addEventListener("click",()=>void sendPendingWrite());
+$("resolveButton").addEventListener("click",()=>void refresh(false));
 
-$("resolveButton").addEventListener("click",() => void refresh(false));
-
-$("exportPendingButton").addEventListener("click",() => {
- const snapshot = pendingWrite || recoverySnapshot;
+$("exportPendingButton").addEventListener("click",()=>{
+ const snapshot=pendingWrite||recoverySnapshot;
  if(!snapshot) return;
-
- const blob = new Blob(
-  [JSON.stringify(snapshot,null,2)],
-  {type:"application/json"}
- );
-
- const url = URL.createObjectURL(blob);
- const link = document.createElement("a");
-
- link.href = url;
- link.download = `followup-save-${snapshot.requestId}.json`;
+ const blob=new Blob([JSON.stringify(snapshot,null,2)],{
+  type:"application/json"
+ });
+ const url=URL.createObjectURL(blob);
+ const link=document.createElement("a");
+ link.href=url;
+ link.download=`followup-backup-${snapshot.requestId}.json`;
  link.click();
-
- setTimeout(() => URL.revokeObjectURL(url),1000);
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
 
 try{
- $("operator").value =
-  sessionStorage.getItem("amc-followup-recording-staff") || "";
+ $("operator").value=
+  sessionStorage.getItem("amc-followup-recording-staff")||"";
 }catch(error){}
 
-$("operator").addEventListener("input",() => {
+$("operator").addEventListener("input",()=>{
  try{
   sessionStorage.setItem(
    "amc-followup-recording-staff",
@@ -3486,136 +2942,86 @@ $("operator").addEventListener("input",() => {
  }catch(error){}
 });
 
-window.addEventListener("beforeunload",event => {
- if(actionDirty || pendingWrite || busy){
+window.addEventListener("beforeunload",event=>{
+ if(actionDirty||pendingWrite||busy||integrityHold){
   event.preventDefault();
-  event.returnValue = "";
+  event.returnValue="";
  }
 });
 
-/* Print saved records only */
+/* Print saved records */
 
 function printReportHTML(state){
- const all = entries(state);
+ const all=entries(state);
+ if(!all.length) return "<p>No report records.</p>";
 
- return all.length ? `
+ return `
   <div class="table-wrap">
    <table>
-    <thead>
-     <tr>
-      <th>Report</th>
-      <th>Progress / record</th>
-     </tr>
-    </thead>
+    <thead><tr><th>Report</th><th>Progress / record</th></tr></thead>
     <tbody>
-     ${all.map(({group,report}) => {
-      const current = stage(state,group,report);
-
+     ${all.map(({group,report})=>{
+      const current=stage(state,group,report);
       return `
        <tr>
-        <td>
-         <strong>${esc(report.name || group.name)}</strong>
-         <div class="code">${esc(group.code)}</div>
-        </td>
+        <td><strong>${esc(report.name||group.name)}</strong></td>
         <td>
          <strong>${esc(current.label)}</strong>
-
-         <div>
-          Expected reports:
-          ${group.planReviewed ? "Verified" : "Not verified"}
-         </div>
-
-         ${report.receivedDate ? `
-          <div>Received: ${esc(dateLabel(report.receivedDate))}</div>
-         ` : ""}
-
+         <div>Report list: ${group.planReviewed?"Verified":"Not verified"}</div>
+         ${report.receivedDate?`
+          <div>Received: ${esc(dateLabel(report.receivedDate))}</div>`:""}
          <div>
           Classification:
-          ${esc(CLASSIFICATIONS[report.triage] || "Awaiting nurse review")}
+          ${esc(CLASSIFICATIONS[report.triage]||"Awaiting nurse review")}
          </div>
-
-         ${report.nurseNote ? `
-          <div class="note">
-           Nurse / receipt notes: ${esc(report.nurseNote)}
-          </div>
-         ` : ""}
-
-         ${report.reviewedAt ? `
+         ${report.nurseNote?`
+          <div class="note">Nurse notes: ${esc(report.nurseNote)}</div>`:""}
+         ${report.reviewedAt?`
           <div>
-           ${needsDoctorReview(report)
-             ? "Previous doctor review"
-             : "Doctor review"}:
-           ${esc(
-            report.reviewDoctorName ||
-            report.doctorName ||
-            "Doctor not recorded"
-           )}
+           ${needsDoctorReview(report)?"Previous doctor review":"Doctor review"}:
+           ${esc(report.reviewDoctorName||report.doctorName||"Not recorded")}
            · ${esc(timeLabel(report.reviewedAt))}
           </div>
-
-          ${report.reviewNote ? `
-           <div class="note">${esc(report.reviewNote)}</div>
-          ` : ""}
-         ` : ""}
-
-         ${report.reviewPending && report.reviewedAt ? `
-          <div>New review cycle pending</div>
-         ` : ""}
-
-         <div>Filing: ${report.archived ? "Filed" : "Not recorded"}</div>
-
-         ${patientPending(state,report) ? `
-          <div>Patient receipt confirmation pending</div>
-         ` : ""}
-
-         ${report.cancelled ? `
-          <div class="note">
-           Cancellation reason: ${esc(report.cancelReason)}
-          </div>
-         ` : ""}
+          ${report.reviewNote?`
+           <div class="note">${esc(report.reviewNote)}</div>`:""}`:""}
+         ${report.reviewPending&&report.reviewedAt?
+          "<div>Another doctor review required</div>":""}
+         <div>Filing: ${report.archived?"Filed":"Not recorded"}</div>
+         ${patientPending(state,report)?
+          "<div>Patient receipt confirmation pending</div>":""}
+         ${report.cancelled?`
+          <div class="note">Cancellation reason: ${esc(report.cancelReason)}</div>`:""}
         </td>
-       </tr>
-      `;
+       </tr>`;
      }).join("")}
     </tbody>
    </table>
-  </div>
- ` : '<p>No report records.</p>';
+  </div>`;
 }
 
-$("printButton").addEventListener("click",handleUI(async () => {
- if(!selected || editingLocked() || actionDirty){
-  throw new Error("Save or verify outstanding changes before printing.");
+$("printButton").addEventListener("click",handleUI(async()=>{
+ if(!selected||editingLocked()||actionDirty){
+  throw new Error("Save or check outstanding changes before printing.");
  }
 
- const record = clone(selected);
- const state = record.state;
+ const record=clone(selected),state=record.state;
 
- $("printArea").innerHTML = `
+ $("printArea").innerHTML=`
   <div class="brand">
-   <img src="./amclogo.png" alt="Adventist Medical Center logo">
+   <img src="./amclogo.png" alt="Adventist Medical Center">
    <h1>Adventist Medical Center<br>Report Follow-up Summary</h1>
   </div>
-
-  <p>
-   <strong>${esc(state.quotationNumber)}</strong>
-   · Confirmed revision ${esc(state.sourceRevision)}<br>
-   Printed: ${esc(timeLabel(new Date().toISOString()))}<br>
-   Saved: ${esc(timeLabel(record.updated_at))}
-  </p>
-
+  <p>Printed: ${esc(timeLabel(new Date().toISOString()))}</p>
   <div class="patient-meta">${patientHTML(state)}</div>
 
   <section class="section">
    <h2>Appointment and follow-up</h2>
    <p>
-    ${esc(APPOINTMENTS[state.appointmentStatus] || "Not arranged")}
+    ${esc(APPOINTMENTS[state.appointmentStatus]||"Not arranged")}
     · ${esc(dateLabel(state.appointmentDate))}<br>
     Next contact: ${esc(dateLabel(state.nextFollowupDate))}
    </p>
-   ${state.caseNote ? `
-    <div class="note">${esc(state.caseNote)}</div>
-   ` : ""}
+   ${state.caseNote?`<div class="note">${esc(state.caseNote)}</div>`:""}
   </section>
 
   <section class="section">
@@ -3625,93 +3031,71 @@ $("printButton").addEventListener("click",handleUI(async () => {
 
   <section class="section">
    <h2>Contact records</h2>
-   ${[...state.contacts].reverse().map(contactHTML).join("") ||
+   ${[...state.contacts].reverse().map(contactHTML).join("")||
     "<p>No contact records.</p>"}
-
-   ${(state.followupNotes || []).map(item => `
+   ${(state.followupNotes||[]).map(item=>`
     <div class="log">
      <strong>Arrangement notes</strong>
      <div>${esc(timeLabel(item.at))} · ${esc(item.staff)}</div>
      <div class="note">${esc(item.note)}</div>
-    </div>
-   `).join("")}
+    </div>`).join("")}
   </section>
 
   <section class="section">
    <p class="small-text">
-    This is a follow-up tracking summary, not a laboratory or imaging report.
+    This is a follow-up summary, not a laboratory or imaging report.
     Refer to the actual reports in the clinic system.
-    Recorded statuses do not replace clinical assessment or required escalation.
+    This record does not replace clinical assessment or urgent escalation.
    </p>
-  </section>
- `;
+  </section>`;
 
  await Promise.all(
-  [...$("printArea").querySelectorAll("img")].map(image =>
-   image.decode
-    ? image.decode().catch(() => {})
-    : Promise.resolve()
-  )
+  [...$("printArea").querySelectorAll("img")].map(image=>
+   image.decode?image.decode().catch(()=>{}):Promise.resolve())
  );
 
- const oldTitle = document.title;
- document.title = `${state.quotationNumber}-Followup`;
-
- try{
-  window.print();
- }finally{
-  document.title = oldTitle;
- }
+ const oldTitle=document.title;
+ document.title=`${state.quotationNumber||"Patient"}-Followup`;
+ try{window.print()}
+ finally{document.title=oldTitle}
 }));
 
-/* Startup reads records without silently syncing quotations */
+/* Startup */
 
 async function connect(){
  if(!window.supabase?.createClient){
-  message(
-   "The backend library failed to load. Check your connection or CDN access, then refresh.",
-   true
-  );
+  message("The page could not connect. Check your connection and reload the page.",true);
   return;
  }
 
  try{
-  client = window.supabase.createClient(
-   SUPABASE_URL,
-   SUPABASE_KEY,
-   {
-    auth:{
-     persistSession:true,
-     autoRefreshToken:true,
-     detectSessionInUrl:false,
-     storageKey:"amc-public-demo-auth"
-    }
+  client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
+   auth:{
+    persistSession:true,
+    autoRefreshToken:true,
+    detectSessionInUrl:false,
+    storageKey:"amc-public-demo-auth"
    }
-  );
+  });
 
-  const session = await client.auth.getSession();
+  const session=await client.auth.getSession();
   if(session.error) throw session.error;
 
   if(!session.data.session){
-   const signIn = await client.auth.signInAnonymously();
+   const signIn=await client.auth.signInAnonymously();
    if(signIn.error) throw signIn.error;
   }
 
-  ready = true;
+  ready=true;
   updateControls();
-
   await refresh(false);
 
  }catch(error){
-  console.error(error);
-
-  ready = false;
+  console.error("Connection failed",error);
+  ready=false;
   updateControls();
-
   message(
-   "Cannot connect: " +
-   (error.message || "Please refresh.") +
-   " Check the follow-up SQL and Anonymous Sign-ins settings.",
+   "Unable to connect. Reload the page or contact the administrator.",
    true
   );
  }
