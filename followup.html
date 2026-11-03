@@ -2380,7 +2380,12 @@ async function sendPendingWrite(){
   return true;
 
  }catch(error){
-  console.error("Save failed",error);
+console.error("Save failed:", JSON.stringify({
+ code: error?.code || "",
+ message: error?.message || "",
+ details: error?.details || "",
+ hint: error?.hint || ""
+}, null, 2));
 
   if(String(error.message||"").includes("VERSION_CONFLICT")){
    pendingWrite=null;
@@ -2388,9 +2393,25 @@ async function sendPendingWrite(){
     "This patient record was updated elsewhere. Your changes were not saved. "+
     "Reload and check the latest record before trying again.";
    message("The record has changed. Reload and check.",true);
-  }else{
-   message("Save confirmation has not arrived. Use Retry same save or Reload and check.",true);
-  }
+}else if(error?.code === "P0001"){
+ // The server explicitly rejected this save.
+ // Retain recoverySnapshot, but do not offer the same request as a retry.
+ pendingWrite = null;
+
+ blockedReason =
+  "Changes were not saved. Reload and check the patient record " +
+  "before trying again. If this continues, contact the administrator.";
+
+ message("Changes were not saved. Reload and check.", true);
+
+}else{
+ // The outcome is uncertain, so keep the same-request retry available.
+ message(
+  "Save confirmation has not arrived. " +
+  "Use Retry same save or Reload and check.",
+  true
+ );
+}
   return false;
 
  }finally{
