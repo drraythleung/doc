@@ -182,7 +182,7 @@ details summary{cursor:pointer;font-weight:bold}
   <div class="stats" id="quoteMeta"></div>
   <br>
   <div class="grid">
-   <label class="field">Patient name *
+   <label class="field">Patient name 
     <input id="patientName" maxlength="100" autocomplete="off">
    </label>
    <label class="field">Patient reference *
@@ -280,7 +280,7 @@ details summary{cursor:pointer;font-weight:bold}
      </div>
 
      <div id="paperSection" hidden style="margin-top:12px">
-      <button id="printPaperButton" type="button">Print paper confirmation</button>
+  
       <label class="field" style="margin-top:12px">Signed document — PDF, PNG or JPEG; maximum 8 MB
        <input id="paperFile" type="file" accept=".pdf,.png,.jpg,.jpeg">
       </label>
@@ -293,7 +293,15 @@ details summary{cursor:pointer;font-weight:bold}
        <span>I confirm that the paper form has been signed, matches this quotation revision, and is retained in the clinic records.</span>
       </label>
      </div>
-     <button id="confirmButton" type="button" class="success">Record confirmation and lock revision</button>
+     <div class="actions" style="margin-top:14px">
+      <button id="printPaperButton" type="button" hidden>
+       Print paper signing page
+      </button>
+
+      <button id="confirmButton" type="button" class="success">
+       CONFIRM and LOCK revision
+      </button>
+     </div>
     </div>
     <div id="confirmationRecord"></div>
    </section>
@@ -1313,6 +1321,11 @@ function renderQuote(){
  $("clearItemsButton").disabled=!!lockedSnapshot||!items.length;
  $("newRevisionButton").hidden=!lockedSnapshot;
  $("confirmationEditor").hidden=!!lockedSnapshot;
+ $("printPaperButton").hidden =
+  !!lockedSnapshot ||
+  document.querySelector(
+   '[name="signatureMode"]:checked'
+  )?.value !== "paper";
  metadataIds.forEach(id=>$(id).disabled=!!lockedSnapshot);
  $("confirmationRecord").innerHTML=lockedSnapshot?confirmationHTML(lockedSnapshot):"";
  if(!lockedSnapshot)syncConfirmationDefaults();
@@ -1509,10 +1522,11 @@ document.querySelectorAll('[name="signatureMode"]').forEach(r=>{
 
   invalidateConfirmation();
 
-  const paper=r.value==="paper";
+ const paper=r.value==="paper";
 
   $("tabletSection").hidden=paper;
   $("paperSection").hidden=!paper;
+  $("printPaperButton").hidden=!paper;
 
   if(!paper){
    requestAnimationFrame(resizeCanvas);
@@ -1553,7 +1567,6 @@ $("paperFile").addEventListener("change",async()=>{
 function validation(){
  const m=metadata();
  if(!items.length)return"Select at least one service.";
- if(!m.patientName)return"Enter the patient name.";
  if(!m.patientReference)return"Enter the patient reference.";
  if(!m.preparedBy)return"Enter the preparing staff member.";
  if(!m.quoteDate)return"Enter the quotation date.";
@@ -1755,20 +1768,57 @@ function printable(s,paperForm=false){
   </div>
   
   ${m.notes?`<p><strong>Notes:</strong><br>${esc(m.notes).replaceAll("\n","<br>")}</p>`:""}
-  ${s.confirmation?confirmationHTML(s):paperForm?`
+ 
+
+${s.confirmation?confirmationHTML(s):paperForm?`
    <div class="confirmation-record">
     <h3>Patient / representative acknowledgement</h3>
-<p>I have reviewed this quotation and accept all listed services
+
+    <p>
+     I have reviewed this quotation and accept all listed services
      and their stated charges. This acknowledgement does not replace
-     any required clinical informed consent.</p>
-    <p>Signer name: __________________________________________</p>
-    <p>Signer role: Patient / Representative</p>
-    <p>Relationship / authority, if applicable: ______________________________</p>
+     any required clinical informed consent.
+    </p>
+
+    <p>
+     <strong>Signer name:</strong>
+     ${esc($("signerName").value.trim()) ||
+       "__________________________________________"}
+    </p>
+
+    <p>
+     <strong>Signer role:</strong>
+     ${esc($("signerRole").value)}
+    </p>
+
+    <p>
+     <strong>Relationship / authority, if applicable:</strong>
+     ${esc($("signerRelationship").value.trim()) ||
+       ($("signerRole").value === "Patient"
+        ? "Not applicable"
+        : "__________________________________________")}
+    </p>
+
+    <p>
+     <strong>Date:</strong>
+     ${$("paperSignedDate").value
+       ? esc(dateLabel($("paperSignedDate").value))
+       : "__________________________________________"}
+    </p>
+
+    <p>
+     <strong>Witness / recording staff name:</strong>
+     ${esc($("witness").value.trim()) ||
+       "__________________________________________"}
+    </p>
+
     <div class="signature-lines">
-     <div>Patient / representative signature</div><div>Date</div>
-     <div>Witness / recording staff name</div><div>Witness signature</div>
+     <div>Patient / representative signature</div>
+     <div>Witness signature</div>
     </div>
    </div>`:""}
+
+  
   <div class="print-footer">
    ${s.terms.map(t=>"• "+esc(t)).join("<br>")}
   </div>`;
@@ -1778,8 +1828,12 @@ function printDoc(paperForm=false){
  if(!s.items.length){message("Select services before printing.",true);return;}
  if(paperForm&&!lockedSnapshot){
   const m=metadata();
-  if(!m.patientName||!m.patientReference||!m.preparedBy){
-   message("Enter patient name, patient reference and preparing staff before printing a signature form.",true);return;
+if(!m.patientReference||!m.preparedBy){
+   message(
+    "Enter patient reference and preparing staff before printing a signature form.",
+    true
+   );
+   return;
   }
 if(!m.quoteDate){
    message("Enter the quotation date before printing a signature form.",true);return;
@@ -2646,14 +2700,12 @@ if(revision > 1 && !savedRevisionId){
   }
 
   if(
-   !m.patientName ||
    !m.patientReference ||
    !m.preparedBy ||
    !m.quoteDate
   ){
-   return "Enter patient name, reference, preparing staff and quotation date.";
+   return "Enter patient reference, preparing staff and quotation date.";
   }
-
   return "";
  }
 
