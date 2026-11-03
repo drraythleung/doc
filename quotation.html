@@ -2569,6 +2569,9 @@ let client = null;
  let lastSavedDraftKey = null;
  let lastSavedAt = null;
  let saveError = "";
+ // 首次建立未獲成功回覆時，禁止盲目重試。
+ // 可能已保存，只係回覆未到；先檢查 Records。
+ let initialSaveNeedsReview = false;
 
  let loadedRecords = [];
  let recordsRun = 0;
@@ -2695,6 +2698,10 @@ el("app").inert = confirming || opening;
   }else if(lockedSnapshot){
    autoStatus.textContent =
     "Confirmed quotation saved · Revision locked";
+  }else if(initialSaveNeedsReview){
+   autoStatus.textContent =
+    "First save was not acknowledged. Autosave is paused. " +
+    "Check Records before trying to create another quotation.";
   }else if(pendingConfirmation){
    autoStatus.textContent =
     "Confirmation was not acknowledged. Retry confirmation, or check Records.";
@@ -2723,8 +2730,8 @@ el("app").inert = confirming || opening;
    }
   }
 
-  autoStatus.style.color =
-   saveError || pendingConfirmation
+autoStatus.style.color =
+   saveError || pendingConfirmation || initialSaveNeedsReview
     ? "var(--red)"
     : "var(--muted)";
  }
@@ -2779,7 +2786,7 @@ el("app").inert = confirming || opening;
 
 
 // 同步檢查綁定，唔單靠 MutationObserver。
- function ensureBinding(){
+function ensureBinding(){
   if(quoteNumber !== boundQuotationNumber){
    boundQuotationNumber = quoteNumber;
 
@@ -2789,8 +2796,13 @@ el("app").inert = confirming || opening;
    lastSavedAt = null;
    saveError = "";
    pendingConfirmation = null;
+   initialSaveNeedsReview = false;
   }
  }
+
+
+
+
 
  function saveDraft(forConfirmation = false){
   if(draftInFlight)return draftInFlight;
@@ -2806,6 +2818,14 @@ el("app").inert = confirming || opening;
   }
 
   ensureBinding();
+
+  // 首次保存失敗後，唔可以當撞號再建立。
+  if(initialSaveNeedsReview){
+   saveError =
+    "Check Records first. The first save may already have succeeded.";
+   updateButtons();
+   return Promise.resolve(false);
+  }
 
   const problem = draftProblem();
 
@@ -2825,6 +2845,11 @@ el("app").inert = confirming || opening;
   const startingNumber = quoteNumber;
   const startingRevision = revision;
 
+  // 凍結呢次請求嘅 backend 綁定。
+  const revisionIdToSave = savedRevisionId;
+  const expectedVersionToSave = savedEditVersion;
+  const isFirstSave = revisionIdToSave === null;
+
   saving = true;
   saveError = "";
   updateButtons();
@@ -2835,37 +2860,119 @@ el("app").inert = confirming || opening;
      "demo_save_draft",
      {
       p_document:documentToSave,
-      p_revision_id:savedRevisionId,
-      p_expected_version:savedEditVersion
+      p_revision_id:revisionIdToSave,
+      p_expected_version:expectedVersionToSave
      }
     );
 
     if(error)throw error;
 
     if(!data?.revision_id || data.edit_version == null){
-     throw new Error("Backend returned an incomplete save result.");
+     throw new Error(
+      "Backend returned an incomplete save result."
+     );
+    }
+
+    /*
+     新 SQL 會返回 quotation_number。
+     未更新 SQL 時，只容許沿用原本提交嘅編號。
+    */
+    const savedNumber =
+     data.quotation_number ?? documentToSave.quotationNumber;
+
+    if(
+     typeof savedNumber !== "string" ||
+     !savedNumber ||
+     savedNumber.length > 100
+    ){
+     throw new Error(
+      "Backend returned an invalid quotation number."
+     );
+    }
+
+    // 已保存報價嘅編號唔應改變。
+    if(!isFirstSave && savedNumber !== startingNumber){
+     throw new Error(
+      "Backend unexpectedly changed an existing quotation number."
+     );
     }
 
     if(
      quoteNumber !== startingNumber ||
      revision !== startingRevision
     ){
-     return false;
+     throw new Error(
+      "The current quotation changed during saving. Check Records."
+     );
     }
+
+    const numberChanged = savedNumber !== startingNumber;
+
+    /*
+     先同步 number 同 bound number，再 render。
+     避免 MutationObserver 清走新保存嘅 revision ID。
+    */
+    quoteNumber = savedNumber;
+    boundQuotationNumber = savedNumber;
 
     savedRevisionId = data.revision_id;
     savedEditVersion = data.edit_version;
-    lastSavedDraftKey = key;
+
+    // 保存 key 必須用 backend 實際使用嘅編號。
+    documentToSave.quotationNumber = savedNumber;
+    lastSavedDraftKey = draftKey(documentToSave);
     lastSavedAt = new Date().toISOString();
 
-    // 儲存期間如有新修改，保留未保存狀態。
-    dirty = draftKey() !== key;
+    initialSaveNeedsReview = false;
+
+    if(numberChanged){
+     /*
+      舊號碼嘅未提交簽名／紙本驗證唔沿用。
+      已確認 revisions 唔會經過呢個首次建立分支。
+     */
+     invalidateConfirmation();
+     el("printArea").innerHTML = "";
+
+     render();
+
+     message(
+      "The quotation number was automatically changed to " +
+      savedNumber +
+      " to avoid a duplicate. The draft is saved. " +
+      "Please sign again, or reprint and verify the paper form."
+     );
+    }
+
+    // 保存期間新輸入嘅內容，繼續保留未保存狀態。
+    dirty = draftKey() !== lastSavedDraftKey;
 
     return true;
    }catch(error){
     console.error("Automatic draft save failed:",error);
 
-    saveError = error.message || "Please retry.";
+    if(isFirstSave){
+     /*
+      保守處理所有首次建立錯誤：
+      即使係明確 SQL 錯誤，亦先要求檢查 Records。
+      唔喺下一個 autosave tick 再建立一份。
+     */
+     initialSaveNeedsReview = true;
+
+     saveError =
+      (error.message || "No successful save response received.") +
+      " First-save retries are paused; check Records.";
+
+     message(
+      "The first save was not acknowledged. " +
+      "Do not assume it failed: check Records for " +
+      startingNumber +
+      " and the test patient/reference before starting another quotation.",
+      true
+     );
+    }else{
+     saveError = error.message || "Please retry.";
+    }
+
     return false;
    }finally{
     saving = false;
@@ -2876,6 +2983,7 @@ el("app").inert = confirming || opening;
 
   return draftInFlight;
  }
+ 
 
  window.amcConfirmQuotation = async snapshot=>{
   if(confirming || opening || lockedSnapshot)return false;
@@ -2925,11 +3033,18 @@ el("app").inert = confirming || opening;
     }
    }
 
+
+
    if(
     quoteNumber !== startingNumber ||
     revision !== startingRevision
    ){
-    throw new Error("The current quotation changed. Please retry.");
+    throw new Error(
+     "The quotation number or revision changed while saving. " +
+     "Confirmation was not submitted. " +
+     "Review the saved quotation and sign again. " +
+     "For paper confirmation, reprint and verify the form with the current number."
+    );
    }
 
    if(
@@ -2966,9 +3081,10 @@ el("app").inert = confirming || opening;
 
    // 成功先鎖定，並顯示 backend 已保存嘅同一份快照。
    lockedSnapshot = clone(documentToConfirm);
-   pendingConfirmation = null;
-   saveError = "";
-   dirty = false;
+  pendingConfirmation = null;
+  saveError = "";
+  initialSaveNeedsReview = false;
+  dirty = false;
 
    render();
 
@@ -2982,10 +3098,17 @@ el("app").inert = confirming || opening;
 
    dirty = true;
 
+
    message(
     "Confirmation was not completed in this page: " +
     (error.message || "Please retry.") +
-    " Your signature remains on screen. If the connection was interrupted, retry the same confirmation or check Records.",
+    (
+     initialSaveNeedsReview
+      ? " First check Records; the initial draft save may already have succeeded."
+      : quoteNumber !== startingNumber
+       ? " The old-number signature and paper verification were cleared."
+       : " If the connection was interrupted, retry the same confirmation or check Records. Any signature still on screen has not been cleared."
+    ),
     true
    );
 
@@ -3465,7 +3588,8 @@ lastSavedDraftKey = draftKey(s);
 lastSavedAt = null;
 saveError = "";
 pendingConfirmation = null;
-
+initialSaveNeedsReview = false;
+   
 category = "quotation";
 dirty = false;
 
