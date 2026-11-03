@@ -3528,5 +3528,445 @@ if(selected){
 renderTabs();
 updateControls();
 </script>
+ <!-- Batch actions and direct buttons -->
+<style>
+.batch-toolbar{
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:8px;
+ padding:10px 12px;
+ margin-bottom:10px;
+ border:1px solid var(--line);
+ border-radius:12px;
+ background:#f8fafc;
+}
+
+.batch-toolbar .batch-select-all{
+ display:flex;
+ align-items:center;
+ gap:7px;
+ font-size:12px;
+ font-weight:700;
+ margin-right:4px;
+}
+
+.batch-toolbar button{
+ font-size:12px;
+ padding:7px 10px;
+ border-radius:8px;
+}
+
+.batch-count{
+ font-size:12px;
+ color:var(--muted);
+ margin-right:auto;
+}
+
+.batch-help{
+ width:100%;
+ margin:0;
+ color:var(--muted);
+ font-size:11px;
+}
+
+.report-table th.batch-checkbox-column,
+.report-table td.batch-checkbox-column{
+ width:38px;
+ padding:10px 8px;
+ text-align:center;
+}
+
+.report-table th:nth-child(2){width:27%}
+.report-table th:nth-child(3){width:27%}
+.report-table th:nth-child(4){width:auto}
+
+.report-table tr.batch-selected{
+ background:#eff6ff;
+}
+
+.action-divider{
+ width:100%;
+ height:0;
+}
+
+@media print{
+ .batch-toolbar,
+ .batch-checkbox-column{
+  display:none!important;
+ }
+}
+</style>
+
+<script>
+"use strict";
+
+// ------------------------------------------------------------
+// 1. Remove More. Show useful actions directly.
+// ------------------------------------------------------------
+
+compactActionsHTML = function(group,report){
+ const button = (action,label,style = "") =>
+  compactButton(group,report,action,label,style);
+
+ if(report.cancelled){
+  return `
+   <div class="quick-actions">
+    ${button("reopen","Restore tracking")}
+   </div>
+  `;
+ }
+
+ let actions = "";
+
+ if(!report.receivedDate){
+  actions =
+   button("received","Received","primary") +
+   button("cancel","Cancel tracking","danger");
+
+ }else{
+  actions += button(
+   "quick-routine",
+   "Routine review",
+   report.triage === "routine" ? "success" : ""
+  );
+
+  actions += button(
+   "quick-doctor",
+   "Needs doctor",
+   report.triage === "doctor" ? "primary" : ""
+  );
+
+  actions += button(
+   "quick-urgent",
+   "Urgent review",
+   "urgent-button"
+  );
+
+  if(!report.archived){
+   actions += button("quick-filed","Mark filed");
+  }
+
+  actions += `<span class="action-divider"></span>`;
+
+  actions += button("triage","Review notes");
+
+  if(!report.notifiedAt){
+   actions += button("notify","Doctor notified");
+  }
+
+  if(!report.reviewedAt){
+   actions += button("review","Doctor reviewed");
+  }
+ }
+
+ const notes = [
+  report.nurseNote
+   ? "Nurse / receipt notes: " + report.nurseNote
+   : "",
+  report.reviewNote
+   ? "Doctor review notes: " + report.reviewNote
+   : ""
+ ].filter(Boolean).join("\n");
+
+ return `
+  <div class="quick-actions">${actions}</div>
+  ${notes ? `
+   <div class="compact-note">${esc(notes)}</div>
+  ` : ""}
+ `;
+};
+
+// ------------------------------------------------------------
+// 2. Add checkboxes to the existing compact table.
+//    Print output does not include checkboxes.
+// ------------------------------------------------------------
+
+const batchOriginalGroupsHTML = groupsHTML;
+
+groupsHTML = function(state,showButtons = true){
+ const html = batchOriginalGroupsHTML(state,showButtons);
+
+ if(!showButtons) return html;
+
+ const template = document.createElement("template");
+ template.innerHTML = html;
+
+ const table = template.content.querySelector(".report-table");
+ if(!table) return html;
+
+ const header = document.createElement("th");
+ header.className = "batch-checkbox-column";
+ header.textContent = "";
+ table.querySelector("thead tr").prepend(header);
+
+ const entries = [];
+
+ for(const group of state.groups || []){
+  if(!(group.reports || []).length){
+   entries.push(null);
+   continue;
+  }
+
+  for(const report of group.reports){
+   entries.push({group,report});
+  }
+ }
+
+ table.querySelectorAll("tbody tr").forEach((row,index) => {
+  const cell = document.createElement("td");
+  cell.className = "batch-checkbox-column";
+
+  const entry = entries[index];
+
+  if(entry && !entry.report.cancelled){
+   const checkbox = document.createElement("input");
+   checkbox.type = "checkbox";
+   checkbox.className = "batch-report-checkbox";
+   checkbox.dataset.group = entry.group.id;
+   checkbox.dataset.report = entry.report.id;
+
+   checkbox.setAttribute(
+    "aria-label",
+    "Select " + (entry.report.name || entry.group.name)
+   );
+
+   cell.append(checkbox);
+  }
+
+  row.prepend(cell);
+ });
+
+ return template.innerHTML;
+};
+
+// ------------------------------------------------------------
+// 3. Batch toolbar
+// ------------------------------------------------------------
+
+const batchToolbar = document.createElement("div");
+batchToolbar.className = "batch-toolbar";
+batchToolbar.id = "batchToolbar";
+
+batchToolbar.innerHTML = `
+ <label class="batch-select-all">
+  <input id="batchSelectAll" type="checkbox">
+  Select all
+ </label>
+
+ <span id="batchCount" class="batch-count">0 selected</span>
+
+ <button type="button" data-batch="received" class="primary" disabled>
+  Mark received
+ </button>
+
+ <button type="button" data-batch="received-filed" disabled>
+  Received + filed
+ </button>
+
+ <button type="button" data-batch="routine" disabled>
+  Routine review
+ </button>
+
+ <button type="button" data-batch="filed" disabled>
+  Mark filed
+ </button>
+
+ <p class="batch-help">
+  Select only the reports you are recording.
+  Routine review is not a declaration that results are normal.
+  Urgent results require direct escalation; this page sends no alerts.
+ </p>
+`;
+
+$("groups").before(batchToolbar);
+
+function batchCheckboxes(){
+ return [
+  ...$("groups").querySelectorAll(".batch-report-checkbox")
+ ];
+}
+
+function batchUpdateSelection(){
+ const all = batchCheckboxes();
+ const checked = all.filter(checkbox => checkbox.checked);
+
+ $("batchCount").textContent = `${checked.length} selected`;
+
+ $("batchSelectAll").checked =
+  all.length > 0 && checked.length === all.length;
+
+ $("batchSelectAll").indeterminate =
+  checked.length > 0 && checked.length < all.length;
+
+ $("batchSelectAll").disabled = !all.length;
+
+ for(const checkbox of all){
+  checkbox.closest("tr").classList.toggle(
+   "batch-selected",
+   checkbox.checked
+  );
+ }
+
+ const reports = checked.map(checkbox =>
+  findReport(
+   selected.state,
+   checkbox.dataset.group,
+   checkbox.dataset.report
+  ).report
+ );
+
+ const hasSelection = reports.length > 0;
+ const allReceived =
+  hasSelection && reports.every(report => !!report.receivedDate);
+
+ for(const button of batchToolbar.querySelectorAll("[data-batch]")){
+  const action = button.dataset.batch;
+
+  if(action === "routine"){
+   button.disabled =
+    !allReceived ||
+    reports.some(report =>
+     ["doctor","urgent"].includes(report.triage) ||
+     !!report.reviewedAt
+    );
+
+  }else if(action === "filed"){
+   button.disabled =
+    !allReceived ||
+    reports.every(report => !!report.archived);
+
+  }else if(action === "received"){
+   button.disabled =
+    !hasSelection ||
+    reports.every(report => !!report.receivedDate);
+
+  }else{
+   button.disabled =
+    !hasSelection ||
+    reports.every(report =>
+     !!report.receivedDate && !!report.archived
+    );
+  }
+ }
+}
+
+$("batchSelectAll").addEventListener("change",event => {
+ for(const checkbox of batchCheckboxes()){
+  checkbox.checked = event.target.checked;
+ }
+
+ batchUpdateSelection();
+});
+
+$("groups").addEventListener("change",event => {
+ if(event.target.matches(".batch-report-checkbox")){
+  batchUpdateSelection();
+ }
+});
+
+// Reset selection after loading a case or saving.
+// This prevents accidentally applying the next action to an old selection.
+const batchOriginalRenderDetail = renderDetail;
+
+renderDetail = function(){
+ batchOriginalRenderDetail();
+ batchUpdateSelection();
+};
+
+// ------------------------------------------------------------
+// 4. One save for the whole selected batch.
+// ------------------------------------------------------------
+
+batchToolbar.addEventListener("click",async event => {
+ const button = event.target.closest("[data-batch]");
+ if(!button || button.disabled) return;
+
+ const action = button.dataset.batch;
+
+ const targets = batchCheckboxes()
+  .filter(checkbox => checkbox.checked)
+  .map(checkbox => ({
+   groupId:checkbox.dataset.group,
+   reportId:checkbox.dataset.report
+  }));
+
+ if(!targets.length) return;
+
+ const labels = {
+  received:"Reports received",
+  "received-filed":"Reports received and filed",
+  routine:"Nurse routine review recorded",
+  filed:"Report filing recorded"
+ };
+
+ await commit(
+  `${labels[action]} — batch of ${targets.length}`,
+  (state,staff) => {
+   const reports = targets.map(target =>
+    findReport(state,target.groupId,target.reportId).report
+   );
+
+   if(reports.some(report => report.cancelled)){
+    throw new Error("Cancelled tracking entries cannot be included.");
+   }
+
+   if(
+    ["routine","filed"].includes(action) &&
+    reports.some(report => !report.receivedDate)
+   ){
+    throw new Error("Mark the selected reports as received first.");
+   }
+
+   // Do not silently downgrade a doctor/urgent disposition.
+   // Changes to those outcomes must use the individual review action.
+   if(
+    action === "routine" &&
+    reports.some(report =>
+     ["doctor","urgent"].includes(report.triage) ||
+     !!report.reviewedAt
+    )
+   ){
+    throw new Error(
+     "Use the individual review action to change an escalated " +
+     "or doctor-reviewed report."
+    );
+   }
+
+   const now = new Date().toISOString();
+   const receivedDate = today();
+
+   for(const report of reports){
+    if(action === "received" || action === "received-filed"){
+     // Preserve previously recorded receipt dates.
+     if(!report.receivedDate){
+      report.receivedDate = receivedDate;
+     }
+    }
+
+    if(action === "filed" || action === "received-filed"){
+     report.archived = true;
+    }
+
+    if(action === "routine"){
+     // Preserve an existing routine review's original person/time.
+     if(report.triage !== "routine"){
+      report.triage = "routine";
+      report.nurseName = staff;
+      report.nurseAt = now;
+     }
+    }
+   }
+  }
+ );
+});
+
+// Apply the new layout.
+if(selected){
+ renderDetail();
+}else{
+ batchUpdateSelection();
+}
+</script>
 </body>
 </html>
