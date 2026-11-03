@@ -1852,34 +1852,34 @@ function printable(s,paperForm=false){
      I have reviewed this quotation and accept all listed services and their stated charges.
     </p>
 
-    <div class="ack-details">
-     <div class="ack-field">
-      <span class="ack-label">Signer name:</span>
-      ${paperValue($("signerName").value)}
-     </div>
+   <div class="ack-details">
+ <div class="ack-field">
+  <span class="ack-label">Signer name:</span>
+  ${paperValue($("signerName").value)}
+ </div>
 
-     <div class="ack-field">
-      <span class="ack-label">Role:</span>
-      ${paperValue(role)}
-     </div>
+ <div class="ack-field">
+  <span class="ack-label">Date:</span>
+  ${paperValue(signedDate)}
+ </div>
 
-     ${representative?`
-      <div class="ack-field ack-wide">
-       <span class="ack-label">Relationship / authority:</span>
-       ${paperValue($("signerRelationship").value)}
-      </div>
-     `:""}
+ <div class="ack-field">
+  <span class="ack-label">Role:</span>
+  ${paperValue(role)}
+ </div>
 
-     <div class="ack-field">
-      <span class="ack-label">Date:</span>
-      ${paperValue(signedDate)}
-     </div>
+ <div class="ack-field">
+  <span class="ack-label">Witness / staff:</span>
+  ${paperValue($("witness").value)}
+ </div>
 
-     <div class="ack-field">
-      <span class="ack-label">Witness / staff:</span>
-      ${paperValue($("witness").value)}
-     </div>
-    </div>
+ ${representative?`
+  <div class="ack-field ack-wide">
+   <span class="ack-label">Relationship / authority:</span>
+   ${paperValue($("signerRelationship").value)}
+  </div>
+ `:""}
+</div>
 
     <div class="ack-signatures">
      <div>
