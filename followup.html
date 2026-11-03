@@ -522,15 +522,6 @@ tbody tr:last-child td{border-bottom:0}
       <button id="quotationButton" type="button">
        Open quotation page
       </button>
-      <p class="small-text">
-       <strong>Test data only.</strong>
-       Staff names are not verified logins.
-       Do not enter real patient information in this demo.
-      </p>
-      <p class="small-text">
-       This page records actions; it does not send messages.
-       Urgent results require the clinic's usual escalation process.
-      </p>
      </div>
     </details>
    </div>
@@ -2961,7 +2952,7 @@ $("actionCancel").addEventListener("click",()=>closeWorkspace());
 
 $("patientButton").addEventListener("click",handleUI(openPatientDetails));
 $("contactButton").addEventListener("click",handleUI(()=>openContact()));
-$("manageButton").addEventListener("click",handleUI(openManage));
+$("manageButton").addEventListener("click",handleUI(()=>openManage()));
 $("correctionButton").addEventListener("click",handleUI(openCorrectionChooser));
 $("historyButton").addEventListener("click",handleUI(openHistory));
 
