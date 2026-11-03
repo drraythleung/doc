@@ -1,0 +1,2956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Adventist Medical Center — Report Follow-up</title>
+
+<style>
+:root{
+ --bg:#eef2f7;
+ --panel:#ffffff;
+ --soft:#f8fafc;
+ --text:#12202f;
+ --muted:#5b6b7c;
+ --line:#d9e2ec;
+ --blue:#1d4ed8;
+ --green:#059669;
+ --red:#b91c1c;
+ --amber:#946200;
+ --shadow:0 8px 24px rgba(15,23,42,.06);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{
+ margin:0;
+ background:radial-gradient(
+  circle at top left,
+  #f8fbff 0%,
+  #eef2f7 42%,
+  #e4ebf5 100%
+ );
+ color:var(--text);
+ font:15px/1.5 Inter,Tahoma,Arial,sans-serif;
+ -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.5}
+button,input,select,textarea{border-radius:12px}
+button{
+ padding:9px 13px;
+ border:1px solid var(--line);
+ background:var(--panel);
+ color:var(--text);
+ font-weight:700;
+ transition:transform .16s,box-shadow .16s,background .16s;
+}
+button:hover:not(:disabled){
+ border-color:var(--blue);
+ transform:translateY(-1px);
+}
+button.primary{
+ background:linear-gradient(135deg,#1d4ed8,#2563eb);
+ border-color:var(--blue);
+ color:white;
+ box-shadow:0 4px 12px rgba(37,99,235,.2);
+}
+button.success{
+ background:linear-gradient(135deg,#059669,#10b981);
+ border-color:var(--green);
+ color:white;
+}
+button.danger{color:var(--red)}
+button.small{padding:6px 10px;font-size:12px}
+button:focus-visible,input:focus-visible,
+select:focus-visible,textarea:focus-visible{
+ outline:3px solid #88b5ff;
+ outline-offset:2px;
+}
+input,select,textarea{
+ padding:9px 10px;
+ border:1px solid var(--line);
+ background:var(--panel);
+ color:var(--text);
+ width:100%;
+}
+input[type=checkbox]{
+ width:18px;
+ height:18px;
+ flex-shrink:0;
+ accent-color:var(--blue);
+}
+textarea{resize:vertical}
+label.field{
+ display:flex;
+ flex-direction:column;
+ gap:5px;
+ font-size:12px;
+ font-weight:bold;
+}
+small,.muted{color:var(--muted)}
+h1,h2,h3,p{margin:0 0 10px}
+h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
+h2{font-size:19px}
+h3{font-size:16px}
+.wrap{max-width:1200px;margin:auto;padding:20px}
+.card{
+ padding:22px;
+ background:var(--panel);
+ border:1px solid var(--line);
+ border-radius:18px;
+ box-shadow:var(--shadow);
+ margin-bottom:16px;
+}
+#app > header{
+ background:linear-gradient(135deg,#fff,#f6f9fc);
+ padding:22px 24px;
+}
+.amc-brand{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:24px;
+ width:100%;
+ margin-bottom:20px;
+}
+.amc-logo{
+ display:block;
+ flex-shrink:0;
+ width:190px;
+ max-width:35%;
+ height:auto;
+ margin:0;
+}
+.amc-brand h1{
+ flex:1;
+ min-width:0;
+ margin:0;
+ text-align:right;
+ font-size:24px;
+ line-height:1.3;
+}
+.header-row,.actions,.stats,.tabs{
+ display:flex;
+ gap:9px;
+ align-items:center;
+ flex-wrap:wrap;
+}
+.header-row{justify-content:space-between}
+.actions{margin:12px 0}
+.header-tools{
+ display:flex;
+ align-items:flex-end;
+ justify-content:space-between;
+ gap:16px;
+ flex-wrap:wrap;
+}
+.operator-field{width:min(100%,280px)}
+.search-label{
+ display:block;
+ margin-top:16px;
+ color:var(--muted);
+ font-size:12px;
+ font-weight:700;
+}
+.search-row{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ margin-top:6px;
+}
+.search-row input{
+ flex:1;
+ min-width:0;
+ padding:12px 16px;
+}
+.notice{
+ padding:12px 15px;
+ border-radius:10px;
+ background:#fff4d9;
+ border:1px solid #ead39a;
+ margin:12px 0;
+ color:#684a0b;
+ font-size:13px;
+}
+.notice.blue{
+ background:#eff6ff;
+ border-color:#bfdbfe;
+ color:#164bab;
+}
+.notice.red{
+ background:#fff0ef;
+ border-color:#ffc5bf;
+ color:var(--red);
+}
+#message{
+ min-height:24px;
+ margin:10px 0 0;
+ font-weight:bold;
+ font-size:13px;
+ color:var(--blue);
+}
+.info-bar{
+ display:flex;
+ flex-wrap:wrap;
+ gap:10px;
+ margin-bottom:16px;
+}
+.chip{
+ display:inline-block;
+ border:1px solid var(--line);
+ border-radius:25px;
+ background:var(--panel);
+ padding:8px 15px;
+ font-size:13px;
+ font-weight:700;
+ box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.chip.blue{color:var(--blue)}
+.chip.green{color:var(--green)}
+.chip.amber{color:#b45309}
+.chip.red{color:var(--red)}
+.tabs{gap:5px;margin-bottom:0}
+.tabs button{
+ padding:11px 15px;
+ border-radius:12px 12px 0 0;
+ border:1px solid var(--line);
+ border-bottom:0;
+ background:var(--soft);
+ color:var(--muted);
+ font-size:13px;
+}
+.tabs button.active{
+ background:var(--panel);
+ color:var(--text);
+ border-color:#c4d0dd;
+ box-shadow:0 -4px 12px rgba(15,23,42,.04);
+}
+.tab-count{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ min-width:20px;
+ height:20px;
+ margin-left:6px;
+ padding:0 5px;
+ background:#dbeafe;
+ color:#1d4ed8;
+ border-radius:999px;
+ font-size:11px;
+}
+.main-panel{
+ background:var(--panel);
+ border:1px solid var(--line);
+ border-radius:0 18px 18px 18px;
+ padding:22px;
+ box-shadow:var(--shadow);
+ margin-bottom:16px;
+ min-height:240px;
+}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:12px;
+}
+.full{grid-column:1/-1}
+.table-scroll{overflow:auto}
+table{border-collapse:collapse;width:100%}
+th,td{
+ padding:11px 12px;
+ text-align:left;
+ border-bottom:1px solid var(--line);
+ vertical-align:top;
+}
+th{
+ font-size:11px;
+ text-transform:uppercase;
+ color:var(--muted);
+ letter-spacing:.05em;
+ white-space:nowrap;
+}
+td{font-size:13px}
+#caseBody tr{cursor:pointer}
+#caseBody tr:hover{background:var(--soft)}
+.patient-name{font-weight:700;font-size:14px}
+.code{
+ font-family:monospace;
+ color:var(--muted);
+ font-size:11px;
+ overflow-wrap:anywhere;
+}
+.badge{
+ display:inline-block;
+ padding:4px 8px;
+ border-radius:25px;
+ border:1px solid var(--line);
+ background:var(--soft);
+ font-size:11px;
+ font-weight:700;
+ margin:2px 3px 2px 0;
+}
+.badge.blue{background:#eff6ff;border-color:#bfdbfe;color:var(--blue)}
+.badge.green{background:#ecfdf5;border-color:#a7e3c9;color:#087a55}
+.badge.amber{background:#fff7df;border-color:#ead39a;color:var(--amber)}
+.badge.red{background:#fff0ef;border-color:#ffc5bf;color:var(--red)}
+.empty{
+ text-align:center;
+ padding:40px 20px;
+ color:var(--muted);
+}
+.empty strong{
+ display:block;
+ color:var(--text);
+ font-size:17px;
+ margin-bottom:8px;
+}
+.patient-details{
+ background:var(--soft);
+ border:1px solid var(--line);
+ border-radius:14px;
+ margin:15px 0;
+ padding:16px;
+}
+.patient-details > summary{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:12px;
+ cursor:pointer;
+ font-weight:800;
+}
+.patient-details > summary::after{
+ content:"Expand";
+ color:var(--blue);
+ font-size:12px;
+}
+.patient-details[open] > summary::after{content:"Collapse"}
+.patient-meta{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:9px 20px;
+ padding-top:14px;
+ font-size:13px;
+}
+.patient-meta .label{
+ display:block;
+ color:var(--muted);
+ font-size:11px;
+ margin-bottom:2px;
+}
+.section{
+ border-top:1px solid var(--line);
+ padding-top:20px;
+ margin-top:20px;
+}
+.service-group{
+ background:var(--soft);
+ border:1px solid var(--line);
+ border-radius:14px;
+ padding:16px;
+ margin-bottom:12px;
+}
+.group-header{
+ display:flex;
+ justify-content:space-between;
+ align-items:flex-start;
+ gap:12px;
+}
+.group-header h3{margin-bottom:4px}
+.report{
+ background:white;
+ border:1px solid var(--line);
+ border-radius:12px;
+ padding:13px 14px;
+ margin-top:10px;
+}
+.report-name{font-weight:700;margin-bottom:6px}
+.report-meta{
+ font-size:12px;
+ color:var(--muted);
+ margin-top:5px;
+}
+.report-actions{
+ display:flex;
+ align-items:center;
+ gap:7px;
+ flex-wrap:wrap;
+ margin-top:10px;
+}
+.note{white-space:pre-wrap;overflow-wrap:anywhere}
+.summary{
+ background:linear-gradient(135deg,#ecfdf5,#d1fae5);
+ border:1px solid #6ee7b7;
+ border-radius:16px;
+ padding:16px;
+ margin:15px 0;
+}
+.summary-row{
+ display:flex;
+ justify-content:space-between;
+ gap:12px;
+ margin:5px 0;
+ font-size:13px;
+}
+.summary-main{
+ background:white;
+ border:2px solid #10b981;
+ border-radius:12px;
+ padding:12px 14px;
+ margin-top:10px;
+ font-weight:700;
+ color:#087a55;
+}
+.log-entry{
+ border-bottom:1px solid var(--line);
+ padding:12px 0;
+ font-size:13px;
+}
+.log-entry:last-child{border-bottom:0}
+.checkline{
+ display:flex;
+ align-items:flex-start;
+ gap:9px;
+ margin:12px 0;
+ font-size:13px;
+}
+.checkline input{margin-top:2px}
+dialog{
+ width:min(680px,calc(100% - 24px));
+ max-height:90vh;
+ overflow:auto;
+ border:1px solid var(--line);
+ border-radius:18px;
+ padding:22px;
+ color:var(--text);
+ background:var(--panel);
+ box-shadow:0 20px 70px #0f172a33;
+}
+dialog::backdrop{background:#13213a80}
+dialog .grid{grid-template-columns:1fr 1fr;margin:15px 0}
+dialog h2{margin-bottom:8px}
+#printArea{display:none}
+
+@media(max-width:850px){
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .tabs button{padding:9px 12px;font-size:12px}
+}
+@media(max-width:650px){
+ .wrap{padding:10px}
+ #app > header{padding:16px}
+ .card,.main-panel{padding:14px}
+ .amc-brand{gap:12px}
+ .amc-logo{width:120px}
+ .amc-brand h1{font-size:17px}
+ .grid,.patient-meta,dialog .grid{grid-template-columns:1fr}
+ .search-row{flex-wrap:wrap}
+ .search-row input{flex-basis:100%}
+ .tabs button{padding:8px 10px;font-size:11px}
+ .chip{padding:7px 10px;font-size:12px}
+ .group-header{flex-wrap:wrap}
+ th,td{padding:9px 6px}
+}
+@media print{
+ @page{margin:15mm}
+ body{background:white;color:#111;font-size:11px}
+ #app,dialog{display:none!important}
+ #printArea{display:block;color:#111}
+ #printArea .print-brand{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8mm;
+  margin-bottom:6mm;
+ }
+ #printArea .amc-logo{
+  width:40mm;
+  height:auto;
+  max-width:none;
+ }
+ #printArea h1{
+  flex:1;
+  margin:0;
+  text-align:right;
+  font-size:18px;
+ }
+ #printArea h2{font-size:15px}
+ #printArea h3{font-size:13px}
+ #printArea .patient-meta{grid-template-columns:1fr 1fr}
+ #printArea .service-group{
+  background:white;
+  box-shadow:none;
+  break-inside:avoid;
+  margin-bottom:4mm;
+  padding:10px;
+ }
+ #printArea .report{
+  background:white;
+  padding:9px;
+  break-inside:avoid;
+ }
+ #printArea .badge{
+  background:white;
+  border-color:#ccc;
+  color:#111;
+ }
+ #printArea .notice{background:white;color:#111;border-color:#ccc}
+ #printArea .report-meta,#printArea .muted{color:#444}
+ #printArea .print-footer{
+  border-top:1px solid #ccc;
+  padding-top:10px;
+  margin-top:15px;
+  font-size:10px;
+ }
+}
+</style>
+</head>
+
+<body>
+
+<div id="app" class="wrap">
+
+ <header class="card">
+  <div class="amc-brand">
+   <img
+    class="amc-logo"
+    src="./amclogo.png"
+    alt="Adventist Medical Center logo"
+    decoding="async"
+   >
+   <h1>Adventist Medical Center<br>Report Follow-up</h1>
+  </div>
+
+  <div class="header-tools">
+   <div class="actions">
+    <button id="quotationButton" type="button">
+     Open quotation
+    </button>
+
+    <button id="syncButton" type="button" class="primary" disabled>
+     Sync confirmed quotations
+    </button>
+
+    <button id="reloadButton" type="button" disabled>
+     Refresh records
+    </button>
+   </div>
+
+   <label class="field operator-field">
+    Recording staff *
+    <input
+     id="operator"
+     maxlength="100"
+     autocomplete="off"
+     placeholder="Enter your name before recording actions"
+    >
+   </label>
+  </div>
+
+  <label class="search-label" for="search">
+   Search follow-up records
+  </label>
+
+  <div class="search-row">
+   <input
+    id="search"
+    type="search"
+    autocomplete="off"
+    placeholder="Patient name, reference, quotation number or service"
+   >
+   <button id="clearSearchButton" type="button">Clear Search</button>
+  </div>
+
+  <details style="margin-top:14px">
+   <summary class="muted" style="font-size:12px;cursor:pointer">
+    Demo information and workflow notes
+   </summary>
+
+   <div class="notice">
+    <strong>Shared demo — test data only.</strong>
+    This page uses the same anonymous demo connection as the quotation
+    page. Individual staff authentication and appropriate access controls
+    are required before using real patient information.
+   </div>
+
+   <p class="muted" style="font-size:12px">
+    Scanned reports remain in the existing clinic system.
+    An outstanding report does not prove that the investigation has been
+    performed or that the provider is overdue.
+    Urgent results must be escalated using the clinic's established
+    process; recording a status here does not send a notification.
+   </p>
+  </details>
+
+  <div id="message" role="status" aria-live="polite">
+   Connecting to demo backend…
+  </div>
+
+  <div id="writeNotice" class="notice red" hidden>
+   <p id="writeNoticeText"></p>
+
+   <div class="actions">
+    <button id="retryButton" type="button">
+     Retry same save
+    </button>
+
+    <button id="resolveButton" type="button">
+     Reload and verify saved record
+    </button>
+   </div>
+  </div>
+ </header>
+
+ <div id="infoBar" class="info-bar"></div>
+
+ <div id="tabs" class="tabs" aria-label="Follow-up categories"></div>
+
+ <main class="main-panel">
+
+  <!-- WORKLIST -->
+  <section id="listPanel">
+   <div class="header-row">
+    <h2>Follow-up worklist</h2>
+    <span class="muted" style="font-size:12px">
+     Confirmed quotations only
+    </span>
+   </div>
+
+   <p id="listCount" class="muted" style="font-size:13px"></p>
+
+   <div class="table-scroll">
+    <table>
+     <thead>
+      <tr>
+       <th>Patient / quotation</th>
+       <th>Reports</th>
+       <th>Outstanding actions</th>
+       <th>Appointment / follow-up</th>
+       <th>Open</th>
+      </tr>
+     </thead>
+     <tbody id="caseBody"></tbody>
+    </table>
+   </div>
+  </section>
+
+  <!-- CASE DETAILS -->
+  <section id="detailPanel" hidden>
+   <div class="header-row">
+    <h2 id="detailTitle" tabindex="-1">Follow-up Summary</h2>
+
+    <div class="actions">
+     <button id="backButton" type="button">
+      ← Back to worklist
+     </button>
+
+     <button id="printButton" type="button" class="primary">
+      Print / Save PDF
+     </button>
+    </div>
+   </div>
+
+   <div id="caseMeta" class="stats"></div>
+
+   <details id="patientDetails" class="patient-details" open>
+    <summary>Patient and quotation details</summary>
+    <div id="patientMeta" class="patient-meta"></div>
+   </details>
+
+   <div id="caseSummary" class="summary"></div>
+
+   <div id="caseEditor">
+
+    <section class="section">
+     <h2>Investigations and reports</h2>
+
+     <div class="notice blue">
+      <strong>Confirm the report tracking plan first.</strong>
+      Initial report names are copied from the quotation. They are not
+      a verified breakdown of package contents or expected report counts.
+      Use “Report tracking plan” to confirm the actual reports to track.
+     </div>
+
+     <div id="groups"></div>
+    </section>
+
+    <section class="section">
+     <h2>Appointment and follow-up</h2>
+
+     <form id="caseForm">
+      <div class="grid">
+
+       <label class="field">
+        Follow-up appointment date
+        <input id="appointmentDate" type="date">
+       </label>
+
+       <label class="field">
+        Appointment status
+        <select id="appointmentStatus">
+         <option value="unscheduled">Not arranged</option>
+         <option value="booked">Booked</option>
+         <option value="attended">Attended</option>
+         <option value="missed">Did not attend</option>
+         <option value="declined">Patient declined</option>
+        </select>
+       </label>
+
+       <label class="field">
+        Next follow-up date
+        <input id="nextFollowupDate" type="date">
+       </label>
+
+       <label class="field full">
+        Case notes / next steps
+        <textarea id="caseNote" rows="3" maxlength="2000"></textarea>
+       </label>
+
+      </div>
+
+      <p class="muted" style="font-size:12px;margin-top:12px">
+       Follow-up reminders are based on the date entered by staff.
+       Marking an appointment as attended does not record a doctor's
+       review of the reports.
+      </p>
+
+      <div class="actions">
+       <button type="submit" class="primary">
+        Save appointment and follow-up
+       </button>
+      </div>
+     </form>
+    </section>
+
+    <section class="section">
+     <div class="header-row">
+      <h2>Contact history</h2>
+
+      <button id="addContactButton" type="button" class="primary">
+       Add contact record
+      </button>
+     </div>
+
+     <div id="contacts"></div>
+    </section>
+
+   </div>
+
+   <section class="section">
+    <div class="header-row">
+     <h2>Activity history</h2>
+
+     <button id="auditButton" type="button">
+      Load latest 50 actions
+     </button>
+    </div>
+
+    <p class="muted" style="font-size:12px">
+     In this demo, staff names are entered manually.
+     Account IDs and save times are recorded by the backend.
+    </p>
+
+    <div id="audit"></div>
+   </section>
+
+  </section>
+
+ </main>
+</div>
+
+<!-- REPORT ACTION -->
+<dialog id="reportDialog" aria-labelledby="reportDialogTitle">
+ <form id="reportForm">
+  <h2 id="reportDialogTitle">Report action</h2>
+  <p id="reportDialogName"></p>
+  <p id="reportActionHelp" class="muted" style="font-size:13px"></p>
+
+  <div class="grid">
+
+   <label id="receivedField" class="field full" hidden>
+    Report received date *
+    <input id="receivedDate" type="date">
+   </label>
+
+   <label id="archiveField" class="checkline full" hidden>
+    <input id="archived" type="checkbox">
+    <span>
+     The scanned report has been stored in the existing clinic system.
+    </span>
+   </label>
+
+   <label id="triageField" class="field full" hidden>
+    Nurse initial review outcome *
+    <select id="triage">
+     <option value="routine">Reviewed — retain for follow-up appointment</option>
+     <option value="doctor">Doctor follow-up required</option>
+     <option value="urgent">Urgent doctor follow-up required</option>
+    </select>
+   </label>
+
+   <label id="doctorField" class="field full" hidden>
+    Doctor name *
+    <input id="doctorName" maxlength="100" autocomplete="off">
+   </label>
+
+   <label class="field full">
+    <span id="reportNoteLabel">Notes</span>
+    <textarea id="reportNote" rows="3" maxlength="2000"></textarea>
+   </label>
+
+  </div>
+
+  <div class="actions">
+   <button type="submit" class="primary">Record and save</button>
+   <button type="button" data-close="reportDialog">Cancel</button>
+  </div>
+ </form>
+</dialog>
+
+<!-- REPORT PLAN -->
+<dialog id="planDialog" aria-labelledby="planDialogTitle">
+ <form id="planForm">
+  <h2 id="planDialogTitle">Report tracking plan</h2>
+  <p id="planService"></p>
+
+  <div class="notice">
+   Enter one expected report or result per line, based on the provider's
+   actual reporting arrangements. Do not infer package contents.
+   <br><br>
+   Keep existing entries in their original order and append new entries
+   at the end. Received or cancelled entries cannot be renamed.
+   Use “Cancel tracking” for an entry that is no longer required.
+  </div>
+
+  <label class="field">
+   Report names — one per line
+   <textarea id="planNames" rows="8" maxlength="15000"></textarea>
+  </label>
+
+  <label class="checkline">
+   <input id="planChecked" type="checkbox">
+   <span>
+    I have verified the reports and quantities to track.
+    If the quotation revision has changed, I have checked whether the
+    existing report records still apply.
+   </span>
+  </label>
+
+  <div class="actions">
+   <button type="submit" class="primary">Save tracking plan</button>
+   <button type="button" data-close="planDialog">Cancel</button>
+  </div>
+ </form>
+</dialog>
+
+<!-- CONTACT RECORD -->
+<dialog id="contactDialog" aria-labelledby="contactDialogTitle">
+ <form id="contactForm">
+  <h2 id="contactDialogTitle">Add contact record</h2>
+
+  <div class="grid">
+
+   <label class="field">
+    Contact method
+    <select id="contactMethod">
+     <option>Telephone</option>
+     <option>Clinic-approved messaging channel</option>
+     <option>In person</option>
+     <option>Other</option>
+    </select>
+   </label>
+
+   <label class="field">
+    Contact outcome
+    <select id="contactOutcome">
+     <option>Follow-up appointment arranged</option>
+     <option>No answer</option>
+     <option>Patient will arrange later</option>
+     <option>Patient declined follow-up</option>
+     <option>Investigation confirmed not performed</option>
+     <option>Provider contacted</option>
+     <option>Other</option>
+    </select>
+   </label>
+
+   <label class="field full">
+    Person / organisation contacted
+    <input
+     id="contactTarget"
+     maxlength="150"
+     placeholder="Patient, representative or provider"
+    >
+   </label>
+
+   <label class="field full">
+    Contact notes / next steps *
+    <textarea id="contactNote" rows="4" maxlength="2000"></textarea>
+   </label>
+
+   <label class="field full">
+    Next follow-up date — optional
+    <input id="contactNextDate" type="date">
+   </label>
+
+  </div>
+
+  <p class="muted" style="font-size:12px">
+   A contact record does not automatically cancel report tracking or
+   change the appointment status. Update those items separately.
+  </p>
+
+  <div class="actions">
+   <button type="submit" class="primary">Save contact record</button>
+   <button type="button" data-close="contactDialog">Cancel</button>
+  </div>
+ </form>
+</dialog>
+
+<div id="printArea"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+"use strict";
+
+/* ============================================================
+   CONFIGURATION
+   Uses the follow-up SQL supplied with the previous version.
+   Shared demo only — not a production patient-data access model.
+   ============================================================ */
+
+const SUPABASE_URL =
+ "https://ypictveubevkggsmgyzk.supabase.co";
+
+const SUPABASE_KEY =
+ "sb_publishable_soGHa4Gfy7Ig2OCB50vNxw_jIAbQ4XS";
+
+const $ = id => document.getElementById(id);
+const clone = value => JSON.parse(JSON.stringify(value));
+
+const esc = value => String(value ?? "").replace(
+ /[&<>"']/g,
+ character => ({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  '"':"&quot;",
+  "'":"&#39;"
+ })[character]
+);
+
+function today(){
+ const parts = new Intl.DateTimeFormat("en-CA",{
+  timeZone:"Asia/Hong_Kong",
+  year:"numeric",
+  month:"2-digit",
+  day:"2-digit"
+ }).formatToParts(new Date());
+
+ const values = Object.fromEntries(
+  parts
+   .filter(part => ["year","month","day"].includes(part.type))
+   .map(part => [part.type,part.value])
+ );
+
+ return `${values.year}-${values.month}-${values.day}`;
+}
+
+function dateLabel(value){
+ if(!value) return "Not specified";
+
+ const parts = String(value).split("-");
+
+ return parts.length === 3
+  ? `${parts[2]}/${parts[1]}/${parts[0]}`
+  : String(value);
+}
+
+function timeLabel(value){
+ if(!value) return "Not recorded";
+
+ const date = new Date(value);
+
+ if(Number.isNaN(date.getTime())) return "Invalid date";
+
+ return date.toLocaleString("en-GB",{
+  timeZone:"Asia/Hong_Kong"
+ }) + " HKT";
+}
+
+function validDate(value){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+ const date = new Date(value + "T00:00:00Z");
+
+ return !Number.isNaN(date.getTime()) &&
+  date.toISOString().slice(0,10) === value;
+}
+
+function uuid(){
+ if(globalThis.crypto?.randomUUID){
+  return crypto.randomUUID();
+ }
+
+ if(!globalThis.crypto?.getRandomValues){
+  throw new Error(
+   "Secure ID generation is unavailable. Use an updated browser over HTTPS."
+  );
+ }
+
+ const bytes = crypto.getRandomValues(new Uint8Array(16));
+
+ bytes[6] = (bytes[6] & 15) | 64;
+ bytes[8] = (bytes[8] & 63) | 128;
+
+ const hex = [...bytes].map(
+  value => value.toString(16).padStart(2,"0")
+ ).join("");
+
+ return [
+  hex.slice(0,8),
+  hex.slice(8,12),
+  hex.slice(12,16),
+  hex.slice(16,20),
+  hex.slice(20)
+ ].join("-");
+}
+
+function badge(text,colour = ""){
+ return `<span class="badge ${esc(colour)}">${esc(text)}</span>`;
+}
+
+const TRIAGE = {
+ pending:"Awaiting nurse review",
+ routine:"Reviewed — retain for follow-up",
+ doctor:"Doctor follow-up required",
+ urgent:"Urgent doctor follow-up required"
+};
+
+const APPOINTMENTS = {
+ unscheduled:"Not arranged",
+ booked:"Booked",
+ attended:"Attended",
+ missed:"Did not attend",
+ declined:"Patient declined"
+};
+
+const TAB_DEFINITIONS = [
+ ["case","Follow-up Summary"],
+ ["all","All cases"],
+ ["plan","Tracking plans"],
+ ["missing","Outstanding reports"],
+ ["nurse","Nurse review"],
+ ["doctor","Doctor follow-up"],
+ ["followup","Appointments / reminders"]
+];
+
+let client = null;
+let ready = false;
+let busy = false;
+
+let records = [];
+let selected = null;
+
+let activeTab = "all";
+let previousListTab = "all";
+
+let pendingWrite = null;
+let staleRecord = false;
+let caseFormDirty = false;
+
+let auditRun = 0;
+let reportContext = null;
+let planContext = null;
+
+/* ============================================================
+   STATUS AND CONTROLS
+   ============================================================ */
+
+function message(text,error = false){
+ $("message").textContent = text;
+ $("message").style.color = error ? "var(--red)" : "var(--blue)";
+}
+
+function recordingStaff(){
+ const name = $("operator").value.trim();
+
+ if(!name){
+  $("operator").focus();
+
+  throw new Error(
+   "Enter the recording staff member's name before recording an action."
+  );
+ }
+
+ return name;
+}
+
+function updateControls(){
+ $("syncButton").disabled =
+  !ready || busy || !!pendingWrite || staleRecord;
+
+ $("reloadButton").disabled = !ready || busy;
+ $("quotationButton").disabled = busy;
+ $("backButton").disabled = busy;
+
+ $("auditButton").disabled = !ready || busy;
+
+ $("printButton").disabled =
+  !selected || busy || !!pendingWrite || staleRecord;
+
+ $("retryButton").disabled = busy;
+ $("resolveButton").disabled = busy;
+
+ $("caseEditor").inert =
+  busy || !!pendingWrite || staleRecord;
+
+ $("caseBody").inert = busy || !!pendingWrite;
+ $("tabs").inert = busy || !!pendingWrite;
+
+ document.querySelectorAll("dialog").forEach(dialog => {
+  dialog.inert = busy;
+ });
+
+ $("writeNotice").hidden = !pendingWrite && !staleRecord;
+
+ if(pendingWrite){
+  $("writeNoticeText").textContent =
+   "The save was not acknowledged and may already have succeeded. " +
+   "Further changes are paused. Retry the same save, or reload to " +
+   "verify the actual saved record.";
+
+  $("retryButton").hidden = false;
+
+ }else if(staleRecord){
+  $("writeNoticeText").textContent =
+   "This case has been changed by another staff member or a quotation " +
+   "sync. Editing is paused. Reload the latest record before making " +
+   "further changes.";
+
+  $("retryButton").hidden = true;
+ }
+}
+
+function requireCleanCaseForm(){
+ if(caseFormDirty){
+  throw new Error(
+   "Appointment or follow-up fields contain unsaved changes. " +
+   "Save them first, or refresh the record before recording another action."
+  );
+ }
+}
+
+function canDiscardCaseForm(){
+ return !caseFormDirty || window.confirm(
+  "Discard the unsaved appointment and follow-up changes?"
+ );
+}
+
+/* ============================================================
+   WORKLIST CALCULATIONS
+   No automatic clinical interpretation.
+   ============================================================ */
+
+function metrics(state){
+ const groups = state.groups || [];
+
+ const allReports = groups.flatMap(
+  group => group.reports || []
+ );
+
+ const activeReports = allReports.filter(
+  report => !report.cancelled
+ );
+
+ const missing = activeReports.filter(
+  report => !report.receivedDate
+ );
+
+ const received = activeReports.filter(
+  report => !!report.receivedDate
+ );
+
+ const nurse = received.filter(
+  report => report.triage === "pending"
+ );
+
+ const doctor = received.filter(
+  report =>
+   ["doctor","urgent"].includes(report.triage) &&
+   !report.reviewedAt
+ );
+
+ const urgent = doctor.filter(
+  report => report.triage === "urgent"
+ );
+
+ const unarchived = received.filter(
+  report => !report.archived
+ );
+
+ const plans = groups.filter(
+  group => !group.planReviewed
+ );
+
+ const due =
+  !!state.nextFollowupDate &&
+  state.nextFollowupDate <= today();
+
+ const missed =
+  state.appointmentStatus === "missed" ||
+  (
+   state.appointmentStatus === "booked" &&
+   !!state.appointmentDate &&
+   state.appointmentDate < today()
+  );
+
+ const arrange =
+  state.appointmentStatus === "unscheduled" &&
+  received.length > 0;
+
+ return {
+  allReports,
+  activeReports,
+  missing,
+  received,
+  nurse,
+  doctor,
+  urgent,
+  unarchived,
+  plans,
+  due,
+  missed,
+  arrange
+ };
+}
+
+function matchesTab(state,tab){
+ const m = metrics(state);
+
+ return tab === "all" ||
+  (tab === "plan" && m.plans.length > 0) ||
+  (tab === "missing" && m.missing.length > 0) ||
+  (tab === "nurse" && m.nurse.length > 0) ||
+  (tab === "doctor" && m.doctor.length > 0) ||
+  (
+   tab === "followup" &&
+   (m.due || m.missed || m.arrange)
+  );
+}
+
+function searchMatches(record){
+ const query = $("search").value.trim().toLowerCase();
+
+ if(!query) return true;
+
+ const state = record.state;
+ const metadata = state.metadata || {};
+
+ const text = [
+  state.quotationNumber,
+  metadata.patientName,
+  metadata.patientReference,
+  metadata.clinician,
+  ...(state.groups || []).flatMap(group => [
+   group.name,
+   group.code,
+   ...(group.reports || []).map(report => report.name)
+  ])
+ ].join(" ").toLowerCase();
+
+ return text.includes(query);
+}
+
+function reportProgress(state){
+ const m = metrics(state);
+
+ if(!m.allReports.length){
+  return badge("No report-tracking items");
+ }
+
+ if(!m.activeReports.length){
+  return badge("All tracking items cancelled","amber");
+ }
+
+ if(!m.missing.length){
+  return m.plans.length
+   ? badge("Received — plan verification pending","amber")
+   : badge("Tracked reports received","green");
+ }
+
+ return badge(
+  m.received.length ? "Partially received" : "Not yet received",
+  m.received.length ? "blue" : "amber"
+ ) + `
+  <div class="muted" style="font-size:12px;margin-top:3px">
+   ${m.received.length} received · ${m.missing.length} outstanding
+  </div>
+ `;
+}
+
+function workBadges(state){
+ const m = metrics(state);
+ let html = "";
+
+ if(m.plans.length){
+  html += badge(`Plan verification: ${m.plans.length}`,"amber");
+ }
+
+ if(m.nurse.length){
+  html += badge(`Nurse review: ${m.nurse.length}`,"blue");
+ }
+
+ if(m.doctor.length){
+  html += badge(`Doctor follow-up: ${m.doctor.length}`,"red");
+ }
+
+ if(m.urgent.length){
+  html += badge(`Urgent: ${m.urgent.length}`,"red");
+ }
+
+ if(m.unarchived.length){
+  html += badge(`Filing not recorded: ${m.unarchived.length}`,"amber");
+ }
+
+ if(m.due) html += badge("Follow-up due","amber");
+
+ if(m.missed){
+  html += badge("Check appointment attendance","amber");
+ }
+
+ if(m.arrange){
+  html += badge("Arrange follow-up appointment","blue");
+ }
+
+ return html || `
+  <span class="muted" style="font-size:12px">
+   No listed outstanding actions
+  </span>
+ `;
+}
+
+/* ============================================================
+   RENDERING — PART 1 STYLE
+   ============================================================ */
+
+function renderInfoBar(){
+ const outstandingCases = records.filter(
+  record => metrics(record.state).missing.length > 0
+ ).length;
+
+ const doctorCases = records.filter(
+  record => metrics(record.state).doctor.length > 0
+ ).length;
+
+ const urgentCases = records.filter(
+  record => metrics(record.state).urgent.length > 0
+ ).length;
+
+ $("infoBar").innerHTML = `
+  <span class="chip blue">${records.length} follow-up cases</span>
+  <span class="chip amber">${outstandingCases} awaiting reports</span>
+  <span class="chip blue">${doctorCases} requiring doctor follow-up</span>
+  ${urgentCases ? `
+   <span class="chip red">${urgentCases} with urgent follow-up</span>
+  ` : ""}
+  ${selected ? `
+   <span class="chip green">
+    ${esc(selected.state.quotationNumber)}
+    · Revision ${esc(selected.state.sourceRevision)}
+   </span>
+  ` : ""}
+ `;
+}
+
+function renderTabs(){
+ $("tabs").innerHTML = TAB_DEFINITIONS.map(([id,label]) => {
+  const count = id === "case"
+   ? null
+   : records.filter(record => matchesTab(record.state,id)).length;
+
+  return `
+   <button
+    type="button"
+    data-tab="${esc(id)}"
+    class="${activeTab === id ? "active" : ""}"
+    aria-pressed="${activeTab === id}"
+    ${id === "case" && !selected ? "disabled" : ""}
+   >
+    ${esc(label)}
+    ${count !== null ? `
+     <span class="tab-count">${count}</span>
+    ` : ""}
+   </button>
+  `;
+ }).join("");
+
+ $("listPanel").hidden = activeTab === "case";
+ $("detailPanel").hidden = activeTab !== "case";
+}
+
+function renderList(){
+ const tab = activeTab === "case" ? previousListTab : activeTab;
+
+ const filtered = records.filter(
+  record => matchesTab(record.state,tab) && searchMatches(record)
+ );
+
+ $("listCount").textContent =
+  `${filtered.length} matching case(s) · ${records.length} loaded · ` +
+  "A case may appear in more than one worklist.";
+
+ $("caseBody").innerHTML = filtered.length
+  ? filtered.map(record => {
+     const state = record.state;
+     const metadata = state.metadata || {};
+
+     return `
+      <tr data-row-open="${esc(record.id)}">
+       <td>
+        <div class="patient-name">
+         ${esc(metadata.patientName || "Name not entered")}
+        </div>
+
+        <div>
+         Reference: ${esc(metadata.patientReference || "Not entered")}
+        </div>
+
+        <div class="code">
+         ${esc(state.quotationNumber)}
+         · R${esc(state.sourceRevision)}
+        </div>
+       </td>
+
+       <td>${reportProgress(state)}</td>
+
+       <td>${workBadges(state)}</td>
+
+       <td>
+        <strong>
+         ${esc(APPOINTMENTS[state.appointmentStatus] || "Not arranged")}
+        </strong><br>
+
+        <small>
+         Appointment: ${esc(dateLabel(state.appointmentDate))}<br>
+         Next follow-up: ${esc(dateLabel(state.nextFollowupDate))}
+        </small>
+       </td>
+
+       <td>
+        <button
+         type="button"
+         class="small"
+         data-open="${esc(record.id)}"
+        >
+         Open
+        </button>
+       </td>
+      </tr>
+     `;
+    }).join("")
+  : `
+     <tr>
+      <td colspan="5">
+       <div class="empty">
+        <strong>No matching follow-up cases</strong>
+        Try another search or worklist.
+        If a quotation has just been confirmed, select
+        “Sync confirmed quotations”.
+       </div>
+      </td>
+     </tr>
+    `;
+
+ renderInfoBar();
+ renderTabs();
+}
+
+function patientMetadataHTML(state){
+ const m = state.metadata || {};
+
+ const field = (label,value) => `
+  <div>
+   <span class="label">${esc(label)}</span>
+   <strong>${esc(value || "Not entered")}</strong>
+  </div>
+ `;
+
+ return [
+  field("Patient name",m.patientName),
+  field("Patient reference",m.patientReference),
+  field("Referring clinician",m.clinician),
+  field("Quotation prepared by",m.preparedBy),
+  field("Quotation date",dateLabel(m.quoteDate)),
+  field("Confirmed quotation revision",String(state.sourceRevision)),
+  m.notes ? `
+   <div class="full">
+    <span class="label">Quotation notes</span>
+    <div class="note">${esc(m.notes)}</div>
+   </div>
+  ` : ""
+ ].join("");
+}
+
+function reportStatus(report){
+ if(report.cancelled){
+  return badge("Tracking cancelled","amber") + `
+   <div class="report-meta note">
+    Reason: ${esc(report.cancelReason || "Not recorded")}
+   </div>
+  `;
+ }
+
+ if(!report.receivedDate){
+  return badge("Report not yet received","amber");
+ }
+
+ let html = badge(
+  `Received: ${dateLabel(report.receivedDate)}`,
+  "green"
+ );
+
+ html += badge(
+  TRIAGE[report.triage] || "Awaiting nurse review",
+  report.triage === "urgent"
+   ? "red"
+   : report.triage === "doctor"
+    ? "amber"
+    : "blue"
+ );
+
+ html += badge(
+  report.archived
+   ? "Stored in clinic system"
+   : "Filing not recorded",
+  report.archived ? "green" : "amber"
+ );
+
+ if(report.notifiedAt){
+  html += badge("Doctor notified","blue");
+ }
+
+ if(report.reviewedAt){
+  html += badge("Doctor review recorded","green");
+ }
+
+ return html;
+}
+
+function reportHTML(group,report,showButtons = true){
+ let html = `
+  <div class="report">
+   <div class="report-name">${esc(report.name)}</div>
+   <div>${reportStatus(report)}</div>
+
+   ${report.nurseAt ? `
+    <div class="report-meta">
+     Nurse review:
+     ${esc(report.nurseName)}
+     · ${esc(timeLabel(report.nurseAt))}
+    </div>
+   ` : ""}
+
+   ${report.nurseNote ? `
+    <div class="report-meta note">${esc(report.nurseNote)}</div>
+   ` : ""}
+
+   ${report.notifiedAt ? `
+    <div class="report-meta">
+     Doctor notified:
+     ${esc(report.doctorName)}
+     · ${esc(timeLabel(report.notifiedAt))}
+    </div>
+   ` : ""}
+
+   ${report.reviewedAt ? `
+    <div class="report-meta">
+     Doctor review:
+     ${esc(report.doctorName)}
+     · ${esc(timeLabel(report.reviewedAt))}
+    </div>
+   ` : ""}
+
+   ${report.reviewNote ? `
+    <div class="report-meta note">${esc(report.reviewNote)}</div>
+   ` : ""}
+ `;
+
+ if(showButtons){
+  const attributes = `
+   data-group="${esc(group.id)}"
+   data-report="${esc(report.id)}"
+  `;
+
+  html += `<div class="report-actions">`;
+
+  if(report.cancelled){
+   html += `
+    <button
+     type="button"
+     class="small"
+     data-action="reopen"
+     ${attributes}
+    >
+     Restore tracking
+    </button>
+   `;
+
+  }else{
+   html += `
+    <button
+     type="button"
+     class="small"
+     data-action="received"
+     ${attributes}
+     ${!group.planReviewed ? "disabled" : ""}
+    >
+     ${report.receivedDate
+      ? "Update received / filing"
+      : "Record received"}
+    </button>
+   `;
+
+   if(report.receivedDate){
+    html += `
+     <button
+      type="button"
+      class="small"
+      data-action="triage"
+      ${attributes}
+     >
+      Nurse review
+     </button>
+
+     <button
+      type="button"
+      class="small"
+      data-action="notify"
+      ${attributes}
+     >
+      Record doctor notified
+     </button>
+
+     <button
+      type="button"
+      class="small"
+      data-action="review"
+      ${attributes}
+     >
+      Record doctor review
+     </button>
+    `;
+
+   }else{
+    html += `
+     <button
+      type="button"
+      class="small danger"
+      data-action="cancel"
+      ${attributes}
+     >
+      Cancel tracking
+     </button>
+    `;
+   }
+  }
+
+  html += `</div>`;
+ }
+
+ return html + `</div>`;
+}
+
+function groupsHTML(state,showButtons = true){
+ const groups = state.groups || [];
+
+ if(!groups.length){
+  return `
+   <div class="empty">
+    <strong>No report-tracking items</strong>
+    This quotation does not contain automatically tracked report items.
+   </div>
+  `;
+ }
+
+ return groups.map(group => `
+  <div class="service-group">
+
+   <div class="group-header">
+    <div>
+     <h3>${esc(group.name)}</h3>
+
+     <div class="code">
+      ${esc(group.code)}
+      · ${esc(group.id)}
+      · Quotation quantity: ${esc(group.qty)}
+     </div>
+    </div>
+
+    ${showButtons ? `
+     <button
+      type="button"
+      class="small"
+      data-plan="${esc(group.id)}"
+     >
+      Report tracking plan
+     </button>
+    ` : ""}
+   </div>
+
+   <div style="margin-top:7px">
+    ${group.planReviewed
+     ? badge("Tracking plan verified","green")
+     : badge("Tracking plan verification required","amber")}
+   </div>
+
+   ${group.sourceRemoved ? `
+    <div class="notice">
+     This service is no longer listed in the latest confirmed quotation.
+     Existing report records have been retained.
+     Verify whether the investigation was performed before cancelling
+     outstanding tracking or continuing follow-up.
+    </div>
+   ` : ""}
+
+   ${group.cat === "packages" && !group.planReviewed ? `
+    <p class="muted" style="font-size:12px;margin-top:8px">
+     Package contents were not supplied in the quotation source.
+     Confirm the expected reports with the provider.
+    </p>
+   ` : ""}
+
+   ${(group.reports || []).map(
+    report => reportHTML(group,report,showButtons)
+   ).join("")}
+
+  </div>
+ `).join("");
+}
+
+function contactsHTML(state){
+ const contacts = [...(state.contacts || [])].reverse();
+
+ return contacts.length
+  ? contacts.map(contact => `
+     <div class="log-entry">
+
+      <strong>${esc(contact.outcome)}</strong>
+      · ${esc(contact.method)}<br>
+
+      <small>
+       ${esc(contact.staff)}
+       · ${esc(timeLabel(contact.at))}
+       ${contact.target
+        ? " · Contact: " + esc(contact.target)
+        : ""}
+      </small>
+
+      <div class="note" style="margin-top:5px">
+       ${esc(contact.note)}
+      </div>
+
+      ${contact.nextDate ? `
+       <small>
+        Next follow-up recorded at this contact:
+        ${esc(dateLabel(contact.nextDate))}
+       </small>
+      ` : ""}
+
+     </div>
+    `).join("")
+  : `
+     <p class="muted" style="font-size:13px">
+      No contact records have been recorded.
+     </p>
+    `;
+}
+
+function renderDetail(){
+ if(!selected) return;
+
+ const state = selected.state;
+ const m = metrics(state);
+
+ $("detailTitle").textContent = "Follow-up Summary";
+
+ $("caseMeta").innerHTML = `
+  <span class="badge blue">${esc(state.quotationNumber)}</span>
+  <span class="badge">Confirmed revision ${esc(state.sourceRevision)}</span>
+  <span class="badge">Follow-up version ${esc(selected.edit_version)}</span>
+ `;
+
+ $("patientMeta").innerHTML = patientMetadataHTML(state);
+
+ $("caseSummary").innerHTML = `
+  <div class="summary-row">
+   <span>Active report-tracking entries</span>
+   <strong>${m.activeReports.length}</strong>
+  </div>
+
+  <div class="summary-row">
+   <span>Reports received</span>
+   <strong>${m.received.length}</strong>
+  </div>
+
+  <div class="summary-row">
+   <span>Reports outstanding</span>
+   <strong>${m.missing.length}</strong>
+  </div>
+
+  <div class="summary-main">${reportProgress(state)}</div>
+
+  <div style="margin-top:9px">${workBadges(state)}</div>
+
+  <p class="muted" style="font-size:11px;margin:10px 0 0">
+   Last saved: ${esc(timeLabel(selected.updated_at))}
+  </p>
+ `;
+
+ $("groups").innerHTML = groupsHTML(state);
+ $("contacts").innerHTML = contactsHTML(state);
+
+ $("appointmentDate").value = state.appointmentDate || "";
+
+ $("appointmentStatus").value =
+  state.appointmentStatus || "unscheduled";
+
+ $("nextFollowupDate").value = state.nextFollowupDate || "";
+ $("caseNote").value = state.caseNote || "";
+
+ caseFormDirty = false;
+}
+
+function replaceRecord(record){
+ const index = records.findIndex(item => item.id === record.id);
+
+ if(index >= 0){
+  records[index] = record;
+ }else{
+  records.push(record);
+ }
+
+ records.sort(
+  (a,b) => String(b.updated_at).localeCompare(String(a.updated_at))
+ );
+
+ if(selected?.id === record.id){
+  selected = record;
+ }
+
+ renderList();
+
+ if(selected?.id === record.id){
+  renderDetail();
+ }
+}
+
+/* ============================================================
+   BACKEND READS AND SYNC
+   ============================================================ */
+
+function validateRecord(record){
+ if(
+  !record?.id ||
+  record.edit_version == null ||
+  record.state?.schemaVersion !== 1 ||
+  !Array.isArray(record.state.groups) ||
+  !Array.isArray(record.state.contacts) ||
+  record.state.groups.some(group =>
+   !group?.id || !Array.isArray(group.reports)
+  )
+ ){
+  throw new Error("The backend returned an unsupported follow-up format.");
+ }
+
+ return record;
+}
+
+async function readAllCases(){
+ const result = [];
+ const pageSize = 200;
+
+ for(let offset = 0;;offset += pageSize){
+  const {data,error} = await client
+   .from("amc_followup_cases")
+   .select("*")
+   .order("id",{ascending:true})
+   .range(offset,offset + pageSize - 1);
+
+  if(error) throw error;
+
+  const page = data || [];
+
+  page.forEach(validateRecord);
+  result.push(...page);
+
+  if(page.length < pageSize) break;
+ }
+
+ return result.sort(
+  (a,b) => String(b.updated_at).localeCompare(String(a.updated_at))
+ );
+}
+
+async function fetchCase(id){
+ const {data,error} = await client
+  .from("amc_followup_cases")
+  .select("*")
+  .eq("id",id)
+  .single();
+
+ if(error) throw error;
+
+ return validateRecord(data);
+}
+
+async function refresh(syncSource = false){
+ if(!ready || busy) return;
+
+ if(syncSource && (pendingWrite || staleRecord)){
+  message("Reload and verify the current record before syncing.",true);
+  return;
+ }
+
+ if(!canDiscardCaseForm()) return;
+
+ if(pendingWrite && !window.confirm(
+  "Reload the actual backend record? " +
+  "The unacknowledged save may already have succeeded. " +
+  "A successful reload will clear the pending retry."
+ )){
+  return;
+ }
+
+ busy = true;
+ updateControls();
+
+ message(
+  syncSource
+   ? "Synchronising confirmed quotations…"
+   : "Refreshing saved records…"
+ );
+
+ const selectedId = selected?.id;
+ let syncResult = null;
+
+ try{
+  if(syncSource){
+   const {data,error} = await client.rpc("amc_followup_sync");
+
+   if(error) throw error;
+
+   syncResult = data;
+  }
+
+  const newRecords = await readAllCases();
+
+  const freshSelected = selectedId
+   ? await fetchCase(selectedId)
+   : null;
+
+  records = newRecords;
+
+  if(freshSelected){
+   selected = freshSelected;
+
+   const index = records.findIndex(
+    record => record.id === freshSelected.id
+   );
+
+   if(index >= 0) records[index] = freshSelected;
+   else records.push(freshSelected);
+
+   $("audit").textContent = "";
+  }
+
+  pendingWrite = null;
+  staleRecord = false;
+  caseFormDirty = false;
+
+  renderList();
+  if(selected) renderDetail();
+
+  message(
+   syncSource
+    ? `${syncResult?.changed || 0} case(s) created or updated. ` +
+      `${records.length} follow-up case(s) loaded.`
+    : `${records.length} follow-up case(s) refreshed.`
+  );
+
+ }catch(error){
+  console.error("Follow-up refresh failed:",error);
+
+  message(
+   "Refresh failed: " +
+   (error.message || "Please retry.") +
+   " Existing information on screen has not been refreshed.",
+   true
+  );
+
+ }finally{
+  busy = false;
+  updateControls();
+ }
+}
+
+async function openCase(id){
+ if(busy || pendingWrite || !canDiscardCaseForm()) return;
+
+ busy = true;
+ updateControls();
+ message("Opening the latest saved follow-up record…");
+
+ try{
+  const record = await fetchCase(id);
+
+  selected = record;
+  staleRecord = false;
+
+  if(activeTab !== "case"){
+   previousListTab = activeTab;
+  }
+
+  activeTab = "case";
+
+  replaceRecord(record);
+
+  $("audit").textContent = "";
+  $("patientDetails").open = true;
+
+  renderDetail();
+  renderTabs();
+
+  $("detailTitle").focus({preventScroll:true});
+  window.scrollTo({top:0,left:0,behavior:"instant"});
+
+  message("Latest saved follow-up record opened.");
+
+ }catch(error){
+  message(
+   "Could not open this record: " +
+   (error.message || "Please retry."),
+   true
+  );
+
+ }finally{
+  busy = false;
+  updateControls();
+ }
+}
+
+/* ============================================================
+   SAVES
+   Version checks prevent silent overwrites.
+   Request IDs allow retrying an unacknowledged save.
+   ============================================================ */
+
+async function sendPendingWrite(){
+ if(!pendingWrite || busy) return false;
+
+ const request = pendingWrite;
+
+ busy = true;
+ updateControls();
+
+ message("Saving follow-up record… Do not close this page.");
+
+ try{
+  const {data,error} = await client.rpc("amc_followup_save",{
+   p_case_id:request.caseId,
+   p_expected_version:request.expectedVersion,
+   p_state:request.state,
+   p_actor_label:request.staff,
+   p_action:request.action,
+   p_request_id:request.requestId
+  });
+
+  if(error) throw error;
+
+  const saved = validateRecord(data);
+
+  pendingWrite = null;
+  staleRecord = false;
+
+  selected = saved;
+
+  replaceRecord(saved);
+  $("audit").textContent = "";
+
+  message("Saved: " + request.action + ".");
+  return true;
+
+ }catch(error){
+  console.error("Follow-up save failed:",error);
+
+  if(String(error.message || "").includes("VERSION_CONFLICT")){
+   pendingWrite = null;
+   staleRecord = true;
+
+   message(
+    "Not saved: this case was updated by another staff member or " +
+    "a quotation sync. Refresh the record, then repeat your action.",
+    true
+   );
+
+  }else{
+   message(
+    "The save was not acknowledged: " +
+    (error.message || "Connection problem.") +
+    " Retry the same save, or reload to verify the saved result.",
+    true
+   );
+  }
+
+  return false;
+
+ }finally{
+  busy = false;
+  updateControls();
+ }
+}
+
+async function commit(action,mutator,allowDirtyCaseForm = false){
+ if(!selected || busy || pendingWrite || staleRecord){
+  return false;
+ }
+
+ try{
+  if(!allowDirtyCaseForm){
+   requireCleanCaseForm();
+  }
+
+  const staff = recordingStaff();
+  const state = clone(selected.state);
+
+  mutator(state,staff);
+
+  pendingWrite = {
+   caseId:selected.id,
+   expectedVersion:selected.edit_version,
+   state,
+   staff,
+   action,
+   requestId:uuid()
+  };
+
+  document.querySelectorAll("dialog[open]").forEach(
+   dialog => dialog.close()
+  );
+
+  return await sendPendingWrite();
+
+ }catch(error){
+  window.alert(error.message || "The action could not be saved.");
+  return false;
+ }
+}
+
+/* ============================================================
+   REPORT ACTIONS
+   ============================================================ */
+
+function findReport(state,groupId,reportId){
+ const group = state.groups.find(
+  item => item.id === groupId
+ );
+
+ const report = group?.reports.find(
+  item => item.id === reportId
+ );
+
+ if(!group || !report){
+  throw new Error("The report-tracking entry could not be found.");
+ }
+
+ return {group,report};
+}
+
+function openReportAction(groupId,reportId,action){
+ try{
+  requireCleanCaseForm();
+  recordingStaff();
+
+  const {group,report} = findReport(
+   selected.state,groupId,reportId
+  );
+
+  if(action === "received" && !group.planReviewed){
+   throw new Error("Verify the report tracking plan first.");
+  }
+
+  if(
+   ["triage","notify","review"].includes(action) &&
+   !report.receivedDate
+  ){
+   throw new Error("Record the report as received first.");
+  }
+
+  reportContext = {groupId,reportId,action};
+
+  const titles = {
+   received:"Record report received / filing",
+   triage:"Record nurse initial review",
+   notify:"Record doctor notified",
+   review:"Record doctor review",
+   cancel:"Cancel report tracking",
+   reopen:"Restore report tracking"
+  };
+
+  const help = {
+   received:
+    "Use the date the clinic actually received the report, " +
+    "not the specimen collection or investigation date.",
+
+   triage:
+    "A nurse records the review outcome according to the clinic's " +
+    "workflow. This system does not classify clinical results automatically.",
+
+   notify:
+    "Record this only after the doctor has actually been notified. " +
+    "A notification does not mean the doctor has reviewed the report.",
+
+   review:
+    "Record this only after the doctor has actually reviewed the report. " +
+    "If entered on the doctor's behalf, the activity history retains " +
+    "the recording staff member's name.",
+
+   cancel:
+    "Use only for verified investigations or reports that no longer " +
+    "require tracking. Cancellation must not replace follow-up of a " +
+    "report that has already been received.",
+
+   reopen:
+    "Restoring tracking retains the previous record and cancellation " +
+    "reason. A reason for restoring tracking is required."
+  };
+
+  $("reportDialogTitle").textContent = titles[action];
+  $("reportDialogName").textContent = report.name;
+  $("reportActionHelp").textContent = help[action];
+
+  $("receivedField").hidden = action !== "received";
+  $("archiveField").hidden = action !== "received";
+  $("triageField").hidden = action !== "triage";
+
+  $("doctorField").hidden =
+   !["notify","review"].includes(action);
+
+  $("receivedDate").value = report.receivedDate || today();
+  $("receivedDate").max = today();
+
+  $("archived").checked = !!report.archived;
+
+  $("triage").value =
+   report.triage === "pending" ? "routine" : report.triage;
+
+  $("doctorName").value = report.doctorName || "";
+
+  $("reportNote").value =
+   action === "triage"
+    ? report.nurseNote || ""
+    : action === "review"
+     ? report.reviewNote || ""
+     : "";
+
+  $("reportNoteLabel").textContent =
+   ["cancel","reopen"].includes(action)
+    ? "Reason *"
+    : "Notes";
+
+  $("reportDialog").showModal();
+
+ }catch(error){
+  window.alert(error.message);
+ }
+}
+
+$("reportForm").addEventListener("submit",async event => {
+ event.preventDefault();
+
+ if(!reportContext) return;
+
+ const context = {...reportContext};
+ const action = context.action;
+
+ const receivedDate = $("receivedDate").value;
+ const archived = $("archived").checked;
+ const triage = $("triage").value;
+ const doctor = $("doctorName").value.trim();
+ const note = $("reportNote").value.trim();
+
+ const labels = {
+  received:"Report received / filing updated",
+  triage:"Nurse initial review recorded",
+  notify:"Doctor notification recorded",
+  review:"Doctor review recorded",
+  cancel:"Report tracking cancelled",
+  reopen:"Report tracking restored"
+ };
+
+ await commit(labels[action],(state,staff) => {
+  const {group,report} = findReport(
+   state,context.groupId,context.reportId
+  );
+
+  const now = new Date().toISOString();
+
+  if(action === "received"){
+   if(!group.planReviewed){
+    throw new Error("Verify the report tracking plan first.");
+   }
+
+   if(!validDate(receivedDate) || receivedDate > today()){
+    throw new Error(
+     "Enter a valid report received date that is not in the future."
+    );
+   }
+
+   report.receivedDate = receivedDate;
+   report.archived = archived;
+
+   if(note){
+    report.nurseNote =
+     (report.nurseNote ? report.nurseNote + "\n" : "") +
+     "Receipt / filing note: " + note;
+   }
+
+  }else if(action === "triage"){
+   if(!report.receivedDate){
+    throw new Error("The report has not been recorded as received.");
+   }
+
+   if(!["routine","doctor","urgent"].includes(triage)){
+    throw new Error("Select a nurse review outcome.");
+   }
+
+   const changedDisposition = report.triage !== triage;
+
+   report.triage = triage;
+   report.nurseName = staff;
+   report.nurseAt = now;
+   report.nurseNote = note;
+
+   // A changed outcome may require a new doctor review.
+   // The previous values remain in the audit snapshots.
+   if(changedDisposition && report.reviewedAt){
+    report.reviewedAt = "";
+    report.reviewNote = "";
+   }
+
+  }else if(action === "notify"){
+   if(!report.receivedDate || !doctor){
+    throw new Error(
+     "Confirm the report has been received and enter the doctor's name."
+    );
+   }
+
+   report.doctorName = doctor;
+   report.notifiedAt = now;
+
+   if(note){
+    report.nurseNote =
+     (report.nurseNote ? report.nurseNote + "\n" : "") +
+     "Doctor notification note: " + note;
+   }
+
+  }else if(action === "review"){
+   if(!report.receivedDate || !doctor){
+    throw new Error(
+     "Confirm the report has been received and enter the reviewing doctor's name."
+    );
+   }
+
+   report.doctorName = doctor;
+   report.reviewedAt = now;
+   report.reviewNote = note;
+
+  }else if(action === "cancel"){
+   if(report.receivedDate){
+    throw new Error(
+     "A received report cannot be cancelled instead of being followed up."
+    );
+   }
+
+   if(!note){
+    throw new Error("Enter a cancellation reason.");
+   }
+
+   report.cancelled = true;
+   report.cancelReason = note;
+
+  }else if(action === "reopen"){
+   if(!note){
+    throw new Error("Enter a reason for restoring tracking.");
+   }
+
+   report.cancelled = false;
+
+   report.cancelReason =
+    (report.cancelReason || "") +
+    "\nTracking restored: " + note;
+  }
+ });
+});
+
+/* ============================================================
+   REPORT TRACKING PLAN
+   Existing entries are retained.
+   ============================================================ */
+
+function openPlan(groupId){
+ try{
+  requireCleanCaseForm();
+  recordingStaff();
+
+  const group = selected.state.groups.find(
+   item => item.id === groupId
+  );
+
+  if(!group){
+   throw new Error("The investigation could not be found.");
+  }
+
+  planContext = {groupId};
+
+  $("planService").textContent =
+   `${group.name} · ${group.code} · Quotation quantity: ${group.qty}`;
+
+  $("planNames").value = group.reports.map(
+   report => report.name
+  ).join("\n");
+
+  $("planChecked").checked = false;
+
+  $("planDialog").showModal();
+
+ }catch(error){
+  window.alert(error.message);
+ }
+}
+
+function emptyReport(name){
+ return {
+  id:uuid(),
+  name,
+  receivedDate:"",
+  archived:false,
+  triage:"pending",
+  nurseName:"",
+  nurseAt:"",
+  nurseNote:"",
+  doctorName:"",
+  notifiedAt:"",
+  reviewedAt:"",
+  reviewNote:"",
+  cancelled:false,
+  cancelReason:""
+ };
+}
+
+$("planForm").addEventListener("submit",async event => {
+ event.preventDefault();
+
+ if(!planContext) return;
+
+ const groupId = planContext.groupId;
+ const confirmed = $("planChecked").checked;
+
+ const names = $("planNames").value
+  .split("\n")
+  .map(name => name.trim())
+  .filter(Boolean);
+
+ await commit("Report tracking plan verified / updated",state => {
+  if(!confirmed){
+   throw new Error(
+    "Confirm that you have verified the reports and quantities to track."
+   );
+  }
+
+  const group = state.groups.find(
+   item => item.id === groupId
+  );
+
+  if(!group){
+   throw new Error("The investigation could not be found.");
+  }
+
+  if(
+   names.length < group.reports.length ||
+   names.length > 100 ||
+   names.some(name => name.length > 300)
+  ){
+   throw new Error(
+    "Retain all existing entries. Use a maximum of 100 lines and " +
+    "300 characters per line. Cancel unnecessary tracking entries " +
+    "instead of deleting them."
+   );
+  }
+
+  group.reports.forEach((report,index) => {
+   if(
+    (report.receivedDate || report.cancelled) &&
+    report.name !== names[index]
+   ){
+    throw new Error(
+     "Received or cancelled entries cannot be renamed or reordered. " +
+     "Append supplementary or corrected report entries at the end."
+    );
+   }
+
+   report.name = names[index];
+  });
+
+  names.slice(group.reports.length).forEach(name => {
+   group.reports.push(emptyReport(name));
+  });
+
+  group.planReviewed = true;
+ });
+});
+
+/* ============================================================
+   APPOINTMENT AND CONTACT RECORDS
+   ============================================================ */
+
+$("caseForm").addEventListener("input",() => {
+ caseFormDirty = true;
+});
+
+$("caseForm").addEventListener("change",() => {
+ caseFormDirty = true;
+});
+
+$("caseForm").addEventListener("submit",async event => {
+ event.preventDefault();
+
+ const appointmentDate = $("appointmentDate").value;
+ const appointmentStatus = $("appointmentStatus").value;
+ const nextDate = $("nextFollowupDate").value;
+ const note = $("caseNote").value.trim();
+
+ await commit(
+  "Appointment and follow-up arrangements updated",
+  state => {
+   if(appointmentStatus === "booked" && !appointmentDate){
+    throw new Error("Enter a date for the booked appointment.");
+   }
+
+   if(appointmentDate && !validDate(appointmentDate)){
+    throw new Error("Enter a valid appointment date.");
+   }
+
+   if(nextDate && !validDate(nextDate)){
+    throw new Error("Enter a valid next follow-up date.");
+   }
+
+   if(appointmentStatus === "declined" && !note){
+    throw new Error(
+     "Document the circumstances or reason for declining follow-up."
+    );
+   }
+
+   state.appointmentDate = appointmentDate;
+   state.appointmentStatus = appointmentStatus;
+   state.nextFollowupDate = nextDate;
+   state.caseNote = note;
+  },
+  true
+ );
+});
+
+$("addContactButton").addEventListener("click",() => {
+ try{
+  requireCleanCaseForm();
+  recordingStaff();
+
+  $("contactForm").reset();
+  $("contactDialog").showModal();
+
+ }catch(error){
+  window.alert(error.message);
+ }
+});
+
+$("contactForm").addEventListener("submit",async event => {
+ event.preventDefault();
+
+ const method = $("contactMethod").value;
+ const outcome = $("contactOutcome").value;
+ const target = $("contactTarget").value.trim();
+ const note = $("contactNote").value.trim();
+ const nextDate = $("contactNextDate").value;
+
+ await commit("Contact record added",(state,staff) => {
+  if(!note){
+   throw new Error("Enter contact notes or the next steps.");
+  }
+
+  if(nextDate && !validDate(nextDate)){
+   throw new Error("Enter a valid next follow-up date.");
+  }
+
+  state.contacts.push({
+   id:uuid(),
+   at:new Date().toISOString(),
+   staff,
+   method,
+   outcome,
+   target,
+   note,
+   nextDate
+  });
+
+  // A blank value does not erase a previously entered reminder.
+  if(nextDate){
+   state.nextFollowupDate = nextDate;
+  }
+ });
+});
+
+/* ============================================================
+   ACTIVITY HISTORY
+   ============================================================ */
+
+async function loadAudit(){
+ if(!selected || busy) return;
+
+ const caseId = selected.id;
+ const run = ++auditRun;
+
+ $("audit").textContent = "Loading activity history…";
+
+ try{
+  const {data,error} = await client
+   .from("amc_followup_audit")
+   .select("id,actor_id,actor_label,action,created_at")
+   .eq("case_id",caseId)
+   .order("id",{ascending:false})
+   .limit(50);
+
+  if(run !== auditRun || selected?.id !== caseId) return;
+
+  if(error) throw error;
+
+  $("audit").innerHTML = data?.length
+   ? data.map(entry => `
+      <div class="log-entry">
+       <strong>${esc(entry.action)}</strong><br>
+
+       ${esc(entry.actor_label)}
+       · ${esc(timeLabel(entry.created_at))}
+
+       <div class="code">
+        Account: ${esc(entry.actor_id)}
+       </div>
+      </div>
+     `).join("")
+   : `
+      <p class="muted" style="font-size:13px">
+       No activity records found.
+      </p>
+     `;
+
+ }catch(error){
+  if(run !== auditRun || selected?.id !== caseId) return;
+
+  $("audit").textContent =
+   "Could not load activity history: " +
+   (error.message || "Please retry.");
+ }
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+
+$("quotationButton").addEventListener("click",() => {
+ window.open("./quotation.html","_blank","noopener");
+});
+
+$("tabs").addEventListener("click",event => {
+ const button = event.target.closest("[data-tab]");
+
+ if(!button || button.disabled) return;
+
+ const nextTab = button.dataset.tab;
+
+ if(
+  activeTab === "case" &&
+  nextTab !== "case" &&
+  !canDiscardCaseForm()
+ ){
+  return;
+ }
+
+ if(activeTab === "case" && nextTab !== "case"){
+  caseFormDirty = false;
+
+  // Restore fields from the saved record when discarding changes.
+  if(selected) renderDetail();
+ }
+
+ activeTab = nextTab;
+
+ if(nextTab !== "case"){
+  previousListTab = nextTab;
+ }
+
+ renderList();
+ renderTabs();
+});
+
+$("search").addEventListener("input",() => {
+ renderList();
+});
+
+$("clearSearchButton").addEventListener("click",() => {
+ $("search").value = "";
+ renderList();
+ $("search").focus();
+});
+
+$("caseBody").addEventListener("click",event => {
+ const button = event.target.closest("[data-open]");
+
+ if(button){
+  void openCase(button.dataset.open);
+  return;
+ }
+
+ if(event.target.closest("input,select,textarea,a")) return;
+
+ const row = event.target.closest("[data-row-open]");
+
+ if(row){
+  void openCase(row.dataset.rowOpen);
+ }
+});
+
+$("groups").addEventListener("click",event => {
+ const planButton = event.target.closest("[data-plan]");
+
+ if(planButton){
+  openPlan(planButton.dataset.plan);
+  return;
+ }
+
+ const actionButton = event.target.closest("[data-action]");
+
+ if(!actionButton || actionButton.disabled) return;
+
+ openReportAction(
+  actionButton.dataset.group,
+  actionButton.dataset.report,
+  actionButton.dataset.action
+ );
+});
+
+$("backButton").addEventListener("click",() => {
+ if(!canDiscardCaseForm()) return;
+
+ caseFormDirty = false;
+
+ if(selected) renderDetail();
+
+ activeTab = previousListTab;
+ renderList();
+ renderTabs();
+
+ window.scrollTo({top:0,left:0,behavior:"instant"});
+});
+
+$("syncButton").addEventListener("click",() => {
+ void refresh(true);
+});
+
+$("reloadButton").addEventListener("click",() => {
+ void refresh(false);
+});
+
+$("retryButton").addEventListener("click",() => {
+ void sendPendingWrite();
+});
+
+$("resolveButton").addEventListener("click",() => {
+ void refresh(false);
+});
+
+$("auditButton").addEventListener("click",loadAudit);
+
+document.querySelectorAll("[data-close]").forEach(button => {
+ button.addEventListener("click",() => {
+  $(button.dataset.close).close();
+ });
+});
+
+/* ============================================================
+   PRINT — USES THE SAVED CASE SNAPSHOT
+   ============================================================ */
+
+$("printButton").addEventListener("click",async () => {
+ if(!selected) return;
+
+ if(caseFormDirty || pendingWrite || staleRecord){
+  window.alert(
+   "Save or verify outstanding changes before printing. " +
+   "Printing uses the saved follow-up record."
+  );
+
+  return;
+ }
+
+ const state = selected.state;
+
+ $("printArea").innerHTML = `
+  <div class="print-brand">
+   <img
+    class="amc-logo"
+    src="./amclogo.png"
+    alt="Adventist Medical Center logo"
+   >
+   <h1>Adventist Medical Center<br>Report Follow-up Summary</h1>
+  </div>
+
+  <p>
+   <strong>${esc(state.quotationNumber)}</strong>
+   · Confirmed revision ${esc(state.sourceRevision)}<br>
+   Printed: ${esc(timeLabel(new Date().toISOString()))}<br>
+   Saved record: ${esc(timeLabel(selected.updated_at))}
+  </p>
+
+  <div class="patient-meta">
+   ${patientMetadataHTML(state)}
+  </div>
+
+  <div class="section">
+   <h2>Appointment and follow-up</h2>
+
+   <p>
+    Appointment:
+    ${esc(dateLabel(state.appointmentDate))}
+    · ${esc(APPOINTMENTS[state.appointmentStatus] || "Not arranged")}<br>
+
+    Next follow-up:
+    ${esc(dateLabel(state.nextFollowupDate))}
+   </p>
+
+   ${state.caseNote ? `
+    <p class="note">${esc(state.caseNote)}</p>
+   ` : ""}
+  </div>
+
+  <div class="section">
+   <h2>Investigations and reports</h2>
+   ${groupsHTML(state,false)}
+  </div>
+
+  <div class="section">
+   <h2>Contact history</h2>
+   ${contactsHTML(state)}
+  </div>
+
+  <div class="print-footer">
+   This is a follow-up tracking summary, not a laboratory or imaging
+   report. Refer to the actual reports stored in the clinic system.
+   Recorded statuses do not replace clinical assessment or required
+   escalation procedures.
+  </div>
+ `;
+
+ const images = [
+  ...$("printArea").querySelectorAll("img")
+ ];
+
+ await Promise.all(images.map(
+  image => image.decode?.().catch(() => {}) || Promise.resolve()
+ ));
+
+ const oldTitle = document.title;
+
+ document.title = state.quotationNumber + "-Followup";
+
+ try{
+  window.print();
+ }finally{
+  document.title = oldTitle;
+ }
+});
+
+/* ============================================================
+   CONNECTION
+   ============================================================ */
+
+window.addEventListener("beforeunload",event => {
+ if(caseFormDirty || pendingWrite || busy){
+  event.preventDefault();
+  event.returnValue = "";
+ }
+});
+
+async function connect(){
+ if(!window.supabase?.createClient){
+  message(
+   "The backend library could not load. Check your connection and refresh.",
+   true
+  );
+
+  return;
+ }
+
+ client = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  {
+   auth:{
+    persistSession:true,
+    autoRefreshToken:true,
+    detectSessionInUrl:false,
+    storageKey:"amc-public-demo-auth"
+   }
+  }
+ );
+
+ try{
+  const sessionResult = await client.auth.getSession();
+
+  if(sessionResult.error){
+   throw sessionResult.error;
+  }
+
+  if(!sessionResult.data.session){
+   const signInResult = await client.auth.signInAnonymously();
+
+   if(signInResult.error){
+    throw signInResult.error;
+   }
+  }
+
+  ready = true;
+  updateControls();
+
+  // Import new confirmed quotations and confirmed revisions.
+  // Draft revisions do not change report tracking.
+  await refresh(true);
+
+ }catch(error){
+  console.error("Follow-up connection failed:",error);
+
+  message(
+   "Cannot connect: " +
+   (error.message || "Please refresh.") +
+   " Check that the follow-up SQL has been installed and " +
+   "Anonymous Sign-ins are enabled.",
+   true
+  );
+ }
+}
+
+renderList();
+renderTabs();
+updateControls();
+
+void connect();
+</script>
+</body>
+</html>
