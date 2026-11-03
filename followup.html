@@ -786,12 +786,39 @@ pre{
 
 <details class="batch-tools">
  <summary>Batch actions</summary>
+
  <div id="workflowToolbar" class="toolbar">
-  <!-- 保留你原本嘅 checkbox、selectionCount 同四個批量操作掣 -->
+  <label>
+   <input id="selectAll" type="checkbox">
+   Select all
+  </label>
+
+  <span id="selectionCount" class="count">0 selected</span>
+
+  <button type="button" data-batch="received" disabled>
+   Mark received
+  </button>
+
+  <button type="button" data-batch="routine" disabled>
+   Routine review
+  </button>
+
+  <button type="button" data-batch="review" disabled>
+   Record doctor review
+  </button>
+
+  <button type="button" data-batch="filed" disabled>
+   Mark filed
+  </button>
  </div>
 </details>
 
 <div id="groups"></div>
+ <summary>Batch actions</summary>
+ <div id="workflowToolbar" class="toolbar">
+  <!-- 保留你原本嘅 checkbox、selectionCount 同四個批量操作掣 -->
+ </div>
+</details>
     </section>
 
    
@@ -4044,7 +4071,7 @@ $("operator").addEventListener("input",() => {
  const oldTitle = document.title;
  document.title = `${state.quotationNumber}-Followup`;
 
- try{
+try{
   window.print();
  }finally{
   document.title = oldTitle;
