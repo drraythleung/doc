@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -24,7 +24,7 @@ body{
  margin:0;
  background:var(--bg);
  color:var(--text);
- font:15px/1.6 Arial,"Microsoft JhengHei",sans-serif;
+ font:15px/1.6 Arial,sans-serif;
 }
 button,input,select,textarea{font:inherit}
 button{
@@ -38,11 +38,14 @@ button{
 }
 button:hover:not(:disabled){background:#f1f5f9}
 button:disabled{opacity:.45;cursor:not-allowed}
-button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+button.primary{
+ background:var(--blue);
+ border-color:var(--blue);
+ color:#fff;
+}
 button.primary:hover:not(:disabled){background:#1d4ed8}
 button.danger{color:var(--red)}
 button.small{font-size:13px;padding:6px 10px}
-button.link{border:0;background:transparent;color:var(--blue);padding:5px 0}
 button:focus-visible,input:focus-visible,select:focus-visible,
 textarea:focus-visible,summary:focus-visible{
  outline:3px solid #93c5fd;
@@ -87,10 +90,20 @@ small,.muted{color:var(--muted)}
 .brand img{width:170px;max-width:35%;height:auto}
 .brand h1{text-align:right;margin:0}
 .actions{margin:10px 0}
-.field{display:flex;flex-direction:column;gap:6px;font-weight:700}
+.field{
+ display:flex;
+ flex-direction:column;
+ gap:6px;
+ font-weight:700;
+}
 .field small{font-weight:400}
 .operator{width:min(100%,300px)}
-.search-row{display:flex;gap:10px;align-items:flex-end;margin-top:14px}
+.search-row{
+ display:flex;
+ gap:10px;
+ align-items:flex-end;
+ margin-top:14px;
+}
 .search-row .field{flex:1}
 .small-text{font-size:13px;color:var(--muted)}
 .note{white-space:pre-wrap;overflow-wrap:anywhere}
@@ -103,15 +116,36 @@ small,.muted{color:var(--muted)}
  padding:12px 14px;
  margin:12px 0;
 }
-.notice.red{border-color:#fecaca;background:#fff1f2;color:var(--red)}
-.notice.blue{border-color:#bfdbfe;background:#eff6ff;color:#164bab}
+.notice.red{
+ border-color:#fecaca;
+ background:#fff1f2;
+ color:var(--red);
+}
+.notice.blue{
+ border-color:#bfdbfe;
+ background:#eff6ff;
+ color:#164bab;
+}
 #message{min-height:24px;font-size:14px;margin-top:12px}
 .tabs{margin:12px 0}
 .tabs button{font-size:14px}
-.tabs button.active{background:var(--blue);border-color:var(--blue);color:#fff}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}
+.tabs button.active{
+ background:var(--blue);
+ border-color:var(--blue);
+ color:#fff;
+}
+.table-wrap{
+ overflow:auto;
+ border:1px solid var(--line);
+ border-radius:10px;
+}
 table{width:100%;border-collapse:collapse}
-th,td{text-align:left;padding:14px;border-bottom:1px solid var(--line);vertical-align:top}
+th,td{
+ text-align:left;
+ padding:14px;
+ border-bottom:1px solid var(--line);
+ vertical-align:top;
+}
 th{background:var(--soft);font-size:13px;color:var(--muted)}
 tbody tr:last-child td{border-bottom:0}
 .name{font-weight:700}
@@ -123,12 +157,32 @@ tbody tr:last-child td{border-bottom:0}
  background:var(--soft);
  font-size:13px;
 }
-.badge.blue{color:var(--blue);background:#eff6ff;border-color:#bfdbfe}
-.badge.green{color:var(--green);background:#ecfdf5;border-color:#a7e3c9}
-.badge.amber{color:var(--amber);background:#fff8e5;border-color:#ead39a}
-.badge.red{color:var(--red);background:#fff1f2;border-color:#fecaca}
+.badge.blue{
+ color:var(--blue);
+ background:#eff6ff;
+ border-color:#bfdbfe;
+}
+.badge.green{
+ color:var(--green);
+ background:#ecfdf5;
+ border-color:#a7e3c9;
+}
+.badge.amber{
+ color:var(--amber);
+ background:#fff8e5;
+ border-color:#ead39a;
+}
+.badge.red{
+ color:var(--red);
+ background:#fff1f2;
+ border-color:#fecaca;
+}
 .empty{padding:24px;text-align:center;color:var(--muted)}
-.section{border-top:1px solid var(--line);margin-top:22px;padding-top:20px}
+.section{
+ border-top:1px solid var(--line);
+ margin-top:22px;
+ padding-top:20px;
+}
 .patient-strip{
  padding:16px;
  background:var(--soft);
@@ -137,17 +191,29 @@ tbody tr:last-child td{border-bottom:0}
  margin:14px 0;
 }
 .patient-strip .name{font-size:22px}
-.patient-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px}
+.patient-meta{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px 20px;
+}
 .meta-label{display:block;font-size:12px;color:var(--muted)}
 .summary-line{margin:14px 0;font-size:15px}
 .report-table th:first-child{width:45%}
 .report-table th:nth-child(2){width:33%}
 .report-table td:last-child{white-space:nowrap}
 .urgent-row{background:#fff8f8}
-.warning{font-size:13px;color:var(--red);margin-top:6px;font-weight:700}
+.warning{
+ font-size:13px;
+ color:var(--red);
+ margin-top:6px;
+ font-weight:700;
+}
 .archive{margin-top:14px}
 summary{cursor:pointer}
-.archive>summary,.other-tools>summary{color:var(--muted);padding:7px 0}
+.archive>summary,.other-tools>summary{
+ color:var(--muted);
+ padding:7px 0;
+}
 .archive[open]>summary{margin-bottom:8px}
 .appointment-overview{
  display:flex;
@@ -168,9 +234,19 @@ summary{cursor:pointer}
 }
 #actionWorkspace h3{font-size:20px}
 #actionSubtitle{margin-bottom:18px}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0}
+.form-grid{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:16px;
+ margin:14px 0;
+}
 .full{grid-column:1/-1}
-.checkline{display:flex;align-items:flex-start;gap:9px;font-weight:400}
+.checkline{
+ display:flex;
+ align-items:flex-start;
+ gap:9px;
+ font-weight:400;
+}
 .checkline input{margin-top:4px}
 .choice{
  display:flex;
@@ -182,20 +258,39 @@ summary{cursor:pointer}
  margin:8px 0;
  cursor:pointer;
 }
-.choice:has(input:checked){background:#eff6ff;border-color:#93b4ff}
+.choice:has(input:checked){
+ background:#eff6ff;
+ border-color:#93b4ff;
+}
 .choice input{margin:0}
 .choice small{display:block}
-.form-error{color:var(--red);font-weight:700;margin:12px 0}
+.form-error{
+ color:var(--red);
+ font-weight:700;
+ margin:12px 0;
+}
 .log{padding:13px 0;border-bottom:1px solid var(--line)}
 .log:last-child{border-bottom:0}
 .log .note{margin-top:5px}
-.tool-list{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
-.other-tools{margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
-.manage-row{padding:12px 0;border-bottom:1px solid var(--line)}
+.tool-list{
+ display:flex;
+ gap:10px;
+ flex-wrap:wrap;
+ margin:10px 0;
+}
+.other-tools{
+ margin-top:22px;
+ border-top:1px solid var(--line);
+ padding-top:12px;
+}
+.manage-row{
+ padding:12px 0;
+ border-bottom:1px solid var(--line);
+}
 .manage-row:last-child{border:0}
-.readonly{background:var(--soft)}
 #writeNotice .actions{margin-bottom:0}
 #printArea{display:none}
+
 @media(max-width:700px){
  .wrap{padding:10px}
  .card{padding:16px}
@@ -205,11 +300,16 @@ summary{cursor:pointer}
  .search-row .field{flex-basis:100%}
  .form-grid,.patient-meta{grid-template-columns:1fr}
  #actionWorkspace{padding:16px}
- .report-table,.report-table tbody,.report-table tr,.report-table td{
-  display:block;width:100%;
+ .report-table,.report-table tbody,
+ .report-table tr,.report-table td{
+  display:block;
+  width:100%;
  }
  .report-table thead{display:none}
- .report-table tr{padding:14px;border-bottom:1px solid var(--line)}
+ .report-table tr{
+  padding:14px;
+  border-bottom:1px solid var(--line);
+ }
  .report-table td{padding:0;border:0}
  .report-table td+td{margin-top:9px}
  .report-table td:last-child{white-space:normal}
@@ -228,7 +328,11 @@ summary{cursor:pointer}
  #printArea tr,#printArea .log{break-inside:avoid}
  #printArea th,#printArea td{padding:8px;border-color:#ccc}
  #printArea .table-wrap{overflow:visible}
- #printArea .badge{color:#111;background:white;border-color:#ccc}
+ #printArea .badge{
+  color:#111;
+  background:white;
+  border-color:#ccc;
+ }
 }
 </style>
 </head>
@@ -238,79 +342,96 @@ summary{cursor:pointer}
  <header class="card">
   <div class="brand">
    <img src="./amclogo.png" alt="Adventist Medical Center logo">
-   <h1>Adventist Medical Center<br>報告跟進</h1>
+   <h1>Adventist Medical Center<br>Report Follow-up</h1>
   </div>
 
   <div class="row">
    <div class="actions">
-    <button id="reloadButton" type="button" disabled>重新載入</button>
+    <button id="reloadButton" type="button" disabled>
+     Refresh records
+    </button>
+
     <details>
-     <summary class="small-text">資料工具</summary>
+     <summary class="small-text">Data tools</summary>
      <div class="actions">
-      <button id="syncButton" type="button" disabled>同步已確認報價</button>
-      <button id="quotationButton" type="button">開啟報價頁</button>
+      <button id="syncButton" type="button" disabled>
+       Sync confirmed quotations
+      </button>
+      <button id="quotationButton" type="button">
+       Open quotation
+      </button>
      </div>
     </details>
    </div>
+
    <label class="field operator">
-    記錄同事 *
+    Recording staff *
     <input id="operator" maxlength="100" autocomplete="off"
-     placeholder="輸入姓名；轉更時請更改">
+     placeholder="Enter your name; update when staff changes">
    </label>
   </div>
 
   <div id="searchArea" class="search-row">
    <label class="field">
-    尋找病人
+    Find a patient
     <input id="search" type="search" autocomplete="off"
-     placeholder="姓名、病歷號碼、報價編號或檢查名稱">
+     placeholder="Name, patient reference, quotation number or investigation">
    </label>
-   <button id="clearSearchButton" type="button">清除</button>
+   <button id="clearSearchButton" type="button">Clear</button>
   </div>
 
   <details style="margin-top:12px">
-   <summary class="small-text">測試系統及使用提醒</summary>
+   <summary class="small-text">Demo information and workflow notes</summary>
    <div class="notice">
-    <strong>只供測試資料使用。</strong>
-    使用真實病人資料前，需要個別員工登入、適當權限及伺服器審計保護。
-    「記錄同事」係自行輸入，唔係已驗證身份。
+    <strong>Test data only.</strong>
+    Individual staff authentication, appropriate access controls and
+    server-enforced audit protections are required before using real
+    patient information. Recording staff names are manually entered,
+    not verified identities.
    </div>
    <p class="small-text">
-    本頁只記錄已完成嘅工作，唔會發送訊息。
-    緊急結果請按診所流程即時通知醫生，唔好只靠本頁記錄。
-    未收到報告唔代表檢查已進行，亦唔代表供應商已逾期。
+    This page records actions; it does not send messages.
+    Use the clinic's established process for urgent escalation.
+    An outstanding report does not prove that an investigation was
+    performed or that a provider is overdue.
    </p>
   </details>
 
-  <div id="message" role="status" aria-live="polite">正在連接測試系統…</div>
+  <div id="message" role="status" aria-live="polite">
+   Connecting to the demo backend…
+  </div>
 
   <div id="writeNotice" class="notice red" hidden>
    <p id="writeNoticeText"></p>
    <div class="actions">
-    <button id="retryButton" type="button">重試同一筆儲存</button>
-    <button id="resolveButton" type="button">重新載入並核對</button>
-    <button id="exportPendingButton" type="button">下載儲存備份</button>
+    <button id="retryButton" type="button">Retry same save</button>
+    <button id="resolveButton" type="button">Reload and verify</button>
+    <button id="exportPendingButton" type="button">
+     Download save snapshot
+    </button>
    </div>
   </div>
  </header>
 
- <nav id="tabs" class="tabs" aria-label="工作清單分類"></nav>
+ <nav id="tabs" class="tabs" aria-label="Worklist categories"></nav>
 
  <main class="card">
   <section id="listPanel">
    <div class="row">
-    <h2>病人工作清單</h2>
-    <small>只顯示已確認報價</small>
+    <h2>Patient worklist</h2>
+    <small>Confirmed quotations only</small>
    </div>
+
    <p id="listCount" class="small-text"></p>
+
    <div class="table-wrap">
     <table>
      <thead>
       <tr>
-       <th>病人</th>
-       <th>尚待處理</th>
-       <th>預約／下次聯絡</th>
-       <th></th>
+       <th>Patient</th>
+       <th>Outstanding actions</th>
+       <th>Appointment / next contact</th>
+       <th>Open</th>
       </tr>
      </thead>
      <tbody id="caseBody"></tbody>
@@ -320,17 +441,17 @@ summary{cursor:pointer}
 
   <section id="detailPanel" hidden>
    <div class="row">
-    <h2 id="detailTitle" tabindex="-1">病人跟進</h2>
+    <h2 id="detailTitle" tabindex="-1">Patient follow-up</h2>
     <div class="actions">
-     <button id="backButton" type="button">← 返回清單</button>
-     <button id="printButton" type="button">列印／PDF</button>
+     <button id="backButton" type="button">← Back to worklist</button>
+     <button id="printButton" type="button">Print / Save PDF</button>
     </div>
    </div>
 
    <div id="patientStrip" class="patient-strip"></div>
 
    <details id="patientDetails">
-    <summary class="small-text">病人及報價資料</summary>
+    <summary class="small-text">Patient and quotation details</summary>
     <div id="patientMeta" class="patient-meta" style="margin-top:12px"></div>
    </details>
 
@@ -339,17 +460,17 @@ summary{cursor:pointer}
    <div id="caseEditor">
     <section class="section" style="margin-top:12px">
      <div class="row">
-      <h2>報告</h2>
-      <small>按右邊按鈕，處理下一步</small>
+      <h2>Reports</h2>
+      <small>Use the button on the right for the next action</small>
      </div>
      <div id="groups"></div>
     </section>
 
     <section class="section">
      <div class="row">
-      <h2>病人聯絡及預約</h2>
+      <h2>Patient contact and appointment</h2>
       <button id="contactButton" type="button" class="primary">
-       記錄聯絡／預約
+       Record contact / appointment
       </button>
      </div>
      <div id="appointmentOverview" class="appointment-overview"></div>
@@ -359,29 +480,32 @@ summary{cursor:pointer}
     <section id="actionWorkspace" hidden aria-labelledby="actionTitle">
      <div class="row">
       <h3 id="actionTitle" tabindex="-1"></h3>
-      <button id="actionCancel" type="button">取消／關閉</button>
+      <button id="actionCancel" type="button">Cancel / Close</button>
      </div>
+
      <p id="actionSubtitle" class="small-text"></p>
+
      <form id="actionForm">
       <div id="actionFields"></div>
       <p id="actionError" class="form-error" role="alert" hidden></p>
       <div id="saveActions" class="actions">
-       <button id="actionSave" type="submit" class="primary">儲存</button>
+       <button id="actionSave" type="submit" class="primary">Save</button>
       </div>
      </form>
+
      <div id="historyContent"></div>
     </section>
 
     <details id="otherTools" class="other-tools">
-     <summary>其他操作：紀錄、更正、報告清單</summary>
+     <summary>Other actions: history, corrections and report lists</summary>
      <div class="tool-list">
-      <button id="historyButton" type="button">查看紀錄</button>
-      <button id="correctionButton" type="button">更正紀錄</button>
-      <button id="manageButton" type="button">管理報告清單</button>
+      <button id="historyButton" type="button">View history</button>
+      <button id="correctionButton" type="button">Correct a record</button>
+      <button id="manageButton" type="button">Manage report lists</button>
      </div>
      <p class="small-text">
-      平日跟進用上面「報告」同「記錄聯絡／預約」。
-      呢度只用作查閱或更正。
+      For routine follow-up, use Reports and Record contact / appointment
+      above. These tools are for checking or correcting records.
      </p>
     </details>
    </div>
@@ -392,1194 +516,2192 @@ summary{cursor:pointer}
 <div id="printArea"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 "use strict";
 
-const SUPABASE_URL="https://ypictveubevkggsmgyzk.supabase.co";
-const SUPABASE_KEY="sb_publishable_soGHa4Gfy7Ig2OCB50vNxw_jIAbQ4XS";
+const SUPABASE_URL = "https://ypictveubevkggsmgyzk.supabase.co";
+const SUPABASE_KEY = "sb_publishable_soGHa4Gfy7Ig2OCB50vNxw_jIAbQ4XS";
 
-const $=id=>document.getElementById(id);
-const clone=value=>JSON.parse(JSON.stringify(value));
-const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({
- "&":"&amp;","<":"&lt;",">":"&gt;",
- '"':"&quot;","'":"&#39;"
+const $ = id => document.getElementById(id);
+const clone = value => JSON.parse(JSON.stringify(value));
+
+const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+ "&":"&amp;",
+ "<":"&lt;",
+ ">":"&gt;",
+ '"':"&quot;",
+ "'":"&#39;"
 })[c]);
 
-const APPOINTMENTS={
- unscheduled:"未安排",
- booked:"已預約",
- attended:"已到診",
- missed:"未到診",
- declined:"病人拒絕"
+const APPOINTMENTS = {
+ unscheduled:"Not arranged",
+ booked:"Booked",
+ attended:"Attended",
+ missed:"Did not attend",
+ declined:"Patient declined"
 };
-const CLASSIFICATIONS={
- pending:"待初步檢視",
- routine:"一般處理",
- doctor:"優先交醫生",
- urgent:"緊急交醫生"
+
+const CLASSIFICATIONS = {
+ pending:"Awaiting nurse review",
+ routine:"Routine",
+ doctor:"Priority",
+ urgent:"Urgent"
 };
-const TABS=[
- ["all","全部"],
- ["missing","未收到報告"],
- ["review","待檢視／覆核"],
- ["followup","待聯絡／預約"]
+
+const TABS = [
+ ["all","All cases"],
+ ["missing","Outstanding reports"],
+ ["review","Nurse / doctor review"],
+ ["followup","Contacts / appointments"]
 ];
 
-let client=null;
-let ready=false;
-let busy=false;
-let records=[];
-let selected=null;
-let activeTab="all";
-let previousTab="all";
-let pendingWrite=null;
-let recoverySnapshot=null;
-let blockedReason="";
-let actionContext=null;
-let actionDirty=false;
-let viewToken=0;
+let client = null;
+let ready = false;
+let busy = false;
+let records = [];
+let selected = null;
+let activeTab = "all";
+let previousTab = "all";
+let pendingWrite = null;
+let recoverySnapshot = null;
+let blockedReason = "";
+let actionContext = null;
+let actionDirty = false;
+let viewToken = 0;
+
+/* Utilities */
 
 function uuid(){
  if(globalThis.crypto?.randomUUID) return crypto.randomUUID();
+
  if(!globalThis.crypto?.getRandomValues){
-  throw new Error("瀏覽器無法建立安全編號，請使用更新版本及 HTTPS。");
+  throw new Error(
+   "Secure IDs are unavailable. Use an updated browser over HTTPS."
+  );
  }
- const b=crypto.getRandomValues(new Uint8Array(16));
- b[6]=(b[6]&15)|64;
- b[8]=(b[8]&63)|128;
- const s=[...b].map(x=>x.toString(16).padStart(2,"0")).join("");
- return [s.slice(0,8),s.slice(8,12),s.slice(12,16),
-  s.slice(16,20),s.slice(20)].join("-");
+
+ const bytes = crypto.getRandomValues(new Uint8Array(16));
+ bytes[6] = (bytes[6] & 15) | 64;
+ bytes[8] = (bytes[8] & 63) | 128;
+
+ const text = [...bytes]
+  .map(value => value.toString(16).padStart(2,"0"))
+  .join("");
+
+ return [
+  text.slice(0,8),
+  text.slice(8,12),
+  text.slice(12,16),
+  text.slice(16,20),
+  text.slice(20)
+ ].join("-");
 }
+
 function today(){
- const parts=new Intl.DateTimeFormat("en-CA",{
-  timeZone:"Asia/Hong_Kong",year:"numeric",month:"2-digit",day:"2-digit"
+ const parts = new Intl.DateTimeFormat("en-CA",{
+  timeZone:"Asia/Hong_Kong",
+  year:"numeric",
+  month:"2-digit",
+  day:"2-digit"
  }).formatToParts(new Date());
- const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));
- return `${p.year}-${p.month}-${p.day}`;
+
+ const values = Object.fromEntries(
+  parts.map(part => [part.type,part.value])
+ );
+
+ return `${values.year}-${values.month}-${values.day}`;
 }
-function validDate(v){
- if(!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
- const d=new Date(v+"T00:00:00Z");
- return !Number.isNaN(d.getTime())&&d.toISOString().slice(0,10)===v;
+
+function validDate(value){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+ const date = new Date(value + "T00:00:00Z");
+
+ return !Number.isNaN(date.getTime()) &&
+  date.toISOString().slice(0,10) === value;
 }
-function dateLabel(v){
- if(!v) return "未設定";
- const p=String(v).split("-");
- return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:String(v);
+
+function dateLabel(value){
+ if(!value) return "Not set";
+
+ const parts = String(value).split("-");
+
+ return parts.length === 3
+  ? `${parts[2]}/${parts[1]}/${parts[0]}`
+  : String(value);
 }
-function timeLabel(v){
- if(!v) return "未記錄時間";
- const d=new Date(v);
- return Number.isNaN(d.getTime())?"時間不詳":
-  d.toLocaleString("en-GB",{timeZone:"Asia/Hong_Kong"})+" HKT";
+
+function timeLabel(value){
+ if(!value) return "Time not recorded";
+
+ const date = new Date(value);
+
+ return Number.isNaN(date.getTime())
+  ? "Unknown time"
+  : date.toLocaleString("en-GB",{
+     timeZone:"Asia/Hong_Kong"
+    }) + " HKT";
 }
-function badge(text,colour=""){
+
+function badge(text,colour = ""){
  return `<span class="badge ${esc(colour)}">${esc(text)}</span>`;
 }
-function message(text,error=false){
- $("message").textContent=text;
- $("message").style.color=error?"var(--red)":"var(--blue)";
+
+function message(text,error = false){
+ $("message").textContent = text;
+ $("message").style.color = error ? "var(--red)" : "var(--blue)";
 }
+
 function staffName(){
- const name=$("operator").value.trim();
+ const name = $("operator").value.trim();
+
  if(!name){
   $("operator").focus();
-  throw new Error("請先喺頁頂輸入記錄同事姓名。");
+  throw new Error("Enter the recording staff member's name at the top first.");
  }
+
  return name;
 }
+
 function editingLocked(){
- return !ready||busy||!!pendingWrite||!!blockedReason;
+ return !ready || busy || !!pendingWrite || !!blockedReason;
 }
-function canonical(v){
- if(Array.isArray(v)) return "["+v.map(canonical).join(",")+"]";
- if(v&&typeof v==="object"){
-  return "{"+Object.keys(v).sort().map(k=>
-   JSON.stringify(k)+":"+canonical(v[k])).join(",")+"}";
+
+function canonical(value){
+ if(Array.isArray(value)){
+  return "[" + value.map(canonical).join(",") + "]";
  }
- return JSON.stringify(v);
+
+ if(value && typeof value === "object"){
+  return "{" + Object.keys(value).sort().map(key =>
+   JSON.stringify(key) + ":" + canonical(value[key])
+  ).join(",") + "}";
+ }
+
+ return JSON.stringify(value);
 }
-function same(a,b){return canonical(a)===canonical(b)}
+
+function same(a,b){
+ return canonical(a) === canonical(b);
+}
+
 function containsExpected(actual,expected){
- if(expected===null||typeof expected!=="object") return same(actual,expected);
- if(Array.isArray(expected)){
-  return Array.isArray(actual)&&actual.length===expected.length&&
-   expected.every((v,i)=>containsExpected(actual[i],v));
+ if(expected === null || typeof expected !== "object"){
+  return same(actual,expected);
  }
- return actual&&typeof actual==="object"&&
-  Object.keys(expected).every(k=>
-   Object.hasOwn(actual,k)&&containsExpected(actual[k],expected[k]));
+
+ if(Array.isArray(expected)){
+  return Array.isArray(actual) &&
+   actual.length === expected.length &&
+   expected.every((value,index) =>
+    containsExpected(actual[index],value)
+   );
+ }
+
+ return actual && typeof actual === "object" &&
+  Object.keys(expected).every(key =>
+   Object.hasOwn(actual,key) &&
+   containsExpected(actual[key],expected[key])
+  );
 }
+
 function updateControls(){
- $("reloadButton").disabled=!ready||busy;
- $("syncButton").disabled=editingLocked();
- $("quotationButton").disabled=busy;
- $("backButton").disabled=busy||!!pendingWrite;
- $("printButton").disabled=!selected||editingLocked()||actionDirty;
- $("retryButton").disabled=busy;
- $("resolveButton").disabled=busy||!ready;
- $("exportPendingButton").disabled=busy;
+ $("reloadButton").disabled = !ready || busy;
+ $("syncButton").disabled = editingLocked();
+ $("quotationButton").disabled = busy;
+ $("backButton").disabled = busy || !!pendingWrite;
+ $("printButton").disabled =
+  !selected || editingLocked() || actionDirty;
 
- $("caseEditor").inert=editingLocked();
- $("caseBody").inert=busy||!!pendingWrite;
- $("tabs").inert=busy||!!pendingWrite;
+ $("retryButton").disabled = busy;
+ $("resolveButton").disabled = busy || !ready;
+ $("exportPendingButton").disabled = busy;
 
- $("writeNotice").hidden=!pendingWrite&&!blockedReason;
- $("retryButton").hidden=!pendingWrite;
- $("exportPendingButton").hidden=!pendingWrite&&!recoverySnapshot;
+ $("caseEditor").inert = editingLocked();
+ $("caseBody").inert = busy || !!pendingWrite;
+ $("tabs").inert = busy || !!pendingWrite;
+
+ $("writeNotice").hidden = !pendingWrite && !blockedReason;
+ $("retryButton").hidden = !pendingWrite;
+ $("exportPendingButton").hidden =
+  !pendingWrite && !recoverySnapshot;
 
  if(pendingWrite){
-  $("writeNoticeText").textContent=
-   "未收到儲存確認；資料可能已經存好。操作已暫停。"+
-   "請重試同一筆儲存，或者重新載入核對。唔好重做同一動作。";
+  $("writeNoticeText").textContent =
+   "The save was not acknowledged and may already have succeeded. " +
+   "Editing is paused. Retry the same save, or reload to inspect " +
+   "the actual saved record. Do not repeat the action as a new save.";
  }else if(blockedReason){
-  $("writeNoticeText").textContent=blockedReason;
+  $("writeNoticeText").textContent = blockedReason;
  }
 }
 
-/* Existing report fields and review cycles are preserved. */
+/* Report state and retained review cycles */
 
 function findReport(state,groupId,reportId){
- const group=state.groups.find(g=>g.id===groupId);
- const report=group?.reports.find(r=>r.id===reportId);
- if(!group||!report) throw new Error("搵唔到報告記錄，請重新載入。");
+ const group = state.groups.find(item => item.id === groupId);
+ const report = group?.reports.find(item => item.id === reportId);
+
+ if(!group || !report){
+  throw new Error("The report record could not be found. Refresh the records.");
+ }
+
  return {group,report};
 }
+
 function entries(state){
- return state.groups.flatMap(group=>
-  group.reports.map(report=>({group,report})));
+ return state.groups.flatMap(group =>
+  group.reports.map(report => ({group,report}))
+ );
 }
-function cycleId(report){return report.reviewCycleId||"legacy"}
+
+function cycleId(report){
+ return report.reviewCycleId || "legacy";
+}
+
 function nurseDone(report){
  return ["routine","doctor","urgent"].includes(report.triage);
 }
+
 function needsDoctorReview(report){
- return !report.cancelled&&!!report.receivedDate&&
-  (!report.reviewedAt||report.reviewPending===true);
+ return !report.cancelled &&
+  !!report.receivedDate &&
+  (!report.reviewedAt || report.reviewPending === true);
 }
+
 function receiptConfirmed(contact){
- return contact.deliveryStatus==="confirmed"||!!contact.confirmedAt;
+ return contact.deliveryStatus === "confirmed" ||
+  !!contact.confirmedAt;
 }
+
 function patientConfirmed(state,report){
- return state.contacts.some(c=>
-  c.audience==="patient"&&c.reportId===report.id&&
-  (c.reviewCycleId||"legacy")===cycleId(report)&&receiptConfirmed(c));
+ return state.contacts.some(contact =>
+  contact.audience === "patient" &&
+  contact.reportId === report.id &&
+  (contact.reviewCycleId || "legacy") === cycleId(report) &&
+  receiptConfirmed(contact)
+ );
 }
+
 function patientPending(state,report){
- return !report.cancelled&&!!report.reviewedAt&&
-  !needsDoctorReview(report)&&report.patientContactRequired===true&&
+ return !report.cancelled &&
+  !!report.reviewedAt &&
+  !needsDoctorReview(report) &&
+  report.patientContactRequired === true &&
   !patientConfirmed(state,report);
 }
+
 function preserveLegacyReview(report){
- if(!Array.isArray(report.reviewHistory)) report.reviewHistory=[];
- if(report.reviewedAt&&!report.reviewHistory.some(x=>x.at===report.reviewedAt)){
+ if(!Array.isArray(report.reviewHistory)){
+  report.reviewHistory = [];
+ }
+
+ if(report.reviewedAt &&
+  !report.reviewHistory.some(item => item.at === report.reviewedAt)
+ ){
   report.reviewHistory.push({
-   id:uuid(),cycleId:cycleId(report),at:report.reviewedAt,
-   doctor:report.reviewDoctorName||report.doctorName||"",
-   recordedBy:report.reviewRecordedBy||"",
-   note:report.reviewNote||"",
-   patientContactRequired:report.patientContactRequired===true,
+   id:uuid(),
+   cycleId:cycleId(report),
+   at:report.reviewedAt,
+   doctor:report.reviewDoctorName || report.doctorName || "",
+   recordedBy:report.reviewRecordedBy || "",
+   note:report.reviewNote || "",
+   patientContactRequired:report.patientContactRequired === true,
    legacy:true
   });
  }
 }
+
 function openNewReviewCycle(report){
  preserveLegacyReview(report);
- report.reviewCycleId=uuid();
- report.reviewPending=true;
+ report.reviewCycleId = uuid();
+ report.reviewPending = true;
 }
+
 function appendNurseNote(report,note,staff){
  if(!note) return;
- if(!Array.isArray(report.noteHistory)) report.noteHistory=[];
- if(report.nurseNote&&!report.noteHistory.length){
+
+ if(!Array.isArray(report.noteHistory)){
+  report.noteHistory = [];
+ }
+
+ if(report.nurseNote && !report.noteHistory.length){
   report.noteHistory.push({
-   id:uuid(),at:"",staff:"",note:report.nurseNote,legacy:true
+   id:uuid(),
+   at:"",
+   staff:"",
+   note:report.nurseNote,
+   legacy:true
   });
  }
+
  report.noteHistory.push({
-  id:uuid(),at:new Date().toISOString(),staff,note
+  id:uuid(),
+  at:new Date().toISOString(),
+  staff,
+  note
  });
- report.nurseNote=(report.nurseNote?report.nurseNote+"\n\n":"")+note;
+
+ report.nurseNote =
+  (report.nurseNote ? report.nurseNote + "\n\n" : "") + note;
 }
-function recordClassification(report,outcome,staff,reason=""){
+
+function recordClassification(report,outcome,staff,reason = ""){
  if(!Object.hasOwn(CLASSIFICATIONS,outcome)){
-  throw new Error("請選擇有效分類。");
+  throw new Error("Select a valid classification.");
  }
- if((report.triage||"pending")===outcome) return false;
- if(report.reviewedAt||(report.triage||"pending")!=="pending"){
+
+ if((report.triage || "pending") === outcome) return false;
+
+ if(report.reviewedAt ||
+  (report.triage || "pending") !== "pending"
+ ){
   openNewReviewCycle(report);
  }else if(!report.reviewCycleId){
-  report.reviewCycleId=uuid();
+  report.reviewCycleId = uuid();
  }
- if(!Array.isArray(report.nurseReviewHistory)) report.nurseReviewHistory=[];
- if(report.nurseAt&&!report.nurseReviewHistory.length){
+
+ if(!Array.isArray(report.nurseReviewHistory)){
+  report.nurseReviewHistory = [];
+ }
+
+ if(report.nurseAt && !report.nurseReviewHistory.length){
   report.nurseReviewHistory.push({
-   id:uuid(),at:report.nurseAt,staff:report.nurseName||"",
-   classification:report.triage,legacy:true
+   id:uuid(),
+   at:report.nurseAt,
+   staff:report.nurseName || "",
+   classification:report.triage,
+   legacy:true
   });
  }
- const at=new Date().toISOString();
+
+ const at = new Date().toISOString();
+
  report.nurseReviewHistory.push({
-  id:uuid(),at,staff,classification:outcome,reason,
+  id:uuid(),
+  at,
+  staff,
+  classification:outcome,
+  reason,
   cycleId:cycleId(report)
  });
- report.triage=outcome;
- report.nurseName=outcome==="pending"?"":staff;
- report.nurseAt=outcome==="pending"?"":at;
+
+ report.triage = outcome;
+ report.nurseName = outcome === "pending" ? "" : staff;
+ report.nurseAt = outcome === "pending" ? "" : at;
+
  return true;
 }
+
 function emptyReport(name){
  return {
-  id:uuid(),name,receivedDate:"",archived:false,triage:"pending",
-  nurseName:"",nurseAt:"",nurseNote:"",doctorName:"",
-  notifiedAt:"",reviewedAt:"",reviewNote:"",
-  cancelled:false,cancelReason:"",reviewPending:false,
-  patientContactRequired:false,actionLog:[]
+  id:uuid(),
+  name,
+  receivedDate:"",
+  archived:false,
+  triage:"pending",
+  nurseName:"",
+  nurseAt:"",
+  nurseNote:"",
+  doctorName:"",
+  notifiedAt:"",
+  reviewedAt:"",
+  reviewNote:"",
+  cancelled:false,
+  cancelReason:"",
+  reviewPending:false,
+  patientContactRequired:false,
+  actionLog:[]
  };
 }
+
 function stage(state,group,report){
  if(report.cancelled){
-  return {key:"cancelled",label:"已取消跟進",colour:"",order:90};
+  return {
+   key:"cancelled",
+   label:"Tracking cancelled",
+   colour:"",
+   order:90
+  };
  }
+
  if(!group.planReviewed){
-  return {key:"plan",label:"待核對報告清單",colour:"amber",order:10};
+  return {
+   key:"plan",
+   label:"Verify expected reports",
+   colour:"amber",
+   order:10
+  };
  }
+
  if(!report.receivedDate){
-  return {key:"received",label:"未收到",colour:"amber",order:50};
+  return {
+   key:"received",
+   label:"Awaiting report",
+   colour:"amber",
+   order:50
+  };
  }
+
  if(!nurseDone(report)){
-  return {key:"nurse",label:"待初步檢視",colour:"blue",order:30};
+  return {
+   key:"nurse",
+   label:"Awaiting nurse review",
+   colour:"blue",
+   order:30
+  };
  }
+
  if(needsDoctorReview(report)){
   return {
    key:"doctor",
-   label:report.triage==="urgent"?"緊急：待醫生覆核":
-    report.triage==="doctor"?"優先：待醫生覆核":"待醫生覆核",
-   colour:report.triage==="urgent"?"red":"blue",
-   order:report.triage==="urgent"?0:report.triage==="doctor"?20:35
+   label:report.triage === "urgent"
+    ? "Urgent — doctor review pending"
+    : report.triage === "doctor"
+      ? "Priority — doctor review pending"
+      : "Awaiting doctor review",
+   colour:report.triage === "urgent" ? "red" : "blue",
+   order:report.triage === "urgent"
+    ? 0
+    : report.triage === "doctor" ? 20 : 35
   };
  }
+
  if(patientPending(state,report)){
-  return {key:"patient",label:"待確認病人收到",colour:"amber",order:40};
+  return {
+   key:"patient",
+   label:"Patient receipt pending",
+   colour:"amber",
+   order:40
+  };
  }
+
  if(!report.archived){
-  return {key:"filed",label:"待歸檔",colour:"amber",order:60};
+  return {
+   key:"filed",
+   label:"Awaiting filing",
+   colour:"amber",
+   order:60
+  };
  }
- return {key:"complete",label:"已完成",colour:"green",order:80};
-}
-function metrics(state){
- const all=entries(state);
- const active=all.filter(x=>!x.report.cancelled);
- const pending=active.filter(x=>stage(state,x.group,x.report).key!=="complete");
- const missing=active.filter(x=>!x.report.receivedDate);
- const nurse=active.filter(x=>x.report.receivedDate&&!nurseDone(x.report));
- const doctor=active.filter(x=>nurseDone(x.report)&&needsDoctorReview(x.report));
- const patient=active.filter(x=>patientPending(state,x.report));
- const plans=state.groups.filter(g=>!g.planReviewed);
- const urgent=active.filter(x=>
-  x.report.triage==="urgent"&&needsDoctorReview(x.report));
- const due=!!state.nextFollowupDate&&state.nextFollowupDate<=today();
- const missed=state.appointmentStatus==="missed"||
-  (state.appointmentStatus==="booked"&&state.appointmentDate&&
-   state.appointmentDate<today());
- const arrange=(state.appointmentStatus||"unscheduled")==="unscheduled"&&
-  active.some(x=>!!x.report.receivedDate);
- return {all,active,pending,missing,nurse,doctor,patient,plans,urgent,due,missed,arrange};
-}
-function matchesTab(state,tab){
- const m=metrics(state);
- return tab==="all"||
-  (tab==="missing"&&m.missing.length>0)||
-  (tab==="review"&&(m.nurse.length||m.doctor.length||m.plans.length))||
-  (tab==="followup"&&(m.patient.length||m.due||m.missed||m.arrange));
+
+ return {
+  key:"complete",
+  label:"Completed",
+  colour:"green",
+  order:80
+ };
 }
 
-/* Rendering: one state and one next action per report. */
+function metrics(state){
+ const all = entries(state);
+ const active = all.filter(item => !item.report.cancelled);
+
+ const pending = active.filter(item =>
+  stage(state,item.group,item.report).key !== "complete"
+ );
+
+ const missing = active.filter(item => !item.report.receivedDate);
+
+ const nurse = active.filter(item =>
+  item.report.receivedDate && !nurseDone(item.report)
+ );
+
+ const doctor = active.filter(item =>
+  nurseDone(item.report) && needsDoctorReview(item.report)
+ );
+
+ const patient = active.filter(item =>
+  patientPending(state,item.report)
+ );
+
+ const plans = state.groups.filter(group => !group.planReviewed);
+
+ const urgent = active.filter(item =>
+  item.report.triage === "urgent" &&
+  needsDoctorReview(item.report)
+ );
+
+ const due = !!state.nextFollowupDate &&
+  state.nextFollowupDate <= today();
+
+ const missed = state.appointmentStatus === "missed" ||
+  (
+   state.appointmentStatus === "booked" &&
+   !!state.appointmentDate &&
+   state.appointmentDate < today()
+  );
+
+ const arrange =
+  (state.appointmentStatus || "unscheduled") === "unscheduled" &&
+  active.some(item => !!item.report.receivedDate);
+
+ return {
+  all,active,pending,missing,nurse,doctor,
+  patient,plans,urgent,due,missed,arrange
+ };
+}
+
+function matchesTab(state,tab){
+ const m = metrics(state);
+
+ return tab === "all" ||
+  (tab === "missing" && m.missing.length > 0) ||
+  (
+   tab === "review" &&
+   (m.nurse.length || m.doctor.length || m.plans.length)
+  ) ||
+  (
+   tab === "followup" &&
+   (m.patient.length || m.due || m.missed || m.arrange)
+  );
+}
+
+/* Rendering */
 
 function patientHTML(state){
- const m=state.metadata||{};
- const f=(label,value)=>`
-  <div><span class="meta-label">${esc(label)}</span>
-   <strong>${esc(value||"未輸入")}</strong></div>`;
+ const metadata = state.metadata || {};
+
+ const item = (label,value) => `
+  <div>
+   <span class="meta-label">${esc(label)}</span>
+   <strong>${esc(value || "Not entered")}</strong>
+  </div>
+ `;
+
  return [
-  f("病人姓名",m.patientName),
-  f("病歷／參考號碼",m.patientReference),
-  f("轉介醫生",m.clinician),
-  f("報價製作同事",m.preparedBy),
-  f("報價日期",dateLabel(m.quoteDate)),
-  f("已確認報價版本",String(state.sourceRevision??"")),
-  m.notes?`<div class="full"><span class="meta-label">報價備註</span>
-   <div class="note">${esc(m.notes)}</div></div>`:""
+  item("Patient name",metadata.patientName),
+  item("Patient reference",metadata.patientReference),
+  item("Referring clinician",metadata.clinician),
+  item("Quotation prepared by",metadata.preparedBy),
+  item("Quotation date",dateLabel(metadata.quoteDate)),
+  item("Confirmed quotation revision",String(state.sourceRevision ?? "")),
+  metadata.notes ? `
+   <div class="full">
+    <span class="meta-label">Quotation notes</span>
+    <div class="note">${esc(metadata.notes)}</div>
+   </div>
+  ` : ""
  ].join("");
 }
+
 function searchMatches(record){
- const q=$("search").value.trim().toLowerCase();
- if(!q) return true;
- const s=record.state,m=s.metadata||{};
+ const query = $("search").value.trim().toLowerCase();
+ if(!query) return true;
+
+ const state = record.state;
+ const metadata = state.metadata || {};
+
  return [
-  s.quotationNumber,m.patientName,m.patientReference,m.clinician,
-  ...s.groups.flatMap(g=>[g.name,g.code,...g.reports.map(r=>r.name)])
- ].join(" ").toLowerCase().includes(q);
+  state.quotationNumber,
+  metadata.patientName,
+  metadata.patientReference,
+  metadata.clinician,
+  ...state.groups.flatMap(group => [
+   group.name,
+   group.code,
+   ...group.reports.map(report => report.name)
+  ])
+ ].join(" ").toLowerCase().includes(query);
 }
+
 function outstandingText(state){
- const m=metrics(state);
- const items=[];
- if(m.plans.length) items.push(`核對清單 ${m.plans.length}`);
- if(m.nurse.length) items.push(`初步檢視 ${m.nurse.length}`);
- if(m.doctor.length) items.push(`醫生覆核 ${m.doctor.length}`);
- if(m.patient.length) items.push(`病人收妥確認 ${m.patient.length}`);
- if(m.missing.length) items.push(`未收到 ${m.missing.length}`);
- const filing=m.active.filter(x=>stage(state,x.group,x.report).key==="filed").length;
- if(filing) items.push(`歸檔 ${filing}`);
- return items.join(" · ")||"暫無待處理報告";
+ const m = metrics(state);
+ const items = [];
+
+ if(m.plans.length){
+  items.push(`Report lists to verify: ${m.plans.length}`);
+ }
+ if(m.nurse.length){
+  items.push(`Nurse review: ${m.nurse.length}`);
+ }
+ if(m.doctor.length){
+  items.push(`Doctor review: ${m.doctor.length}`);
+ }
+ if(m.patient.length){
+  items.push(`Patient receipt: ${m.patient.length}`);
+ }
+ if(m.missing.length){
+  items.push(`Outstanding reports: ${m.missing.length}`);
+ }
+
+ const filing = m.active.filter(item =>
+  stage(state,item.group,item.report).key === "filed"
+ ).length;
+
+ if(filing) items.push(`Filing: ${filing}`);
+
+ return items.join(" · ") || "No outstanding report actions";
 }
+
 function renderList(){
- const tab=activeTab==="case"?previousTab:activeTab;
- const filtered=records.filter(r=>matchesTab(r.state,tab)&&searchMatches(r));
+ const tab = activeTab === "case" ? previousTab : activeTab;
 
- $("tabs").hidden=activeTab==="case";
- $("searchArea").hidden=activeTab==="case";
- $("tabs").innerHTML=TABS.map(([id,label])=>`
+ const filtered = records.filter(record =>
+  matchesTab(record.state,tab) && searchMatches(record)
+ );
+
+ $("tabs").hidden = activeTab === "case";
+ $("searchArea").hidden = activeTab === "case";
+
+ $("tabs").innerHTML = TABS.map(([id,label]) => `
   <button type="button" data-tab="${id}"
-   class="${activeTab===id?"active":""}"
-   aria-pressed="${activeTab===id}">
-   ${esc(label)} (${records.filter(r=>matchesTab(r.state,id)).length})
-  </button>`).join("");
- $("listPanel").hidden=activeTab==="case";
- $("detailPanel").hidden=activeTab!=="case";
- $("listCount").textContent=`顯示 ${filtered.length} 位病人，共 ${records.length} 個個案。`;
+   class="${activeTab === id ? "active" : ""}"
+   aria-pressed="${activeTab === id}">
+   ${esc(label)}
+   (${records.filter(record => matchesTab(record.state,id)).length})
+  </button>
+ `).join("");
 
- $("caseBody").innerHTML=filtered.length?filtered.map(record=>{
-  const s=record.state,m=s.metadata||{},count=metrics(s);
-  return `
-   <tr>
-    <td>
-     <div class="name">${esc(m.patientName||"未輸入姓名")}</div>
-     <div class="small-text">${esc(m.patientReference||"未輸入病歷號碼")}</div>
-     <div class="code">${esc(s.quotationNumber)}</div>
-    </td>
-    <td>
-     ${count.urgent.length?`<div class="warning">有緊急報告待醫生覆核</div>`:""}
-     ${esc(outstandingText(s))}
-    </td>
-    <td>
-     <strong>${esc(APPOINTMENTS[s.appointmentStatus]||"未安排")}</strong>
-     ${s.appointmentDate?`<div class="small-text">${esc(dateLabel(s.appointmentDate))}</div>`:""}
-     <div class="small-text">下次聯絡：${esc(dateLabel(s.nextFollowupDate))}</div>
-     ${count.missed?'<div class="warning">請核對到診情況</div>':""}
-     ${count.due?'<div class="warning">已到跟進日期</div>':""}
-    </td>
-    <td><button type="button" data-open="${esc(record.id)}">開啟</button></td>
-   </tr>`;
- }).join(""):'<tr><td colspan="4" class="empty">冇符合條件嘅個案。</td></tr>';
+ $("listPanel").hidden = activeTab === "case";
+ $("detailPanel").hidden = activeTab !== "case";
+
+ $("listCount").textContent =
+  `${filtered.length} matching case(s) · ${records.length} cases loaded.`;
+
+ $("caseBody").innerHTML = filtered.length
+  ? filtered.map(record => {
+     const state = record.state;
+     const metadata = state.metadata || {};
+     const count = metrics(state);
+
+     return `
+      <tr>
+       <td>
+        <div class="name">
+         ${esc(metadata.patientName || "Name not entered")}
+        </div>
+        <div class="small-text">
+         ${esc(metadata.patientReference || "Patient reference not entered")}
+        </div>
+        <div class="code">${esc(state.quotationNumber)}</div>
+       </td>
+       <td>
+        ${count.urgent.length ? `
+         <div class="warning">Urgent doctor review pending</div>
+        ` : ""}
+        ${esc(outstandingText(state))}
+       </td>
+       <td>
+        <strong>
+         ${esc(APPOINTMENTS[state.appointmentStatus] || "Not arranged")}
+        </strong>
+        ${state.appointmentDate ? `
+         <div class="small-text">
+          ${esc(dateLabel(state.appointmentDate))}
+         </div>
+        ` : ""}
+        <div class="small-text">
+         Next contact: ${esc(dateLabel(state.nextFollowupDate))}
+        </div>
+        ${count.missed ? `
+         <div class="warning">Check appointment attendance</div>
+        ` : ""}
+        ${count.due ? `
+         <div class="warning">Follow-up due</div>
+        ` : ""}
+       </td>
+       <td>
+        <button type="button" data-open="${esc(record.id)}">Open</button>
+       </td>
+      </tr>
+     `;
+    }).join("")
+  : '<tr><td colspan="4" class="empty">No matching cases.</td></tr>';
+
  updateControls();
 }
+
 function reportButton(group,report,key,label){
- return `<button type="button" class="primary"
-  data-step="${esc(key)}" data-group="${esc(group.id)}"
-  data-report="${esc(report.id)}">${esc(label)}</button>`;
-}
-function reportTable(state,list){
- return `<div class="table-wrap">
-  <table class="report-table">
-   <thead><tr><th>報告</th><th>進度</th><th>下一步</th></tr></thead>
-   <tbody>${list.map(({group,report})=>{
-    const s=stage(state,group,report);
-    const labels={
-     plan:"核對清單",received:"記錄收件",nurse:"處理",
-     doctor:"記錄覆核",patient:"記錄聯絡",filed:"確認歸檔"
-    };
-    const urgent=report.triage==="urgent"&&needsDoctorReview(report);
-    return `<tr class="${urgent?"urgent-row":""}">
-     <td><div class="name">${esc(report.name||group.name)}</div>
-      <div class="code">${esc(group.code)}</div>
-      ${urgent?'<div class="warning">按診所流程即時通知醫生</div>':""}
-     </td>
-     <td>${badge(s.label,s.colour)}
-      ${report.receivedDate&&s.key!=="complete"?
-       `<div class="small-text">收件：${esc(dateLabel(report.receivedDate))}</div>`:""}
-     </td>
-     <td>${labels[s.key]?reportButton(group,report,s.key,labels[s.key]):
-      '<span class="muted">—</span>'}</td>
-    </tr>`;
-   }).join("")}</tbody>
-  </table></div>`;
-}
-function groupsHTML(state){
- const all=entries(state);
- const pending=all.filter(x=>
-  !["complete","cancelled"].includes(stage(state,x.group,x.report).key)
- ).sort((a,b)=>{
-  const urgent=x=>x.report.triage==="urgent"&&needsDoctorReview(x.report);
-  return Number(urgent(b))-Number(urgent(a))||
-   stage(state,a.group,a.report).order-stage(state,b.group,b.report).order;
- });
- const completed=all.filter(x=>stage(state,x.group,x.report).key==="complete");
- const emptyGroups=state.groups.filter(g=>!g.reports.length);
  return `
-  ${pending.length?reportTable(state,pending):
-   '<p class="muted">暫無待處理報告。</p>'}
-  ${emptyGroups.length?`<div class="notice">
-   ${emptyGroups.map(g=>`<div class="row">
-    <span>${esc(g.name)}：未建立報告清單</span>
-    <button type="button" data-plan="${esc(g.id)}">核對清單</button>
-   </div>`).join("")}</div>`:""}
-  ${completed.length?`<details class="archive">
-   <summary>已完成報告 (${completed.length})</summary>
-   ${reportTable(state,completed)}
-  </details>`:""}`;
+  <button type="button" class="primary"
+   data-step="${esc(key)}"
+   data-group="${esc(group.id)}"
+   data-report="${esc(report.id)}">
+   ${esc(label)}
+  </button>
+ `;
 }
-function deliveryLabel(contact){
- if(receiptConfirmed(contact)) return "已明確確認收妥";
- return {
-  sent:"已發送，未確認收妥",
-  connected:"已聯絡，未確認收妥",
-  "no-answer":"無人接聽",
-  voicemail:"已留言"
- }[contact.deliveryStatus]||contact.outcome||"未記錄";
-}
-function contactHTML(contact){
- return `<div class="log">
-  <strong>${esc(contact.target||"病人")} · ${esc(contact.method||"")}</strong>
-  <div class="small-text">
-   ${esc(deliveryLabel(contact))}
-   · ${esc(timeLabel(contact.at))}
-   · ${esc(contact.staff||"未記錄同事")}
+
+function reportTable(state,list){
+ return `
+  <div class="table-wrap">
+   <table class="report-table">
+    <thead>
+     <tr>
+      <th>Report</th>
+      <th>Progress</th>
+      <th>Next action</th>
+     </tr>
+    </thead>
+    <tbody>
+     ${list.map(({group,report}) => {
+      const current = stage(state,group,report);
+
+      const labels = {
+       plan:"Verify reports",
+       received:"Record received",
+       nurse:"Review",
+       doctor:"Record review",
+       patient:"Record contact",
+       filed:"Confirm filing"
+      };
+
+      const urgent = report.triage === "urgent" &&
+       needsDoctorReview(report);
+
+      return `
+       <tr class="${urgent ? "urgent-row" : ""}">
+        <td>
+         <div class="name">${esc(report.name || group.name)}</div>
+         <div class="code">${esc(group.code)}</div>
+         ${urgent ? `
+          <div class="warning">
+           Use the clinic's immediate escalation process
+          </div>
+         ` : ""}
+        </td>
+        <td>
+         ${badge(current.label,current.colour)}
+         ${report.receivedDate && current.key !== "complete" ? `
+          <div class="small-text">
+           Received: ${esc(dateLabel(report.receivedDate))}
+          </div>
+         ` : ""}
+        </td>
+        <td>
+         ${labels[current.key]
+           ? reportButton(group,report,current.key,labels[current.key])
+           : '<span class="muted">—</span>'}
+        </td>
+       </tr>
+      `;
+     }).join("")}
+    </tbody>
+   </table>
   </div>
-  ${contact.reportName?`<div class="small-text">報告：${esc(contact.reportName)}</div>`:""}
-  ${contact.note?`<div class="note">${esc(contact.note)}</div>`:""}
-  ${contact.nextDate?`<div class="small-text">
-   下次聯絡：${esc(dateLabel(contact.nextDate))}</div>`:""}
-  ${contact.confirmedAt?`<div class="small-text">
-   收妥確認：${esc(timeLabel(contact.confirmedAt))}
-   · ${esc(contact.confirmedBy||contact.staff||"")}</div>`:""}
- </div>`;
+ `;
 }
+
+function groupsHTML(state){
+ const all = entries(state);
+
+ const pending = all.filter(item =>
+  !["complete","cancelled"].includes(
+   stage(state,item.group,item.report).key
+  )
+ ).sort((a,b) => {
+  const urgent = item =>
+   item.report.triage === "urgent" &&
+   needsDoctorReview(item.report);
+
+  return Number(urgent(b)) - Number(urgent(a)) ||
+   stage(state,a.group,a.report).order -
+   stage(state,b.group,b.report).order;
+ });
+
+ const completed = all.filter(item =>
+  stage(state,item.group,item.report).key === "complete"
+ );
+
+ const emptyGroups = state.groups.filter(group => !group.reports.length);
+
+ return `
+  ${pending.length
+    ? reportTable(state,pending)
+    : '<p class="muted">No outstanding report actions.</p>'}
+
+  ${emptyGroups.length ? `
+   <div class="notice">
+    ${emptyGroups.map(group => `
+     <div class="row">
+      <span>${esc(group.name)} — no report entries</span>
+      <button type="button" data-plan="${esc(group.id)}">
+       Verify reports
+      </button>
+     </div>
+    `).join("")}
+   </div>
+  ` : ""}
+
+  ${completed.length ? `
+   <details class="archive">
+    <summary>Completed reports (${completed.length})</summary>
+    ${reportTable(state,completed)}
+   </details>
+  ` : ""}
+ `;
+}
+
+function deliveryLabel(contact){
+ if(receiptConfirmed(contact)) return "Receipt explicitly confirmed";
+
+ return ({
+  sent:"Sent — receipt not confirmed",
+  connected:"Contact made — receipt not confirmed",
+  "no-answer":"No answer",
+  voicemail:"Voicemail left"
+ })[contact.deliveryStatus] || contact.outcome || "Not recorded";
+}
+
+function contactHTML(contact){
+ return `
+  <div class="log">
+   <strong>
+    ${esc(contact.target || "Patient")}
+    · ${esc(contact.method || "")}
+   </strong>
+   <div class="small-text">
+    ${esc(deliveryLabel(contact))}
+    · ${esc(timeLabel(contact.at))}
+    · ${esc(contact.staff || "Recording staff not entered")}
+   </div>
+   ${contact.reportName ? `
+    <div class="small-text">Report: ${esc(contact.reportName)}</div>
+   ` : ""}
+   ${contact.note ? `
+    <div class="note">${esc(contact.note)}</div>
+   ` : ""}
+   ${contact.nextDate ? `
+    <div class="small-text">
+     Next contact: ${esc(dateLabel(contact.nextDate))}
+    </div>
+   ` : ""}
+   ${contact.confirmedAt ? `
+    <div class="small-text">
+     Receipt confirmation: ${esc(timeLabel(contact.confirmedAt))}
+     · ${esc(contact.confirmedBy || contact.staff || "")}
+    </div>
+   ` : ""}
+  </div>
+ `;
+}
+
 function recentContactsHTML(state){
- // New multi-report contacts share a communicationId.
- // Show one communication in the compact preview; full history retains each link.
- const seen=new Set();
- const unique=[...state.contacts].reverse().filter(c=>{
-  if(!c.communicationId) return true;
-  if(seen.has(c.communicationId)) return false;
-  seen.add(c.communicationId);
+ const seen = new Set();
+
+ const unique = [...state.contacts].reverse().filter(contact => {
+  if(!contact.communicationId) return true;
+  if(seen.has(contact.communicationId)) return false;
+
+  seen.add(contact.communicationId);
   return true;
  });
+
  return unique.slice(0,2).map(contactHTML).join("");
 }
+
 function renderDetail(){
  if(!selected) return;
- const state=selected.state,m=state.metadata||{},counts=metrics(state);
- $("detailTitle").textContent="病人跟進";
- $("patientStrip").innerHTML=`
-  <div class="name">${esc(m.patientName||"未輸入姓名")}</div>
-  <div>病歷／參考號碼：${esc(m.patientReference||"未輸入")}</div>
-  <div class="code">${esc(state.quotationNumber)} · 報價版本 ${esc(state.sourceRevision)}</div>`;
- $("patientMeta").innerHTML=patientHTML(state);
- $("caseSummary").innerHTML=`
-  <strong>尚有 ${counts.pending.length} 份報告未完成處理</strong>
-  ${counts.urgent.length?'<div class="warning">有緊急報告待醫生覆核；請即時按診所流程跟進。</div>':""}
-  <div class="small-text">最後儲存：${esc(timeLabel(selected.updated_at))}</div>`;
- $("groups").innerHTML=groupsHTML(state);
- $("appointmentOverview").innerHTML=`
-  <div><span class="meta-label">覆診</span>
-   <strong>${esc(APPOINTMENTS[state.appointmentStatus]||"未安排")}</strong>
-   ${state.appointmentDate?` · ${esc(dateLabel(state.appointmentDate))}`:""}</div>
-  <div><span class="meta-label">下次聯絡</span>
-   <strong>${esc(dateLabel(state.nextFollowupDate))}</strong></div>
-  ${state.caseNote?`<div style="flex-basis:100%">
-   <span class="meta-label">現有跟進備註</span>
-   <div class="note">${esc(state.caseNote)}</div></div>`:""}
-  ${counts.missed?'<div class="warning">請核對病人到診情況。</div>':""}`;
- $("recentContacts").innerHTML=recentContactsHTML(state);
+
+ const state = selected.state;
+ const metadata = state.metadata || {};
+ const counts = metrics(state);
+
+ $("detailTitle").textContent = "Patient follow-up";
+
+ $("patientStrip").innerHTML = `
+  <div class="name">${esc(metadata.patientName || "Name not entered")}</div>
+  <div>
+   Patient reference: ${esc(metadata.patientReference || "Not entered")}
+  </div>
+  <div class="code">
+   ${esc(state.quotationNumber)}
+   · Quotation revision ${esc(state.sourceRevision)}
+  </div>
+ `;
+
+ $("patientMeta").innerHTML = patientHTML(state);
+
+ $("caseSummary").innerHTML = `
+  <strong>
+   ${counts.pending.length} report(s) with outstanding actions
+  </strong>
+  ${counts.urgent.length ? `
+   <div class="warning">
+    Urgent doctor review pending.
+    Use the clinic's immediate escalation process.
+   </div>
+  ` : ""}
+  <div class="small-text">
+   Last saved: ${esc(timeLabel(selected.updated_at))}
+  </div>
+ `;
+
+ $("groups").innerHTML = groupsHTML(state);
+
+ $("appointmentOverview").innerHTML = `
+  <div>
+   <span class="meta-label">Appointment</span>
+   <strong>
+    ${esc(APPOINTMENTS[state.appointmentStatus] || "Not arranged")}
+   </strong>
+   ${state.appointmentDate
+     ? ` · ${esc(dateLabel(state.appointmentDate))}`
+     : ""}
+  </div>
+  <div>
+   <span class="meta-label">Next contact</span>
+   <strong>${esc(dateLabel(state.nextFollowupDate))}</strong>
+  </div>
+  ${state.caseNote ? `
+   <div style="flex-basis:100%">
+    <span class="meta-label">Current follow-up notes</span>
+    <div class="note">${esc(state.caseNote)}</div>
+   </div>
+  ` : ""}
+  ${counts.missed ? `
+   <div class="warning">Check the patient's appointment attendance.</div>
+  ` : ""}
+ `;
+
+ $("recentContacts").innerHTML = recentContactsHTML(state);
+
  updateControls();
 }
+
 function replaceRecord(record){
- const i=records.findIndex(r=>r.id===record.id);
- if(i>=0) records[i]=record; else records.push(record);
- records.sort((a,b)=>String(b.updated_at).localeCompare(String(a.updated_at)));
- if(selected?.id===record.id) selected=record;
+ const index = records.findIndex(item => item.id === record.id);
+
+ if(index >= 0) records[index] = record;
+ else records.push(record);
+
+ records.sort((a,b) =>
+  String(b.updated_at).localeCompare(String(a.updated_at))
+ );
+
+ if(selected?.id === record.id) selected = record;
 }
 
-/* One inline work area. No dialogs. */
+/* Single inline workspace */
 
-function closeWorkspace(force=false){
- if(busy&&!force) return false;
- if(!force&&actionDirty&&!window.confirm("放棄未儲存嘅輸入？")) return false;
+function closeWorkspace(force = false){
+ if(busy && !force) return false;
+
+ if(!force && actionDirty &&
+  !window.confirm("Discard the unsaved changes?")
+ ){
+  return false;
+ }
+
  viewToken++;
- actionContext=null;
- actionDirty=false;
- $("actionWorkspace").hidden=true;
- $("actionFields").innerHTML="";
- $("historyContent").innerHTML="";
- $("actionError").hidden=true;
+ actionContext = null;
+ actionDirty = false;
+
+ $("actionWorkspace").hidden = true;
+ $("actionFields").innerHTML = "";
+ $("historyContent").innerHTML = "";
+ $("actionError").hidden = true;
+
  updateControls();
  return true;
 }
-function startWorkspace(title,subtitle,fields,context,readOnly=false){
- if(!selected) throw new Error("請先開啟病人個案。");
+
+function startWorkspace(title,subtitle,fields,context,readOnly = false){
+ if(!selected){
+  throw new Error("Open a patient case first.");
+ }
+
  if(!readOnly){
-  if(editingLocked()) throw new Error("操作暫停中，請先處理頁頂提示。");
+  if(editingLocked()){
+   throw new Error("Editing is paused. Resolve the warning at the top first.");
+  }
   staffName();
  }
+
  if(!closeWorkspace()) return false;
- actionContext=context;
- actionDirty=false;
- $("actionTitle").textContent=title;
- $("actionSubtitle").textContent=subtitle;
- $("actionFields").innerHTML=fields;
- $("historyContent").innerHTML="";
- $("saveActions").hidden=readOnly;
- $("actionSave").textContent="儲存";
- $("actionError").hidden=true;
- $("actionWorkspace").hidden=false;
- $("actionWorkspace").scrollIntoView({behavior:"smooth",block:"start"});
+
+ actionContext = context;
+ actionDirty = false;
+
+ $("actionTitle").textContent = title;
+ $("actionSubtitle").textContent = subtitle;
+ $("actionFields").innerHTML = fields;
+ $("historyContent").innerHTML = "";
+ $("saveActions").hidden = readOnly;
+ $("actionSave").textContent = "Save";
+ $("actionError").hidden = true;
+ $("actionWorkspace").hidden = false;
+
+ $("actionWorkspace").scrollIntoView({
+  behavior:"smooth",
+  block:"start"
+ });
+
  $("actionTitle").focus({preventScroll:true});
+
  updateControls();
  return true;
 }
-function field(label,html,full=false){
- return `<label class="field ${full?"full":""}">${esc(label)}${html}</label>`;
+
+function field(label,html,full = false){
+ return `
+  <label class="field ${full ? "full" : ""}">
+   ${esc(label)}
+   ${html}
+  </label>
+ `;
 }
-function options(list,current=""){
- return list.map(([value,label])=>`<option value="${esc(value)}"
-  ${value===current?"selected":""}>${esc(label)}</option>`).join("");
+
+function options(list,current = ""){
+ return list.map(([value,label]) => `
+  <option value="${esc(value)}"
+   ${value === current ? "selected" : ""}>
+   ${esc(label)}
+  </option>
+ `).join("");
 }
-function doctorInput(value=""){
- const names=new Set();
+
+function doctorInput(value = ""){
+ const names = new Set();
+
  for(const record of records){
   for(const {report} of entries(record.state)){
    if(report.reviewDoctorName) names.add(report.reviewDoctorName);
    if(report.doctorName) names.add(report.doctorName);
-   for(const review of report.reviewHistory||[]){
+
+   for(const review of report.reviewHistory || []){
     if(review.doctor) names.add(review.doctor);
    }
   }
-  for(const c of record.state.contacts){
-   if(c.audience==="doctor"&&c.target) names.add(c.target);
+
+  for(const contact of record.state.contacts){
+   if(contact.audience === "doctor" && contact.target){
+    names.add(contact.target);
+   }
   }
  }
- return `<input id="actionDoctor" list="doctorNames" maxlength="100"
-  autocomplete="off" value="${esc(value)}" required>
-  <datalist id="doctorNames">${[...names].sort().map(name=>
-   `<option value="${esc(name)}"></option>`).join("")}</datalist>`;
+
+ return `
+  <input id="actionDoctor" list="doctorNames"
+   maxlength="100" autocomplete="off"
+   value="${esc(value)}" required>
+  <datalist id="doctorNames">
+   ${[...names].sort().map(name =>
+    `<option value="${esc(name)}"></option>`
+   ).join("")}
+  </datalist>
+ `;
 }
+
 function openStep(target,key){
- const {group,report}=findReport(selected.state,target.groupId,target.reportId);
- const current=stage(selected.state,group,report);
- if(current.key!==key) throw new Error("報告進度已改變，請使用目前顯示嘅下一步。");
- if(key==="plan"){openPlan(group.id);return}
+ const {group,report} = findReport(
+  selected.state,target.groupId,target.reportId
+ );
 
- if(key==="received"){
-  startWorkspace("記錄收件",report.name,`
-   <div class="form-grid">
-    ${field("實際收到日期 *",`<input id="receivedDate" type="date"
-     value="${today()}" max="${today()}" required>`)}
-   </div>
-   <p class="small-text">請填診所實際收到報告嘅日期，唔係抽血或檢查日期。</p>
-  `,{type:"received",target});
- }else if(key==="nurse"){
-  startWorkspace("初步檢視",report.name,`
-   <p class="small-text">已收到：${esc(dateLabel(report.receivedDate))}</p>
-   <p><strong>按診所既定準則選擇：</strong></p>
-   ${[
-    ["routine","一般處理","仍然需要記錄醫生覆核"],
-    ["doctor","優先交醫生","按診所流程優先安排覆核"],
-    ["urgent","緊急交醫生","立即按診所流程通知醫生"]
-   ].map(([value,label,help])=>`
-    <label class="choice">
-     <input type="radio" name="classification" value="${value}" required>
-     <span><strong>${label}</strong><small>${help}</small></span>
-    </label>`).join("")}
-   <div class="form-grid">
-    ${field("備註（選填）",
-     '<textarea id="nurseNote" rows="2" maxlength="2000"></textarea>',true)}
-   </div>
-   <p class="small-text">初步分類唔等於醫生已覆核。</p>
-  `,{type:"nurse",target});
- }else if(key==="doctor"){
-  startWorkspace("記錄醫生覆核",report.name,`
-   ${report.triage==="urgent"?`<div class="notice red">
-    請按診所流程即時通知醫生。呢度只記錄已完成嘅覆核。</div>`:""}
-   <div class="form-grid">
-    ${field("已覆核嘅醫生 *",doctorInput(
-     report.reviewDoctorName||report.doctorName||""),true)}
-    ${field("醫生有冇要求聯絡病人？ *",`
-     <select id="patientRequired" required>
-      <option value="">請選擇</option>
-      <option value="no">冇</option>
-      <option value="yes">有，需要確認病人收妥</option>
-     </select>`,true)}
-    ${field("醫生指示／覆核備註（選填）",
-     '<textarea id="reviewNote" rows="3" maxlength="2000"></textarea>',true)}
-   </div>
-   <label class="checkline">
-    <input id="reviewConfirmed" type="checkbox" required>
-    <span>已確認以上醫生實際覆核咗呢份報告；唔係只發送咗訊息。</span>
-   </label>
-  `,{type:"review",target});
- }else if(key==="patient"){
+ const current = stage(selected.state,group,report);
+
+ if(current.key !== key){
+  throw new Error(
+   "The report progress has changed. Use the currently displayed next action."
+  );
+ }
+
+ if(key === "plan"){
+  openPlan(group.id);
+  return;
+ }
+
+ if(key === "received"){
+  startWorkspace(
+   "Record report received",
+   report.name,
+   `
+    <div class="form-grid">
+     ${field("Actual received date *",`
+      <input id="receivedDate" type="date"
+       value="${today()}" max="${today()}" required>
+     `)}
+    </div>
+    <p class="small-text">
+     Enter the date the clinic actually received the report,
+     not the specimen or investigation date.
+    </p>
+   `,
+   {type:"received",target}
+  );
+
+ }else if(key === "nurse"){
+  startWorkspace(
+   "Nurse review",
+   report.name,
+   `
+    <p class="small-text">
+     Received: ${esc(dateLabel(report.receivedDate))}
+    </p>
+    <p><strong>Select according to the clinic's established criteria:</strong></p>
+
+    ${[
+     ["routine","Routine","Doctor review must still be recorded"],
+     ["doctor","Priority","Arrange priority doctor review according to clinic procedure"],
+     ["urgent","Urgent","Immediately escalate according to clinic procedure"]
+    ].map(([value,label,help]) => `
+     <label class="choice">
+      <input type="radio" name="classification"
+       value="${value}" required>
+      <span>
+       <strong>${esc(label)}</strong>
+       <small>${esc(help)}</small>
+      </span>
+     </label>
+    `).join("")}
+
+    <div class="form-grid">
+     ${field("Notes — optional",`
+      <textarea id="nurseNote" rows="2" maxlength="2000"></textarea>
+     `,true)}
+    </div>
+
+    <p class="small-text">
+     Nurse classification does not mean that a doctor has reviewed the report.
+    </p>
+   `,
+   {type:"nurse",target}
+  );
+
+ }else if(key === "doctor"){
+  startWorkspace(
+   "Record doctor review",
+   report.name,
+   `
+    ${report.triage === "urgent" ? `
+     <div class="notice red">
+      Use the clinic's immediate escalation process.
+      This form records a review that has already taken place.
+     </div>
+    ` : ""}
+
+    <div class="form-grid">
+     ${field("Reviewing doctor *",doctorInput(
+      report.reviewDoctorName || report.doctorName || ""
+     ),true)}
+
+     ${field("Did the doctor require patient contact? *",`
+      <select id="patientRequired" required>
+       <option value="">Select an option</option>
+       <option value="no">No</option>
+       <option value="yes">Yes — receipt confirmation required</option>
+      </select>
+     `,true)}
+
+     ${field("Doctor instructions / review notes — optional",`
+      <textarea id="reviewNote" rows="3" maxlength="2000"></textarea>
+     `,true)}
+    </div>
+
+    <label class="checkline">
+     <input id="reviewConfirmed" type="checkbox" required>
+     <span>
+      I have confirmed that the named doctor actually reviewed this report.
+      Sending a message alone does not count as doctor review.
+     </span>
+    </label>
+   `,
+   {type:"review",target}
+  );
+
+ }else if(key === "patient"){
   openContact(target);
- }else if(key==="filed"){
-  startWorkspace("確認歸檔",report.name,`
-   <label class="checkline">
-    <input id="filingConfirmed" type="checkbox" required>
-    <span>已將呢份報告放入診所系統。</span>
-   </label>
-  `,{type:"filed",target});
+
+ }else if(key === "filed"){
+  startWorkspace(
+   "Confirm report filing",
+   report.name,
+   `
+    <label class="checkline">
+     <input id="filingConfirmed" type="checkbox" required>
+     <span>This report has been filed in the clinic system.</span>
+    </label>
+   `,
+   {type:"filed",target}
+  );
  }
 }
 
-/* Unified patient contact and appointment entry. */
+/* Patient contact and appointment */
 
-function openContact(target=null){
- const state=selected.state;
- const pending=entries(state).filter(x=>patientPending(state,x.report));
+function openContact(target = null){
+ const state = selected.state;
+
+ const pending = entries(state).filter(item =>
+  patientPending(state,item.report)
+ );
+
  if(target){
-  const {report}=findReport(state,target.groupId,target.reportId);
-  if(!patientPending(state,report)) throw new Error("呢份報告暫時唔需要病人收妥確認。");
+  const {report} = findReport(
+   state,target.groupId,target.reportId
+  );
+
+  if(!patientPending(state,report)){
+   throw new Error(
+    "This report is not currently awaiting patient receipt confirmation."
+   );
+  }
  }
- const opened=startWorkspace("記錄聯絡／預約",
-  "只填今次做過嘅事；未改動嘅預約資料會保留。",`
-  <label class="checkline">
-   <input id="recordContact" type="checkbox" checked>
-   <span>今次有嘗試聯絡或已聯絡病人</span>
-  </label>
 
-  <div id="contactFields">
-   <div class="form-grid">
-    ${field("聯絡方式 *",`<select id="contactMethod" required>
-     <option value="">請選擇</option>
-     <option value="Telephone">電話</option>
-     <option value="Email">診所批准嘅電郵</option>
-     <option value="WhatsApp">診所批准嘅 WhatsApp</option>
-     <option value="In person">面談</option>
-    </select>`)}
-    ${field("聯絡結果 *",`<select id="contactDelivery" required>
-     <option value="">先選聯絡方式</option>
-    </select>`)}
-    ${field("接聽人／代表姓名（選填）",
-     '<input id="patientRecipient" maxlength="150">',true)}
+ const opened = startWorkspace(
+  "Record contact / appointment",
+  "Record only what happened this time. Appointment details remain unchanged unless selected.",
+  `
+   <label class="checkline">
+    <input id="recordContact" type="checkbox" checked>
+    <span>A patient contact attempt or communication took place</span>
+   </label>
+
+   <div id="contactFields">
+    <div class="form-grid">
+     ${field("Contact method *",`
+      <select id="contactMethod" required>
+       <option value="">Select a method</option>
+       <option value="Telephone">Telephone</option>
+       <option value="Email">Clinic-approved email</option>
+       <option value="WhatsApp">Clinic-approved WhatsApp</option>
+       <option value="In person">In person</option>
+      </select>
+     `)}
+
+     ${field("Contact result *",`
+      <select id="contactDelivery" required>
+       <option value="">Select a method first</option>
+      </select>
+     `)}
+
+     ${field("Patient / representative name — optional",`
+      <input id="patientRecipient" maxlength="150">
+     `,true)}
+    </div>
+
+    ${pending.length ? `
+     <div class="notice blue">
+      <strong>Reports involved in this contact:</strong>
+      <p class="small-text">
+       Select only reports actually involved.
+       Only explicit receipt confirmation completes their receipt requirement.
+      </p>
+
+      ${pending.map(({group,report}) => `
+       <label class="checkline" style="margin:8px 0">
+        <input type="checkbox"
+         data-contact-report="${esc(report.id)}"
+         data-contact-group="${esc(group.id)}"
+         ${target?.reportId === report.id ? "checked" : ""}>
+        <span>${esc(report.name || group.name)}</span>
+       </label>
+      `).join("")}
+     </div>
+    ` : ""}
    </div>
-   ${pending.length?`
-    <div class="notice blue">
-     <strong>今次聯絡涉及以下待確認報告：</strong>
-     <p class="small-text">
-      只勾選今次實際涉及嘅報告。
-      只有「明確確認收妥」先會完成相關收妥要求。
-     </p>
-     ${pending.map(({group,report})=>`
-      <label class="checkline" style="margin:8px 0">
-       <input type="checkbox" data-contact-report="${esc(report.id)}"
-        data-contact-group="${esc(group.id)}"
-        ${target?.reportId===report.id?"checked":""}>
-       <span>${esc(report.name||group.name)}</span>
-      </label>`).join("")}
-    </div>`:""}
-  </div>
 
-  <label class="checkline" style="margin-top:18px">
-   <input id="changeAppointment" type="checkbox">
-   <span>今次要安排／更改預約</span>
-  </label>
-  <div id="appointmentFields" class="form-grid" hidden>
-   ${field("預約情況 *",`<select id="appointmentStatus">
-    ${options(Object.entries(APPOINTMENTS),state.appointmentStatus||"unscheduled")}
-   </select>`)}
-   ${field("預約日期",`<input id="appointmentDate" type="date"
-    value="${esc(state.appointmentDate||"")}">`)}
-  </div>
+   <label class="checkline" style="margin-top:18px">
+    <input id="changeAppointment" type="checkbox">
+    <span>Arrange or update the appointment</span>
+   </label>
 
-  <label class="checkline" style="margin-top:18px">
-   <input id="changeFollowup" type="checkbox">
-   <span>設定／更改下次聯絡日期</span>
-  </label>
-  <div id="followupFields" class="form-grid" hidden>
-   ${field("下次聯絡日期（清空即移除提醒）",`
-    <input id="nextFollowupDate" type="date"
-     value="${esc(state.nextFollowupDate||"")}">`)}
-  </div>
+   <div id="appointmentFields" class="form-grid" hidden>
+    ${field("Appointment status *",`
+     <select id="appointmentStatus">
+      ${options(
+       Object.entries(APPOINTMENTS),
+       state.appointmentStatus || "unscheduled"
+      )}
+     </select>
+    `)}
 
-  <div class="form-grid">
-   ${field("今次聯絡／安排備註",
-    '<textarea id="contactNote" rows="3" maxlength="2000"></textarea>',true)}
-  </div>
- `,{type:"contact",requiredReportId:target?.reportId||""});
+    ${field("Appointment date",`
+     <input id="appointmentDate" type="date"
+      value="${esc(state.appointmentDate || "")}">
+    `)}
+   </div>
+
+   <label class="checkline" style="margin-top:18px">
+    <input id="changeFollowup" type="checkbox">
+    <span>Set or update the next contact date</span>
+   </label>
+
+   <div id="followupFields" class="form-grid" hidden>
+    ${field("Next contact date — leave blank to remove the reminder",`
+     <input id="nextFollowupDate" type="date"
+      value="${esc(state.nextFollowupDate || "")}">
+    `)}
+   </div>
+
+   <div class="form-grid">
+    ${field("Notes for this contact / arrangement",`
+     <textarea id="contactNote" rows="3" maxlength="2000"></textarea>
+    `,true)}
+   </div>
+  `,
+  {
+   type:"contact",
+   requiredReportId:target?.reportId || ""
+  }
+ );
 
  if(opened) refreshContactFields();
 }
+
 function refreshContactFields(){
- const on=$("recordContact").checked;
- $("contactFields").hidden=!on;
- $("contactFields").querySelectorAll("input,select").forEach(el=>{
-  el.disabled=!on;
+ const contactEnabled = $("recordContact").checked;
+ const appointmentEnabled = $("changeAppointment").checked;
+ const followupEnabled = $("changeFollowup").checked;
+
+ $("contactFields").hidden = !contactEnabled;
+
+ $("contactFields").querySelectorAll("input,select").forEach(element => {
+  element.disabled = !contactEnabled;
  });
- $("contactMethod").required=on;
- $("contactDelivery").required=on;
- $("appointmentFields").hidden=!$("changeAppointment").checked;
- $("followupFields").hidden=!$("changeFollowup").checked;
+
+ $("contactMethod").required = contactEnabled;
+ $("contactDelivery").required = contactEnabled;
+
+ $("appointmentFields").hidden = !appointmentEnabled;
+ $("appointmentFields").querySelectorAll("input,select").forEach(element => {
+  element.disabled = !appointmentEnabled;
+ });
+
+ $("followupFields").hidden = !followupEnabled;
+ $("followupFields").querySelectorAll("input").forEach(element => {
+  element.disabled = !followupEnabled;
+ });
 }
+
 function refreshDeliveryOptions(){
- const method=$("contactMethod").value;
- const list=method==="Telephone"?[
-  ["confirmed","已接通，明確確認收妥"],
-  ["connected","已接通，未確認收妥"],
-  ["no-answer","無人接聽"],
-  ["voicemail","已留言"]
- ]:method==="In person"?[
-  ["confirmed","已面談，明確確認收妥"],
-  ["connected","已面談，未確認收妥"]
- ]:method?[
-  ["sent","已發送，未確認收妥"],
-  ["confirmed","已明確確認收妥"]
- ]:[];
- $("contactDelivery").innerHTML=options([
-  ["",method?"請選實際結果":"先選聯絡方式"],...list
+ const method = $("contactMethod").value;
+
+ const list = method === "Telephone" ? [
+  ["confirmed","Connected — receipt explicitly confirmed"],
+  ["connected","Connected — receipt not confirmed"],
+  ["no-answer","No answer"],
+  ["voicemail","Voicemail left"]
+ ] : method === "In person" ? [
+  ["confirmed","Met in person — receipt explicitly confirmed"],
+  ["connected","Met in person — receipt not confirmed"]
+ ] : method ? [
+  ["sent","Sent — receipt not confirmed"],
+  ["confirmed","Receipt explicitly confirmed"]
+ ] : [];
+
+ $("contactDelivery").innerHTML = options([
+  ["",method ? "Select the actual result" : "Select a method first"],
+  ...list
  ]);
 }
+
 function arrangementSnapshot(state){
  return {
-  appointmentDate:state.appointmentDate||"",
-  appointmentStatus:state.appointmentStatus||"unscheduled",
-  nextFollowupDate:state.nextFollowupDate||"",
-  caseNote:state.caseNote||""
+  appointmentDate:state.appointmentDate || "",
+  appointmentStatus:state.appointmentStatus || "unscheduled",
+  nextFollowupDate:state.nextFollowupDate || "",
+  caseNote:state.caseNote || ""
  };
 }
+
 function appendArrangement(state,before,staff){
- const after=arrangementSnapshot(state);
+ const after = arrangementSnapshot(state);
+
  if(!same(before,after)){
-  state.arrangementHistory=[...(state.arrangementHistory||[]),{
-   id:uuid(),at:new Date().toISOString(),staff,before,after
-  }];
+  state.arrangementHistory = [
+   ...(state.arrangementHistory || []),
+   {
+    id:uuid(),
+    at:new Date().toISOString(),
+    staff,
+    before,
+    after
+   }
+  ];
  }
 }
 
-/* Report-list management and corrections are secondary tasks. */
+/* Secondary tools */
 
 function openManage(){
- const state=selected.state;
- startWorkspace("管理報告清單",
-  "核對每項檢查實際會有幾份報告。收到前先核對，唔需要每日重做。",
-  state.groups.map(group=>`
+ const state = selected.state;
+
+ startWorkspace(
+  "Manage report lists",
+  "Verify the reports actually expected for each investigation. This does not need to be repeated every day.",
+  state.groups.map(group => `
    <div class="manage-row">
     <div class="row">
-     <div><strong>${esc(group.name)}</strong>
-      <div class="small-text">${esc(group.code)} · 報價數量 ${esc(group.qty)}</div>
+     <div>
+      <strong>${esc(group.name)}</strong>
+      <div class="small-text">
+       ${esc(group.code)} · Quotation quantity: ${esc(group.qty)}
+      </div>
      </div>
-     <button type="button" data-plan="${esc(group.id)}">核對／編輯</button>
+     <button type="button" data-plan="${esc(group.id)}">
+      Verify / Edit
+     </button>
     </div>
     <div class="small-text">
-     ${group.planReviewed?"已核對":"未核對"} · ${group.reports.length} 個報告項目
+     ${group.planReviewed ? "Verified" : "Not verified"}
+     · ${group.reports.length} report entry/entries
     </div>
-   </div>`).join("")||'<p class="muted">冇檢查項目。</p>',
-  {type:"manage"},true);
-}
-function openPlan(groupId){
- const group=selected.state.groups.find(g=>g.id===groupId);
- if(!group) throw new Error("搵唔到檢查項目。");
- startWorkspace("核對報告清單",
-  `${group.name} · ${group.code} · 報價數量 ${group.qty}`,`
-  <p class="small-text">
-   一項檢查可能有多份報告。保留已有項目，需要時喺下面新增。
-   已收到或已取消嘅報告名稱唔會更改。
-  </p>
-  ${group.reports.map(report=>`
-   <div class="form-grid">
-    ${field("現有報告",`<input data-plan-report="${esc(report.id)}"
-     maxlength="300" value="${esc(report.name)}"
-     ${report.receivedDate||report.cancelled?"readonly":""} required>`,true)}
-   </div>`).join("")}
-  <div class="form-grid">
-   ${field("新增報告（每行一份；唔需要新增可留空）",
-    '<textarea id="additionalReports" rows="3" maxlength="15000"></textarea>',true)}
-  </div>
-  <label class="checkline">
-   <input id="planConfirmed" type="checkbox" required>
-   <span>已核對呢個報價版本實際需要跟進嘅報告同數量。</span>
-  </label>
- `,{type:"plan",groupId});
-}
-function openCorrectionChooser(){
- startWorkspace("更正紀錄","選擇需要更正嘅項目。",`
-  <div class="manage-row">
-   <div class="row"><strong>預約／跟進備註</strong>
-    <button type="button" data-correct-arrangement>更正</button></div>
-  </div>
-  ${entries(selected.state).map(({group,report})=>`
-   <div class="manage-row"><div class="row">
-    <div><strong>${esc(report.name||group.name)}</strong>
-     <div class="small-text">${esc(stage(selected.state,group,report).label)}</div>
-    </div>
-    <button type="button" data-correct-group="${esc(group.id)}"
-     data-correct-report="${esc(report.id)}">
-     ${report.cancelled?"恢復跟進":"更正"}
-    </button>
-   </div></div>`).join("")}
- `,{type:"correctionChooser"},true);
-}
-function openCorrection(target){
- const {report}=findReport(selected.state,target.groupId,target.reportId);
- if(report.cancelled){openTracking(target,true);return}
- startWorkspace("更正報告紀錄",report.name,`
-  <div class="form-grid">
-   ${field("收到日期",`<input id="detailDate" type="date" max="${today()}"
-    value="${esc(report.receivedDate||"")}" ${report.receivedDate?"required":""}>`)}
-   ${field("初步分類",`<select id="detailTriage">
-    ${options(Object.entries(CLASSIFICATIONS),report.triage||"pending")}
-   </select>`)}
-   <label class="checkline full">
-    <input id="detailFiled" type="checkbox" ${report.archived?"checked":""}>
-    <span>已歸檔到診所系統</span>
-   </label>
-   <label class="checkline full">
-    <input id="reopenReview" type="checkbox">
-    <span>需要醫生重新覆核</span>
-   </label>
-   ${field("更正原因 *",
-    '<textarea id="correctionReason" rows="2" maxlength="2000" required></textarea>',true)}
-  </div>
-  <p class="small-text">
-   改變分類或要求重新覆核，會開始新覆核週期；之前嘅覆核及備註保留。
-   唔支援清除已記錄嘅收件日期。
-  </p>
-  ${!report.receivedDate?`
-   <div class="section">
-    <button type="button" class="danger"
-     data-cancel-group="${esc(target.groupId)}"
-     data-cancel-report="${esc(target.reportId)}">取消呢項跟進</button>
-   </div>`:""}
- `,{type:"correction",target});
-}
-function openTracking(target,restore){
- const {report}=findReport(selected.state,target.groupId,target.reportId);
- if(!restore&&report.receivedDate) throw new Error("已收到嘅報告唔可以取消跟進。");
- startWorkspace(restore?"恢復跟進":"取消跟進",report.name,`
-  <p class="small-text">只喺核實後操作，歷史記錄會保留。</p>
-  <div class="form-grid">
-   ${field("核實原因 *",
-    '<textarea id="trackingReason" rows="2" maxlength="2000" required></textarea>',true)}
-  </div>
- `,{type:restore?"restore":"cancel",target});
-}
-function openArrangementCorrection(){
- const state=selected.state;
- startWorkspace("更正預約／跟進備註","原有值會保留喺歷史紀錄。",`
-  <div class="form-grid">
-   ${field("預約情況",`<select id="correctStatus">
-    ${options(Object.entries(APPOINTMENTS),state.appointmentStatus||"unscheduled")}
-   </select>`)}
-   ${field("預約日期",`<input id="correctDate" type="date"
-    value="${esc(state.appointmentDate||"")}">`)}
-   ${field("下次聯絡日期",`<input id="correctNext" type="date"
-    value="${esc(state.nextFollowupDate||"")}">`)}
-   ${field("跟進備註",`<textarea id="correctNote" rows="3"
-    maxlength="2000">${esc(state.caseNote||"")}</textarea>`,true)}
-   ${field("更正原因 *",
-    '<textarea id="arrangementReason" rows="2" maxlength="2000" required></textarea>',true)}
-  </div>
- `,{type:"arrangementCorrection"});
+   </div>
+  `).join("") || '<p class="muted">No investigation entries.</p>',
+  {type:"manage"},
+  true
+ );
 }
 
-/* Human-readable history. No raw JSON in the staff interface. */
+function openPlan(groupId){
+ const group = selected.state.groups.find(item => item.id === groupId);
+
+ if(!group){
+  throw new Error("The investigation could not be found.");
+ }
+
+ startWorkspace(
+  "Verify expected reports",
+  `${group.name} · ${group.code} · Quotation quantity: ${group.qty}`,
+  `
+   <p class="small-text">
+    One investigation may produce more than one report.
+    Retain existing entries and add reports below when needed.
+    Received or cancelled report names cannot be changed.
+   </p>
+
+   ${group.reports.map(report => `
+    <div class="form-grid">
+     ${field("Existing report",`
+      <input data-plan-report="${esc(report.id)}"
+       maxlength="300" value="${esc(report.name)}"
+       ${report.receivedDate || report.cancelled ? "readonly" : ""}
+       required>
+     `,true)}
+    </div>
+   `).join("")}
+
+   <div class="form-grid">
+    ${field("Additional reports — one per line; leave blank if none",`
+     <textarea id="additionalReports" rows="3" maxlength="15000"></textarea>
+    `,true)}
+   </div>
+
+   <label class="checkline">
+    <input id="planConfirmed" type="checkbox" required>
+    <span>
+     I have verified the actual expected reports and quantities
+     for this quotation revision.
+    </span>
+   </label>
+  `,
+  {type:"plan",groupId}
+ );
+}
+
+function openCorrectionChooser(){
+ startWorkspace(
+  "Correct a record",
+  "Choose the item that needs correction.",
+  `
+   <div class="manage-row">
+    <div class="row">
+     <strong>Appointment / follow-up notes</strong>
+     <button type="button" data-correct-arrangement>Correct</button>
+    </div>
+   </div>
+
+   ${entries(selected.state).map(({group,report}) => `
+    <div class="manage-row">
+     <div class="row">
+      <div>
+       <strong>${esc(report.name || group.name)}</strong>
+       <div class="small-text">
+        ${esc(stage(selected.state,group,report).label)}
+       </div>
+      </div>
+      <button type="button"
+       data-correct-group="${esc(group.id)}"
+       data-correct-report="${esc(report.id)}">
+       ${report.cancelled ? "Restore tracking" : "Correct"}
+      </button>
+     </div>
+    </div>
+   `).join("")}
+  `,
+  {type:"correctionChooser"},
+  true
+ );
+}
+
+function openCorrection(target){
+ const {report} = findReport(
+  selected.state,target.groupId,target.reportId
+ );
+
+ if(report.cancelled){
+  openTracking(target,true);
+  return;
+ }
+
+ startWorkspace(
+  "Correct report record",
+  report.name,
+  `
+   <div class="form-grid">
+    ${field("Received date",`
+     <input id="detailDate" type="date" max="${today()}"
+      value="${esc(report.receivedDate || "")}"
+      ${report.receivedDate ? "required" : ""}>
+    `)}
+
+    ${field("Nurse classification",`
+     <select id="detailTriage">
+      ${options(
+       Object.entries(CLASSIFICATIONS),
+       report.triage || "pending"
+      )}
+     </select>
+    `)}
+
+    <label class="checkline full">
+     <input id="detailFiled" type="checkbox"
+      ${report.archived ? "checked" : ""}>
+     <span>Filed in the clinic system</span>
+    </label>
+
+    <label class="checkline full">
+     <input id="reopenReview" type="checkbox">
+     <span>Require a new doctor review</span>
+    </label>
+
+    ${field("Reason for correction *",`
+     <textarea id="correctionReason" rows="2"
+      maxlength="2000" required></textarea>
+    `,true)}
+   </div>
+
+   <p class="small-text">
+    Changing the classification or requesting another doctor review
+    opens a new review cycle. Previous reviews and notes are retained.
+    Clearing a recorded received date is not supported.
+   </p>
+
+   ${!report.receivedDate ? `
+    <div class="section">
+     <button type="button" class="danger"
+      data-cancel-group="${esc(target.groupId)}"
+      data-cancel-report="${esc(target.reportId)}">
+      Cancel this tracking entry
+     </button>
+    </div>
+   ` : ""}
+  `,
+  {type:"correction",target}
+ );
+}
+
+function openTracking(target,restore){
+ const {report} = findReport(
+  selected.state,target.groupId,target.reportId
+ );
+
+ if(!restore && report.receivedDate){
+  throw new Error("A received report cannot be cancelled.");
+ }
+
+ startWorkspace(
+  restore ? "Restore tracking" : "Cancel tracking",
+  report.name,
+  `
+   <p class="small-text">
+    Proceed only after verification. Historical records will be retained.
+   </p>
+
+   <div class="form-grid">
+    ${field("Verified reason *",`
+     <textarea id="trackingReason" rows="2"
+      maxlength="2000" required></textarea>
+    `,true)}
+   </div>
+  `,
+  {type:restore ? "restore" : "cancel",target}
+ );
+}
+
+function openArrangementCorrection(){
+ const state = selected.state;
+
+ startWorkspace(
+  "Correct appointment / follow-up notes",
+  "Previous values will be retained in history.",
+  `
+   <div class="form-grid">
+    ${field("Appointment status",`
+     <select id="correctStatus">
+      ${options(
+       Object.entries(APPOINTMENTS),
+       state.appointmentStatus || "unscheduled"
+      )}
+     </select>
+    `)}
+
+    ${field("Appointment date",`
+     <input id="correctDate" type="date"
+      value="${esc(state.appointmentDate || "")}">
+    `)}
+
+    ${field("Next contact date",`
+     <input id="correctNext" type="date"
+      value="${esc(state.nextFollowupDate || "")}">
+    `)}
+
+    ${field("Follow-up notes",`
+     <textarea id="correctNote" rows="3"
+      maxlength="2000">${esc(state.caseNote || "")}</textarea>
+    `,true)}
+
+    ${field("Reason for correction *",`
+     <textarea id="arrangementReason" rows="2"
+      maxlength="2000" required></textarea>
+    `,true)}
+   </div>
+  `,
+  {type:"arrangementCorrection"}
+ );
+}
+
+/* Human-readable history */
 
 function reportHistoryItems(state){
- const items=[];
+ const items = [];
+
  for(const {group,report} of entries(state)){
-  const title=report.name||group.name;
-  for(const event of report.actionLog||[]){
-   const before=event.before||{},after=event.after||{},lines=[];
-   if(before.receivedDate!==after.receivedDate){
-    lines.push(`收到日期：${dateLabel(before.receivedDate)} → ${dateLabel(after.receivedDate)}`);
+  const title = report.name || group.name;
+
+  for(const event of report.actionLog || []){
+   const before = event.before || {};
+   const after = event.after || {};
+   const lines = [];
+
+   if(before.receivedDate !== after.receivedDate){
+    lines.push(
+     `Received date: ${dateLabel(before.receivedDate)} → ${dateLabel(after.receivedDate)}`
+    );
    }
-   if(before.triage!==after.triage){
-    lines.push(`分類：${CLASSIFICATIONS[before.triage]||"未記錄"} → ${CLASSIFICATIONS[after.triage]||"未記錄"}`);
+
+   if(before.triage !== after.triage){
+    lines.push(
+     `Classification: ${CLASSIFICATIONS[before.triage] || "Not recorded"} → ` +
+     `${CLASSIFICATIONS[after.triage] || "Not recorded"}`
+    );
    }
-   if(before.archived!==after.archived){
-    lines.push(`歸檔：${after.archived?"已歸檔":"未歸檔"}`);
+
+   if(before.archived !== after.archived){
+    lines.push(`Filing: ${after.archived ? "Filed" : "Not filed"}`);
    }
-   if(before.cancelled!==after.cancelled){
-    lines.push(after.cancelled?"已取消跟進":"已恢復跟進");
+
+   if(before.cancelled !== after.cancelled){
+    lines.push(
+     after.cancelled ? "Tracking cancelled" : "Tracking restored"
+    );
    }
-   if(before.name!==after.name&&after.name) lines.push(`報告名稱：${after.name}`);
-   if(!before.reviewPending&&after.reviewPending&&before.reviewedAt){
-    lines.push("需要新一輪醫生覆核；之前覆核保留");
+
+   if(before.name !== after.name && after.name){
+    lines.push(`Report name: ${after.name}`);
    }
+
+   if(!before.reviewPending && after.reviewPending && before.reviewedAt){
+    lines.push(
+     "A new doctor review is required; the previous review is retained."
+    );
+   }
+
    items.push({
-    at:event.at,staff:event.staff,title,
-    text:lines.join("\n")||"已更新報告或相關聯絡紀錄",
-    source:"已儲存報告紀錄（時間由瀏覽器記錄）"
+    at:event.at,
+    staff:event.staff,
+    title,
+    text:lines.join("\n") || "Report or related contact record updated",
+    source:"Saved report record — browser-generated event time"
    });
   }
-  const reviews=[...(report.reviewHistory||[])];
-  if(report.reviewedAt&&!reviews.some(x=>x.at===report.reviewedAt)){
+
+  const reviews = [...(report.reviewHistory || [])];
+
+  if(report.reviewedAt &&
+   !reviews.some(review => review.at === report.reviewedAt)
+  ){
    reviews.push({
     at:report.reviewedAt,
-    doctor:report.reviewDoctorName||report.doctorName||"",
-    recordedBy:report.reviewRecordedBy||"",note:report.reviewNote||""
+    doctor:report.reviewDoctorName || report.doctorName || "",
+    recordedBy:report.reviewRecordedBy || "",
+    note:report.reviewNote || ""
    });
   }
+
   for(const review of reviews){
    items.push({
-    at:review.at,staff:review.recordedBy,title,
-    text:`醫生覆核：${review.doctor||"未記錄醫生"}${review.note?"\n"+review.note:""}`,
-    source:"已儲存覆核紀錄"
+    at:review.at,
+    staff:review.recordedBy,
+    title,
+    text:`Doctor review: ${review.doctor || "Doctor not recorded"}` +
+     (review.note ? "\n" + review.note : ""),
+    source:"Saved doctor review record"
    });
   }
+
   if(report.nurseNote){
-   items.push({at:report.nurseAt||"",staff:report.nurseName||"",
-    title,text:"初步檢視／收件備註：\n"+report.nurseNote,
-    source:"保留備註"});
+   items.push({
+    at:report.nurseAt || "",
+    staff:report.nurseName || "",
+    title,
+    text:"Nurse / receipt notes:\n" + report.nurseNote,
+    source:"Retained notes"
+   });
   }
-  for(const correction of report.correctionHistory||[]){
-   items.push({at:correction.at,staff:correction.staff,title,
-    text:"更正原因："+correction.reason,source:"已儲存更正紀錄"});
+
+  for(const correction of report.correctionHistory || []){
+   items.push({
+    at:correction.at,
+    staff:correction.staff,
+    title,
+    text:"Correction reason: " + correction.reason,
+    source:"Saved correction record"
+   });
   }
-  for(const tracking of report.trackingHistory||[]){
-   items.push({at:tracking.at,staff:tracking.staff,title,
-    text:(tracking.type==="cancel"?"取消跟進：":"恢復跟進：")+tracking.reason,
-    source:"已儲存跟進紀錄"});
+
+  for(const tracking of report.trackingHistory || []){
+   items.push({
+    at:tracking.at,
+    staff:tracking.staff,
+    title,
+    text:(tracking.type === "cancel"
+     ? "Tracking cancelled: "
+     : "Tracking restored: ") + tracking.reason,
+    source:"Saved tracking record"
+   });
   }
  }
+
  return items;
 }
+
 function readableHistoryHTML(state){
- const items=reportHistoryItems(state);
+ const items = reportHistoryItems(state);
+
  for(const contact of state.contacts){
   items.push({
-   at:contact.at,staff:contact.staff,
-   title:contact.reportName||"病人聯絡",
-   text:`${contact.target||"病人"} · ${contact.method||""} · ${deliveryLabel(contact)}`+
-    (contact.note?"\n"+contact.note:"")+
-    (contact.nextDate?"\n下次聯絡："+dateLabel(contact.nextDate):"")+
-    (contact.confirmedAt?"\n收妥確認："+timeLabel(contact.confirmedAt):""),
-   source:"已儲存聯絡紀錄"
+   at:contact.at,
+   staff:contact.staff,
+   title:contact.reportName || (
+    contact.audience === "doctor" ? "Doctor contact" : "Patient contact"
+   ),
+   text:`${contact.target || "Recipient"} · ${contact.method || ""} · ` +
+    deliveryLabel(contact) +
+    (contact.note ? "\n" + contact.note : "") +
+    (contact.nextDate
+     ? "\nNext contact: " + dateLabel(contact.nextDate)
+     : "") +
+    (contact.confirmedAt
+     ? "\nReceipt confirmation: " + timeLabel(contact.confirmedAt)
+     : ""),
+   source:"Saved contact record"
   });
  }
- for(const arrangement of state.arrangementHistory||[]){
-  const after=arrangement.after||{};
+
+ for(const arrangement of state.arrangementHistory || []){
+  const after = arrangement.after || {};
+
   items.push({
-   at:arrangement.at,staff:arrangement.staff,title:"預約／跟進安排",
-   text:`${APPOINTMENTS[after.appointmentStatus]||"未安排"}`+
-    ` · ${dateLabel(after.appointmentDate)}`+
-    `\n下次聯絡：${dateLabel(after.nextFollowupDate)}`+
-    (after.caseNote?"\n跟進備註："+after.caseNote:"")+
-    (arrangement.reason?"\n更正原因："+arrangement.reason:""),
-   source:"已儲存安排紀錄"
+   at:arrangement.at,
+   staff:arrangement.staff,
+   title:"Appointment / follow-up arrangements",
+   text:`${APPOINTMENTS[after.appointmentStatus] || "Not arranged"}` +
+    ` · ${dateLabel(after.appointmentDate)}` +
+    `\nNext contact: ${dateLabel(after.nextFollowupDate)}` +
+    (after.caseNote ? "\nFollow-up notes: " + after.caseNote : "") +
+    (arrangement.reason
+     ? "\nCorrection reason: " + arrangement.reason
+     : ""),
+   source:"Saved arrangement record"
   });
  }
- items.sort((a,b)=>String(b.at||"").localeCompare(String(a.at||"")));
- return items.length?items.map(item=>`
-  <div class="log">
-   <strong>${esc(item.title)}</strong>
-   <div class="small-text">${esc(timeLabel(item.at))}
-    · ${esc(item.staff||"未記錄同事")}</div>
-   <div class="note">${esc(item.text)}</div>
-   <div class="small-text">${esc(item.source)}</div>
-  </div>`).join(""):'<p class="muted">暫無此版本可顯示嘅詳細紀錄。</p>';
+
+ for(const note of state.followupNotes || []){
+  items.push({
+   at:note.at,
+   staff:note.staff,
+   title:"Arrangement notes",
+   text:note.note || "",
+   source:"Saved arrangement note"
+  });
+ }
+
+ items.sort((a,b) =>
+  String(b.at || "").localeCompare(String(a.at || ""))
+ );
+
+ return items.length
+  ? items.map(item => `
+     <div class="log">
+      <strong>${esc(item.title)}</strong>
+      <div class="small-text">
+       ${esc(timeLabel(item.at))}
+       · ${esc(item.staff || "Recording staff not entered")}
+      </div>
+      <div class="note">${esc(item.text)}</div>
+      <div class="small-text">${esc(item.source)}</div>
+     </div>
+    `).join("")
+  : '<p class="muted">No detailed history available in this version yet.</p>';
 }
+
 async function openHistory(){
- if(!selected||!ready||busy) return;
- const caseId=selected.id;
- if(!startWorkspace("查看紀錄",
-  "詳細紀錄及伺服器儲存紀錄分開顯示；保留紀錄唔等於已具備受保護嘅審計系統。",
-  "",{type:"history",caseId},true)) return;
- const token=viewToken;
- $("historyContent").innerHTML=`
-  <h3>工作紀錄</h3>
+ if(!selected || !ready || busy) return;
+
+ const caseId = selected.id;
+
+ if(!startWorkspace(
+  "View history",
+  "Detailed records and server save history are shown separately. Retained records are not a substitute for a protected audit system.",
+  "",
+  {type:"history",caseId},
+  true
+ )) return;
+
+ const token = viewToken;
+
+ $("historyContent").innerHTML = `
+  <h3>Activity records</h3>
   ${readableHistoryHTML(selected.state)}
+
   <details class="archive">
-   <summary>伺服器儲存紀錄（最近 50 筆）</summary>
-   <div id="serverHistory">正在載入…</div>
-  </details>`;
- const current=()=>token===viewToken&&selected?.id===caseId&&
-  actionContext?.type==="history";
+   <summary>Server save history — latest 50 actions</summary>
+   <div id="serverHistory">Loading…</div>
+  </details>
+ `;
+
+ const isCurrent = () =>
+  token === viewToken &&
+  selected?.id === caseId &&
+  actionContext?.type === "history";
+
  try{
-  const {data,error}=await client.from("amc_followup_audit")
+  const {data,error} = await client
+   .from("amc_followup_audit")
    .select("id,actor_label,action,created_at")
-   .eq("case_id",caseId).order("id",{ascending:false}).limit(50);
-  if(!current()) return;
+   .eq("case_id",caseId)
+   .order("id",{ascending:false})
+   .limit(50);
+
+  if(!isCurrent()) return;
   if(error) throw error;
-  $("serverHistory").innerHTML=data?.length?data.map(event=>`
-   <div class="log"><strong>${esc(event.action)}</strong>
-    <div class="small-text">${esc(timeLabel(event.created_at))}
-     · ${esc(event.actor_label||"未記錄同事")}</div>
-   </div>`).join(""):'<p class="muted">冇伺服器儲存紀錄。</p>';
+
+  $("serverHistory").innerHTML = data?.length
+   ? data.map(event => `
+      <div class="log">
+       <strong>${esc(event.action)}</strong>
+       <div class="small-text">
+        ${esc(timeLabel(event.created_at))}
+        · ${esc(event.actor_label || "Recording staff not entered")}
+       </div>
+      </div>
+     `).join("")
+   : '<p class="muted">No server save records found.</p>';
+
  }catch(error){
-  if(current()) $("serverHistory").textContent=
-   "伺服器紀錄暫時無法載入："+error.message+"。上面已儲存嘅詳細紀錄仍可查閱。";
+  if(isCurrent()){
+   $("serverHistory").textContent =
+    "Server history is currently unavailable: " + error.message +
+    ". The saved detailed records above remain available.";
+  }
  }
 }
 
-/* Backend reads: existing table and RPC signatures. */
+/* Backend reads — existing tables and RPC signatures */
 
 function validateRecord(record){
- if(!record?.id||record.edit_version==null||
-  record.state?.schemaVersion!==1||
-  !Array.isArray(record.state.groups)||
-  !Array.isArray(record.state.contacts)||
-  record.state.groups.some(g=>!g?.id||!Array.isArray(g.reports)||
-   g.reports.some(r=>!r?.id))){
-  throw new Error("後台回傳咗唔支援嘅資料格式。");
+ if(
+  !record?.id ||
+  record.edit_version == null ||
+  record.state?.schemaVersion !== 1 ||
+  !Array.isArray(record.state.groups) ||
+  !Array.isArray(record.state.contacts) ||
+  record.state.groups.some(group =>
+   !group?.id ||
+   !Array.isArray(group.reports) ||
+   group.reports.some(report => !report?.id)
+  )
+ ){
+  throw new Error("The backend returned an unsupported record format.");
  }
+
  return record;
 }
+
 async function fetchCase(id){
- const {data,error}=await client.from("amc_followup_cases")
-  .select("*").eq("id",id).single();
+ const {data,error} = await client
+  .from("amc_followup_cases")
+  .select("*")
+  .eq("id",id)
+  .single();
+
  if(error) throw error;
  return validateRecord(data);
 }
+
 async function readAllCases(){
- const result=[],size=200;
- for(let offset=0;;offset+=size){
-  const {data,error}=await client.from("amc_followup_cases")
-   .select("*").order("id",{ascending:true}).range(offset,offset+size-1);
+ const result = [];
+ const size = 200;
+
+ for(let offset = 0;;offset += size){
+  const {data,error} = await client
+   .from("amc_followup_cases")
+   .select("*")
+   .order("id",{ascending:true})
+   .range(offset,offset + size - 1);
+
   if(error) throw error;
-  const page=data||[];
+
+  const page = data || [];
   page.forEach(validateRecord);
   result.push(...page);
-  if(page.length<size) break;
- }
- return result.sort((a,b)=>String(b.updated_at).localeCompare(String(a.updated_at)));
-}
-async function refresh(sync=false){
- if(!ready||busy) return;
- if(sync&&(pendingWrite||blockedReason)){
-  message("請先處理未確認嘅儲存或頁頂警告。",true);return;
- }
- if(actionDirty&&!window.confirm("重新載入會放棄未儲存輸入，繼續？")) return;
- if(pendingWrite&&!window.confirm(
-  "未確認嘅儲存可能已成功。先下載備份，再重新載入核對。繼續？")) return;
- if(blockedReason&&recoverySnapshot&&!window.confirm(
-  "重新載入唔會修復後台資料保存設定。請保留備份。繼續？")) return;
 
- busy=true;
+  if(page.length < size) break;
+ }
+
+ return result.sort((a,b) =>
+  String(b.updated_at).localeCompare(String(a.updated_at))
+ );
+}
+
+async function refresh(sync = false){
+ if(!ready || busy) return;
+
+ if(sync && (pendingWrite || blockedReason)){
+  message("Resolve the unacknowledged save or warning before syncing.",true);
+  return;
+ }
+
+ if(actionDirty && !window.confirm(
+  "Refreshing will discard the unsaved input. Continue?"
+ )){
+  return;
+ }
+
+ if(pendingWrite && !window.confirm(
+  "The unacknowledged save may already have succeeded. " +
+  "Download a snapshot first if needed, then reload to verify. Continue?"
+ )){
+  return;
+ }
+
+ if(blockedReason && recoverySnapshot && !window.confirm(
+  "Reloading does not repair backend data-preservation settings. " +
+  "Keep the save snapshot. Continue?"
+ )){
+  return;
+ }
+
+ busy = true;
  updateControls();
- message(sync?"正在同步已確認報價…":"正在載入資料…");
- const selectedId=selected?.id;
+
+ message(sync
+  ? "Synchronising confirmed quotations…"
+  : "Loading records…"
+ );
+
+ const selectedId = selected?.id;
+
  try{
-  let result=null;
+  let result = null;
+
   if(sync){
-   const response=await client.rpc("amc_followup_sync");
+   const response = await client.rpc("amc_followup_sync");
    if(response.error) throw response.error;
-   result=response.data;
+   result = response.data;
   }
-  const loaded=await readAllCases();
-  const current=selectedId?await fetchCase(selectedId):null;
+
+  const loaded = await readAllCases();
+  const current = selectedId ? await fetchCase(selectedId) : null;
+
   closeWorkspace(true);
-  records=loaded;
-  selected=current;
+  records = loaded;
+  selected = current;
+
   if(current) replaceRecord(current);
-  pendingWrite=null;
-  blockedReason="";
+
+  pendingWrite = null;
+  blockedReason = "";
+
   if(selected) renderDetail();
   renderList();
-  message(sync?
-   `同步完成：${result?.changed||0} 個個案新增或更新。`:
-   `已載入 ${records.length} 個個案。`);
+
+  message(sync
+   ? `Sync completed: ${result?.changed || 0} case(s) created or updated.`
+   : `${records.length} case(s) loaded.`
+  );
+
  }catch(error){
   console.error(error);
-  message("載入失敗："+(error.message||"請重試。"),true);
+  message("Could not load records: " + (error.message || "Please retry."),true);
+
  }finally{
-  busy=false;
+  busy = false;
   updateControls();
  }
 }
+
 async function openCase(id){
- if(!ready||busy||pendingWrite) return;
- if(actionDirty&&!window.confirm("放棄未儲存輸入？")) return;
- busy=true;
+ if(!ready || busy || pendingWrite) return;
+
+ if(actionDirty &&
+  !window.confirm("Discard the unsaved input?")
+ ){
+  return;
+ }
+
+ busy = true;
  updateControls();
- message("正在開啟最新已儲存個案…");
+ message("Opening the latest saved case…");
+
  try{
-  const record=await fetchCase(id);
+  const record = await fetchCase(id);
+
   closeWorkspace(true);
-  if(activeTab!=="case") previousTab=activeTab;
-  selected=record;
-  blockedReason="";
-  activeTab="case";
+
+  if(activeTab !== "case") previousTab = activeTab;
+
+  selected = record;
+  blockedReason = "";
+  activeTab = "case";
+
   replaceRecord(record);
   renderDetail();
   renderList();
-  $("patientDetails").open=false;
-  $("otherTools").open=false;
+
+  $("patientDetails").open = false;
+  $("otherTools").open = false;
+
   $("detailTitle").focus({preventScroll:true});
   window.scrollTo({top:0,behavior:"instant"});
-  message("已開啟最新已儲存個案。");
+
+  message("Latest saved case opened.");
+
  }catch(error){
-  message("開啟失敗："+error.message,true);
+  message("Could not open the case: " + error.message,true);
+
  }finally{
-  busy=false;
+  busy = false;
   updateControls();
  }
 }
 
-/* Save protections: version checks, idempotent retries, preserved JSON. */
+/* Save preparation and preservation checks */
 
 function reportSnapshot(report){
- const copy=clone(report);
+ const copy = clone(report);
  delete copy.actionLog;
  return copy;
 }
+
 function appendReportEvents(beforeState,state,staff,action,requestId){
- const beforeReports=new Map(entries(beforeState).map(({group,report})=>
-  [`${group.id}:${report.id}`,report]));
- const at=new Date().toISOString();
+ const beforeReports = new Map(
+  entries(beforeState).map(({group,report}) => [
+   `${group.id}:${report.id}`,
+   report
+  ])
+ );
+
+ const at = new Date().toISOString();
+
  for(const {group,report} of entries(state)){
-  const previous=beforeReports.get(`${group.id}:${report.id}`);
-  const before=previous?reportSnapshot(previous):null;
-  const after=reportSnapshot(report);
-  const oldContacts=beforeState.contacts.filter(c=>c.reportId===report.id);
-  const newContacts=state.contacts.filter(c=>c.reportId===report.id);
-  if(same(before,after)&&same(oldContacts,newContacts)) continue;
-  report.actionLog=clone(previous?.actionLog||[]);
+  const previous = beforeReports.get(`${group.id}:${report.id}`);
+
+  const before = previous ? reportSnapshot(previous) : null;
+  const after = reportSnapshot(report);
+
+  const oldContacts = beforeState.contacts.filter(contact =>
+   contact.reportId === report.id
+  );
+
+  const newContacts = state.contacts.filter(contact =>
+   contact.reportId === report.id
+  );
+
+  if(same(before,after) && same(oldContacts,newContacts)) continue;
+
+  report.actionLog = clone(previous?.actionLog || []);
+
   report.actionLog.push({
-   id:uuid(),requestId,at,staff,action,before,after,
-   ...(same(oldContacts,newContacts)?{}:{
-    contactsBefore:oldContacts,contactsAfter:newContacts
+   id:uuid(),
+   requestId,
+   at,
+   staff,
+   action,
+   before,
+   after,
+   ...(same(oldContacts,newContacts) ? {} : {
+    contactsBefore:oldContacts,
+    contactsAfter:newContacts
    })
   });
  }
 }
+
 function showActionError(text){
  if(!$("actionWorkspace").hidden){
-  $("actionError").textContent=text;
-  $("actionError").hidden=false;
- }else message(text,true);
+  $("actionError").textContent = text;
+  $("actionError").hidden = false;
+ }else{
+  message(text,true);
+ }
 }
+
 async function commit(action,mutator){
- if(!selected||editingLocked()) return false;
+ if(!selected || editingLocked()) return false;
+
  try{
-  const staff=staffName();
-  const before=clone(selected.state),state=clone(before),requestId=uuid();
+  const staff = staffName();
+  const before = clone(selected.state);
+  const state = clone(before);
+  const requestId = uuid();
+
   mutator(state,staff);
+
   if(same(before,state)){
    closeWorkspace(true);
-   message("冇改動需要儲存，原有記錄同時間已保留。");
+   message("No changes to save. Existing records and times were retained.");
    return true;
   }
+
   appendReportEvents(before,state,staff,action,requestId);
-  pendingWrite={
-   caseId:selected.id,expectedVersion:selected.edit_version,
-   state,staff,action:action.slice(0,300),requestId
+
+  pendingWrite = {
+   caseId:selected.id,
+   expectedVersion:selected.edit_version,
+   state,
+   staff,
+   action:action.slice(0,300),
+   requestId
   };
-  recoverySnapshot=clone(pendingWrite);
+
+  recoverySnapshot = clone(pendingWrite);
+
   closeWorkspace(true);
+
   return await sendPendingWrite();
+
  }catch(error){
-  showActionError(error.message||"無法準備儲存。");
+  showActionError(error.message || "Could not prepare the save.");
   return false;
  }
 }
+
 async function sendPendingWrite(){
- if(!pendingWrite||busy) return false;
- const request=pendingWrite;
- busy=true;
+ if(!pendingWrite || busy) return false;
+
+ const request = pendingWrite;
+
+ busy = true;
  updateControls();
- message("正在儲存，請唔好關閉頁面…");
+ message("Saving… Please do not close the page.");
+
  try{
-  const {data,error}=await client.rpc("amc_followup_save",{
+  const {data,error} = await client.rpc("amc_followup_save",{
    p_case_id:request.caseId,
    p_expected_version:request.expectedVersion,
    p_state:request.state,
@@ -1587,529 +2709,1014 @@ async function sendPendingWrite(){
    p_action:request.action,
    p_request_id:request.requestId
   });
-  if(error) throw error;
-  const saved=validateRecord(data);
-  if(saved.id!==request.caseId) throw new Error("後台確認咗另一個個案。");
 
-  pendingWrite=null;
-  selected=saved;
+  if(error) throw error;
+
+  const saved = validateRecord(data);
+
+  if(saved.id !== request.caseId){
+   throw new Error("The backend acknowledged a different case.");
+  }
+
+  pendingWrite = null;
+  selected = saved;
+
   replaceRecord(saved);
   renderDetail();
   renderList();
 
   if(!containsExpected(saved.state,request.state)){
-   blockedReason=
-    "後台確認已儲存，但回傳資料冇完整保留提交內容或歷史。"+
-    "操作已暫停。請下載備份，檢查 amc_followup_save／sync SQL。"+
-    "重新載入唔會修復後台設定。";
-   message("已收到儲存確認，但完整資料保存檢查失敗。",true);
+   blockedReason =
+    "The backend acknowledged the save, but its returned state did not " +
+    "preserve all submitted values or history. Editing is paused. " +
+    "Download the save snapshot and check amc_followup_save / sync SQL. " +
+    "Reloading does not repair the backend configuration.";
+
+   message("Save acknowledged, but data-preservation verification failed.",true);
    return false;
   }
-  blockedReason="";
-  recoverySnapshot=null;
-  message("已儲存："+request.action);
+
+  blockedReason = "";
+  recoverySnapshot = null;
+
+  message("Saved: " + request.action + ".");
   return true;
+
  }catch(error){
   console.error(error);
-  if(String(error.message||"").includes("VERSION_CONFLICT")){
-   pendingWrite=null;
-   blockedReason=
-    "另一位同事或報價同步已更新呢個個案。今次請求未有儲存。"+
-    "請重新載入核對，之後只重做仍然需要嘅動作。";
-   message("資料版本衝突，請重新載入核對。",true);
+
+  if(String(error.message || "").includes("VERSION_CONFLICT")){
+   pendingWrite = null;
+
+   blockedReason =
+    "Another staff member or quotation sync updated this case. " +
+    "This request was not saved. Reload and verify the latest record, " +
+    "then repeat only the action still required.";
+
+   message("Version conflict — reload and verify.",true);
+
   }else{
-   message("未收到儲存確認："+(error.message||"連線問題。")+
-    " 請重試同一筆，或者重新載入核對。",true);
+   message(
+    "Save not acknowledged: " +
+    (error.message || "Connection problem.") +
+    " Retry the same save or reload to verify.",
+    true
+   );
   }
+
   return false;
+
  }finally{
-  busy=false;
+  busy = false;
   updateControls();
  }
 }
 
-/* Read all input values before commit closes the workspace. */
+/* Read input before commit closes the workspace */
 
-$("actionForm").addEventListener("submit",async event=>{
+$("actionForm").addEventListener("submit",async event => {
  event.preventDefault();
- if(!actionContext||editingLocked()) return;
- $("actionError").hidden=true;
- const context=clone(actionContext);
- const value=id=>$(id)?.value.trim()||"";
 
- if(context.type==="received"){
-  const date=value("receivedDate");
-  await commit("Report receipt recorded",(state,staff)=>{
-   if(!validDate(date)||date>today()) throw new Error("請填有效日期，唔可以係未來日期。");
-   const {group,report}=findReport(state,context.target.groupId,context.target.reportId);
-   if(report.cancelled||!group.planReviewed) throw new Error("請先核對清單及恢復跟進。");
-   if(report.receivedDate) throw new Error("已記錄收件；需要改日期請用更正紀錄。");
-   report.receivedDate=date;
-   report.receivedRecordedAt=new Date().toISOString();
-   report.receivedRecordedBy=staff;
-   report.reviewCycleId=report.reviewCycleId||uuid();
-   report.reviewPending=true;
+ if(!actionContext || editingLocked()) return;
+
+ $("actionError").hidden = true;
+
+ const context = clone(actionContext);
+ const value = id => $(id)?.value.trim() || "";
+
+ if(context.type === "received"){
+  const date = value("receivedDate");
+
+  await commit("Report receipt recorded",(state,staff) => {
+   if(!validDate(date) || date > today()){
+    throw new Error("Enter a valid received date, not in the future.");
+   }
+
+   const {group,report} = findReport(
+    state,context.target.groupId,context.target.reportId
+   );
+
+   if(report.cancelled || !group.planReviewed){
+    throw new Error("Verify the report list and restore tracking first.");
+   }
+
+   if(report.receivedDate){
+    throw new Error(
+     "Receipt is already recorded. Use Correct a record to change the date."
+    );
+   }
+
+   report.receivedDate = date;
+   report.receivedRecordedAt = new Date().toISOString();
+   report.receivedRecordedBy = staff;
+   report.reviewCycleId = report.reviewCycleId || uuid();
+   report.reviewPending = true;
   });
 
- }else if(context.type==="nurse"){
-  const outcome=$("actionFields").querySelector('input[name="classification"]:checked')?.value;
-  const note=value("nurseNote");
-  await commit("Nurse initial classification recorded",(state,staff)=>{
-   const {report}=findReport(state,context.target.groupId,context.target.reportId);
-   if(!["routine","doctor","urgent"].includes(outcome)) throw new Error("請選擇初步檢視結果。");
-   if(report.cancelled||!report.receivedDate) throw new Error("請先記錄收件。");
-   if((report.triage||"pending")!=="pending"||report.reviewedAt){
-    throw new Error("已有分類或覆核，請用更正紀錄。");
+ }else if(context.type === "nurse"){
+  const outcome = $("actionFields")
+   .querySelector('input[name="classification"]:checked')?.value;
+
+  const note = value("nurseNote");
+
+  await commit("Nurse initial classification recorded",(state,staff) => {
+   const {report} = findReport(
+    state,context.target.groupId,context.target.reportId
+   );
+
+   if(!["routine","doctor","urgent"].includes(outcome)){
+    throw new Error("Select the nurse review classification.");
    }
+
+   if(report.cancelled || !report.receivedDate){
+    throw new Error("Record receipt first.");
+   }
+
+   if((report.triage || "pending") !== "pending" || report.reviewedAt){
+    throw new Error(
+     "A classification or review already exists. Use Correct a record."
+    );
+   }
+
    recordClassification(report,outcome,staff);
    appendNurseNote(report,note,staff);
   });
 
- }else if(context.type==="review"){
-  const doctor=value("actionDoctor"),requirement=value("patientRequired");
-  const note=value("reviewNote"),confirmed=$("reviewConfirmed").checked;
-  await commit("Doctor review recorded",(state,staff)=>{
-   if(!doctor||!["yes","no"].includes(requirement)||!confirmed){
-    throw new Error("請填醫生、病人聯絡要求，並確認醫生實際已覆核。");
+ }else if(context.type === "review"){
+  const doctor = value("actionDoctor");
+  const requirement = value("patientRequired");
+  const note = value("reviewNote");
+  const confirmed = $("reviewConfirmed").checked;
+
+  await commit("Doctor review recorded",(state,staff) => {
+   if(!doctor || !["yes","no"].includes(requirement) || !confirmed){
+    throw new Error(
+     "Enter the doctor and patient contact requirement, " +
+     "and confirm that the doctor actually reviewed the report."
+    );
    }
-   const {report}=findReport(state,context.target.groupId,context.target.reportId);
-   if(!needsDoctorReview(report)||!nurseDone(report)) throw new Error("呢份報告唔係待醫生覆核。");
+
+   const {report} = findReport(
+    state,context.target.groupId,context.target.reportId
+   );
+
+   if(!needsDoctorReview(report) || !nurseDone(report)){
+    throw new Error("This report is not awaiting doctor review.");
+   }
+
    preserveLegacyReview(report);
-   report.reviewCycleId=report.reviewCycleId||uuid();
-   const at=new Date().toISOString();
+   report.reviewCycleId = report.reviewCycleId || uuid();
+
+   const at = new Date().toISOString();
+
    report.reviewHistory.push({
-    id:uuid(),cycleId:cycleId(report),at,doctor,recordedBy:staff,
-    note,patientContactRequired:requirement==="yes"
+    id:uuid(),
+    cycleId:cycleId(report),
+    at,
+    doctor,
+    recordedBy:staff,
+    note,
+    patientContactRequired:requirement === "yes"
    });
-   report.reviewDoctorName=doctor;
-   report.doctorName=doctor;
-   report.reviewedAt=at;
-   report.reviewRecordedBy=staff;
-   report.reviewNote=note;
-   report.reviewPending=false;
-   report.patientContactRequired=requirement==="yes";
+
+   report.reviewDoctorName = doctor;
+   report.doctorName = doctor;
+   report.reviewedAt = at;
+   report.reviewRecordedBy = staff;
+   report.reviewNote = note;
+   report.reviewPending = false;
+   report.patientContactRequired = requirement === "yes";
   });
 
- }else if(context.type==="filed"){
-  const confirmed=$("filingConfirmed").checked;
-  await commit("Report filing recorded",state=>{
-   const {report}=findReport(state,context.target.groupId,context.target.reportId);
-   if(!confirmed||report.cancelled||!report.receivedDate){
-    throw new Error("請確認已收到及已歸檔。");
+ }else if(context.type === "filed"){
+  const confirmed = $("filingConfirmed").checked;
+
+  await commit("Report filing recorded",state => {
+   const {report} = findReport(
+    state,context.target.groupId,context.target.reportId
+   );
+
+   if(!confirmed || report.cancelled || !report.receivedDate){
+    throw new Error("Confirm that the report was received and filed.");
    }
-   report.archived=true;
+
+   report.archived = true;
   });
 
- }else if(context.type==="contact"){
-  const recordContact=$("recordContact").checked;
-  const method=value("contactMethod"),delivery=value("contactDelivery");
-  const recipient=value("patientRecipient"),note=value("contactNote");
-  const changeAppointment=$("changeAppointment").checked;
-  const status=value("appointmentStatus"),date=value("appointmentDate");
-  const changeFollowup=$("changeFollowup").checked,nextDate=value("nextFollowupDate");
-  const linked=[...$("actionFields").querySelectorAll("[data-contact-report]:checked")]
-   .map(el=>({groupId:el.dataset.contactGroup,reportId:el.dataset.contactReport}));
+ }else if(context.type === "contact"){
+  const recordContact = $("recordContact").checked;
+  const method = value("contactMethod");
+  const delivery = value("contactDelivery");
+  const recipient = value("patientRecipient");
+  const note = value("contactNote");
 
-  await commit("Patient contact / appointment recorded",(state,staff)=>{
-   const allowed={
+  const changeAppointment = $("changeAppointment").checked;
+  const status = value("appointmentStatus");
+  const date = value("appointmentDate");
+
+  const changeFollowup = $("changeFollowup").checked;
+  const nextDate = value("nextFollowupDate");
+
+  const linked = [
+   ...$("actionFields").querySelectorAll("[data-contact-report]:checked")
+  ].map(element => ({
+   groupId:element.dataset.contactGroup,
+   reportId:element.dataset.contactReport
+  }));
+
+  await commit("Patient contact / appointment recorded",(state,staff) => {
+   const allowed = {
     Telephone:["confirmed","connected","no-answer","voicemail"],
-    Email:["sent","confirmed"],WhatsApp:["sent","confirmed"],
+    Email:["sent","confirmed"],
+    WhatsApp:["sent","confirmed"],
     "In person":["confirmed","connected"]
    };
-   if(recordContact&&!allowed[method]?.includes(delivery)){
-    throw new Error("請選擇聯絡方式及實際結果。");
-   }
-   if(!recordContact&&!changeAppointment&&!changeFollowup){
-    throw new Error("請選擇今次有做嘅事。");
-   }
-   if(context.requiredReportId&&(!recordContact||
-    !linked.some(x=>x.reportId===context.requiredReportId))){
-    throw new Error("今次係跟進指定報告，請保留聯絡記錄並勾選該報告。");
-   }
-   if(recordContact&&!linked.length&&!note){
-    throw new Error("一般病人聯絡請填今次聯絡備註。");
-   }
-   if(!recordContact&&!note){
-    throw new Error("只更改安排時，請填今次安排備註。");
-   }
-   if(changeAppointment){
-    if(!Object.hasOwn(APPOINTMENTS,status)) throw new Error("請選有效預約情況。");
-    if(["booked","attended","missed"].includes(status)&&!date){
-     throw new Error("請填相關預約日期。");
-    }
-    if(date&&!validDate(date)) throw new Error("預約日期無效。");
-    if(status==="declined"&&!note) throw new Error("請記錄病人拒絕嘅原因或情況。");
-   }
-   if(changeFollowup&&nextDate&&!validDate(nextDate)){
-    throw new Error("下次聯絡日期無效。");
+
+   if(recordContact && !allowed[method]?.includes(delivery)){
+    throw new Error("Select the contact method and actual result.");
    }
 
-   const before=arrangementSnapshot(state);
-   const at=new Date().toISOString();
+   if(!recordContact && !changeAppointment && !changeFollowup){
+    throw new Error("Select what was done this time.");
+   }
+
+   if(context.requiredReportId && (
+    !recordContact ||
+    !linked.some(item => item.reportId === context.requiredReportId)
+   )){
+    throw new Error(
+     "This action concerns a specific report. " +
+     "Keep contact recording enabled and select that report."
+    );
+   }
+
+   if(recordContact && !linked.length && !note){
+    throw new Error("Enter notes for a general patient contact.");
+   }
+
+   if(!recordContact && !note){
+    throw new Error("Enter notes when recording an arrangement without contact.");
+   }
+
+   if(changeAppointment){
+    if(!Object.hasOwn(APPOINTMENTS,status)){
+     throw new Error("Select a valid appointment status.");
+    }
+
+    if(["booked","attended","missed"].includes(status) && !date){
+     throw new Error("Enter the relevant appointment date.");
+    }
+
+    if(date && !validDate(date)){
+     throw new Error("Enter a valid appointment date.");
+    }
+
+    if(status === "declined" && !note){
+     throw new Error(
+      "Document the reason or circumstances of declining the appointment."
+     );
+    }
+   }
+
+   if(changeFollowup && nextDate && !validDate(nextDate)){
+    throw new Error("Enter a valid next contact date.");
+   }
+
+   const before = arrangementSnapshot(state);
+   const at = new Date().toISOString();
+
    if(recordContact){
-    const reports=linked.map(target=>{
-     const {report}=findReport(state,target.groupId,target.reportId);
-     if(!patientPending(state,report)) throw new Error("所選報告已唔係待病人收妥確認。");
+    const reports = linked.map(target => {
+     const {report} = findReport(
+      state,target.groupId,target.reportId
+     );
+
+     if(!patientPending(state,report)){
+      throw new Error(
+       "A selected report is no longer awaiting patient receipt confirmation."
+      );
+     }
+
      return report;
     });
-    const communicationId=uuid();
-    const targets=reports.length?reports:[null];
+
+    const communicationId = uuid();
+    const targets = reports.length ? reports : [null];
+
     for(const report of targets){
      state.contacts.push({
-      id:uuid(),communicationId,at,staff,audience:"patient",
-      target:recipient||"Patient",method,deliveryStatus:delivery,
-      outcome:deliveryLabel({deliveryStatus:delivery}),note,
-      nextDate:changeFollowup?nextDate:"",
-      reportId:report?.id||"",reportName:report?.name||"",
-      reviewCycleId:report?cycleId(report):"",
-      confirmedAt:delivery==="confirmed"?at:"",
-      confirmedBy:delivery==="confirmed"?staff:""
+      id:uuid(),
+      communicationId,
+      at,
+      staff,
+      audience:"patient",
+      target:recipient || "Patient",
+      method,
+      deliveryStatus:delivery,
+      outcome:deliveryLabel({deliveryStatus:delivery}),
+      note,
+      nextDate:changeFollowup ? nextDate : "",
+      reportId:report?.id || "",
+      reportName:report?.name || "",
+      reviewCycleId:report ? cycleId(report) : "",
+      confirmedAt:delivery === "confirmed" ? at : "",
+      confirmedBy:delivery === "confirmed" ? staff : ""
      });
     }
+
    }else{
-    // A non-contact arrangement is a separate note, not a fake contact.
-    state.followupNotes=[...(state.followupNotes||[]),{
-     id:uuid(),at,staff,note,type:"arrangement"
-    }];
+    state.followupNotes = [
+     ...(state.followupNotes || []),
+     {
+      id:uuid(),
+      at,
+      staff,
+      note,
+      type:"arrangement"
+     }
+    ];
    }
+
    if(changeAppointment){
-    state.appointmentStatus=status;
-    state.appointmentDate=status==="unscheduled"?"":date;
+    state.appointmentStatus = status;
+    state.appointmentDate = status === "unscheduled" ? "" : date;
    }
-   if(changeFollowup) state.nextFollowupDate=nextDate;
+
+   if(changeFollowup){
+    state.nextFollowupDate = nextDate;
+   }
+
    appendArrangement(state,before,staff);
   });
 
- }else if(context.type==="plan"){
-  const confirmed=$("planConfirmed").checked;
-  const existing=[...$("actionFields").querySelectorAll("[data-plan-report]")]
-   .map(el=>({id:el.dataset.planReport,name:el.value.trim()}));
-  const additional=value("additionalReports").split("\n").map(x=>x.trim()).filter(Boolean);
-  await commit("Report tracking plan verified / updated",(state,staff)=>{
-   if(!confirmed) throw new Error("請確認已核對清單。");
-   const group=state.groups.find(g=>g.id===context.groupId);
-   if(!group) throw new Error("搵唔到檢查項目。");
-   if(group.reports.length+additional.length>100) throw new Error("每項檢查最多 100 份報告。");
-   for(const item of existing){
-    const report=group.reports.find(r=>r.id===item.id);
-    if(!report||!item.name||item.name.length>300) throw new Error("報告名稱須為 1–300 字。");
-    if((report.receivedDate||report.cancelled)&&report.name!==item.name){
-     throw new Error("已收到或已取消嘅報告名稱唔可以更改。");
-    }
-    report.name=item.name;
+ }else if(context.type === "plan"){
+  const confirmed = $("planConfirmed").checked;
+
+  const existing = [
+   ...$("actionFields").querySelectorAll("[data-plan-report]")
+  ].map(element => ({
+   id:element.dataset.planReport,
+   name:element.value.trim()
+  }));
+
+  const additional = value("additionalReports")
+   .split("\n")
+   .map(name => name.trim())
+   .filter(Boolean);
+
+  await commit("Report tracking plan verified / updated",(state,staff) => {
+   if(!confirmed){
+    throw new Error("Confirm that the report list has been verified.");
    }
-   if(additional.some(name=>name.length>300)) throw new Error("報告名稱最多 300 字。");
-   additional.forEach(name=>group.reports.push(emptyReport(name)));
-   if(!group.reports.length) throw new Error("請至少建立一份報告。");
-   group.planReviewed=true;
-   group.planVerifiedAt=new Date().toISOString();
-   group.planVerifiedBy=staff;
-   group.planVerifiedSourceRevision=state.sourceRevision;
+
+   const group = state.groups.find(item => item.id === context.groupId);
+
+   if(!group){
+    throw new Error("The investigation could not be found.");
+   }
+
+   if(group.reports.length + additional.length > 100){
+    throw new Error("Use a maximum of 100 reports per investigation.");
+   }
+
+   for(const item of existing){
+    const report = group.reports.find(entry => entry.id === item.id);
+
+    if(!report || !item.name || item.name.length > 300){
+     throw new Error("Report names must contain 1–300 characters.");
+    }
+
+    if((report.receivedDate || report.cancelled) &&
+     report.name !== item.name
+    ){
+     throw new Error("Received or cancelled report names cannot be changed.");
+    }
+
+    report.name = item.name;
+   }
+
+   if(additional.some(name => name.length > 300)){
+    throw new Error("Report names must be at most 300 characters.");
+   }
+
+   additional.forEach(name => group.reports.push(emptyReport(name)));
+
+   if(!group.reports.length){
+    throw new Error("Add at least one expected report.");
+   }
+
+   group.planReviewed = true;
+   group.planVerifiedAt = new Date().toISOString();
+   group.planVerifiedBy = staff;
+   group.planVerifiedSourceRevision = state.sourceRevision;
   });
 
- }else if(context.type==="correction"){
-  const date=value("detailDate"),triage=value("detailTriage");
-  const filed=$("detailFiled").checked,reopen=$("reopenReview").checked;
-  const reason=value("correctionReason");
-  await commit("Report correction recorded",(state,staff)=>{
-   if(!reason) throw new Error("請填更正原因。");
-   const {group,report}=findReport(state,context.target.groupId,context.target.reportId);
-   if(report.cancelled) throw new Error("請先恢復跟進。");
-   if(!Object.hasOwn(CLASSIFICATIONS,triage)) throw new Error("分類無效。");
-   if(date&&(!validDate(date)||date>today())) throw new Error("收到日期無效。");
-   if(report.receivedDate&&!date) throw new Error("唔支援清除已記錄嘅收件日期。");
-   if(!report.receivedDate&&date&&!group.planReviewed) throw new Error("請先核對清單。");
-   if(!date&&(triage!=="pending"||filed||reopen)){
-    throw new Error("請先記錄收件，再分類、覆核或歸檔。");
+ }else if(context.type === "correction"){
+  const date = value("detailDate");
+  const triage = value("detailTriage");
+  const filed = $("detailFiled").checked;
+  const reopen = $("reopenReview").checked;
+  const reason = value("correctionReason");
+
+  await commit("Report correction recorded",(state,staff) => {
+   if(!reason){
+    throw new Error("Enter the correction reason.");
    }
-   if(!report.receivedDate&&date){
-    report.reviewCycleId=report.reviewCycleId||uuid();
-    report.reviewPending=true;
-    report.receivedRecordedAt=new Date().toISOString();
-    report.receivedRecordedBy=staff;
+
+   const {group,report} = findReport(
+    state,context.target.groupId,context.target.reportId
+   );
+
+   if(report.cancelled){
+    throw new Error("Restore tracking first.");
    }
-   if((report.triage||"pending")!==triage){
+
+   if(!Object.hasOwn(CLASSIFICATIONS,triage)){
+    throw new Error("Select a valid classification.");
+   }
+
+   if(date && (!validDate(date) || date > today())){
+    throw new Error("Enter a valid received date, not in the future.");
+   }
+
+   if(report.receivedDate && !date){
+    throw new Error("Clearing a recorded received date is not supported.");
+   }
+
+   if(!report.receivedDate && date && !group.planReviewed){
+    throw new Error("Verify the report list first.");
+   }
+
+   if(!date && (triage !== "pending" || filed || reopen)){
+    throw new Error(
+     "Record receipt before classification, doctor review or filing."
+    );
+   }
+
+   if(!report.receivedDate && date){
+    report.reviewCycleId = report.reviewCycleId || uuid();
+    report.reviewPending = true;
+    report.receivedRecordedAt = new Date().toISOString();
+    report.receivedRecordedBy = staff;
+   }
+
+   if((report.triage || "pending") !== triage){
     recordClassification(report,triage,staff,reason);
    }else if(reopen){
     openNewReviewCycle(report);
    }
-   report.receivedDate=date;
-   report.archived=filed;
-   report.correctionHistory=[...(report.correctionHistory||[]),{
-    id:uuid(),at:new Date().toISOString(),staff,reason,cycleId:cycleId(report)
-   }];
+
+   report.receivedDate = date;
+   report.archived = filed;
+
+   report.correctionHistory = [
+    ...(report.correctionHistory || []),
+    {
+     id:uuid(),
+     at:new Date().toISOString(),
+     staff,
+     reason,
+     cycleId:cycleId(report)
+    }
+   ];
   });
 
- }else if(context.type==="cancel"||context.type==="restore"){
-  const reason=value("trackingReason");
-  await commit(context.type==="cancel"?"Report tracking cancelled":"Report tracking restored",
-   (state,staff)=>{
-    if(!reason) throw new Error("請填核實原因。");
-    const {report}=findReport(state,context.target.groupId,context.target.reportId);
-    if(context.type==="cancel"&&report.receivedDate) throw new Error("已收到嘅報告唔可以取消。");
-    if(!Array.isArray(report.trackingHistory)) report.trackingHistory=[];
-    if(report.cancelled&&report.cancelReason&&!report.trackingHistory.length){
+ }else if(context.type === "cancel" || context.type === "restore"){
+  const reason = value("trackingReason");
+
+  await commit(
+   context.type === "cancel"
+    ? "Report tracking cancelled"
+    : "Report tracking restored",
+   (state,staff) => {
+    if(!reason){
+     throw new Error("Enter the verified reason.");
+    }
+
+    const {report} = findReport(
+     state,context.target.groupId,context.target.reportId
+    );
+
+    if(context.type === "cancel" && report.receivedDate){
+     throw new Error("A received report cannot be cancelled.");
+    }
+
+    if(!Array.isArray(report.trackingHistory)){
+     report.trackingHistory = [];
+    }
+
+    if(report.cancelled && report.cancelReason &&
+     !report.trackingHistory.length
+    ){
      report.trackingHistory.push({
-      id:uuid(),type:"cancel",reason:report.cancelReason,at:"",staff:"",legacy:true
+      id:uuid(),
+      type:"cancel",
+      reason:report.cancelReason,
+      at:"",
+      staff:"",
+      legacy:true
      });
     }
-    report.trackingHistory.push({
-     id:uuid(),type:context.type,reason,at:new Date().toISOString(),staff
-    });
-    report.cancelled=context.type==="cancel";
-    if(context.type==="cancel") report.cancelReason=reason;
-    else report.restoreReason=reason;
-   });
 
- }else if(context.type==="arrangementCorrection"){
-  const status=value("correctStatus"),date=value("correctDate");
-  const next=value("correctNext"),note=value("correctNote"),reason=value("arrangementReason");
-  await commit("Appointment / follow-up correction recorded",(state,staff)=>{
-   if(!reason) throw new Error("請填更正原因。");
-   if(!Object.hasOwn(APPOINTMENTS,status)) throw new Error("預約情況無效。");
-   if(["booked","attended","missed"].includes(status)&&!date) throw new Error("請填預約日期。");
-   if(date&&!validDate(date)) throw new Error("預約日期無效。");
-   if(next&&!validDate(next)) throw new Error("下次聯絡日期無效。");
-   if(status==="declined"&&!note) throw new Error("請記錄拒絕原因或情況。");
-   const before=arrangementSnapshot(state);
-   state.appointmentStatus=status;
-   state.appointmentDate=date;
-   state.nextFollowupDate=next;
-   state.caseNote=note;
-   const after=arrangementSnapshot(state);
+    report.trackingHistory.push({
+     id:uuid(),
+     type:context.type,
+     reason,
+     at:new Date().toISOString(),
+     staff
+    });
+
+    report.cancelled = context.type === "cancel";
+
+    if(context.type === "cancel"){
+     report.cancelReason = reason;
+    }else{
+     report.restoreReason = reason;
+    }
+   }
+  );
+
+ }else if(context.type === "arrangementCorrection"){
+  const status = value("correctStatus");
+  const date = value("correctDate");
+  const next = value("correctNext");
+  const note = value("correctNote");
+  const reason = value("arrangementReason");
+
+  await commit("Appointment / follow-up correction recorded",(state,staff) => {
+   if(!reason){
+    throw new Error("Enter the correction reason.");
+   }
+
+   if(!Object.hasOwn(APPOINTMENTS,status)){
+    throw new Error("Select a valid appointment status.");
+   }
+
+   if(["booked","attended","missed"].includes(status) && !date){
+    throw new Error("Enter the appointment date.");
+   }
+
+   if(date && !validDate(date)){
+    throw new Error("Enter a valid appointment date.");
+   }
+
+   if(next && !validDate(next)){
+    throw new Error("Enter a valid next contact date.");
+   }
+
+   if(status === "declined" && !note){
+    throw new Error(
+     "Document the reason or circumstances of declining the appointment."
+    );
+   }
+
+   const before = arrangementSnapshot(state);
+
+   state.appointmentStatus = status;
+   state.appointmentDate = date;
+   state.nextFollowupDate = next;
+   state.caseNote = note;
+
+   const after = arrangementSnapshot(state);
+
    if(!same(before,after)){
-    state.arrangementHistory=[...(state.arrangementHistory||[]),{
-     id:uuid(),at:new Date().toISOString(),staff,before,after,reason
-    }];
+    state.arrangementHistory = [
+     ...(state.arrangementHistory || []),
+     {
+      id:uuid(),
+      at:new Date().toISOString(),
+      staff,
+      before,
+      after,
+      reason
+     }
+    ];
    }
   });
  }
 });
 
-/* Include non-contact arrangement notes in readable history. */
-const baseReadableHistoryHTML=readableHistoryHTML;
-readableHistoryHTML=function(state){
- const extra=[...(state.followupNotes||[])].reverse().map(item=>`
-  <div class="log">
-   <strong>安排備註</strong>
-   <div class="small-text">${esc(timeLabel(item.at))} · ${esc(item.staff)}</div>
-   <div class="note">${esc(item.note)}</div>
-  </div>`).join("");
- return (extra?`<h3>安排備註</h3>${extra}<h3 style="margin-top:18px">其他紀錄</h3>`:"")+
-  baseReadableHistoryHTML(state);
-};
-
-/* Events: all DOM IDs exist once. */
+/* Events */
 
 function handleUI(fn){
- return async event=>{
-  try{await fn(event)}
-  catch(error){showActionError(error.message||"操作失敗。")}
+ return async event => {
+  try{
+   await fn(event);
+  }catch(error){
+   showActionError(error.message || "The action could not be completed.");
+  }
  };
 }
-$("groups").addEventListener("click",handleUI(event=>{
+
+$("groups").addEventListener("click",handleUI(event => {
  if(editingLocked()) return;
- const plan=event.target.closest("[data-plan]");
- if(plan){openPlan(plan.dataset.plan);return}
- const button=event.target.closest("[data-step]");
+
+ const plan = event.target.closest("[data-plan]");
+
+ if(plan){
+  openPlan(plan.dataset.plan);
+  return;
+ }
+
+ const button = event.target.closest("[data-step]");
  if(!button) return;
+
  openStep({
-  groupId:button.dataset.group,reportId:button.dataset.report
+  groupId:button.dataset.group,
+  reportId:button.dataset.report
  },button.dataset.step);
 }));
-$("actionFields").addEventListener("click",handleUI(event=>{
- const plan=event.target.closest("[data-plan]");
- if(plan){openPlan(plan.dataset.plan);return}
- const correct=event.target.closest("[data-correct-report]");
+
+$("actionFields").addEventListener("click",handleUI(event => {
+ const plan = event.target.closest("[data-plan]");
+
+ if(plan){
+  openPlan(plan.dataset.plan);
+  return;
+ }
+
+ const correct = event.target.closest("[data-correct-report]");
+
  if(correct){
   openCorrection({
-   groupId:correct.dataset.correctGroup,reportId:correct.dataset.correctReport
-  });return;
+   groupId:correct.dataset.correctGroup,
+   reportId:correct.dataset.correctReport
+  });
+  return;
  }
- const cancel=event.target.closest("[data-cancel-report]");
+
+ const cancel = event.target.closest("[data-cancel-report]");
+
  if(cancel){
   openTracking({
-   groupId:cancel.dataset.cancelGroup,reportId:cancel.dataset.cancelReport
-  },false);return;
+   groupId:cancel.dataset.cancelGroup,
+   reportId:cancel.dataset.cancelReport
+  },false);
+  return;
  }
- if(event.target.closest("[data-correct-arrangement]")) openArrangementCorrection();
+
+ if(event.target.closest("[data-correct-arrangement]")){
+  openArrangementCorrection();
+ }
 }));
-$("actionFields").addEventListener("input",()=>{
- actionDirty=true;updateControls();
-});
-$("actionFields").addEventListener("change",event=>{
- actionDirty=true;
- if(event.target.id==="contactMethod") refreshDeliveryOptions();
- if(["recordContact","changeAppointment","changeFollowup"].includes(event.target.id)){
-  refreshContactFields();
- }
+
+$("actionFields").addEventListener("input",() => {
+ actionDirty = true;
  updateControls();
 });
-$("actionCancel").addEventListener("click",()=>closeWorkspace());
-$("contactButton").addEventListener("click",handleUI(()=>openContact()));
-$("manageButton").addEventListener("click",handleUI(()=>openManage()));
-$("correctionButton").addEventListener("click",handleUI(()=>openCorrectionChooser()));
-$("historyButton").addEventListener("click",handleUI(()=>openHistory()));
 
-$("caseBody").addEventListener("click",event=>{
- const button=event.target.closest("[data-open]");
+$("actionFields").addEventListener("change",event => {
+ actionDirty = true;
+
+ if(event.target.id === "contactMethod"){
+  refreshDeliveryOptions();
+ }
+
+ if([
+  "recordContact",
+  "changeAppointment",
+  "changeFollowup"
+ ].includes(event.target.id)){
+  refreshContactFields();
+ }
+
+ updateControls();
+});
+
+$("actionCancel").addEventListener("click",() => closeWorkspace());
+
+$("contactButton").addEventListener(
+ "click",handleUI(() => openContact())
+);
+
+$("manageButton").addEventListener(
+ "click",handleUI(() => openManage())
+);
+
+$("correctionButton").addEventListener(
+ "click",handleUI(() => openCorrectionChooser())
+);
+
+$("historyButton").addEventListener(
+ "click",handleUI(() => openHistory())
+);
+
+$("caseBody").addEventListener("click",event => {
+ const button = event.target.closest("[data-open]");
  if(button) void openCase(button.dataset.open);
 });
-$("tabs").addEventListener("click",event=>{
- const button=event.target.closest("[data-tab]");
- if(!button||busy||pendingWrite) return;
- activeTab=button.dataset.tab;
- previousTab=activeTab;
+
+$("tabs").addEventListener("click",event => {
+ const button = event.target.closest("[data-tab]");
+
+ if(!button || busy || pendingWrite) return;
+
+ activeTab = button.dataset.tab;
+ previousTab = activeTab;
+
  renderList();
 });
-$("backButton").addEventListener("click",()=>{
- if(busy||pendingWrite||!closeWorkspace()) return;
- activeTab=previousTab;
+
+$("backButton").addEventListener("click",() => {
+ if(busy || pendingWrite || !closeWorkspace()) return;
+
+ activeTab = previousTab;
  renderList();
+
  window.scrollTo({top:0,behavior:"instant"});
 });
+
 $("search").addEventListener("input",renderList);
-$("clearSearchButton").addEventListener("click",()=>{
- $("search").value="";renderList();$("search").focus();
+
+$("clearSearchButton").addEventListener("click",() => {
+ $("search").value = "";
+ renderList();
+ $("search").focus();
 });
-$("reloadButton").addEventListener("click",()=>void refresh(false));
-$("syncButton").addEventListener("click",()=>{
- if(window.confirm("同步已確認報價？後台同步必須保留已有報告、歷史及覆核週期。")){
+
+$("reloadButton").addEventListener("click",() => void refresh(false));
+
+$("syncButton").addEventListener("click",() => {
+ if(window.confirm(
+  "Sync confirmed quotations? Backend sync must preserve existing " +
+  "reports, history and review-cycle fields."
+ )){
   void refresh(true);
  }
 });
-$("quotationButton").addEventListener("click",()=>{
+
+$("quotationButton").addEventListener("click",() => {
  window.open("./quotation.html","_blank","noopener");
 });
-$("retryButton").addEventListener("click",()=>void sendPendingWrite());
-$("resolveButton").addEventListener("click",()=>void refresh(false));
-$("exportPendingButton").addEventListener("click",()=>{
- const snapshot=pendingWrite||recoverySnapshot;
+
+$("retryButton").addEventListener("click",() => void sendPendingWrite());
+
+$("resolveButton").addEventListener("click",() => void refresh(false));
+
+$("exportPendingButton").addEventListener("click",() => {
+ const snapshot = pendingWrite || recoverySnapshot;
  if(!snapshot) return;
- const blob=new Blob([JSON.stringify(snapshot,null,2)],{type:"application/json"});
- const url=URL.createObjectURL(blob),link=document.createElement("a");
- link.href=url;
- link.download=`followup-save-${snapshot.requestId}.json`;
+
+ const blob = new Blob(
+  [JSON.stringify(snapshot,null,2)],
+  {type:"application/json"}
+ );
+
+ const url = URL.createObjectURL(blob);
+ const link = document.createElement("a");
+
+ link.href = url;
+ link.download = `followup-save-${snapshot.requestId}.json`;
  link.click();
- setTimeout(()=>URL.revokeObjectURL(url),1000);
+
+ setTimeout(() => URL.revokeObjectURL(url),1000);
 });
+
 try{
- $("operator").value=sessionStorage.getItem("amc-followup-recording-staff")||"";
+ $("operator").value =
+  sessionStorage.getItem("amc-followup-recording-staff") || "";
 }catch(error){}
-$("operator").addEventListener("input",()=>{
+
+$("operator").addEventListener("input",() => {
  try{
-  sessionStorage.setItem("amc-followup-recording-staff",$("operator").value.trim());
+  sessionStorage.setItem(
+   "amc-followup-recording-staff",
+   $("operator").value.trim()
+  );
  }catch(error){}
 });
-window.addEventListener("beforeunload",event=>{
- if(actionDirty||pendingWrite||busy){
-  event.preventDefault();event.returnValue="";
+
+window.addEventListener("beforeunload",event => {
+ if(actionDirty || pendingWrite || busy){
+  event.preventDefault();
+  event.returnValue = "";
  }
 });
 
-/* Print saved data only; no editor IDs or input forms. */
+/* Print saved records only */
 
 function printReportHTML(state){
- const all=entries(state);
- return all.length?`<div class="table-wrap"><table>
-  <thead><tr><th>報告</th><th>進度／記錄</th></tr></thead>
-  <tbody>${all.map(({group,report})=>{
-   const s=stage(state,group,report);
-   return `<tr>
-    <td><strong>${esc(report.name||group.name)}</strong>
-     <div class="code">${esc(group.code)}</div></td>
-    <td>
-     <strong>${esc(s.label)}</strong>
-     <div>報告清單：${group.planReviewed?"已核對":"未核對"}</div>
-     ${report.receivedDate?`<div>收到：${esc(dateLabel(report.receivedDate))}</div>`:""}
-     <div>分類：${esc(CLASSIFICATIONS[report.triage]||"待初步檢視")}</div>
-     ${report.nurseNote?`<div class="note">初步檢視／收件備註：${esc(report.nurseNote)}</div>`:""}
-     ${report.reviewedAt?`
-      <div>${needsDoctorReview(report)?"之前覆核":"醫生覆核"}：
-       ${esc(report.reviewDoctorName||report.doctorName||"未記錄")}
-       · ${esc(timeLabel(report.reviewedAt))}</div>
-      ${report.reviewNote?`<div class="note">${esc(report.reviewNote)}</div>`:""}`:""}
-     ${report.reviewPending&&report.reviewedAt?"<div>新覆核週期待完成</div>":""}
-     <div>歸檔：${report.archived?"已歸檔":"未記錄"}</div>
-     ${patientPending(state,report)?"<div>待確認病人收妥</div>":""}
-     ${report.cancelled?`<div class="note">取消原因：${esc(report.cancelReason)}</div>`:""}
-    </td>
-   </tr>`;
-  }).join("")}</tbody></table></div>`:'<p>冇報告記錄。</p>';
+ const all = entries(state);
+
+ return all.length ? `
+  <div class="table-wrap">
+   <table>
+    <thead>
+     <tr>
+      <th>Report</th>
+      <th>Progress / record</th>
+     </tr>
+    </thead>
+    <tbody>
+     ${all.map(({group,report}) => {
+      const current = stage(state,group,report);
+
+      return `
+       <tr>
+        <td>
+         <strong>${esc(report.name || group.name)}</strong>
+         <div class="code">${esc(group.code)}</div>
+        </td>
+        <td>
+         <strong>${esc(current.label)}</strong>
+
+         <div>
+          Expected reports:
+          ${group.planReviewed ? "Verified" : "Not verified"}
+         </div>
+
+         ${report.receivedDate ? `
+          <div>Received: ${esc(dateLabel(report.receivedDate))}</div>
+         ` : ""}
+
+         <div>
+          Classification:
+          ${esc(CLASSIFICATIONS[report.triage] || "Awaiting nurse review")}
+         </div>
+
+         ${report.nurseNote ? `
+          <div class="note">
+           Nurse / receipt notes: ${esc(report.nurseNote)}
+          </div>
+         ` : ""}
+
+         ${report.reviewedAt ? `
+          <div>
+           ${needsDoctorReview(report)
+             ? "Previous doctor review"
+             : "Doctor review"}:
+           ${esc(
+            report.reviewDoctorName ||
+            report.doctorName ||
+            "Doctor not recorded"
+           )}
+           · ${esc(timeLabel(report.reviewedAt))}
+          </div>
+
+          ${report.reviewNote ? `
+           <div class="note">${esc(report.reviewNote)}</div>
+          ` : ""}
+         ` : ""}
+
+         ${report.reviewPending && report.reviewedAt ? `
+          <div>New review cycle pending</div>
+         ` : ""}
+
+         <div>Filing: ${report.archived ? "Filed" : "Not recorded"}</div>
+
+         ${patientPending(state,report) ? `
+          <div>Patient receipt confirmation pending</div>
+         ` : ""}
+
+         ${report.cancelled ? `
+          <div class="note">
+           Cancellation reason: ${esc(report.cancelReason)}
+          </div>
+         ` : ""}
+        </td>
+       </tr>
+      `;
+     }).join("")}
+    </tbody>
+   </table>
+  </div>
+ ` : '<p>No report records.</p>';
 }
-$("printButton").addEventListener("click",handleUI(async()=>{
- if(!selected||editingLocked()||actionDirty){
-  throw new Error("請先儲存或核對未完成嘅改動。");
+
+$("printButton").addEventListener("click",handleUI(async () => {
+ if(!selected || editingLocked() || actionDirty){
+  throw new Error("Save or verify outstanding changes before printing.");
  }
- const record=clone(selected),state=record.state;
- $("printArea").innerHTML=`
+
+ const record = clone(selected);
+ const state = record.state;
+
+ $("printArea").innerHTML = `
   <div class="brand">
    <img src="./amclogo.png" alt="Adventist Medical Center logo">
    <h1>Adventist Medical Center<br>Report Follow-up Summary</h1>
   </div>
-  <p><strong>${esc(state.quotationNumber)}</strong>
+
+  <p>
+   <strong>${esc(state.quotationNumber)}</strong>
    · Confirmed revision ${esc(state.sourceRevision)}<br>
    Printed: ${esc(timeLabel(new Date().toISOString()))}<br>
-   Saved: ${esc(timeLabel(record.updated_at))}</p>
+   Saved: ${esc(timeLabel(record.updated_at))}
+  </p>
+
   <div class="patient-meta">${patientHTML(state)}</div>
+
   <section class="section">
-   <h2>預約及跟進</h2>
-   <p>${esc(APPOINTMENTS[state.appointmentStatus]||"未安排")}
+   <h2>Appointment and follow-up</h2>
+   <p>
+    ${esc(APPOINTMENTS[state.appointmentStatus] || "Not arranged")}
     · ${esc(dateLabel(state.appointmentDate))}<br>
-    下次聯絡：${esc(dateLabel(state.nextFollowupDate))}</p>
-   ${state.caseNote?`<div class="note">${esc(state.caseNote)}</div>`:""}
+    Next contact: ${esc(dateLabel(state.nextFollowupDate))}
+   </p>
+   ${state.caseNote ? `
+    <div class="note">${esc(state.caseNote)}</div>
+   ` : ""}
   </section>
-  <section class="section"><h2>報告</h2>${printReportHTML(state)}</section>
+
   <section class="section">
-   <h2>聯絡紀錄</h2>
-   ${[...state.contacts].reverse().map(contactHTML).join("")||"<p>冇聯絡紀錄。</p>"}
-   ${(state.followupNotes||[]).map(item=>`
-    <div class="log"><strong>安排備註</strong>
-     <div>${esc(timeLabel(item.at))} · ${esc(item.staff)}</div>
-     <div class="note">${esc(item.note)}</div></div>`).join("")}
+   <h2>Reports</h2>
+   ${printReportHTML(state)}
   </section>
-  <section class="section"><p class="small-text">
-   本頁係跟進記錄摘要，唔係化驗或影像報告。
-   請參閱診所系統實際報告。記錄唔代替臨床評估或緊急通知。
-  </p></section>`;
- await Promise.all([...$("printArea").querySelectorAll("img")].map(img=>
-  img.decode?img.decode().catch(()=>{}):Promise.resolve()));
- const oldTitle=document.title;
- document.title=`${state.quotationNumber}-Followup`;
- try{window.print()}finally{document.title=oldTitle}
+
+  <section class="section">
+   <h2>Contact records</h2>
+   ${[...state.contacts].reverse().map(contactHTML).join("") ||
+    "<p>No contact records.</p>"}
+
+   ${(state.followupNotes || []).map(item => `
+    <div class="log">
+     <strong>Arrangement notes</strong>
+     <div>${esc(timeLabel(item.at))} · ${esc(item.staff)}</div>
+     <div class="note">${esc(item.note)}</div>
+    </div>
+   `).join("")}
+  </section>
+
+  <section class="section">
+   <p class="small-text">
+    This is a follow-up tracking summary, not a laboratory or imaging report.
+    Refer to the actual reports in the clinic system.
+    Recorded statuses do not replace clinical assessment or required escalation.
+   </p>
+  </section>
+ `;
+
+ await Promise.all(
+  [...$("printArea").querySelectorAll("img")].map(image =>
+   image.decode
+    ? image.decode().catch(() => {})
+    : Promise.resolve()
+  )
+ );
+
+ const oldTitle = document.title;
+ document.title = `${state.quotationNumber}-Followup`;
+
+ try{
+  window.print();
+ }finally{
+  document.title = oldTitle;
+ }
 }));
 
-/* Startup reads records; it does not silently sync quotations. */
+/* Startup reads records without silently syncing quotations */
 
 async function connect(){
  if(!window.supabase?.createClient){
-  message("後台程式庫載入失敗，請檢查網絡或 CDN，之後重新整理。",true);
+  message(
+   "The backend library failed to load. Check your connection or CDN access, then refresh.",
+   true
+  );
   return;
  }
+
  try{
-  client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
-   auth:{
-    persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,
-    storageKey:"amc-public-demo-auth"
+  client = window.supabase.createClient(
+   SUPABASE_URL,
+   SUPABASE_KEY,
+   {
+    auth:{
+     persistSession:true,
+     autoRefreshToken:true,
+     detectSessionInUrl:false,
+     storageKey:"amc-public-demo-auth"
+    }
    }
-  });
-  const session=await client.auth.getSession();
+  );
+
+  const session = await client.auth.getSession();
   if(session.error) throw session.error;
+
   if(!session.data.session){
-   const signIn=await client.auth.signInAnonymously();
+   const signIn = await client.auth.signInAnonymously();
    if(signIn.error) throw signIn.error;
   }
-  ready=true;
+
+  ready = true;
   updateControls();
+
   await refresh(false);
+
  }catch(error){
   console.error(error);
-  ready=false;
+
+  ready = false;
   updateControls();
-  message("無法連接："+(error.message||"請重新整理。")+
-   " 請檢查 follow-up SQL 及 Anonymous Sign-ins 設定。",true);
+
+  message(
+   "Cannot connect: " +
+   (error.message || "Please refresh.") +
+   " Check the follow-up SQL and Anonymous Sign-ins settings.",
+   true
+  );
  }
 }
+
 renderList();
 updateControls();
 void connect();
