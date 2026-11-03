@@ -1978,7 +1978,7 @@ function printable(s,paperForm=false){
    <h1>Adventist Medical Center Combined Service Quotation</h1>
   </div>
 
-  <p>${esc(s.quotationNumber)} · Revision ${s.revision}</p>
+
 
   <div class="print-meta">
    <div>
@@ -1994,7 +1994,10 @@ function printable(s,paperForm=false){
    <div>
     Prepared by: ${esc(m.preparedBy||"Not entered")}
    </div>
-   <div>Quotation date: ${dateLabel(m.quoteDate)}</div>
+<div>Quotation date: ${dateLabel(m.quoteDate)}</div>
+<div>
+ ${esc(s.quotationNumber)} · Revision ${s.revision}
+</div>
   </div>
 
   <table>
