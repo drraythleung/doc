@@ -252,7 +252,7 @@ details summary{cursor:pointer;font-weight:bold}
       <label><input type="radio" name="signatureMode" value="paper"> Paper signature</label>
      </div>
      <div class="grid" style="grid-template-columns:1fr 1fr">
-      <label class="field">Signer name *
+      <label class="field">Signer name 
        <input id="signerName" maxlength="100" autocomplete="off">
       </label>
       <label class="field">Signer role *
@@ -299,7 +299,7 @@ details summary{cursor:pointer;font-weight:bold}
       </button>
 
       <button id="confirmButton" type="button" class="success">
-       CONFIRM and LOCK revision
+       Record confirmation and lock revision
       </button>
      </div>
     </div>
@@ -1570,7 +1570,6 @@ function validation(){
  if(!m.patientReference)return"Enter the patient reference.";
  if(!m.preparedBy)return"Enter the preparing staff member.";
  if(!m.quoteDate)return"Enter the quotation date.";
- if(!$("signerName").value.trim())return"Enter the signer name.";
  if($("signerRole").value==="Representative"&&!$("signerRelationship").value.trim())
   return"Document the representative's relationship or authority.";
  if(!$("witness").value.trim())return"Enter the witness or recording staff member.";
