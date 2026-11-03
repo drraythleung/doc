@@ -3968,5 +3968,258 @@ if(selected){
  batchUpdateSelection();
 }
 </script>
+ <style>
+/* ==================================================
+   Cleaner report action styling — visual changes only
+   ================================================== */
+
+/* Table */
+.report-table-wrap{
+ border:1px solid #e2e8f0;
+ border-radius:14px;
+ background:#fff;
+}
+
+.report-table thead{
+ background:#f8fafc;
+}
+
+.report-table th{
+ padding:12px;
+ color:#64748b;
+ font-size:11px;
+ font-weight:700;
+ letter-spacing:.04em;
+}
+
+.report-table td{
+ padding:15px 12px;
+ vertical-align:top;
+ border-bottom:1px solid #edf1f5;
+}
+
+.report-table tbody tr{
+ background:#fff;
+ transition:background .15s;
+}
+
+.report-table tbody tr:hover{
+ background:#f8fbff;
+}
+
+.report-table tbody tr.batch-selected{
+ background:#eff6ff;
+}
+
+.test-title{
+ font-size:14px;
+ font-weight:700;
+ color:#1e293b;
+}
+
+.test-code,
+.compact-history{
+ color:#64748b;
+ line-height:1.5;
+}
+
+/* Actions: left aligned and more compact */
+.quick-actions{
+ justify-content:flex-start;
+ align-items:center;
+ gap:6px;
+}
+
+/* Neutral main buttons */
+.quick-actions button{
+ min-height:34px;
+ padding:6px 11px;
+ border:1px solid #dce4ee;
+ border-radius:8px;
+ background:#fff;
+ color:#334155;
+ font-size:12px;
+ line-height:1.4;
+ font-weight:600;
+ box-shadow:none;
+ transition:
+  background .15s,
+  border-color .15s,
+  color .15s;
+}
+
+.quick-actions button:hover:not(:disabled){
+ transform:none;
+ background:#f1f5f9;
+ border-color:#a8b9cf;
+ box-shadow:none;
+}
+
+/* Received: clear primary action */
+.quick-actions button[data-action="received"]{
+ background:#2563eb;
+ border-color:#2563eb;
+ color:#fff;
+}
+
+.quick-actions button[data-action="received"]:hover:not(:disabled){
+ background:#1d4ed8;
+ border-color:#1d4ed8;
+}
+
+/* Routine already recorded: soft green */
+.quick-actions button[data-action="quick-routine"].success{
+ background:#ecfdf5;
+ border-color:#a7e3c9;
+ color:#047857;
+}
+
+.quick-actions button[data-action="quick-routine"].success:hover{
+ background:#d1fae5;
+ border-color:#6ee7b7;
+}
+
+/* Doctor follow-up already selected: soft blue */
+.quick-actions button[data-action="quick-doctor"].primary{
+ background:#eff6ff;
+ border-color:#bfdbfe;
+ color:#1d4ed8;
+}
+
+.quick-actions button[data-action="quick-doctor"].primary:hover{
+ background:#dbeafe;
+ border-color:#93c5fd;
+}
+
+/* Urgent: distinct, without dominating the whole row */
+.quick-actions button[data-action="quick-urgent"]{
+ background:#fff5f5;
+ border-color:#fecaca;
+ color:#b91c1c;
+}
+
+.quick-actions button[data-action="quick-urgent"]:hover{
+ background:#fee2e2;
+ border-color:#fca5a5;
+}
+
+/* Filing action */
+.quick-actions button[data-action="quick-filed"]{
+ background:#f8fafc;
+ color:#475569;
+}
+
+/* Slight spacing before the secondary action row */
+.quick-actions .action-divider{
+ flex-basis:100%;
+ height:0;
+ margin:1px 0;
+}
+
+/* Secondary actions: quiet text buttons */
+.quick-actions button[data-action="triage"],
+.quick-actions button[data-action="notify"],
+.quick-actions button[data-action="review"]{
+ min-height:30px;
+ padding:4px 8px;
+ background:transparent;
+ border-color:transparent;
+ border-radius:6px;
+ color:#52657d;
+ font-size:11px;
+ font-weight:500;
+}
+
+.quick-actions button[data-action="triage"]:hover,
+.quick-actions button[data-action="notify"]:hover,
+.quick-actions button[data-action="review"]:hover{
+ background:#eaf0f7;
+ border-color:transparent;
+ color:#1d4ed8;
+}
+
+/* Cancel remains visible, but less visually dominant */
+.quick-actions button[data-action="cancel"]{
+ background:transparent;
+ border-color:transparent;
+ color:#b91c1c;
+ font-size:11px;
+ font-weight:500;
+}
+
+.quick-actions button[data-action="cancel"]:hover{
+ background:#fff1f2;
+ border-color:transparent;
+}
+
+/* Keep keyboard focus clearly visible */
+.quick-actions button:focus-visible{
+ outline:3px solid #93c5fd;
+ outline-offset:2px;
+}
+
+/* Status chips */
+.compact-status .badge{
+ padding:3px 8px;
+ border-radius:6px;
+ font-size:10px;
+ font-weight:600;
+ box-shadow:none;
+}
+
+/* Notes */
+.compact-note{
+ padding:8px 10px;
+ margin-top:9px;
+ border-left:3px solid #cbd5e1;
+ border-radius:0 6px 6px 0;
+ background:#f8fafc;
+ color:#52657d;
+ font-size:11px;
+ line-height:1.5;
+}
+
+/* Batch toolbar */
+.batch-toolbar{
+ gap:8px;
+ padding:12px 14px;
+ background:#f8fafc;
+ border-color:#e2e8f0;
+ border-radius:12px;
+ box-shadow:none;
+}
+
+.batch-toolbar button{
+ min-height:34px;
+ padding:6px 11px;
+ border-radius:8px;
+ font-size:12px;
+ font-weight:600;
+ box-shadow:none;
+}
+
+.batch-toolbar button:hover:not(:disabled){
+ transform:none;
+}
+
+.batch-toolbar button.primary{
+ background:#2563eb;
+ border-color:#2563eb;
+}
+
+.batch-toolbar button:disabled{
+ opacity:.45;
+}
+
+.batch-help{
+ color:#64748b;
+ line-height:1.5;
+}
+
+/* Header is left aligned to match the buttons */
+.report-table th:last-child{
+ text-align:left!important;
+}
+</style>
 </body>
 </html>
