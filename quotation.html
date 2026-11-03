@@ -237,6 +237,76 @@ details summary{cursor:pointer;font-weight:bold}
  }
 }
 </style>
+ <style>
+/* 網頁：Logo 左、標題右 */
+.amc-brand{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:24px;
+ width:100%;
+}
+
+.amc-brand .amc-logo{
+ flex-shrink:0;
+ width:190px;
+ height:auto;
+ margin:0;
+}
+
+.amc-brand h1{
+ flex:1;
+ min-width:0;
+ margin:0;
+ text-align:right;
+ font-size:24px;
+ line-height:1.3;
+}
+
+/* 手機：保持同一行，縮細 Logo 同文字 */
+@media screen and (max-width:650px){
+ .amc-brand{
+  gap:12px;
+ }
+
+ .amc-brand .amc-logo{
+  width:120px;
+ }
+
+ .amc-brand h1{
+  font-size:17px;
+ }
+}
+
+/* 列印：Logo 左、標題右，保留 Logo 比例 */
+@media print{
+ #printArea .print-brand{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8mm;
+  width:100%;
+  break-inside:avoid;
+ }
+
+ #printArea .print-brand .amc-logo{
+  flex-shrink:0;
+  width:40mm;
+  height:auto;
+  max-height:none;
+  margin:0;
+ }
+
+ #printArea .print-brand h1{
+  flex:1;
+  min-width:0;
+  margin:0;
+  text-align:right;
+  font-size:18px;
+  line-height:1.3;
+ }
+}
+</style>
 </head>
 <body>
 <div id="app" class="wrap">
