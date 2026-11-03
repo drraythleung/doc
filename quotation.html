@@ -1688,19 +1688,7 @@ function confirmationHTML(s){
      `}
  </div>`;
 }
-$("newRevisionButton").addEventListener("click",()=>{
- if(!lockedSnapshot)return;
- if(!confirm("Create a new revision? Existing confirmation will remain in the exported history. A new signature will be required to confirm the revised quotation."))return;
- history.push(clone(lockedSnapshot));
- revision++;lockedSnapshot=null;
- items.forEach(i=>i.decision="accepted");
- clearInk();paperAttachment=null;attachmentVersion++;
- $("paperFile").value="";$("paperFileName").textContent="";
- $("paperVerified").checked=false;
- ["signerName","signerRelationship","witness"].forEach(id=>$(id).value="");
- $("paperSignedDate").value=localDate();
- dirty=true; render(); message("New draft revision created. Review the services and sign again.");
-});
+
 $("resetButton").addEventListener("click",()=>{
  if(  (items.length||dirty||history.length) &&  !confirm(   "Start a new quotation? Unsaved changes, signatures and attachments on this page will be discarded. Saved backend records will remain available in Records."  ) )return;
  quoteNumber=number();revision=1;items=[];history=[];lockedSnapshot=null;
@@ -2521,15 +2509,6 @@ quotationCard.querySelector(":scope > h2").textContent =
   });
 
   /* Open the quotation tab when creating a revision or resetting. */
-  document.getElementById("newRevisionButton")
-    .addEventListener("click", function(){
-      if (!lockedSnapshot){
-        category = "quotation";
-        patientDetails.open = true;
-        render();
-        requestAnimationFrame(resizeCanvas);
-      }
-    });
 
   document.getElementById("resetButton")
     .addEventListener("click", function(){
@@ -2651,10 +2630,14 @@ let client = null;
  function draftProblem(){
   const m = metadata();
 
-  if(revision !== 1){
-   return "Backend saving supports revision 1 only.";
-  }
 
+  if(!Number.isInteger(revision) || revision < 1){
+ return "Invalid quotation revision.";
+}
+
+if(revision > 1 && !savedRevisionId){
+ return "Open or create this revision through the backend first.";
+}
   if(!items.length){
    return "Select at least one service.";
   }
@@ -2686,13 +2669,18 @@ let client = null;
 
   el("resetButton").disabled = busy;
 
-  // 新 revision 嘅 backend 尚未接駁，避免誤以為會自動保存。
-  el("newRevisionButton").disabled = true;
-  el("newRevisionButton").title =
-   "Backend saving of new revisions is not connected yet.";
+
+  el("newRevisionButton").disabled =
+ !ready ||
+ busy ||
+ !lockedSnapshot ||
+ !savedRevisionId;
+
+el("newRevisionButton").title =
+ "Create the next draft revision, or open its existing draft.";
 
   // 確認期間凍結報價頁；成功／失敗後都會解除。
-  el("app").inert = confirming;
+el("app").inert = confirming || opening;
 
   if(!ready){
    autoStatus.textContent =
@@ -2897,13 +2885,8 @@ let client = null;
    return false;
   }
 
-  if(revision !== 1){
-   message(
-    "Backend confirmation currently supports revision 1 only.",
-    true
-   );
-   return false;
-  }
+ 
+  
 
   ensureBinding();
 
@@ -3012,7 +2995,148 @@ let client = null;
    updateButtons();
   }
  };
+el("newRevisionButton").addEventListener("click", async()=>{
+ if(
+  !ready ||
+  saving ||
+  confirming ||
+  opening ||
+  !lockedSnapshot ||
+  !savedRevisionId
+ ){
+  return;
+ }
 
+ if(!window.confirm(
+  "Create the next revision? " +
+  "The current confirmed revision and its signature will remain unchanged. " +
+  "The new revision will require a new confirmation. " +
+  "If its draft already exists, that draft will be opened."
+ )){
+  return;
+ }
+
+ const sourceRevisionId = savedRevisionId;
+ const sourceVersion = savedEditVersion;
+
+ opening = true;
+ updateButtons();
+
+ try{
+  const {data,error} = await client.rpc(
+   "demo_create_revision",
+   {
+    p_source_revision_id:sourceRevisionId,
+    p_expected_version:sourceVersion
+   }
+  );
+
+  if(error)throw error;
+
+  const s = data?.document;
+
+  if(
+   !data?.revision_id ||
+   data.edit_version == null ||
+   data.status !== "draft" ||
+   !s ||
+   !s.metadata ||
+   !Array.isArray(s.items) ||
+   s.confirmation != null ||
+   s.quotationNumber !== quoteNumber ||
+   s.revision !== revision + 1
+  ){
+   throw new Error(
+    "Backend returned an invalid revision result. Check Records before retrying."
+   );
+  }
+
+  // Backend succeeded: now switch the page to its saved draft.
+  quoteNumber = s.quotationNumber;
+  revision = s.revision;
+  items = clone(s.items);
+
+  lockedSnapshot = null;
+
+  // Revision history lives in the database.
+  history = [];
+
+  metadataIds.forEach(id=>{
+   el(id).value = s.metadata[id] || "";
+  });
+
+  // Never carry the previous signature into a new revision.
+  clearInk();
+
+  paperAttachment = null;
+  attachmentVersion++;
+
+  el("paperFile").value = "";
+  el("paperFileName").textContent = "";
+  el("paperVerified").checked = false;
+  el("paperSignedDate").value = localDate();
+
+  ["signerName","signerRelationship","witness"].forEach(id=>{
+   el(id).value = "";
+  });
+
+  el("signerRole").value = "Patient";
+  lastAutoSignerName = "";
+  lastAutoWitness = "";
+
+  document.querySelector(
+   '[name="signatureMode"][value="tablet"]'
+  ).checked = true;
+
+  el("tabletSection").hidden = false;
+  el("paperSection").hidden = true;
+
+  el("printArea").innerHTML = "";
+
+  // Bind autosave and confirmation to the NEW revision record.
+  savedRevisionId = data.revision_id;
+  savedEditVersion = data.edit_version;
+  boundQuotationNumber = quoteNumber;
+
+  lastSavedDraftKey = draftKey(s);
+  lastSavedAt = new Date().toISOString();
+
+  pendingConfirmation = null;
+  saveError = "";
+  dirty = false;
+
+  category = "quotation";
+
+  const details = document.querySelector(
+   ".amc-patient-details"
+  );
+
+  if(details)details.open = true;
+
+  render();
+  showQuotationPage(true);
+
+  message(
+   data.already_exists
+    ? "Existing Revision " + revision +
+      " draft opened. Review it before signing."
+    : "Revision " + revision +
+      " draft created and saved. Review the details and sign again."
+  );
+ }catch(error){
+  console.error("Create revision failed:",error);
+
+  message(
+   "Could not create or open the next revision: " +
+   (error.message || "Please retry.") +
+   " If the connection was interrupted, retry or check Records.",
+   true
+  );
+ }finally{
+  opening = false;
+  updateButtons();
+ }
+});
  // 每 30 秒檢查；冇修改就唔發送儲存請求。
  setInterval(()=>{
   if(
@@ -3049,12 +3173,11 @@ let client = null;
  */
  ["resetButton","newRevisionButton"].forEach(id=>{
   el(id).addEventListener("click",event=>{
-   if(
-    saving ||
-    confirming ||
-    opening ||
-    id === "newRevisionButton"
-   ){
+if(
+ saving ||
+ confirming ||
+ opening
+){
     event.preventDefault();
     event.stopImmediatePropagation();
    }
