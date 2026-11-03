@@ -82,14 +82,7 @@ thead{position:sticky;top:0;background:var(--panel);z-index:1}
 details summary{cursor:pointer;font-weight:bold}
 .signature-preview{max-width:100%;max-height:170px;background:white}
 #printArea{display:none}
-body.dark{
- --bg:#101727;--panel:#1a2438;--soft:#202e46;--text:#e8eef8;
- --muted:#adbed4;--line:#364660;--blue:#3678ed;--green:#128360;
-}
-body.dark .selected{background:#183c32}
-body.dark .badge{background:#243e68;color:#bfd4ff}
-body.dark .notice{background:#3a301b;color:#ffe2a0;border-color:#66542b}
-body.dark .locked{background:#183c32;color:#a5efc9}
+
 @media(max-width:950px){.workspace{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:550px){
  .wrap{padding:10px}.card{padding:14px}.grid{grid-template-columns:1fr}
@@ -123,7 +116,6 @@ body.dark .locked{background:#183c32;color:#a5efc9}
     <h1>Combined Service Quotation</h1>
    
    </div>
-   <button id="themeButton" type="button">Dark mode</button>
   </div>
   <small>Laboratory source: 03 Sep 2026 · Imaging source: 13 Jul 2026</small>
 
@@ -1920,9 +1912,7 @@ input,select,textarea{
 input:disabled,select:disabled,textarea:disabled{
   opacity:.85;
 }
-#themeButton{
-  background:var(--soft);
-}
+
 
 /* Header search */
 .amc-search-row{
@@ -2173,63 +2163,6 @@ th{
   margin-top:14px;
 }
 
-/* Dark mode */
-body.dark{
-  --bg:#111420;
-  --panel:#1c2035;
-  --soft:#242940;
-  --text:#e8ecf4;
-  --muted:#adbad0;
-  --line:#333a55;
-  --blue:#60a5fa;
-  --green:#55efc4;
-  --red:#fda4af;
-  background:radial-gradient(
-    circle at top left,
-    #161926 0%,
-    #111420 42%,
-    #0d1017 100%
-  );
-}
-body.dark #app > header{
-  background:linear-gradient(135deg,#1c2035,#181c2e);
-}
-body.dark .badge{
-  background:rgba(59,130,246,.15);
-  border-color:rgba(59,130,246,.3);
-  color:#7cb3f4;
-}
-body.dark #categoryTabs button.active{
-  border-color:#4a5580;
-}
-body.dark .amc-tab-count{
-  background:rgba(59,130,246,.15);
-  color:#7cb3f4;
-}
-body.dark #catalogBody tr.selected{
-  background:rgba(16,185,129,.1);
-}
-body.dark #catalogBody tr.selected:hover{
-  background:rgba(16,185,129,.16);
-}
-body.dark #totals{
-  background:linear-gradient(
-    135deg,
-    rgba(16,185,129,.08),
-    rgba(5,150,105,.05)
-  );
-  border-color:rgba(16,185,129,.35);
-}
-body.dark .locked{
-  color:#a5efc9;
-}
-body.dark button.primary{
-  background:linear-gradient(135deg,#1d4ed8,#2563eb);
-}
-body.dark button.success{
-  background:linear-gradient(135deg,#047857,#059669);
-}
-
 @media(max-width:650px){
   .wrap{padding:10px}
   #app > header{padding:16px}
@@ -2252,7 +2185,7 @@ body.dark button.success{
 }
 
 @media print{
-  body,body.dark{
+  body{
     background:#fff;
     color:#111;
   }
@@ -2565,12 +2498,17 @@ quotationCard.querySelector(":scope > h2").textContent =
     }
   });
 
-  /* Persist only the display preference, not patient information. */
-  try {
-    if (localStorage.getItem("amcQuote_theme") === "dark"){
-      document.body.classList.add("dark");
-    }
-  } catch (_) {}
+
+ /* Light mode only: remove any legacy dark-mode preference. */
+  document.body.classList.remove("dark");
+
+  try{
+    localStorage.removeItem("amcQuote_theme");
+  }catch(_){}
+
+  category = "all";
+  render();
+})();
 
   function refreshThemeLabel(){
     const dark = document.body.classList.contains("dark");
