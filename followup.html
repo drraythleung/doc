@@ -774,23 +774,8 @@ pre{
 
    <div id="caseEditor">
     <section class="section">
-     <h2>Investigations and reports</h2>
+  <h2>Investigations and reports</h2>
 
-     <div class="notice blue">
-      Report entries are copied from the quotation and may not be a
-      verified breakdown of a package. Use “Tracking plan” to verify
-      the actual expected reports before recording receipt.
-     </div>
-
-<details class="batch-tools">
- <summary>Batch actions</summary>
- <div id="workflowToolbar" class="toolbar">
-      <label><input id="selectAll" type="checkbox"> Select all</label>
-      <span id="selectionCount" class="count">0 selected</span>
-      <button type="button" data-batch="received" disabled>Mark received</button>
-      <button type="button" data-batch="routine" disabled>Routine review</button>
-      <button type="button" data-batch="review" disabled>Record doctor review</button>
-      <button type="button" data-batch="filed" disabled>Mark filed</button>
 <details class="workflow-help">
  <summary>About expected reports</summary>
  <p class="small-text">
@@ -798,53 +783,72 @@ pre{
   Verify the actual expected reports before recording receipt.
  </p>
 </details>
-</div>
+
+<details class="batch-tools">
+ <summary>Batch actions</summary>
+ <div id="workflowToolbar" class="toolbar">
+  <!-- 保留你原本嘅 checkbox、selectionCount 同四個批量操作掣 -->
+ </div>
 </details>
 
 <div id="groups"></div>
     </section>
 
-    <section class="section">
-     <h2>Appointment and follow-up</h2>
-     <form id="caseForm">
-      <div class="grid">
-       <label class="field">
-        Follow-up appointment date
-        <input id="appointmentDate" type="date">
-       </label>
-       <label class="field">
-        Appointment status
-        <select id="appointmentStatus">
-         <option value="unscheduled">Not arranged</option>
-         <option value="booked">Booked</option>
-         <option value="attended">Attended</option>
-         <option value="missed">Did not attend</option>
-         <option value="declined">Patient declined</option>
-        </select>
-       </label>
-       <label class="field">
-        Next follow-up date
-        <input id="nextFollowupDate" type="date">
-       </label>
-       <label class="field full">
-        Current case notes / next steps
-        <textarea id="caseNote" rows="3" maxlength="2000"></textarea>
-       </label>
-      </div>
-      <p class="small-text">
-       Appointment attendance does not record a doctor's review.
-       Previous appointment arrangements are retained in the case
-       arrangement history when saved by this page.
-      </p>
-      <div class="actions">
-       <button type="submit" class="primary">Save appointment and follow-up</button>
-      </div>
-     </form>
-     <details>
-      <summary>Previous appointment arrangements</summary>
-      <div id="arrangementHistory"></div>
-     </details>
-    </section>
+   
+    <section class="section appointment-section">
+ <h2>Appointment and follow-up</h2>
+
+ <div id="appointmentOverview" class="appointment-overview"></div>
+
+ <details id="appointmentEditor" class="appointment-editor">
+  <summary>Arrange / update appointment</summary>
+
+  <form id="caseForm">
+   <div class="grid">
+    <label class="field">
+     Appointment date
+     <input id="appointmentDate" type="date">
+    </label>
+
+    <label class="field">
+     Appointment status
+     <select id="appointmentStatus">
+      <option value="unscheduled">Not arranged</option>
+      <option value="booked">Booked</option>
+      <option value="attended">Attended</option>
+      <option value="missed">Did not attend</option>
+      <option value="declined">Patient declined</option>
+     </select>
+    </label>
+
+    <label class="field">
+     Next follow-up date
+     <input id="nextFollowupDate" type="date">
+    </label>
+
+    <label class="field full">
+     Notes / next steps
+     <textarea id="caseNote" rows="2" maxlength="2000"></textarea>
+    </label>
+   </div>
+
+   <div class="actions">
+    <button type="submit" class="primary">
+     Save appointment
+    </button>
+   </div>
+
+   <p class="small-text">
+    Attendance and doctor review are recorded separately.
+   </p>
+  </form>
+ </details>
+
+ <details class="arrangement-archive">
+  <summary>Previous arrangements</summary>
+  <div id="arrangementHistory"></div>
+ </details>
+</section>
 
     <section class="section">
      <div class="row">
@@ -3950,7 +3954,8 @@ $("operator").addEventListener("input",() => {
    PRINT — SAVED SNAPSHOT ONLY
    ============================================================ */
 
-$("printButton").addEventListener("click",async () => {
+
+ $("printButton").addEventListener("click",async () => {
  if(!selected || editingLocked() || caseFormDirty){
   window.alert("Save or verify outstanding changes before printing.");
   return;
@@ -3962,81 +3967,63 @@ $("printButton").addEventListener("click",async () => {
  $("printArea").innerHTML = `
   <div class="brand">
    <img src="./amclogo.png" alt="Adventist Medical Center logo">
-   <h1>Adventist Medical Center<br>Report Follow-up Summary</h1>
+   <h1>
+    Adventist Medical Center<br>
+    Report Follow-up Summary
+   </h1>
   </div>
+
   <p>
    <strong>${esc(state.quotationNumber)}</strong>
    · Confirmed revision ${esc(state.sourceRevision)}<br>
    Printed: ${esc(timeLabel(new Date().toISOString()))}<br>
    Saved record: ${esc(timeLabel(record.updated_at))}
   </p>
-  <div class="patient-meta">${patientHTML(state)}</div>
 
+  <div class="patient-meta">
+   ${patientHTML(state)}
+  </div>
 
+  <section class="section">
+   <h2>Appointment and follow-up</h2>
 
+   <div class="patient-meta">
+    <div>
+     <span class="meta-label">Appointment status</span>
+     <strong>
+      ${esc(APPOINTMENTS[state.appointmentStatus] || "Not arranged")}
+     </strong>
+    </div>
 
-  <section class="section appointment-section">
- <h2>Appointment and follow-up</h2>
+    <div>
+     <span class="meta-label">Appointment date</span>
+     <strong>${esc(dateLabel(state.appointmentDate))}</strong>
+    </div>
 
- <div id="appointmentOverview" class="appointment-overview"></div>
+    <div>
+     <span class="meta-label">Next follow-up</span>
+     <strong>${esc(dateLabel(state.nextFollowupDate))}</strong>
+    </div>
 
- <details id="appointmentEditor" class="appointment-editor">
-  <summary>Arrange / update appointment</summary>
-
-  <form id="caseForm">
-   <div class="grid">
-    <label class="field">
-     Appointment date
-     <input id="appointmentDate" type="date">
-    </label>
-
-    <label class="field">
-     Appointment status
-     <select id="appointmentStatus">
-      <option value="unscheduled">Not arranged</option>
-      <option value="booked">Booked</option>
-      <option value="attended">Attended</option>
-      <option value="missed">Did not attend</option>
-      <option value="declined">Patient declined</option>
-     </select>
-    </label>
-
-    <label class="field">
-     Next follow-up date
-     <input id="nextFollowupDate" type="date">
-    </label>
-
-    <label class="field full">
-     Notes / next steps
-     <textarea id="caseNote" rows="2" maxlength="2000"></textarea>
-    </label>
+    ${state.caseNote ? `
+     <div class="full">
+      <span class="meta-label">Notes / next steps</span>
+      <div class="note">${esc(state.caseNote)}</div>
+     </div>
+    ` : ""}
    </div>
+  </section>
 
-   <div class="actions">
-    <button type="submit" class="primary">
-     Save appointment
-    </button>
-   </div>
-
-   <p class="small-text">
-    Attendance and doctor review are recorded separately.
-   </p>
-  </form>
- </details>
-
- <details class="arrangement-archive">
-  <summary>Previous arrangements</summary>
-  <div id="arrangementHistory"></div>
- </details>
-</section>
   <section class="section">
    <h2>Investigations and reports</h2>
    ${groupsHTML(state,false)}
   </section>
+
   <section class="section">
    <h2>Contact history</h2>
    ${contactsHTML(state,false)}
   </section>
+
   <section class="section">
    <p class="small-text">
     This is a follow-up tracking summary, not a laboratory or imaging report.
@@ -4048,7 +4035,9 @@ $("printButton").addEventListener("click",async () => {
 
  await Promise.all(
   [...$("printArea").querySelectorAll("img")].map(image =>
-   image.decode ? image.decode().catch(() => {}) : Promise.resolve()
+   image.decode
+    ? image.decode().catch(() => {})
+    : Promise.resolve()
   )
  );
 
