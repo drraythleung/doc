@@ -594,6 +594,9 @@ tbody tr:last-child td{border-bottom:0}
     <div class="actions">
      <button id="backButton" type="button">← Worklist</button>
      <button id="printButton" type="button">Print / PDF</button>
+     <button id="tracingButton" type="button" class="danger">
+ Cancel tracing
+</button>
     </div>
    </div>
 
@@ -989,9 +992,7 @@ function stage(state,group,report){
  if(report.cancelled){
   return {key:"cancelled",label:"Cancelled",colour:"",order:90};
  }
- if(!group.planReviewed){
-  return {key:"plan",label:"Report list not verified",colour:"amber",order:10};
- }
+
  if(!report.receivedDate){
   return {key:"received",label:"Awaiting report",colour:"amber",order:50};
  }
@@ -1030,7 +1031,7 @@ function metrics(state){
  const doctor=active.filter(x=>
   nurseDone(x.report)&&needsDoctorReview(x.report));
  const patient=active.filter(x=>patientPending(state,x.report));
- const plans=state.groups.filter(x=>!x.planReviewed);
+ const plans=[];
  const urgent=active.filter(x=>
   x.report.triage==="urgent"&&needsDoctorReview(x.report));
  const due=!!state.nextFollowupDate&&state.nextFollowupDate<=today();
@@ -1570,7 +1571,52 @@ function showSaved(context){
   ${nextHTML}
  `,{type:"saved",target},true);
 }
+function openTracingAction(){
+ const cancelled=tracingCancelled(selected.state);
 
+ const opened=startWorkspace(
+  cancelled?"Resume tracing":"Cancel tracing",
+  selected.state.metadata?.patientName||"",
+  `
+   <div class="notice ${cancelled?"blue":"red"}">
+    ${cancelled
+     ? "Resume tracing for this case. Existing reports and activity "+
+       "records will be retained."
+     : "Cancel tracing for this case and remove it from the active "+
+       "worklist. Records will be retained. Outstanding reports "+
+       "will not be marked as completed."}
+   </div>
+
+   <div class="form-grid">
+    ${field("Reason *",`
+     <textarea id="caseTracingReason"
+      rows="3" maxlength="2000" required
+      placeholder="For example: investigation not performed, patient declined, or care transferred elsewhere"></textarea>`)}
+
+    ${cancelled?field("Next contact date — optional",`
+     <input id="resumeTracingDate"
+      type="date" min="${today()}">`):""}
+   </div>
+
+   <label class="checkline">
+    <input id="caseTracingConfirmed" type="checkbox" required>
+    <span>
+     ${cancelled
+      ? "I confirm that tracing should resume for this case."
+      : "I confirm that tracing should be cancelled for this case. "+
+        "Any known abnormal or urgent results must still be "+
+        "handled according to clinic procedure."}
+    </span>
+   </label>
+  `,
+  {type:"caseTracing",cancel:!cancelled}
+ );
+
+ if(opened){
+  $("actionSave").textContent=
+   cancelled?"Resume tracing":"Confirm cancel tracing";
+ }
+}
 /* Contact / appointment */
 
 function openContact(target=null){
@@ -1652,19 +1698,28 @@ function openContact(target=null){
     </div>
    </div>
 
-   <div class="section">
-    <label class="checkline">
-     <input id="changeFollowup" type="checkbox">
-     <span>Set / change next contact date</span>
-    </label>
-    <div id="followupFields" class="form-grid" hidden>
-     ${field("Next contact date",`
-      <input id="nextFollowupDate" type="date"
-       value="${esc(state.nextFollowupDate||"")}">
-      <small>Leave blank to remove the reminder.</small>`)}
+ <div class="section">
+    <div class="form-grid">
+     ${field("Follow-up arrangement *",`
+      <select id="followupAction" required>
+       <option value="keep">Keep existing reminder</option>
+       <option value="complete">Follow-up completed — clear reminder</option>
+       <option value="reschedule">Further follow-up needed — set a new date</option>
+      </select>
+      <small>
+       Current reminder: ${esc(dateLabel(state.nextFollowupDate))}.
+       After successful contact, confirm whether further follow-up is needed.
+      </small>`)}
     </div>
-   </div>
 
+    <div id="followupFields" class="form-grid" hidden>
+     ${field("Next contact date *",`
+      <input id="nextFollowupDate" type="date"
+       min="${today()}"
+       value="${esc(state.nextFollowupDate||"")}">`)}
+    </div>
+
+   </div>
    <div class="form-grid">
     ${field("Notes",`
      <textarea id="contactNote" rows="2" maxlength="2000"></textarea>`)}
@@ -1679,7 +1734,7 @@ function openContact(target=null){
 function refreshContactFields(){
  const contact=$("recordContact").checked;
  const appointment=$("changeAppointment").checked;
- const followup=$("changeFollowup").checked;
+ const reschedule=$("followupAction").value==="reschedule";
 
  $("contactFields").hidden=!contact;
  $("contactFields").querySelectorAll("input,select").forEach(el=>{
@@ -1693,10 +1748,9 @@ function refreshContactFields(){
   el.disabled=!appointment;
  });
 
- $("followupFields").hidden=!followup;
- $("followupFields").querySelectorAll("input").forEach(el=>{
-  el.disabled=!followup;
- });
+ $("followupFields").hidden=!reschedule;
+ $("nextFollowupDate").disabled=!reschedule;
+ $("nextFollowupDate").required=reschedule;
 }
 
 function refreshDeliveryOptions(){
@@ -1762,7 +1816,7 @@ function openPlan(groupId,target=null){
  const group=selected.state.groups.find(x=>x.id===groupId);
  if(!group) throw new Error("Investigation not found.");
 
- startWorkspace("Verify report list",group.name,`
+startWorkspace("Edit report list",group.name,`
   <p class="small-text">
    Quotation quantity: ${esc(group.qty)}.
    Add one entry for each expected report.
@@ -1782,10 +1836,6 @@ function openPlan(groupId,target=null){
     <small>Leave blank if no additional reports are needed.</small>`)}
   </div>
 
-  <label class="checkline">
-   <input id="planConfirmed" type="checkbox" required>
-   <span>I have verified the expected reports and quantities.</span>
-  </label>
  `,{type:"plan",groupId,target});
 }
 
@@ -2441,8 +2491,8 @@ $("actionForm").addEventListener("submit",async event=>{
    const {group,report}=findReport(
     state,context.target.groupId,context.target.reportId);
 
-   if(report.cancelled||!group.planReviewed){
-    throw new Error("Verify the report list and restore tracking first.");
+if(report.cancelled){
+    throw new Error("Restore report tracking first.");
    }
    if(report.receivedDate){
     throw new Error("Receipt is already recorded. Use Corrections to change the date.");
@@ -2535,9 +2585,11 @@ $("actionForm").addEventListener("submit",async event=>{
   const changeAppointment=$("changeAppointment").checked;
   const status=value("appointmentStatus");
   const date=value("appointmentDate");
-  const changeFollowup=$("changeFollowup").checked;
-  const nextDate=value("nextFollowupDate");
-
+const followupAction=value("followupAction");
+  const changeFollowup=followupAction!=="keep";
+  const nextDate=followupAction==="reschedule"
+   ? value("nextFollowupDate")
+   : "";
   const linked=[
    ...$("actionFields").querySelectorAll("[data-contact-report]:checked")
   ].map(el=>({
@@ -2587,8 +2639,31 @@ $("actionForm").addEventListener("submit",async event=>{
     }
    }
 
-   if(changeFollowup&&nextDate&&!validDate(nextDate)){
-    throw new Error("Enter a valid next contact date.");
+if(!["keep","complete","reschedule"].includes(followupAction)){
+    throw new Error("Select a follow-up arrangement.");
+   }
+
+   if(followupAction==="complete"){
+    if(!recordContact||!["confirmed","connected"].includes(delivery)){
+     throw new Error(
+      "Record successful patient contact before marking this follow-up "+
+      "as completed. For unanswered calls, voicemail or messages sent "+
+      "without confirmation, keep the reminder or set a new date."
+     );
+    }
+
+    if(!note){
+     throw new Error(
+      "Enter notes explaining why this follow-up is completed "+
+      "and no further contact is needed."
+     );
+    }
+   }
+
+   if(followupAction==="reschedule"){
+    if(!validDate(nextDate)||nextDate<today()){
+     throw new Error("Select a next contact date of today or later.");
+    }
    }
 
    const before=arrangementSnapshot(state);
@@ -2635,7 +2710,7 @@ $("actionForm").addEventListener("submit",async event=>{
   });
 
  }else if(context.type==="plan"){
-  const confirmed=$("planConfirmed").checked;
+const confirmed=true;
   const existing=[
    ...$("actionFields").querySelectorAll("[data-plan-report]")
   ].map(el=>({id:el.dataset.planReport,name:el.value.trim()}));
@@ -2700,9 +2775,7 @@ $("actionForm").addEventListener("submit",async event=>{
    if(report.receivedDate&&!date){
     throw new Error("A recorded received date cannot be cleared here.");
    }
-   if(!report.receivedDate&&date&&!group.planReviewed){
-    throw new Error("Verify the report list first.");
-   }
+
    if(!date&&(triage!=="pending"||filed||reopen)){
     throw new Error("Record receipt before classification, review or filing.");
    }
@@ -2877,9 +2950,10 @@ $("actionFields").addEventListener("input",()=>{
 $("actionFields").addEventListener("change",event=>{
  actionDirty=true;
  if(event.target.id==="contactMethod") refreshDeliveryOptions();
- if(["recordContact","changeAppointment","changeFollowup"].includes(event.target.id)){
+if(["recordContact","changeAppointment","followupAction"].includes(event.target.id)){
   refreshContactFields();
  }
+ 
  updateControls();
 });
 
@@ -2988,7 +3062,7 @@ function printReportHTML(state){
         <td><strong>${esc(report.name||group.name)}</strong></td>
         <td>
          <strong>${esc(current.label)}</strong>
-         <div>Report list: ${group.planReviewed?"Verified":"Not verified"}</div>
+
          ${report.receivedDate?`
           <div>Received: ${esc(dateLabel(report.receivedDate))}</div>`:""}
          <div>
@@ -3080,7 +3154,511 @@ $("printButton").addEventListener("click",handleUI(async()=>{
  try{window.print()}
  finally{document.title=oldTitle}
 }));
+/* Integrated tracing repair — keep this block before Startup */
 
+(()=>{
+ "use strict";
+
+ /* Case tracing state */
+
+ function isTracingCancelled(state){
+  return state?.tracingStatus==="cancelled";
+ }
+
+ // Makes the existing openTracingAction() work.
+ window.tracingCancelled=isTracingCancelled;
+
+ function tracingHistoryHTML(state){
+  const history=state.tracingHistory||[];
+  if(!history.length) return "";
+
+  return [...history].reverse().map(item=>`
+   <div class="log">
+    <strong>
+     ${item.type==="cancel"
+      ? "Case tracing cancelled"
+      : "Case tracing resumed"}
+    </strong>
+    <div class="small-text">
+     ${esc(timeLabel(item.at))}
+     · ${esc(item.staff||"Staff not recorded")}
+    </div>
+    <div class="note">${esc(item.reason)}</div>
+   </div>
+  `).join("");
+ }
+
+ /* Worklist categories */
+
+ TABS.splice(0,TABS.length,
+  ["all","Active patients"],
+  ["missing","Awaiting reports"],
+  ["review","Awaiting review"],
+  ["followup","Contact / appointment"],
+  ["cancelled","Cancelled tracing"]
+ );
+
+ STEP_LABELS.plan="Edit report list";
+
+ matchesTab=function(state,tab){
+  if(tab==="cancelled") return isTracingCancelled(state);
+  if(isTracingCancelled(state)) return false;
+
+  const m=metrics(state);
+
+  return tab==="all"||
+   (tab==="missing"&&m.missing.length>0)||
+   (tab==="review"&&(m.nurse.length>0||m.doctor.length>0))||
+   (tab==="followup"&&(
+    m.patient.length>0||m.due||m.missed||m.arrange
+   ));
+ };
+
+ const originalMetrics=metrics;
+
+ metrics=function(state){
+  const result=originalMetrics(state);
+
+  // Report progress remains unchanged.
+  // Cancelled cases do not generate routine worklist reminders.
+  if(isTracingCancelled(state)){
+   result.due=false;
+   result.missed=false;
+   result.arrange=false;
+  }
+
+  return result;
+ };
+
+ const originalOutstandingText=outstandingText;
+
+ outstandingText=function(state){
+  if(isTracingCancelled(state)) return "Tracing cancelled";
+  return originalOutstandingText(state);
+ };
+
+ /* Remove remaining report-verification UI */
+
+ const originalGroupsHTML=groupsHTML;
+
+ groupsHTML=function(state){
+  return originalGroupsHTML(state)
+   .replaceAll("Verify reports","Edit report list");
+ };
+
+ openManage=function(){
+  startWorkspace(
+   "Report lists",
+   "Edit the expected reports for each investigation.",
+   selected.state.groups.map(group=>`
+    <div class="manage-row">
+     <div class="row">
+      <strong>${esc(group.name)}</strong>
+      <button type="button" class="small"
+       data-plan="${esc(group.id)}">
+       Edit report list
+      </button>
+     </div>
+     <div class="small-text">
+      ${group.reports.length} report(s)
+      · Quotation quantity: ${esc(group.qty)}
+     </div>
+    </div>
+   `).join("")||'<p class="muted">No investigations.</p>',
+   {type:"manage"},
+   true
+  );
+ };
+
+ /* Controls and cancelled-case display */
+
+ const originalUpdateControls=updateControls;
+
+ updateControls=function(){
+  originalUpdateControls();
+
+  const locked=editingLocked();
+  const cancelled=!!selected&&isTracingCancelled(selected.state);
+
+  $("tracingButton").disabled=!selected||locked;
+  $("tracingButton").textContent=
+   cancelled?"Resume tracing":"Cancel tracing";
+  $("tracingButton").classList.toggle("danger",!cancelled);
+
+  $("contactButton").disabled=!selected||locked||cancelled;
+  $("correctionButton").disabled=!selected||locked||cancelled;
+  $("manageButton").disabled=!selected||locked||cancelled;
+
+  $("patientButton").disabled=!selected||locked;
+  $("historyButton").disabled=!selected||locked;
+
+  // Keep report records and expandable archives viewable.
+  // Disable their editing actions instead of hiding the records.
+  $("groups").querySelectorAll("button").forEach(button=>{
+   button.disabled=locked||cancelled;
+  });
+ };
+
+ const originalRenderDetail=renderDetail;
+
+ renderDetail=function(){
+  originalRenderDetail();
+  if(!selected) return;
+
+  const state=selected.state;
+
+  if(isTracingCancelled(state)){
+   const last=[...(state.tracingHistory||[])]
+    .reverse()
+    .find(item=>item.type==="cancel");
+
+   const urgent=metrics(state).urgent.length;
+
+   $("caseSummary").innerHTML=`
+    ${badge("Tracing cancelled","red")}
+    ${last?`
+     <span class="small-text">
+      ${esc(last.reason)}
+      · ${esc(timeLabel(last.at))}
+      · ${esc(last.staff||"Staff not recorded")}
+     </span>
+    `:""}
+    ${urgent?`
+     <span class="warning">
+      Known urgent results still require clinic escalation.
+     </span>
+    `:""}
+   `;
+  }
+
+  updateControls();
+ };
+
+ /* Prevent ordinary actions on cancelled cases */
+
+ const originalStartWorkspace=startWorkspace;
+
+ startWorkspace=function(
+  title,subtitle,fields,context,readOnly=false
+ ){
+  if(selected&&isTracingCancelled(selected.state)){
+   const permitted=
+    context?.type==="caseTracing"||
+    (
+     readOnly&&
+     ["history","patientDetails","saved"].includes(context?.type)
+    );
+
+   if(!permitted){
+    throw new Error(
+     "Tracing has been cancelled for this case. "+
+     "Resume tracing before making changes."
+    );
+   }
+  }
+
+  return originalStartWorkspace(
+   title,subtitle,fields,context,readOnly
+  );
+ };
+
+ const originalCommit=commit;
+
+ commit=async function(action,mutator){
+  if(!selected||editingLocked()) return false;
+
+  const tracingAction=actionContext?.type==="caseTracing";
+
+  if(isTracingCancelled(selected.state)&&!tracingAction){
+   showActionError(
+    "Tracing has been cancelled for this case. "+
+    "Resume tracing before making changes."
+   );
+   return false;
+  }
+
+  return originalCommit(action,(state,staff)=>{
+   // Check the actual state being prepared for saving as well.
+   if(isTracingCancelled(state)&&!tracingAction){
+    throw new Error(
+     "Tracing has been cancelled for this case. "+
+     "Resume tracing before making changes."
+    );
+   }
+
+   mutator(state,staff);
+  });
+ };
+
+ /* Dedicated Cancel / Resume workspace */
+
+ openTracingAction=function(){
+  if(!selected){
+   throw new Error("Open a patient first.");
+  }
+
+  const cancelled=isTracingCancelled(selected.state);
+
+  const opened=startWorkspace(
+   cancelled?"Resume tracing":"Cancel tracing",
+   selected.state.metadata?.patientName||"",
+   `
+    <div class="notice ${cancelled?"blue":"red"}">
+     ${cancelled
+      ? "Resume tracing for this case. Existing reports and "+
+        "activity records will be retained."
+      : "Cancel tracing for this case and remove it from the "+
+        "active worklist. Records will be retained. Outstanding "+
+        "reports will not be marked as completed."}
+    </div>
+
+    <div class="form-grid">
+     ${field("Reason *",`
+      <textarea id="caseTracingReason"
+       rows="3" maxlength="2000" required
+       placeholder="For example: investigation not performed, patient declined, or care transferred elsewhere"></textarea>
+     `)}
+
+     ${cancelled?field("Next contact date — optional",`
+      <input id="resumeTracingDate"
+       type="date" min="${today()}">
+     `):""}
+    </div>
+
+    <label class="checkline">
+     <input id="caseTracingConfirmed"
+      type="checkbox" required>
+     <span>
+      ${cancelled
+       ? "I confirm that tracing should resume for this case."
+       : "I confirm that tracing should be cancelled for this "+
+         "case. Any known abnormal or urgent results must "+
+         "still be handled according to clinic procedure."}
+     </span>
+    </label>
+   `,
+   {type:"caseTracing",cancel:!cancelled}
+  );
+
+  if(opened){
+   $("actionSave").textContent=
+    cancelled?"Resume tracing":"Confirm cancel tracing";
+  }
+ };
+
+ $("tracingButton").addEventListener(
+  "click",
+  handleUI(()=>openTracingAction())
+ );
+
+ /*
+  * Handle case tracing before the existing submit handler.
+  * Other actions continue to use the original handler unchanged.
+  */
+ $("actionForm").addEventListener("submit",handleUI(async event=>{
+  if(actionContext?.type!=="caseTracing") return;
+
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  if(editingLocked()) return;
+
+  $("actionError").hidden=true;
+
+  const context=clone(actionContext);
+  const reason=$("caseTracingReason").value.trim();
+  const confirmed=$("caseTracingConfirmed").checked;
+  const nextDate=context.cancel
+   ? ""
+   : ($("resumeTracingDate")?.value.trim()||"");
+
+  await commit(
+   context.cancel
+    ? "Case tracing cancelled"
+    : "Case tracing resumed",
+   (state,staff)=>{
+    if(!reason||!confirmed){
+     throw new Error("Enter a reason and confirm the action.");
+    }
+
+    if(reason.length>2000){
+     throw new Error("The reason must be at most 2,000 characters.");
+    }
+
+    if(isTracingCancelled(state)===context.cancel){
+     throw new Error(
+      "The tracing status has changed. Reload and check."
+     );
+    }
+
+    if(nextDate&&(
+     !validDate(nextDate)||nextDate<today()
+    )){
+     throw new Error(
+      "Select a next contact date of today or later."
+     );
+    }
+
+    const before=arrangementSnapshot(state);
+    const at=new Date().toISOString();
+
+    state.tracingHistory=[
+     ...(state.tracingHistory||[]),
+     {
+      id:uuid(),
+      at,
+      staff,
+      type:context.cancel?"cancel":"resume",
+      reason,
+      previousNextFollowupDate:state.nextFollowupDate||""
+     }
+    ];
+
+    state.tracingStatus=
+     context.cancel?"cancelled":"active";
+
+    // Cancellation clears the reminder.
+    // Resumption uses the date explicitly entered by staff.
+    state.nextFollowupDate=nextDate;
+
+    appendArrangement(state,before,staff);
+   }
+  );
+ }),true);
+
+ /* Saved confirmation */
+
+ const originalShowSaved=showSaved;
+
+ showSaved=function(context){
+  if(context?.type!=="caseTracing"){
+   return originalShowSaved(context);
+  }
+
+  if(!selected||editingLocked()) return;
+
+  const cancelled=isTracingCancelled(selected.state);
+
+  startWorkspace(
+   "Saved",
+   selected.state.metadata?.patientName||"",
+   `
+    <div class="success-box">
+     <strong>✓ Changes saved</strong>
+    </div>
+    <p>
+     ${cancelled
+      ? "Tracing has been cancelled for this case."
+      : "Tracing has resumed for this case."}
+    </p>
+    <p class="muted">
+     ${cancelled
+      ? "Reports and activity records have been retained. "+
+        "The case is available under Cancelled tracing. "+
+        "Use Resume tracing when appropriate."
+      : "Existing reports and activity records have been "+
+        "retained. Continue with the outstanding actions."}
+    </p>
+   `,
+   {type:"saved"},
+   true
+  );
+ };
+
+ /* History */
+
+ const originalReadableHistoryHTML=readableHistoryHTML;
+
+ readableHistoryHTML=function(state){
+  const history=tracingHistoryHTML(state);
+  const existing=originalReadableHistoryHTML(state);
+
+  if(!history) return existing;
+
+  return `
+   <h3>Case tracing history</h3>
+   ${history}
+   <section class="section">
+    <h3>Report and contact history</h3>
+    ${existing}
+   </section>
+  `;
+ };
+
+ const originalSavedActivityLabel=savedActivityLabel;
+
+ savedActivityLabel=function(action){
+  if(action==="Case tracing cancelled"){
+   return "Case tracing cancelled";
+  }
+  if(action==="Case tracing resumed"){
+   return "Case tracing resumed";
+  }
+  return originalSavedActivityLabel(action);
+ };
+
+ /* Print: preserve status, reason, staff, time and tracing history */
+
+ const originalPrintReportHTML=printReportHTML;
+
+ printReportHTML=function(state){
+  const history=tracingHistoryHTML(state);
+
+  return `
+   <p>
+    <strong>Case tracing status:</strong>
+    ${isTracingCancelled(state)?"Cancelled":"Active"}
+   </p>
+
+   ${history?`
+    <div>
+     <h3>Case tracing history</h3>
+     ${history}
+    </div>
+   `:""}
+
+   ${originalPrintReportHTML(state)}
+  `;
+ };
+
+ /* Validate new fields without changing existing records */
+
+ const originalValidateRecord=validateRecord;
+
+ validateRecord=function(record){
+  originalValidateRecord(record);
+
+  const state=record.state;
+
+  // Older records may omit these fields and remain active.
+  if(
+   state.tracingStatus!==undefined&&
+   !["active","cancelled"].includes(state.tracingStatus)
+  ){
+   throw new Error("Unsupported tracing status.");
+  }
+
+  if(
+   state.tracingHistory!==undefined&&
+   (
+    !Array.isArray(state.tracingHistory)||
+    state.tracingHistory.some(item=>
+     !item||
+     !["cancel","resume"].includes(item.type)||
+     typeof item.reason!=="string"||
+     typeof item.at!=="string"||
+     typeof item.staff!=="string"
+    )
+   )
+  ){
+   throw new Error("Unsupported tracing history format.");
+  }
+
+  return record;
+ };
+
+})();
+ 
 /* Startup */
 
 async function connect(){
