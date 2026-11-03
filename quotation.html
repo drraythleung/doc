@@ -339,8 +339,8 @@ details summary{cursor:pointer;font-weight:bold}
 </p>
     <div id="confirmationEditor">
      <div class="mode-options">
-      <label><input type="radio" name="signatureMode" value="tablet" checked> Tablet signature</label>
-      <label><input type="radio" name="signatureMode" value="paper"> Paper signature</label>
+<label><input type="radio" name="signatureMode" value="tablet"> Tablet signature</label>
+<label><input type="radio" name="signatureMode" value="paper" checked> Paper signature</label>
      </div>
      <div class="grid" style="grid-template-columns:1fr 1fr">
       <label class="field">Signer name 
@@ -360,7 +360,7 @@ details summary{cursor:pointer;font-weight:bold}
       </label>
      </div>
 
-     <div id="tabletSection" style="margin-top:12px">
+     <div id="tabletSection" hidden style="margin-top:12px">
       <label class="field" for="signatureCanvas">Sign below *</label>
       <div class="signature-box">
        <canvas id="signatureCanvas" aria-label="Patient signature drawing area"></canvas>
@@ -370,7 +370,7 @@ details summary{cursor:pointer;font-weight:bold}
       </div>
      </div>
 
-     <div id="paperSection" hidden style="margin-top:12px">
+    <div id="paperSection" style="margin-top:12px">
   
       <label class="field" style="margin-top:12px">Signed document — PDF, PNG or JPEG; maximum 8 MB
        <input id="paperFile" type="file" accept=".pdf,.png,.jpg,.jpeg">
@@ -1801,12 +1801,12 @@ $("resetButton").addEventListener("click",()=>{
  
  ["signerName","signerRelationship","witness"].forEach(id=>$(id).value="");
  $("signerRole").value="Patient";
- document.querySelector(
- '[name="signatureMode"][value="tablet"]'
-).checked=true;
+document.querySelector(
+ '[name="signatureMode"][value="paper"]'
+).checked = true;
 
-$("tabletSection").hidden=false;
-$("paperSection").hidden=true;
+el("tabletSection").hidden = true;
+el("paperSection").hidden = false;
  lastAutoSignerName="";
 lastAutoWitness="";
  $("paperVerified").checked=false;
@@ -3409,12 +3409,12 @@ el("newRevisionButton").addEventListener("click", async()=>{
   lastAutoSignerName = "";
   lastAutoWitness = "";
 
-  document.querySelector(
-   '[name="signatureMode"][value="tablet"]'
-  ).checked = true;
+document.querySelector(
+ '[name="signatureMode"][value="paper"]'
+).checked = true;
 
-  el("tabletSection").hidden = false;
-  el("paperSection").hidden = true;
+el("tabletSection").hidden = true;
+el("paperSection").hidden = false;
 
   el("printArea").innerHTML = "";
 
@@ -3769,12 +3769,12 @@ lockedSnapshot = openingConfirmed ? clone(s) : null;
    lastAutoSignerName = "";
    lastAutoWitness = "";
 
-   document.querySelector(
-    '[name="signatureMode"][value="tablet"]'
-   ).checked = true;
+document.querySelector(
+ '[name="signatureMode"][value="paper"]'
+).checked = true;
 
-   el("tabletSection").hidden = false;
-   el("paperSection").hidden = true;
+el("tabletSection").hidden = true;
+el("paperSection").hidden = false;
 
    // 清除上一張已準備列印的文件。
    el("printArea").innerHTML = "";
