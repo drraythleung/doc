@@ -4221,5 +4221,1683 @@ if(selected){
  text-align:left!important;
 }
 </style>
+ <!-- Consolidated report workflow -->
+<style>
+.wrap{max-width:1600px}
+
+.workflow-toolbar{
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:8px;
+ padding:12px 14px;
+ margin-bottom:12px;
+ border:1px solid #e2e8f0;
+ border-radius:12px;
+ background:#f8fafc;
+}
+.workflow-toolbar label{
+ display:flex;
+ align-items:center;
+ gap:7px;
+ font-size:12px;
+ font-weight:700;
+}
+.workflow-count{
+ margin-right:auto;
+ color:#64748b;
+ font-size:12px;
+}
+.workflow-help{
+ width:100%;
+ margin:2px 0 0;
+ color:#64748b;
+ font-size:11px;
+ line-height:1.5;
+}
+.workflow-toolbar button,
+.wf-actions button,
+.wf-file button{
+ min-height:36px;
+ padding:7px 11px;
+ border-radius:8px;
+ font-size:12px;
+ box-shadow:none;
+}
+.workflow-toolbar button:hover,
+.wf-actions button:hover,
+.wf-file button:hover{
+ transform:none;
+}
+
+.report-table-wrap{
+ overflow-x:auto;
+ border:1px solid #e2e8f0;
+ border-radius:14px;
+ background:#fff;
+}
+.report-table{
+ width:100%;
+ table-layout:fixed;
+}
+.report-table th{
+ padding:12px;
+ background:#f8fafc;
+ font-size:11px;
+ color:#64748b;
+}
+.report-table td{
+ padding:16px 12px;
+ vertical-align:top;
+ border-bottom:1px solid #edf1f5;
+}
+.report-table th:nth-child(1){width:38px}
+.report-table th:nth-child(2){width:27%}
+.report-table th:nth-child(3){width:36%}
+.report-table th:nth-child(4){width:auto}
+.report-table tr:last-child td{border-bottom:0}
+.report-table tr.wf-selected{background:#eff6ff}
+.wf-check{text-align:center}
+.test-title{
+ font-size:14px;
+ font-weight:700;
+ line-height:1.4;
+ overflow-wrap:anywhere;
+}
+.test-code{
+ margin-top:5px;
+ color:#64748b;
+ font-size:11px;
+ overflow-wrap:anywhere;
+}
+
+.wf-progress{
+ display:flex;
+ align-items:flex-start;
+ list-style:none;
+ padding:0;
+ margin:0 0 10px;
+}
+.wf-progress li{
+ position:relative;
+ flex:1;
+ min-width:0;
+ text-align:center;
+ color:#64748b;
+ font-size:10px;
+ line-height:1.35;
+}
+.wf-progress li:not(:last-child)::after{
+ content:"";
+ position:absolute;
+ top:9px;
+ left:calc(50% + 12px);
+ width:calc(100% - 24px);
+ height:3px;
+ background:#e2e8f0;
+}
+.wf-progress li.done:not(:last-child)::after{
+ background:#93c5fd;
+}
+.wf-dot{
+ position:relative;
+ z-index:1;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ width:21px;
+ height:21px;
+ margin:0 auto 6px;
+ border:2px solid #cbd5e1;
+ border-radius:50%;
+ background:#fff;
+ color:#fff;
+ font-size:11px;
+ font-weight:700;
+}
+.wf-progress li.done .wf-dot{
+ border-color:#2563eb;
+ background:#2563eb;
+}
+.wf-progress li.done{color:#1e40af}
+.wf-status-line{
+ margin-top:5px;
+ font-size:12px;
+ font-weight:600;
+}
+.wf-small{
+ margin-top:6px;
+ color:#64748b;
+ font-size:11px;
+ line-height:1.5;
+ overflow-wrap:anywhere;
+}
+.wf-file{
+ display:flex;
+ align-items:center;
+ gap:7px;
+ flex-wrap:wrap;
+ margin-top:9px;
+}
+.wf-file button{
+ min-height:30px;
+ padding:4px 8px;
+ background:#f8fafc;
+ color:#475569;
+ font-size:11px;
+}
+
+.wf-actions{
+ display:flex;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:6px;
+}
+.wf-actions button{
+ background:#fff;
+ border:1px solid #dce4ee;
+ color:#334155;
+ font-weight:600;
+ white-space:normal;
+}
+.wf-actions button.primary{
+ background:#2563eb;
+ border-color:#2563eb;
+ color:#fff;
+}
+.wf-actions button.wf-routine{
+ background:#ecfdf5;
+ border-color:#a7e3c9;
+ color:#047857;
+}
+.wf-actions button.wf-priority{
+ background:#fffbeb;
+ border-color:#f5cf75;
+ color:#854d0e;
+}
+.wf-actions button.wf-urgent{
+ background:#fff1f2;
+ border-color:#fecaca;
+ color:#b91c1c;
+}
+.wf-actions .wf-secondary{
+ min-height:32px;
+ padding:5px 8px;
+ background:transparent;
+ border-color:transparent;
+ color:#52657d;
+ font-size:11px;
+}
+.wf-actions .wf-secondary:hover{
+ background:#eaf0f7;
+}
+.wf-action-footer{
+ display:flex;
+ gap:6px;
+ margin-top:8px;
+}
+
+.wf-history-item{
+ padding:10px 0;
+ border-bottom:1px solid #e2e8f0;
+ font-size:12px;
+}
+.wf-history-item:last-child{border-bottom:0}
+.wf-history-item summary{
+ cursor:pointer;
+ color:#2563eb;
+ font-size:11px;
+ margin-top:5px;
+}
+.wf-history-item pre{
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+ padding:10px;
+ background:#f8fafc;
+ border-radius:8px;
+ font-size:11px;
+}
+.wf-contact-entry{
+ border:1px solid #e2e8f0;
+ border-radius:10px;
+ padding:12px;
+ margin:10px 0;
+}
+.wf-contact-entry button{
+ margin-top:8px;
+ font-size:12px;
+ min-height:34px;
+}
+#wfFields .grid{margin:0}
+#wfDialog .notice{font-size:12px}
+#wfHistory{
+ max-height:50vh;
+ overflow:auto;
+}
+.wf-warning{
+ margin-top:8px;
+ color:#b91c1c;
+ font-size:11px;
+ line-height:1.5;
+}
+.wf-checkbox{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ margin:10px 0;
+ font-size:12px;
+}
+
+@media(max-width:700px){
+ .report-table,
+ .report-table tbody,
+ .report-table tr,
+ .report-table td{
+  display:block;
+  width:100%;
+ }
+ .report-table thead{display:none}
+ .report-table tr{
+  position:relative;
+  padding:14px;
+  border-bottom:1px solid #e2e8f0;
+ }
+ .report-table tr:last-child{border-bottom:0}
+ .report-table td{
+  padding:0;
+  border:0;
+ }
+ .report-table td.wf-check{
+  position:absolute;
+  top:15px;
+  right:14px;
+  width:auto;
+ }
+ .report-table td.wf-test{
+  padding-right:30px;
+ }
+ .report-table td.wf-status{
+  margin-top:16px;
+ }
+ .report-table td.wf-action-cell{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid #edf1f5;
+ }
+ .wf-progress{
+  max-width:420px;
+ }
+ .wf-progress li{font-size:11px}
+ .wf-actions button{
+  min-height:40px;
+ }
+ .workflow-toolbar button{
+  min-height:40px;
+ }
+}
+@media print{
+ .workflow-toolbar,
+ .wf-check,
+ .wf-action-cell,
+ .wf-file button{
+  display:none!important;
+ }
+ .report-table-wrap{overflow:visible}
+ .report-table{table-layout:auto}
+ .report-table tr{break-inside:avoid}
+ .report-table th:nth-child(1),
+ .report-table th:nth-child(2),
+ .report-table th:nth-child(3){
+  width:auto;
+ }
+ .wf-progress{
+  print-color-adjust:exact;
+  -webkit-print-color-adjust:exact;
+ }
+}
+</style>
+
+<dialog id="wfDialog" aria-labelledby="wfTitle">
+ <form id="wfForm">
+  <h2 id="wfTitle">Report action</h2>
+  <p id="wfSubtitle" class="muted"></p>
+  <div id="wfFields"></div>
+  <div id="wfHistory"></div>
+  <div class="actions">
+   <button id="wfSave" type="submit" class="primary">
+    Record and save
+   </button>
+   <button id="wfClose" type="button">Close</button>
+  </div>
+ </form>
+</dialog>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------
+   All UI text is English.
+   Existing version-checked RPC / request-ID retry is retained.
+   New fields require the backend to preserve state JSON.
+   ------------------------------------------------------------ */
+
+const WF_TRIAGE = {
+ pending:"Awaiting nurse review",
+ routine:"Routine",
+ doctor:"Priority",
+ urgent:"Urgent"
+};
+
+Object.assign(TRIAGE,{
+ pending:"Awaiting nurse review",
+ routine:"Routine review",
+ doctor:"Priority review",
+ urgent:"Urgent review"
+});
+
+const wfPlanIndex =
+ TAB_DEFINITIONS.findIndex(([id]) => id === "plan");
+
+if(wfPlanIndex >= 0) TAB_DEFINITIONS.splice(wfPlanIndex,1);
+
+const wfDoctorTab =
+ TAB_DEFINITIONS.find(([id]) => id === "doctor");
+if(wfDoctorTab) wfDoctorTab[1] = "Doctor review";
+
+if(activeTab === "plan") activeTab = "all";
+if(previousListTab === "plan") previousListTab = "all";
+
+const wfOldNotice = $("groups").previousElementSibling;
+if(wfOldNotice?.classList.contains("notice")){
+ wfOldNotice.remove();
+}
+
+/* Remember manually entered staff name for this tab only. */
+try{
+ $("operator").value =
+  $("operator").value ||
+  sessionStorage.getItem("amc-followup-recording-staff") ||
+  "";
+}catch(error){}
+
+$("operator").placeholder = "Your name — enter once per session";
+
+$("operator").addEventListener("input",() => {
+ try{
+  sessionStorage.setItem(
+   "amc-followup-recording-staff",
+   $("operator").value.trim()
+  );
+ }catch(error){}
+});
+
+/* ------------------------------------------------------------
+   Metrics: every received report requires doctor review.
+   Filing and patient receipt confirmation remain separate.
+   ------------------------------------------------------------ */
+
+const wfBaseMetrics = metrics;
+
+metrics = function(state){
+ const m = wfBaseMetrics(state);
+
+ m.plans = [];
+ m.doctor = m.received.filter(r => !r.reviewedAt);
+ m.urgent = m.doctor.filter(r => r.triage === "urgent");
+
+ m.patient = m.received.filter(r =>
+  r.patientContactRequired === true &&
+  !wfPatientConfirmed(state,r.id)
+ );
+
+ return m;
+};
+
+function wfPatientConfirmed(state,reportId){
+ return (state.contacts || []).some(c =>
+  c.audience === "patient" &&
+  c.reportId === reportId &&
+  (
+   c.deliveryStatus === "confirmed" ||
+   !!c.confirmedAt
+  )
+ );
+}
+
+const wfBaseWorkBadges = workBadges;
+
+workBadges = function(state){
+ let html = wfBaseWorkBadges(state)
+  .replaceAll("Doctor follow-up:","Doctor review:");
+
+ const m = metrics(state);
+
+ if(m.patient.length){
+  html += badge(
+   `Patient receipt pending: ${m.patient.length}`,
+   "amber"
+  );
+ }
+
+ return html;
+};
+
+const wfBaseMatchesTab = matchesTab;
+
+matchesTab = function(state,tab){
+ if(tab === "followup" && metrics(state).patient.length){
+  return true;
+ }
+ return wfBaseMatchesTab(state,tab);
+};
+
+/* ------------------------------------------------------------
+   Automatic per-report logs.
+   Backend audit remains the authoritative source for server
+   save time/account ID, subject to the existing SQL controls.
+   These local event times are browser-generated.
+   ------------------------------------------------------------ */
+
+function wfSnapshot(report){
+ const copy = clone(report);
+ delete copy.actionLog;
+ return copy;
+}
+
+const wfBaseCommit = commit;
+
+commit = async function(action,mutator,allowDirty = false){
+ return wfBaseCommit(
+  action,
+  (state,staff) => {
+   const before = new Map();
+
+   for(const g of state.groups || []){
+    for(const r of g.reports || []){
+     before.set(r.id,wfSnapshot(r));
+    }
+   }
+
+   const contactsBefore = clone(state.contacts || []);
+
+   for(const g of state.groups || []){
+    g.planReviewed = true; // Legacy compatibility flag.
+   }
+
+   mutator(state,staff);
+
+   const eventAt = new Date().toISOString();
+   const operationId = uuid();
+
+   for(const g of state.groups || []){
+    for(const r of g.reports || []){
+     const previous = before.get(r.id) || null;
+     const current = wfSnapshot(r);
+
+     const oldContacts = contactsBefore.filter(
+      c => c.reportId === r.id
+     );
+     const newContacts = (state.contacts || []).filter(
+      c => c.reportId === r.id
+     );
+
+     const reportChanged =
+      JSON.stringify(previous) !== JSON.stringify(current);
+
+     const contactsChanged =
+      JSON.stringify(oldContacts) !== JSON.stringify(newContacts);
+
+     if(!reportChanged && !contactsChanged) continue;
+
+     if(!Array.isArray(r.actionLog)) r.actionLog = [];
+
+     r.actionLog.push({
+      id:uuid(),
+      operationId,
+      at:eventAt,
+      staff,
+      action,
+      before:previous,
+      after:current,
+      ...(contactsChanged ? {
+       contactsBefore:oldContacts,
+       contactsAfter:newContacts
+      } : {})
+     });
+    }
+   }
+  },
+  allowDirty
+ );
+};
+
+/* ------------------------------------------------------------
+   Toolbar
+   ------------------------------------------------------------ */
+
+const wfToolbar = document.createElement("div");
+wfToolbar.className = "workflow-toolbar";
+wfToolbar.id = "wfToolbar";
+
+wfToolbar.innerHTML = `
+ <label>
+  <input id="wfSelectAll" type="checkbox">
+  Select all
+ </label>
+ <span id="wfCount" class="workflow-count">0 selected</span>
+ <button type="button" data-wf-batch="received" disabled>
+  Mark received
+ </button>
+ <button type="button" data-wf-batch="routine" disabled>
+  Routine review
+ </button>
+ <button type="button" data-wf-batch="review" disabled>
+  Mark reviewed
+ </button>
+ <button type="button" data-wf-batch="filed" disabled>
+  Mark filed
+ </button>
+ <p class="workflow-help">
+  All reports require doctor review, including Routine reports.
+  Filing is tracked separately. This page records communication;
+  it does not send calls, emails or WhatsApp messages.
+ </p>
+`;
+
+$("groups").before(wfToolbar);
+
+function wfBoxes(){
+ return [...$("groups").querySelectorAll(".wf-select")];
+}
+
+function wfSelected(){
+ return wfBoxes().filter(c => c.checked).map(c => ({
+  groupId:c.dataset.group,
+  reportId:c.dataset.report
+ }));
+}
+
+function wfSelectionChanged(){
+ const boxes = wfBoxes();
+ const checked = boxes.filter(c => c.checked);
+ const reports = selected
+  ? wfSelected().map(t =>
+     findReport(selected.state,t.groupId,t.reportId).report
+    )
+  : [];
+
+ $("wfCount").textContent = `${checked.length} selected`;
+
+ $("wfSelectAll").checked =
+  boxes.length > 0 && checked.length === boxes.length;
+
+ $("wfSelectAll").indeterminate =
+  checked.length > 0 && checked.length < boxes.length;
+
+ $("wfSelectAll").disabled = !boxes.length;
+
+ for(const c of boxes){
+  c.closest("tr").classList.toggle("wf-selected",c.checked);
+ }
+
+ const has = reports.length > 0;
+ const received = has && reports.every(r => !!r.receivedDate);
+
+ for(const b of wfToolbar.querySelectorAll("[data-wf-batch]")){
+  const a = b.dataset.wfBatch;
+
+  if(a === "received"){
+   b.disabled = !has || reports.every(r => !!r.receivedDate);
+  }else if(a === "routine"){
+   b.disabled = !received ||
+    reports.some(r =>
+     !!r.reviewedAt ||
+     !["pending","routine"].includes(r.triage)
+    ) ||
+    reports.every(r => r.triage === "routine");
+  }else if(a === "review"){
+   b.disabled = !received ||
+    reports.some(r => !!r.reviewedAt);
+  }else if(a === "filed"){
+   b.disabled = !received || reports.every(r => !!r.archived);
+  }
+ }
+}
+
+$("wfSelectAll").addEventListener("change",event => {
+ for(const c of wfBoxes()) c.checked = event.target.checked;
+ wfSelectionChanged();
+});
+
+$("groups").addEventListener("change",event => {
+ if(event.target.matches(".wf-select")) wfSelectionChanged();
+});
+
+/* ------------------------------------------------------------
+   Rendering
+   ------------------------------------------------------------ */
+
+function wfButton(g,r,action,label,style = ""){
+ return `
+  <button type="button"
+   class="${esc(style)}"
+   data-group="${esc(g.id)}"
+   data-report="${esc(r.id)}"
+   data-action="${esc(action)}">
+   ${esc(label)}
+  </button>
+ `;
+}
+
+function wfLatestDoctorContact(state,reportId){
+ return [...(state.contacts || [])].reverse().find(c =>
+  c.audience === "doctor" && c.reportId === reportId
+ );
+}
+
+function wfDeliveryLabel(c){
+ if(c.deliveryStatus === "confirmed" || c.confirmedAt){
+  return "Receipt confirmed";
+ }
+ if(c.deliveryStatus === "sent") return "Sent";
+ if(c.deliveryStatus === "no-answer") return "No answer";
+ if(c.deliveryStatus === "voicemail") return "Voicemail left";
+ return c.outcome || "Not recorded";
+}
+
+function wfProgressHTML(state,r,g,interactive){
+ if(r.cancelled){
+  return badge("Tracking cancelled","amber") +
+   `<div class="wf-small">${esc(r.cancelReason || "")}</div>`;
+ }
+
+ const nurseDone =
+  ["routine","doctor","urgent"].includes(r.triage);
+
+ const steps = [
+  ["Received",!!r.receivedDate],
+  ["Nurse review",nurseDone],
+  ["Doctor review",!!r.reviewedAt]
+ ];
+
+ let status = "Awaiting report";
+
+ if(r.receivedDate){
+  status = r.reviewedAt
+   ? "Doctor reviewed"
+   : nurseDone
+    ? `${WF_TRIAGE[r.triage]} · Awaiting doctor review`
+    : "Awaiting nurse review";
+ }
+
+ const colour = r.reviewedAt ? "green" :
+  r.triage === "urgent" ? "red" :
+  r.triage === "doctor" ? "amber" : "blue";
+
+ let html = `
+  <ol class="wf-progress" aria-label="Report review progress">
+   ${steps.map(([label,done]) => `
+    <li class="${done ? "done" : ""}">
+     <span class="wf-dot" aria-hidden="true">${done ? "✓" : ""}</span>
+     ${esc(label)}
+     <span class="muted">${done ? " — done" : " — pending"}</span>
+    </li>
+   `).join("")}
+  </ol>
+  <div class="wf-status-line">${badge(status,colour)}</div>
+ `;
+
+ if(r.receivedDate){
+  html += `
+   <div class="wf-small">
+    Received: ${esc(dateLabel(r.receivedDate))}
+   </div>
+  `;
+ }
+
+ if(r.reviewedAt){
+  html += `
+   <div class="wf-small">
+    ${esc(r.doctorName || "Doctor not recorded")}
+    · ${esc(timeLabel(r.reviewedAt))}
+   </div>
+  `;
+ }
+
+ const contact = wfLatestDoctorContact(state,r.id);
+
+ if(contact){
+  html += `
+   <div class="wf-small">
+    Doctor contact: ${esc(contact.method)}
+    · ${esc(wfDeliveryLabel(contact))}
+   </div>
+  `;
+ }else if(r.notifiedAt){
+  html += `
+   <div class="wf-small">
+    Legacy doctor notification recorded.
+    Method / receipt confirmation not recorded.
+   </div>
+  `;
+ }
+
+ if(r.triage === "urgent" && !r.reviewedAt){
+  html += `
+   <div class="wf-warning">
+    Immediate direct escalation required.
+    A sent message does not confirm receipt or doctor review.
+   </div>
+  `;
+ }
+
+ if(r.patientContactRequired === true){
+  html += badge(
+   wfPatientConfirmed(state,r.id)
+    ? "Patient receipt confirmed"
+    : "Patient receipt pending",
+   wfPatientConfirmed(state,r.id) ? "green" : "amber"
+  );
+ }
+
+ html += `<div class="wf-file">`;
+
+ if(r.archived){
+  html += badge("Filed","green");
+ }else if(r.receivedDate && interactive){
+  html += wfButton(g,r,"filed","Mark filed");
+ }else{
+  html += badge("Not filed","amber");
+ }
+
+ html += `</div>`;
+ return html;
+}
+
+function wfActionsHTML(state,g,r){
+ const b = (a,label,style = "") =>
+  wfButton(g,r,a,label,style);
+
+ let main = "";
+
+ if(r.cancelled){
+  main = b("restore","Restore tracking");
+ }else if(!r.receivedDate){
+  main = b("received","Received","primary");
+ }else if(!r.reviewedAt){
+  if(!["routine","doctor","urgent"].includes(r.triage)){
+   main += b("routine","Routine review","wf-routine");
+   main += b("priority","Priority review","wf-priority");
+   main += b("urgent","Urgent review","wf-urgent");
+  }else{
+   if(["doctor","urgent"].includes(r.triage)){
+    main += b("notify","Contact doctor");
+   }
+   main += b("review","Mark reviewed","primary");
+  }
+ }
+
+ if(
+  !r.cancelled &&
+  r.patientContactRequired === true &&
+  !wfPatientConfirmed(state,r.id)
+ ){
+  main += b("patient","Contact patient");
+ }
+
+ const contact = wfLatestDoctorContact(state,r.id);
+
+ if(
+  !r.cancelled &&
+  !r.reviewedAt &&
+  contact?.deliveryStatus === "sent" &&
+  !contact.confirmedAt
+ ){
+  main += b(
+   "confirm-doctor",
+   "Confirm doctor receipt",
+   "wf-secondary"
+  );
+ }
+
+ return `
+  <div class="wf-actions">${main}</div>
+  <div class="wf-actions wf-action-footer">
+   ${b("details","Details","wf-secondary")}
+   ${b("history","History","wf-secondary")}
+  </div>
+ `;
+}
+
+groupsHTML = function(state,showButtons = true){
+ let rows = "";
+
+ for(const g of state.groups || []){
+  for(const r of g.reports || []){
+   rows += `
+    <tr>
+     ${showButtons ? `
+      <td class="wf-check">
+       ${!r.cancelled ? `
+        <input type="checkbox" class="wf-select"
+         data-group="${esc(g.id)}"
+         data-report="${esc(r.id)}"
+         aria-label="Select ${esc(r.name || g.name)}">
+       ` : ""}
+      </td>
+     ` : ""}
+     <td class="wf-test">
+      <div class="test-title">${esc(r.name || g.name)}</div>
+      <div class="test-code">
+       ${esc(g.code || "")} · Qty: ${esc(g.qty)}
+      </div>
+      ${g.sourceRemoved ? `
+       <div class="wf-small">
+        Removed from latest quotation — record retained.
+       </div>
+      ` : ""}
+     </td>
+     <td class="wf-status">
+      ${wfProgressHTML(state,r,g,showButtons)}
+     </td>
+     ${showButtons ? `
+      <td class="wf-action-cell">
+       ${wfActionsHTML(state,g,r)}
+      </td>
+     ` : ""}
+    </tr>
+   `;
+  }
+
+  if(!(g.reports || []).length){
+   rows += `
+    <tr>
+     ${showButtons ? '<td class="wf-check"></td>' : ""}
+     <td class="wf-test">
+      <div class="test-title">${esc(g.name)}</div>
+     </td>
+     <td class="wf-status">No tracking entry</td>
+     ${showButtons ? `
+      <td class="wf-action-cell">
+       <button type="button" data-plan="${esc(g.id)}">
+        Report tracking plan
+       </button>
+      </td>
+     ` : ""}
+    </tr>
+   `;
+  }
+ }
+
+ if(!rows){
+  return '<p class="muted">No report-tracking items.</p>';
+ }
+
+ return `
+  <div class="report-table-wrap">
+   <table class="report-table">
+    <thead><tr>
+     ${showButtons ? '<th aria-label="Selection"></th>' : ""}
+     <th>Ordered test</th>
+     <th>Status</th>
+     ${showButtons ? "<th>Actions</th>" : ""}
+    </tr></thead>
+    <tbody>${rows}</tbody>
+   </table>
+  </div>
+ `;
+};
+
+const wfBaseRenderDetail = renderDetail;
+
+renderDetail = function(){
+ wfBaseRenderDetail();
+ wfSelectionChanged();
+};
+
+/* ------------------------------------------------------------
+   Dialog helpers
+   ------------------------------------------------------------ */
+
+let wfContext = null;
+
+function wfField(label,html,full = false){
+ return `
+  <label class="field ${full ? "full" : ""}">
+   ${esc(label)}${html}
+  </label>
+ `;
+}
+
+function wfOptions(values,current){
+ return values.map(([value,label]) => `
+  <option value="${esc(value)}"
+   ${value === current ? "selected" : ""}>
+   ${esc(label)}
+  </option>
+ `).join("");
+}
+
+function wfDoctorInput(value = ""){
+ const names = new Set();
+
+ for(const record of records){
+  for(const g of record.state.groups || []){
+   for(const r of g.reports || []){
+    if(r.doctorName) names.add(r.doctorName);
+   }
+  }
+  for(const c of record.state.contacts || []){
+   if(c.audience === "doctor" && c.target) names.add(c.target);
+  }
+ }
+
+ return `
+  <input id="wfDoctor" list="wfDoctorNames"
+   maxlength="100" autocomplete="off"
+   value="${esc(value)}"
+   placeholder="Choose or enter doctor name" required>
+  <datalist id="wfDoctorNames">
+   ${[...names].sort().map(n =>
+    `<option value="${esc(n)}"></option>`
+   ).join("")}
+  </datalist>
+ `;
+}
+
+function wfShow(title,subtitle,fields,context){
+ requireCleanCaseForm();
+ recordingStaff();
+
+ wfContext = context;
+ $("wfTitle").textContent = title;
+ $("wfSubtitle").textContent = subtitle;
+ $("wfFields").innerHTML = fields;
+ $("wfHistory").innerHTML = "";
+ $("wfSave").hidden = false;
+ $("wfSave").textContent = "Record and save";
+ $("wfDialog").showModal();
+}
+
+function wfContactFields(audience,doctor = ""){
+ return `
+  <div class="grid">
+   ${wfField("Contact recipient",`
+    <select id="wfAudience">
+     ${wfOptions([
+      ["doctor","Doctor"],
+      ["patient","Patient"]
+     ],audience)}
+    </select>
+   `)}
+   <div id="wfRecipientField">
+    ${wfField("Doctor name *",wfDoctorInput(doctor))}
+   </div>
+   ${wfField("Contact method",`
+    <select id="wfMethod">
+     <option value="Telephone">Telephone</option>
+     <option value="Email">Email</option>
+     <option value="WhatsApp">WhatsApp</option>
+    </select>
+   `)}
+   ${wfField("Contact result",`
+    <select id="wfDelivery"></select>
+   `)}
+   ${wfField("Notes — optional",`
+    <textarea id="wfContactNote" rows="2" maxlength="2000"></textarea>
+   `,true)}
+  </div>
+  <p class="muted" style="font-size:12px">
+   Record communication that has already taken place.
+   Sent does not mean receipt confirmed.
+   Receipt confirmation does not mean doctor review completed.
+  </p>
+ `;
+}
+
+function wfRefreshContactRecipient(){
+ const doctor = $("wfAudience").value === "doctor";
+ $("wfRecipientField").hidden = !doctor;
+ $("wfDoctor").required = doctor;
+}
+
+function wfRefreshDelivery(){
+ const telephone = $("wfMethod").value === "Telephone";
+
+ $("wfDelivery").innerHTML = wfOptions(
+  telephone ? [
+   ["confirmed","Connected — receipt confirmed"],
+   ["no-answer","No answer"],
+   ["voicemail","Voicemail left"]
+  ] : [
+   ["sent","Sent — receipt not confirmed"],
+   ["confirmed","Receipt confirmed"]
+  ],
+  telephone ? "confirmed" : "sent"
+ );
+}
+
+$("wfFields").addEventListener("change",event => {
+ if(event.target.id === "wfMethod") wfRefreshDelivery();
+ if(event.target.id === "wfAudience") wfRefreshContactRecipient();
+});
+
+function wfOpenContact(target,audience){
+ const report = target
+  ? findReport(
+     selected.state,target.groupId,target.reportId
+    ).report
+  : null;
+
+ wfShow(
+  "Record contact",
+  report?.name || "Case contact",
+  wfContactFields(audience,report?.doctorName || ""),
+  {type:"contact",targets:target ? [target] : []}
+ );
+
+ if(target) $("wfAudience").disabled = true;
+
+ wfRefreshContactRecipient();
+ wfRefreshDelivery();
+}
+
+function wfOpenReview(targets){
+ const reports = targets.map(t =>
+  findReport(selected.state,t.groupId,t.reportId).report
+ );
+
+ if(reports.some(r => !r.receivedDate || r.cancelled || r.reviewedAt)){
+  throw new Error(
+   "Select received, active reports awaiting doctor review."
+  );
+ }
+
+ wfShow(
+  "Record doctor review",
+  targets.length === 1
+   ? reports[0].name
+   : `${targets.length} selected reports`,
+  `
+   <div class="grid">
+    ${wfField("Reviewing doctor *",
+     wfDoctorInput(reports[0].doctorName || ""),true)}
+    ${wfField("Patient contact required? *",`
+     <select id="wfPatientRequired" required>
+      <option value="">Select an option</option>
+      <option value="no">No</option>
+      <option value="yes">Yes — confirmation of receipt required</option>
+     </select>
+    `,true)}
+    ${wfField("Review notes — optional",`
+     <textarea id="wfReviewNote" rows="2" maxlength="2000"></textarea>
+    `,true)}
+   </div>
+   <div class="notice blue">
+    Record only reports the named doctor has actually reviewed.
+    No prior notification entry is required.
+   </div>
+  `,
+  {type:"review",targets}
+ );
+}
+
+function wfOpenDetails(target){
+ const {report:r} = findReport(
+  selected.state,target.groupId,target.reportId
+ );
+
+ wfShow(
+  "Report details",
+  r.name,
+  `
+   <div class="grid">
+    ${wfField("Received date",`
+     <input id="wfReceivedDate" type="date"
+      max="${today()}" value="${esc(r.receivedDate || "")}"
+      ${r.receivedDate ? "required" : ""}>
+    `)}
+    ${wfField("Initial review classification",`
+     <select id="wfTriage">
+      ${wfOptions([
+       ["pending","Awaiting nurse review"],
+       ["routine","Routine review"],
+       ["doctor","Priority review"],
+       ["urgent","Urgent review"]
+      ],r.triage || "pending")}
+     </select>
+    `)}
+    ${wfField("Report notes — optional",`
+     <textarea id="wfNurseNote" rows="3" maxlength="2000"
+      >${esc(r.nurseNote || "")}</textarea>
+    `,true)}
+    <label class="wf-checkbox full">
+     <input id="wfArchived" type="checkbox"
+      ${r.archived ? "checked" : ""}>
+     Report filed in the clinic system
+    </label>
+   </div>
+   ${r.reviewedAt ? `
+    <div class="notice">
+     Changing the initial review classification will reopen
+     doctor review. The previous values remain in History.
+    </div>
+   ` : ""}
+   ${!r.receivedDate && !r.cancelled ? `
+    <div class="wf-actions">
+     <button type="button" id="wfCancelTracking"
+      class="wf-secondary">
+      Cancel tracking
+     </button>
+    </div>
+   ` : ""}
+  `,
+  {type:"details",targets:[target]}
+ );
+}
+
+function wfOpenHistory(target){
+ requireCleanCaseForm();
+
+ const {report:r} = findReport(
+  selected.state,target.groupId,target.reportId
+ );
+
+ wfContext = null;
+ $("wfTitle").textContent = "Report history";
+ $("wfSubtitle").textContent = r.name;
+ $("wfFields").innerHTML = "";
+ $("wfSave").hidden = true;
+
+ $("wfHistory").innerHTML = [...(r.actionLog || [])]
+  .reverse()
+  .map(log => `
+   <div class="wf-history-item">
+    <strong>${esc(log.action)}</strong><br>
+    ${esc(log.staff)} · ${esc(timeLabel(log.at))}
+    <details>
+     <summary>View recorded changes</summary>
+     <pre>${esc(JSON.stringify({
+      before:log.before,
+      after:log.after,
+      ...(log.contactsBefore ? {
+       contactsBefore:log.contactsBefore,
+       contactsAfter:log.contactsAfter
+      } : {})
+     },null,2))}</pre>
+    </details>
+   </div>
+  `).join("") || `
+   <p class="muted">
+    No per-report history recorded by this version yet.
+    Earlier actions may be available in Activity history.
+   </p>
+  `;
+
+ $("wfHistory").insertAdjacentHTML("beforeend",`
+  <p class="wf-small">
+   Event times shown here are recorded by the browser.
+   Backend Activity history records server save times.
+  </p>
+ `);
+
+ $("wfDialog").showModal();
+}
+
+$("wfClose").addEventListener("click",() => {
+ $("wfDialog").close();
+});
+
+/* ------------------------------------------------------------
+   Fast actions
+   ------------------------------------------------------------ */
+
+async function wfQuick(targets,action){
+ const titles = {
+  received:"Report received",
+  routine:"Nurse initial review — Routine",
+  priority:"Nurse initial review — Priority",
+  urgent:"Nurse initial review — Urgent",
+  filed:"Report filed"
+ };
+
+ const names = targets.map(t =>
+  findReport(selected.state,t.groupId,t.reportId).report.name
+ );
+
+ return commit(
+  `${titles[action]}: ${names.join("; ")}`,
+  (state,staff) => {
+   const now = new Date().toISOString();
+
+   for(const t of targets){
+    const {report:r} = findReport(
+     state,t.groupId,t.reportId
+    );
+
+    if(r.cancelled){
+     throw new Error("Restore tracking before recording an action.");
+    }
+
+    if(action === "received"){
+     if(!r.receivedDate) r.receivedDate = today();
+     continue;
+    }
+
+    if(!r.receivedDate){
+     throw new Error("Record the report as received first.");
+    }
+
+    if(action === "filed"){
+     r.archived = true;
+     continue;
+    }
+
+    if(r.reviewedAt){
+     throw new Error("Use Details to change a reviewed report.");
+    }
+
+    const outcome = {
+     routine:"routine",
+     priority:"doctor",
+     urgent:"urgent"
+    }[action];
+
+    if(!outcome) throw new Error("Unknown action.");
+
+    if(r.triage !== "pending" && r.triage !== outcome){
+     throw new Error("Use Details to change the existing classification.");
+    }
+
+    if(r.triage !== outcome){
+     r.triage = outcome;
+     r.nurseName = staff;
+     r.nurseAt = now;
+    }
+   }
+  }
+ );
+}
+
+/* The original delegated click handler calls this function. */
+openReportAction = function(groupId,reportId,action){
+ const target = {groupId,reportId};
+
+ try{
+  if(busy || pendingWrite || staleRecord) return;
+
+  if(["received","routine","priority","urgent","filed"].includes(action)){
+   void wfQuick([target],action);
+  }else if(action === "review"){
+   wfOpenReview([target]);
+  }else if(action === "notify"){
+   wfOpenContact(target,"doctor");
+  }else if(action === "patient"){
+   wfOpenContact(target,"patient");
+  }else if(action === "details"){
+   wfOpenDetails(target);
+  }else if(action === "history"){
+   wfOpenHistory(target);
+  }else if(action === "confirm-doctor"){
+   const contact = wfLatestDoctorContact(selected.state,reportId);
+   if(contact) void wfConfirmReceipt(contact.id);
+  }else if(action === "restore"){
+   wfShow(
+    "Restore tracking",
+    findReport(selected.state,groupId,reportId).report.name,
+    wfField("Reason",`
+     <select id="wfReason">
+      <option>Cancelled in error</option>
+      <option>Report tracking required again</option>
+     </select>
+    `),
+    {type:"restore",targets:[target]}
+   );
+  }
+ }catch(error){
+  window.alert(error.message);
+ }
+};
+
+wfToolbar.addEventListener("click",event => {
+ const button = event.target.closest("[data-wf-batch]");
+ if(!button || button.disabled) return;
+
+ try{
+  const targets = wfSelected();
+
+  if(button.dataset.wfBatch === "review"){
+   wfOpenReview(targets);
+  }else{
+   void wfQuick(targets,button.dataset.wfBatch);
+  }
+ }catch(error){
+  window.alert(error.message);
+ }
+});
+
+/* ------------------------------------------------------------
+   Save dialog actions
+   ------------------------------------------------------------ */
+
+$("wfForm").addEventListener("submit",async event => {
+ event.preventDefault();
+
+ if(!wfContext) return;
+
+ const context = clone(wfContext);
+ const value = id => $(id)?.value.trim() || "";
+
+ if(context.type === "review"){
+  const doctor = value("wfDoctor");
+  const required = value("wfPatientRequired");
+  const note = value("wfReviewNote");
+
+  await commit("Doctor review recorded",(state,staff) => {
+   if(!doctor || !["yes","no"].includes(required)){
+    throw new Error("Select a doctor and patient contact requirement.");
+   }
+
+   for(const t of context.targets){
+    const {report:r} = findReport(state,t.groupId,t.reportId);
+
+    if(r.cancelled || !r.receivedDate || r.reviewedAt){
+     throw new Error("This report is not awaiting doctor review.");
+    }
+
+    r.doctorName = doctor;
+    r.reviewedAt = new Date().toISOString();
+    r.reviewRecordedBy = staff;
+    r.reviewNote = note;
+    r.patientContactRequired = required === "yes";
+   }
+  });
+
+ }else if(context.type === "contact"){
+  const audience = value("wfAudience");
+  const doctor = value("wfDoctor");
+  const method = value("wfMethod");
+  const status = value("wfDelivery");
+  const note = value("wfContactNote");
+
+  await commit(
+   `${audience === "doctor" ? "Doctor" : "Patient"} contact: ` +
+   `${method} — ${wfDeliveryLabel({deliveryStatus:status})}`,
+   (state,staff) => {
+    if(
+     !["doctor","patient"].includes(audience) ||
+     !["Telephone","Email","WhatsApp"].includes(method) ||
+     !["sent","confirmed","no-answer","voicemail"].includes(status)
+    ){
+     throw new Error("Select valid contact details.");
+    }
+
+    if(audience === "doctor" && !doctor){
+     throw new Error("Select or enter the doctor's name.");
+    }
+
+    const now = new Date().toISOString();
+    const target = context.targets[0];
+    let report = null;
+
+    if(target){
+     report = findReport(
+      state,target.groupId,target.reportId
+     ).report;
+
+     if(report.cancelled || !report.receivedDate){
+      throw new Error("Contact tracking requires an active received report.");
+     }
+    }
+
+    const contact = {
+     id:uuid(),
+     at:now,
+     staff,
+     audience,
+     method,
+     deliveryStatus:status,
+     outcome:wfDeliveryLabel({deliveryStatus:status}),
+     target:audience === "doctor" ? doctor : "Patient",
+     note,
+     nextDate:"",
+     reportId:report?.id || "",
+     reportName:report?.name || "",
+     confirmedAt:status === "confirmed" ? now : "",
+     confirmedBy:status === "confirmed" ? staff : ""
+    };
+
+    state.contacts.push(contact);
+
+    if(report && audience === "doctor"){
+     if(status === "confirmed"){
+      report.notifiedAt = now;
+     }
+    }
+   }
+  );
+
+ }else if(context.type === "details"){
+  const date = value("wfReceivedDate");
+  const triage = value("wfTriage");
+  const note = value("wfNurseNote");
+  const archived = $("wfArchived").checked;
+
+  await commit("Report details updated",(state,staff) => {
+   const t = context.targets[0];
+   const {report:r} = findReport(state,t.groupId,t.reportId);
+
+   if(r.cancelled){
+    throw new Error("Restore tracking before editing report details.");
+   }
+
+   if(date && (!validDate(date) || date > today())){
+    throw new Error("Enter a valid received date, not in the future.");
+   }
+
+   if(r.receivedDate && !date){
+    throw new Error(
+     "Clearing a recorded receipt is not supported by this editor."
+    );
+   }
+
+   if(!date && (triage !== "pending" || archived)){
+    throw new Error("Record receipt before review or filing.");
+   }
+
+   if(r.triage !== triage){
+    r.triage = triage;
+    r.nurseName = triage === "pending" ? "" : staff;
+    r.nurseAt = triage === "pending"
+     ? ""
+     : new Date().toISOString();
+
+    if(r.reviewedAt){
+     r.reviewedAt = "";
+     r.reviewRecordedBy = "";
+     r.reviewNote = "";
+     r.patientContactRequired = false;
+    }
+   }
+
+   r.receivedDate = date;
+   r.archived = archived;
+   r.nurseNote = note;
+  });
+
+ }else if(context.type === "cancel" || context.type === "restore"){
+  const reason = value("wfReason");
+
+  await commit(
+   context.type === "cancel"
+    ? "Report tracking cancelled"
+    : "Report tracking restored",
+   state => {
+    const t = context.targets[0];
+    const {report:r} = findReport(state,t.groupId,t.reportId);
+
+    if(context.type === "cancel" && r.receivedDate){
+     throw new Error("A received report cannot be cancelled.");
+    }
+
+    r.cancelled = context.type === "cancel";
+    r.cancelReason = reason;
+   }
+  );
+ }
+});
+
+$("wfFields").addEventListener("click",event => {
+ if(event.target.id !== "wfCancelTracking") return;
+
+ const target = wfContext.targets[0];
+ $("wfDialog").close();
+
+ try{
+  wfShow(
+   "Cancel tracking",
+   findReport(
+    selected.state,target.groupId,target.reportId
+   ).report.name,
+   `
+    <div class="notice">
+     Use only when the investigation/report no longer requires tracking.
+     This does not record that a report has been reviewed.
+    </div>
+    ${wfField("Verified reason",`
+     <select id="wfReason">
+      <option>Investigation confirmed not performed</option>
+      <option>Duplicate tracking entry</option>
+      <option>Report no longer required — verified</option>
+      <option>Tracking entry created in error</option>
+     </select>
+    `)}
+   `,
+   {type:"cancel",targets:[target]}
+  );
+ }catch(error){
+  window.alert(error.message);
+ }
+});
+
+/* ------------------------------------------------------------
+   Contact history and confirmation
+   ------------------------------------------------------------ */
+
+contactsHTML = function(state){
+ const contacts = [...(state.contacts || [])].reverse();
+
+ if(!contacts.length){
+  return '<p class="muted">No contact records recorded.</p>';
+ }
+
+ return contacts.map(c => `
+  <div class="wf-contact-entry">
+   <strong>
+    ${esc(c.audience === "doctor" ? "Doctor" :
+     c.audience === "patient" ? "Patient" : "Legacy contact")}
+    · ${esc(c.method)}
+   </strong>
+   ${badge(
+    wfDeliveryLabel(c),
+    c.confirmedAt || c.deliveryStatus === "confirmed"
+     ? "green"
+     : "amber"
+   )}
+   <div class="wf-small">
+    ${esc(c.target || "")}
+    ${c.reportName ? " · " + esc(c.reportName) : ""}
+   </div>
+   <div class="wf-small">
+    Recorded by ${esc(c.staff)} · ${esc(timeLabel(c.at))}
+   </div>
+   ${c.note ? `
+    <div class="note wf-small">${esc(c.note)}</div>
+   ` : ""}
+   ${c.confirmedAt ? `
+    <div class="wf-small">
+     Receipt confirmed:
+     ${esc(timeLabel(c.confirmedAt))}
+     · ${esc(c.confirmedBy || c.staff)}
+    </div>
+   ` : ""}
+   ${c.deliveryStatus === "sent" && !c.confirmedAt ? `
+    <button type="button"
+     data-wf-confirm="${esc(c.id)}">
+     Confirm receipt
+    </button>
+   ` : ""}
+  </div>
+ `).join("");
+};
+
+async function wfConfirmReceipt(contactId){
+ if(!window.confirm(
+  "Record that the recipient has confirmed receipt?"
+ )) return;
+
+ await commit("Contact receipt confirmed",(state,staff) => {
+  const c = state.contacts.find(x => x.id === contactId);
+
+  if(!c || c.deliveryStatus !== "sent" || c.confirmedAt){
+   throw new Error("This contact is not awaiting receipt confirmation.");
+  }
+
+  c.confirmedAt = new Date().toISOString();
+  c.confirmedBy = staff;
+
+  // Keep deliveryStatus = sent to retain the original sending event.
+  // confirmedAt records the separate confirmation event.
+  if(c.audience === "doctor" && c.reportId){
+   for(const g of state.groups || []){
+    const r = g.reports.find(x => x.id === c.reportId);
+    if(r) r.notifiedAt = c.confirmedAt;
+   }
+  }
+
+  if(!Array.isArray(c.confirmationLog)) c.confirmationLog = [];
+  c.confirmationLog.push({
+   at:c.confirmedAt,
+   staff,
+   action:"Receipt confirmed"
+  });
+ });
+}
+
+$("contacts").addEventListener("click",event => {
+ const b = event.target.closest("[data-wf-confirm]");
+ if(b) void wfConfirmReceipt(b.dataset.wfConfirm);
+});
+
+/* Replace the original Add contact button handler. */
+$("addContactButton").addEventListener("click",event => {
+ event.preventDefault();
+ event.stopImmediatePropagation();
+
+ try{
+  if(busy || pendingWrite || staleRecord) return;
+  wfOpenContact(null,"patient");
+ }catch(error){
+  window.alert(error.message);
+ }
+},true);
+
+/* Print should never include interactive confirmation controls. */
+const wfPrintStyle = document.createElement("style");
+wfPrintStyle.textContent = `
+ @media print{
+  #printArea button{display:none!important}
+ }
+`;
+document.head.append(wfPrintStyle);
+
+/* Finish applying the consolidated layout. */
+renderList();
+if(selected) renderDetail();
+else wfSelectionChanged();
+
+renderTabs();
+updateControls();
+</script>
 </body>
 </html>
