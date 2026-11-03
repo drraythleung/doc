@@ -5396,57 +5396,180 @@ function wfOpenDetails(target){
  );
 }
 
-function wfOpenHistory(target){
- requireCleanCaseForm();
+// Prevent an older history request from replacing a newer one.
+let wfHistoryRequest = 0;
 
- const {report:r} = findReport(
-  selected.state,target.groupId,target.reportId
- );
+async function wfOpenHistory(target){
+ try{
+  requireCleanCaseForm();
 
- wfContext = null;
- $("wfTitle").textContent = "Report history";
- $("wfSubtitle").textContent = r.name;
- $("wfFields").innerHTML = "";
- $("wfSave").hidden = true;
+  if(!selected || !client || !ready){
+   throw new Error("The backend connection is not ready.");
+  }
 
- $("wfHistory").innerHTML = [...(r.actionLog || [])]
-  .reverse()
-  .map(log => `
-   <div class="wf-history-item">
-    <strong>${esc(log.action)}</strong><br>
-    ${esc(log.staff)} · ${esc(timeLabel(log.at))}
-    <details>
-     <summary>View recorded changes</summary>
-     <pre>${esc(JSON.stringify({
-      before:log.before,
-      after:log.after,
-      ...(log.contactsBefore ? {
-       contactsBefore:log.contactsBefore,
-       contactsAfter:log.contactsAfter
-      } : {})
-     },null,2))}</pre>
-    </details>
-   </div>
-  `).join("") || `
-   <p class="muted">
-    No per-report history recorded by this version yet.
-    Earlier actions may be available in Activity history.
+  const caseId = selected.id;
+  const {report} = findReport(
+   selected.state,
+   target.groupId,
+   target.reportId
+  );
+
+  const request = ++wfHistoryRequest;
+
+  wfContext = null;
+
+  $("wfTitle").textContent = "Report history";
+  $("wfSubtitle").textContent = report.name;
+  $("wfFields").innerHTML = "";
+  $("wfSave").hidden = true;
+
+  $("wfHistory").innerHTML = `
+   <p class="muted" role="status">
+    Loading server-recorded history…
    </p>
   `;
 
- $("wfHistory").insertAdjacentHTML("beforeend",`
-  <p class="wf-small">
-   Event times shown here are recorded by the browser.
-   Backend Activity history records server save times.
-  </p>
- `);
+  if(!$("wfDialog").open){
+   $("wfDialog").showModal();
+  }
 
- $("wfDialog").showModal();
+  const {data,error} = await client
+   .from("amc_followup_report_events")
+   .select(`
+    id,
+    audit_id,
+    actor_id,
+    actor_label,
+    action,
+    request_id,
+    old_report,
+    new_report,
+    old_contacts,
+    new_contacts,
+    created_at
+   `)
+   .eq("case_id",caseId)
+   .eq("group_id",target.groupId)
+   .eq("report_id",target.reportId)
+   .order("id",{ascending:false})
+   .limit(100);
+
+  // Ignore results if another dialog/action has been opened.
+  if(
+   request !== wfHistoryRequest ||
+   selected?.id !== caseId ||
+   !$("wfDialog").open ||
+   wfContext !== null
+  ){
+   return;
+  }
+
+  if(error) throw error;
+
+  const entries = data || [];
+
+  $("wfHistory").innerHTML = entries.length
+   ? entries.map(entry => {
+      const reportChanges = {};
+      const before = entry.old_report || {};
+      const after = entry.new_report || {};
+
+      const keys = new Set([
+       ...Object.keys(before),
+       ...Object.keys(after)
+      ]);
+
+      for(const key of keys){
+       if(
+        JSON.stringify(before[key]) !==
+        JSON.stringify(after[key])
+       ){
+        reportChanges[key] = {
+         before:before[key] ?? null,
+         after:after[key] ?? null
+        };
+       }
+      }
+
+      const contactsChanged =
+       JSON.stringify(entry.old_contacts) !==
+       JSON.stringify(entry.new_contacts);
+
+      const changes = {
+       ...(Object.keys(reportChanges).length ? {
+        reportChanges
+       } : {}),
+       ...(contactsChanged ? {
+        contactChanges:{
+         before:entry.old_contacts,
+         after:entry.new_contacts
+        }
+       } : {})
+      };
+
+      return `
+       <div class="wf-history-item">
+        <strong>${esc(entry.action)}</strong>
+
+        <div class="wf-small">
+         Recorded by ${esc(entry.actor_label)}
+        </div>
+
+        <div class="wf-small">
+         Saved: ${esc(timeLabel(entry.created_at))}
+        </div>
+
+        <details>
+         <summary>View changes and audit reference</summary>
+
+         <pre>${esc(JSON.stringify(changes,null,2))}</pre>
+
+         <div class="code">
+          Event: ${esc(entry.id)}<br>
+          Audit: ${esc(entry.audit_id)}<br>
+          Account: ${esc(entry.actor_id)}<br>
+          Request: ${esc(entry.request_id || "Source sync")}
+         </div>
+        </details>
+       </div>
+      `;
+     }).join("")
+   : `
+      <p class="muted">
+       No server-recorded events found for this report yet.
+       Earlier actions may be available in Activity history.
+      </p>
+     `;
+
+  $("wfHistory").insertAdjacentHTML("beforeend",`
+   <p class="wf-small">
+    ${entries.length} event(s) shown, newest first.
+    Up to 100 events are loaded.
+    Saved times are recorded by the backend.
+    Staff names are entered manually; account IDs identify
+    the signed-in session, not a verified staff identity.
+   </p>
+  `);
+
+ }catch(error){
+  console.error("Report history could not load:",error);
+
+  if(
+   $("wfDialog").open &&
+   wfContext === null &&
+   $("wfTitle").textContent === "Report history"
+  ){
+   $("wfHistory").innerHTML = `
+    <p class="wf-warning" role="alert">
+     Could not load report history:
+     ${esc(error.message || "Please try again.")}
+    </p>
+   `;
+  }else{
+   window.alert(error.message || "Could not open report history.");
+  }
+ }
 }
-
-$("wfClose").addEventListener("click",() => {
- $("wfDialog").close();
-});
 
 /* ------------------------------------------------------------
    Fast actions
@@ -5892,6 +6015,30 @@ wfPrintStyle.textContent = `
  }
 `;
 document.head.append(wfPrintStyle);
+// Keep legacy elements for existing wrappers,
+// but show only the consolidated workflow toolbar.
+const legacyBatchToolbar = $("batchToolbar");
+
+if(legacyBatchToolbar){
+ legacyBatchToolbar.hidden = true;
+}
+/* Close the workflow dialog. */
+$("wfClose").addEventListener("click",() => {
+ $("wfDialog").close();
+});
+
+$("wfDialog").addEventListener("close",() => {
+ // Ignore history responses belonging to the closed dialog.
+ wfHistoryRequest++;
+ wfContext = null;
+});
+
+/* Hide the old batch toolbar; keep its elements for compatibility. */
+const legacyBatchToolbar = $("batchToolbar");
+
+if(legacyBatchToolbar){
+ legacyBatchToolbar.hidden = true;
+}
 
 /* Finish applying the consolidated layout. */
 renderList();
