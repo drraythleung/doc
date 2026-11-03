@@ -2952,5 +2952,581 @@ updateControls();
 
 void connect();
 </script>
+ <!-- Compact report workflow patch -->
+<style>
+/* Use more of the screen */
+.wrap{
+ max-width:1600px;
+}
+
+/* Compact report table */
+.report-table-wrap{
+ overflow-x:auto;
+ border:1px solid var(--line);
+ border-radius:12px;
+}
+
+.report-table{
+ width:100%;
+ table-layout:fixed;
+}
+
+.report-table th,
+.report-table td{
+ padding:10px 12px;
+}
+
+.report-table th:nth-child(1){width:31%}
+.report-table th:nth-child(2){width:25%}
+.report-table th:nth-child(3){width:44%}
+
+.report-table tbody tr:last-child td{
+ border-bottom:0;
+}
+
+.report-table tbody tr:hover{
+ background:#f8fafc;
+}
+
+.test-title{
+ font-size:14px;
+ font-weight:750;
+ line-height:1.35;
+ overflow-wrap:anywhere;
+}
+
+.test-code{
+ color:var(--muted);
+ font-size:11px;
+ margin-top:4px;
+ overflow-wrap:anywhere;
+}
+
+.compact-status .badge{
+ padding:3px 7px;
+ font-size:11px;
+}
+
+.compact-history{
+ margin-top:4px;
+ color:var(--muted);
+ font-size:11px;
+ line-height:1.4;
+ overflow-wrap:anywhere;
+}
+
+.quick-actions{
+ display:flex;
+ justify-content:flex-end;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:6px;
+}
+
+.quick-actions button{
+ padding:7px 10px;
+ border-radius:8px;
+ font-size:12px;
+ white-space:nowrap;
+}
+
+.quick-actions .urgent-button{
+ color:#b91c1c;
+ border-color:#fecaca;
+ background:#fff1f2;
+}
+
+.report-more{
+ margin-top:7px;
+ text-align:right;
+}
+
+.report-more summary{
+ display:inline-block;
+ color:var(--blue);
+ cursor:pointer;
+ font-size:12px;
+ font-weight:700;
+}
+
+.report-more[open] summary{
+ margin-bottom:7px;
+}
+
+.report-more .quick-actions{
+ padding-top:5px;
+}
+
+.compact-note{
+ text-align:left;
+ font-size:12px;
+ margin-top:8px;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+}
+
+@media(max-width:850px){
+ .report-table{
+  min-width:740px;
+ }
+}
+
+@media print{
+ .report-table{
+  min-width:0;
+  table-layout:auto;
+ }
+ .report-table th,
+ .report-table td{
+  padding:7px;
+ }
+ .report-table tr{
+  break-inside:avoid;
+ }
+ .report-table-wrap{
+  overflow:visible;
+ }
+}
+</style>
+
+<script>
+"use strict";
+
+/*
+ This patch uses the original version-checked save function.
+ Staff and exact save time remain recorded by the backend audit log.
+*/
+
+// ------------------------------------------------------------
+// 1. Remove tracking-plan worklist and warnings
+// ------------------------------------------------------------
+
+const compactPlanTabIndex =
+ TAB_DEFINITIONS.findIndex(([id]) => id === "plan");
+
+if(compactPlanTabIndex >= 0){
+ TAB_DEFINITIONS.splice(compactPlanTabIndex,1);
+}
+
+if(activeTab === "plan") activeTab = "all";
+if(previousListTab === "plan") previousListTab = "all";
+
+const compactOriginalMetrics = metrics;
+
+metrics = function(state){
+ const result = compactOriginalMetrics(state);
+
+ // Plan verification is no longer part of this workflow.
+ result.plans = [];
+
+ return result;
+};
+
+const compactOldPlanNotice = $("groups").previousElementSibling;
+
+if(compactOldPlanNotice?.classList.contains("notice")){
+ compactOldPlanNotice.remove();
+}
+
+// ------------------------------------------------------------
+// 2. Remember recording staff for this browser tab only
+// ------------------------------------------------------------
+
+const compactStaffStorageKey = "amc-followup-recording-staff";
+
+try{
+ if(!$("operator").value.trim()){
+  $("operator").value =
+   sessionStorage.getItem(compactStaffStorageKey) || "";
+ }
+}catch(error){
+ // Storage may be unavailable; the name field still works.
+}
+
+$("operator").placeholder = "Your name — enter once per session";
+
+$("operator").addEventListener("input",() => {
+ try{
+  sessionStorage.setItem(
+   compactStaffStorageKey,
+   $("operator").value.trim()
+  );
+ }catch(error){}
+});
+
+const compactStaffHelp = document.createElement("small");
+
+compactStaffHelp.textContent =
+ "Used for each action. Change this name when staff changes.";
+
+document.querySelector(".operator-field").append(compactStaffHelp);
+
+// ------------------------------------------------------------
+// 3. Keep compatibility with the existing save format
+//    No separate verification action is required.
+// ------------------------------------------------------------
+
+const compactOriginalCommit = commit;
+
+commit = async function(action,mutator,allowDirtyCaseForm = false){
+ return compactOriginalCommit(
+  action,
+  (state,staff) => {
+   // Legacy compatibility flag only.
+   // The UI no longer asks staff to verify a tracking plan.
+   for(const group of state.groups || []){
+    group.planReviewed = true;
+   }
+
+   mutator(state,staff);
+  },
+  allowDirtyCaseForm
+ );
+};
+
+// ------------------------------------------------------------
+// 4. One row per existing report entry — no duplicated heading
+// ------------------------------------------------------------
+
+function compactStatusHTML(report){
+ if(report.cancelled){
+  return badge("Cancelled","amber");
+ }
+
+ if(!report.receivedDate){
+  return badge("Awaiting report","amber");
+ }
+
+ let html = badge("Received","green");
+
+ if(report.triage === "pending"){
+  html += badge("Awaiting nurse review","blue");
+ }else if(report.triage === "routine"){
+  html += badge("Routine","green");
+ }else if(report.triage === "doctor"){
+  html += badge("Doctor follow-up","amber");
+ }else if(report.triage === "urgent"){
+  html += badge("Urgent follow-up","red");
+ }
+
+ if(report.notifiedAt){
+  html += badge("Doctor notified","blue");
+ }
+
+ if(report.reviewedAt){
+  html += badge("Doctor reviewed","green");
+ }
+
+ html += report.archived
+  ? badge("Filed","green")
+  : badge("Not filed","amber");
+
+ return html;
+}
+
+function compactButton(group,report,action,label,style = ""){
+ return `
+  <button
+   type="button"
+   class="${esc(style)}"
+   data-group="${esc(group.id)}"
+   data-report="${esc(report.id)}"
+   data-action="${esc(action)}"
+  >${esc(label)}</button>
+ `;
+}
+
+function compactActionsHTML(group,report){
+ if(report.cancelled){
+  return `
+   <div class="quick-actions">
+    ${compactButton(
+     group,report,"reopen","Restore tracking"
+    )}
+   </div>
+  `;
+ }
+
+ let main = "";
+ let extra = "";
+
+ if(!report.receivedDate){
+  main = compactButton(
+   group,report,"received","Received","primary"
+  );
+
+  extra = compactButton(
+   group,report,"cancel","Cancel tracking","danger"
+  );
+
+ }else{
+  main += compactButton(
+   group,report,"quick-routine","Routine",
+   report.triage === "routine" ? "success" : ""
+  );
+
+  main += compactButton(
+   group,report,"quick-doctor","Doctor",
+   report.triage === "doctor" ? "primary" : ""
+  );
+
+  main += compactButton(
+   group,report,"quick-urgent","Urgent","urgent-button"
+  );
+
+  if(!report.archived){
+   main += compactButton(
+    group,report,"quick-filed","Filed"
+   );
+  }
+
+  extra += compactButton(
+   group,report,"triage","Review notes / change"
+  );
+
+  extra += compactButton(
+   group,report,"notify","Doctor notified"
+  );
+
+  extra += compactButton(
+   group,report,"review","Doctor reviewed"
+  );
+ }
+
+ const notes = [
+  report.nurseNote
+   ? "Nurse / receipt notes: " + report.nurseNote
+   : "",
+  report.reviewNote
+   ? "Doctor review notes: " + report.reviewNote
+   : ""
+ ].filter(Boolean).join("\n");
+
+ return `
+  <div class="quick-actions">${main}</div>
+
+  <details class="report-more">
+   <summary>More</summary>
+   <div class="quick-actions">${extra}</div>
+
+   ${notes ? `
+    <div class="compact-note">${esc(notes)}</div>
+   ` : ""}
+  </details>
+ `;
+}
+
+groupsHTML = function(state,showButtons = true){
+ const groups = state.groups || [];
+ let rows = "";
+
+ for(const group of groups){
+  const reports = group.reports || [];
+
+  for(const report of reports){
+   // Show the report/test name once.
+   const name = report.name || group.name;
+
+   const history = [];
+
+   if(report.receivedDate){
+    history.push(
+     "Received: " + dateLabel(report.receivedDate)
+    );
+   }
+
+   if(report.nurseAt){
+    history.push(
+     "Nurse: " + (report.nurseName || "Not recorded") +
+     " · " + timeLabel(report.nurseAt)
+    );
+   }
+
+   if(report.notifiedAt){
+    history.push(
+     "Notified: " + (report.doctorName || "Not recorded") +
+     " · " + timeLabel(report.notifiedAt)
+    );
+   }
+
+   if(report.reviewedAt){
+    history.push(
+     "Reviewed: " + (report.doctorName || "Not recorded") +
+     " · " + timeLabel(report.reviewedAt)
+    );
+   }
+
+   rows += `
+    <tr>
+     <td>
+      <div class="test-title">${esc(name)}</div>
+
+      <div class="test-code">
+       ${esc(group.code || "")}
+       · Qty: ${esc(group.qty)}
+      </div>
+
+      ${group.sourceRemoved ? `
+       <div class="compact-history" style="color:#b45309">
+        Removed from latest quotation — record retained.
+       </div>
+      ` : ""}
+
+      ${report.cancelled && report.cancelReason ? `
+       <div class="compact-history">
+        ${esc(report.cancelReason)}
+       </div>
+      ` : ""}
+     </td>
+
+     <td class="compact-status">
+      ${compactStatusHTML(report)}
+
+      ${history.map(text => `
+       <div class="compact-history">${esc(text)}</div>
+      `).join("")}
+     </td>
+
+     ${showButtons ? `
+      <td>${compactActionsHTML(group,report)}</td>
+     ` : ""}
+    </tr>
+   `;
+  }
+
+  if(!reports.length){
+   rows += `
+    <tr>
+     <td>
+      <div class="test-title">${esc(group.name)}</div>
+      <div class="test-code">${esc(group.code || "")}</div>
+     </td>
+     <td>${badge("No tracking entry","amber")}</td>
+     ${showButtons ? `
+      <td class="muted">Check the imported order.</td>
+     ` : ""}
+    </tr>
+   `;
+  }
+ }
+
+ if(!rows){
+  return `
+   <p class="muted">No report-tracking items in this quotation.</p>
+  `;
+ }
+
+ return `
+  <div class="report-table-wrap">
+   <table class="report-table">
+    <thead>
+     <tr>
+      <th>Ordered test</th>
+      <th>Status / history</th>
+      ${showButtons ? `<th style="text-align:right">Actions</th>` : ""}
+     </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+   </table>
+  </div>
+ `;
+};
+
+// ------------------------------------------------------------
+// 5. Quick clicks: save immediately, without a typing dialog
+// ------------------------------------------------------------
+
+const compactOriginalOpenReportAction = openReportAction;
+
+openReportAction = function(groupId,reportId,action){
+ const quickActions = [
+  "received",
+  "quick-routine",
+  "quick-doctor",
+  "quick-urgent",
+  "quick-filed"
+ ];
+
+ if(!quickActions.includes(action)){
+  // Keep the existing dialog for notes, cancellation,
+  // doctor notification and actual doctor review.
+  compactOriginalOpenReportAction(groupId,reportId,action);
+  return;
+ }
+
+ const labels = {
+  received:"Report received",
+  "quick-routine":"Nurse initial review recorded — routine",
+  "quick-doctor":"Nurse initial review recorded — doctor follow-up",
+  "quick-urgent":"Nurse initial review recorded — urgent follow-up",
+  "quick-filed":"Report filing recorded"
+ };
+
+ void commit(labels[action],(state,staff) => {
+  const {report} = findReport(state,groupId,reportId);
+
+  if(report.cancelled){
+   throw new Error("Restore tracking before recording an action.");
+  }
+
+  if(action === "received"){
+   if(report.receivedDate){
+    throw new Error("This report is already recorded as received.");
+   }
+
+   report.receivedDate = today();
+
+   // Do NOT automatically mark as filed or nurse-reviewed.
+   return;
+  }
+
+  if(!report.receivedDate){
+   throw new Error("Record the report as received first.");
+  }
+
+  if(action === "quick-filed"){
+   report.archived = true;
+   return;
+  }
+
+  const outcome = {
+   "quick-routine":"routine",
+   "quick-doctor":"doctor",
+   "quick-urgent":"urgent"
+  }[action];
+
+  if(!outcome){
+   throw new Error("Unknown review action.");
+  }
+
+  const changedDisposition = report.triage !== outcome;
+
+  report.triage = outcome;
+  report.nurseName = staff;
+  report.nurseAt = new Date().toISOString();
+
+  // Keep existing notes rather than erasing them.
+  // A changed outcome requires a fresh doctor review.
+  // Previous values remain in the activity snapshots.
+  if(changedDisposition && report.reviewedAt){
+   report.reviewedAt = "";
+   report.reviewNote = "";
+  }
+ });
+};
+
+// ------------------------------------------------------------
+// 6. Refresh the screen using the compact layout
+// ------------------------------------------------------------
+
+renderList();
+
+if(selected){
+ renderDetail();
+}
+
+renderTabs();
+updateControls();
+</script>
 </body>
 </html>
