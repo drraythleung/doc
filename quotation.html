@@ -145,6 +145,98 @@ details summary{cursor:pointer;font-weight:bold}
  }
 }
 </style>
+ <style>
+@media print{
+ /* 紙本 acknowledgement：與其他列印區塊分開處理。 */
+ #printArea .paper-ack{
+  margin-top:7mm;
+  padding-top:5mm;
+  border-top:1px solid #ccc;
+  font-family:Arial,sans-serif;
+  font-size:11px;
+  line-height:1.5;
+  break-inside:avoid;
+  page-break-inside:avoid;
+ }
+
+ #printArea .paper-ack h3{
+  margin:0 0 3mm;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:0;
+ }
+
+ #printArea .paper-ack .ack-statement{
+  margin:0 0 5mm;
+ }
+
+ #printArea .paper-ack .ack-consent{
+  display:block;
+  margin-top:1mm;
+  font-size:10px;
+  color:#444;
+ }
+
+ #printArea .paper-ack .ack-details{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  column-gap:10mm;
+  row-gap:3.5mm;
+ }
+
+ #printArea .paper-ack .ack-field{
+  display:flex;
+  align-items:baseline;
+  gap:2mm;
+  min-width:0;
+ }
+
+ #printArea .paper-ack .ack-label{
+  flex-shrink:0;
+  color:#444;
+  font-weight:400;
+ }
+
+ #printArea .paper-ack .ack-value{
+  min-width:0;
+  overflow-wrap:anywhere;
+ }
+
+ #printArea .paper-ack .ack-wide{
+  grid-column:1/-1;
+ }
+
+ /* 未填資料用 CSS 畫線，唔再用一長串底線字元。 */
+ #printArea .paper-ack .ack-blank{
+  display:inline-block;
+  flex:1;
+  min-width:20mm;
+  height:4mm;
+  border-bottom:0.5pt solid #999;
+ }
+
+ #printArea .paper-ack .ack-signatures{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:10mm;
+  margin-top:5mm;
+  break-inside:avoid;
+  page-break-inside:avoid;
+ }
+
+ #printArea .paper-ack .ack-sign-space{
+  height:20mm;
+  border-bottom:0.5pt solid #777;
+ }
+
+ #printArea .paper-ack .ack-sign-caption{
+  margin-top:3mm;
+  font-size:10px;
+  line-height:1.4;
+  color:#444;
+ }
+}
+</style>
 </head>
 <body>
 <div id="app" class="wrap">
@@ -1734,6 +1826,85 @@ message("New quotation started.");
 function printable(s,paperForm=false){
  const m=s.metadata;
 
+ // 已填資料正常顯示；空白資料保留手寫線。
+ const paperValue=value=>{
+  const text=String(value??"").trim();
+
+  return text
+   ? `<span class="ack-value">${esc(text)}</span>`
+   : `<span class="ack-blank" aria-label="Blank field"></span>`;
+ };
+
+ let paperAcknowledgement="";
+
+ if(paperForm && !s.confirmation){
+  const role=$("signerRole").value;
+  const representative=role==="Representative";
+
+  const signedDate=$("paperSignedDate").value
+   ? dateLabel($("paperSignedDate").value)
+   : "";
+
+  paperAcknowledgement=`
+   <section class="confirmation-record paper-ack">
+    <h3>Patient / representative acknowledgement</h3>
+
+    <p class="ack-statement">
+     I have reviewed this quotation and accept all listed
+     services and their stated charges.
+     <span class="ack-consent">
+      This acknowledgement does not replace any required
+      clinical informed consent.
+     </span>
+    </p>
+
+    <div class="ack-details">
+     <div class="ack-field">
+      <span class="ack-label">Signer name:</span>
+      ${paperValue($("signerName").value)}
+     </div>
+
+     <div class="ack-field">
+      <span class="ack-label">Role:</span>
+      ${paperValue(role)}
+     </div>
+
+     ${representative?`
+      <div class="ack-field ack-wide">
+       <span class="ack-label">Relationship / authority:</span>
+       ${paperValue($("signerRelationship").value)}
+      </div>
+     `:""}
+
+     <div class="ack-field">
+      <span class="ack-label">Date:</span>
+      ${paperValue(signedDate)}
+     </div>
+
+     <div class="ack-field">
+      <span class="ack-label">Witness / staff:</span>
+      ${paperValue($("witness").value)}
+     </div>
+    </div>
+
+    <div class="ack-signatures">
+     <div>
+      <div class="ack-sign-space"></div>
+      <div class="ack-sign-caption">
+       Patient / representative signature
+      </div>
+     </div>
+
+     <div>
+      <div class="ack-sign-space"></div>
+      <div class="ack-sign-caption">
+       Witness signature
+      </div>
+     </div>
+    </div>
+   </section>`;
+ }
+
  return `<div class="print-brand">
    <img
     class="amc-logo"
@@ -1742,86 +1913,72 @@ function printable(s,paperForm=false){
    >
    <h1>Adventist Medical Center Combined Service Quotation</h1>
   </div>
+
   <p>${esc(s.quotationNumber)} · Revision ${s.revision}</p>
+
   <div class="print-meta">
-   <div>Patient: <strong>${esc(m.patientName||"Not entered")}</strong></div>
-   <div>Patient reference: ${esc(m.patientReference||"Not entered")}</div>
-   <div>Referring clinician: ${esc(m.clinician||"Not entered")}</div>
-   <div>Prepared by: ${esc(m.preparedBy||"Not entered")}</div>
+   <div>
+    Patient:
+    <strong>${esc(m.patientName||"Not entered")}</strong>
+   </div>
+   <div>
+    Patient reference: ${esc(m.patientReference||"Not entered")}
+   </div>
+   <div>
+    Referring clinician: ${esc(m.clinician||"Not entered")}
+   </div>
+   <div>
+    Prepared by: ${esc(m.preparedBy||"Not entered")}
+   </div>
    <div>Quotation date: ${dateLabel(m.quoteDate)}</div>
   </div>
-  <table><thead><tr>
-   <th>#</th><th>AMC code</th><th>Service</th><th>Qty</th>
-   <th class="price">Unit HKD</th><th class="price">Amount HKD</th>
-  </tr></thead><tbody>
-  ${s.items.map((i,n)=>`<tr>
-   <td>${n+1}</td><td>${esc(i.code)}</td><td>${esc(i.name)}</td>
-   <td>${i.qty}${i.variable?" "+esc(i.unit):""}</td>
-   <td class="price">${Number(i.price).toFixed(2)}</td>
-   <td class="price">${Number(i.price*i.qty).toFixed(2)}</td>
-  </tr>`).join("")}
-  </tbody></table>
-<div class="print-total">
+
+  <table>
+   <thead>
+    <tr>
+     <th>#</th>
+     <th>AMC code</th>
+     <th>Service</th>
+     <th>Qty</th>
+     <th class="price">Unit HKD</th>
+     <th class="price">Amount HKD</th>
+    </tr>
+   </thead>
+   <tbody>
+    ${s.items.map((i,n)=>`
+     <tr>
+      <td>${n+1}</td>
+      <td>${esc(i.code)}</td>
+      <td>${esc(i.name)}</td>
+      <td>${i.qty}${i.variable?" "+esc(i.unit):""}</td>
+      <td class="price">${Number(i.price).toFixed(2)}</td>
+      <td class="price">${Number(i.price*i.qty).toFixed(2)}</td>
+     </tr>
+    `).join("")}
+   </tbody>
+  </table>
+
+  <div class="print-total">
    ${s.confirmation?"Confirmed total":"Quotation total"}:
    ${money(s.totals.offered)}
   </div>
-  
-  ${m.notes?`<p><strong>Notes:</strong><br>${esc(m.notes).replaceAll("\n","<br>")}</p>`:""}
- 
 
-${s.confirmation?confirmationHTML(s):paperForm?`
-   <div class="confirmation-record">
-    <h3>Patient / representative acknowledgement</h3>
+  ${m.notes?`
+   <p>
+    <strong>Notes:</strong><br>
+    ${esc(m.notes).replaceAll("\n","<br>")}
+   </p>
+  `:""}
 
-    <p>
-     I have reviewed this quotation and accept all listed services
-     and their stated charges. This acknowledgement does not replace
-     any required clinical informed consent.
-    </p>
+  ${s.confirmation
+   ? confirmationHTML(s)
+   : paperAcknowledgement}
 
-    <p>
-     <strong>Signer name:</strong>
-     ${esc($("signerName").value.trim()) ||
-       "__________________________________________"}
-    </p>
-
-    <p>
-     <strong>Signer role:</strong>
-     ${esc($("signerRole").value)}
-    </p>
-
-    <p>
-     <strong>Relationship / authority, if applicable:</strong>
-     ${esc($("signerRelationship").value.trim()) ||
-       ($("signerRole").value === "Patient"
-        ? "Not applicable"
-        : "__________________________________________")}
-    </p>
-
-    <p>
-     <strong>Date:</strong>
-     ${$("paperSignedDate").value
-       ? esc(dateLabel($("paperSignedDate").value))
-       : "__________________________________________"}
-    </p>
-
-    <p>
-     <strong>Witness / recording staff name:</strong>
-     ${esc($("witness").value.trim()) ||
-       "__________________________________________"}
-    </p>
-
-    <div class="signature-lines">
-     <div>Patient / representative signature</div>
-     <div>Witness signature</div>
-    </div>
-   </div>`:""}
-
-  
   <div class="print-footer">
    ${s.terms.map(t=>"• "+esc(t)).join("<br>")}
   </div>`;
 }
+ 
 function printDoc(paperForm=false){
  const s=getDocument();
  if(!s.items.length){message("Select services before printing.",true);return;}
