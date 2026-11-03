@@ -5466,7 +5466,9 @@ async function wfQuick(targets,action){
  );
 
  return commit(
-  `${titles[action]}: ${names.join("; ")}`,
+targets.length === 1
+ ? `${titles[action]}: ${names[0]}`.slice(0,300)
+ : `${titles[action]} — ${targets.length} reports`,
   (state,staff) => {
    const now = new Date().toISOString();
 
