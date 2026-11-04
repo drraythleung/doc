@@ -1320,10 +1320,10 @@ function stage(state,group,report){
   return {
    key:"doctor",
    label:urgent
-    ? "Urgent · doctor review"
+    ? "Urgent · await Dr review"
     : priority
-     ? "Priority · doctor review"
-     : "Awaiting doctor review",
+     ? "Priority · await Dr review"
+     : "Routine · await Dr review",
    colour:urgent?"red":priority?"amber":"blue",
    order:urgent?0:priority?20:35
   };
