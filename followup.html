@@ -5399,7 +5399,120 @@ $("printButton").addEventListener("click",handleUI(async()=>{
     names.join(", ")
    );
   }
+/* Case-level appointment / follow-up changes.
+     These are not report-specific, so label them clearly. */
 
+  let appointmentHistoryFound=false;
+
+  for(const item of state.arrangementHistory||[]){
+   const before=item.before||{};
+   const after=item.after||{};
+   const lines=[];
+
+   const appointmentChanged=
+    (before.appointmentStatus||"unscheduled")!==
+    (after.appointmentStatus||"unscheduled")||
+    (before.appointmentDate||"")!==
+    (after.appointmentDate||"");
+
+   if(appointmentChanged){
+    appointmentHistoryFound=true;
+
+    lines.push(
+     "Appointment: "+
+     (APPOINTMENTS[after.appointmentStatus]||"Not arranged")+
+     (after.appointmentDate
+      ? " · "+dateLabel(after.appointmentDate)
+      : "")
+    );
+   }
+
+   if(
+    (before.nextFollowupDate||"")!==
+    (after.nextFollowupDate||"")
+   ){
+    lines.push(
+     after.nextFollowupDate
+      ? "Next patient contact: "+dateLabel(after.nextFollowupDate)
+      : "Patient follow-up reminder cleared"
+    );
+   }
+
+   if((before.caseNote||"")!==(after.caseNote||"")){
+    lines.push(
+     after.caseNote
+      ? "Comments: "+after.caseNote
+      : "Follow-up comments cleared"
+    );
+   }
+
+   if(item.reason){
+    lines.push("Correction reason: "+item.reason);
+   }
+
+   if(lines.length){
+    add(
+     "Appointment / follow-up — whole case",
+     item.at,
+     item.staff,
+     lines.join("\n")
+    );
+   }
+  }
+
+  /* Notes saved when arranging without recording a contact. */
+
+  for(const item of state.followupNotes||[]){
+   if(!item.note) continue;
+
+   add(
+    "Arrangement comments — whole case",
+    item.at,
+    item.staff,
+    item.note
+   );
+  }
+
+  /* Older records may have a current appointment but no history.
+     Do not invent a booking time or attach it to an old contact. */
+
+  if(
+   !appointmentHistoryFound&&
+   (
+    state.appointmentDate||
+    (
+     state.appointmentStatus&&
+     state.appointmentStatus!=="unscheduled"
+    )
+   )
+  ){
+   add(
+    "Current appointment — whole case",
+    "",
+    "",
+    "Appointment: "+
+    (APPOINTMENTS[state.appointmentStatus]||"Not arranged")+
+    (state.appointmentDate
+     ? " · "+dateLabel(state.appointmentDate)
+     : "")
+   );
+  }
+
+  /* Show existing case comments if no historical entry contains them. */
+
+  if(
+   state.caseNote&&
+   !(state.arrangementHistory||[]).some(item=>
+    item.after?.caseNote===state.caseNote
+   )
+  ){
+   add(
+    "Current follow-up comments — whole case",
+    "",
+    "",
+    state.caseNote
+   );
+  }
   return events.sort((a,b)=>
    String(b.at).localeCompare(String(a.at))
   );
@@ -5577,6 +5690,56 @@ function openInvestigationHistory(groupId,reportId){
   }
 
   return template.innerHTML;
+ };
+
+})();
+ /* Latest patient contact — include comments
+   AFTER all patches, BEFORE Startup */
+
+(()=>{
+ "use strict";
+
+ recentContactsHTML=function(state){
+  const patients=state.contacts.filter(contact=>
+   contact.audience!=="doctor"
+  );
+
+  const latest=patients[patients.length-1];
+  if(!latest) return "";
+
+  const linked=latest.communicationId
+   ? patients.filter(contact=>
+      contact.communicationId===latest.communicationId
+     )
+   : [latest];
+
+  const names=[...new Set(
+   linked.map(contact=>contact.reportName).filter(Boolean)
+  )];
+
+  const comments=[...new Set(
+   linked.map(contact=>contact.note).filter(Boolean)
+  )];
+
+  return `
+   <div class="latest-contact">
+    <strong>Latest patient contact</strong>
+    · ${esc(timeLabel(latest.at))}<br>
+
+    ${esc(latest.method||"")}
+    · ${esc(deliveryLabel(latest))}
+
+    ${names.length?`
+     <br>${esc(names.join(", "))}
+    `:""}
+
+    ${comments.map(comment=>`
+     <div class="note" style="margin-top:6px">
+      <strong>Comments:</strong> ${esc(comment)}
+     </div>
+    `).join("")}
+   </div>
+  `;
  };
 
 })();
