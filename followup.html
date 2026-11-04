@@ -2199,7 +2199,7 @@ function openStep(target,key){
  }
 
  if(key==="doctor"){
-  startWorkspace("Record doctor review",report.name,`
+  startWorkspace("Doctor's comment",report.name,`
    ${report.triage==="urgent"?`
     <div class="notice red">Urgent — follow clinic escalation procedure.</div>
    `:""}
@@ -2486,7 +2486,7 @@ function openDoctorContact(target){
  const reminder=doctorReminderDate(state,report);
 
  const opened=startWorkspace(
-  "Record doctor contact",
+  "Inform doctor record",
   report.name||group.name,
   `
    ${report.triage==="urgent"?`
