@@ -4600,6 +4600,265 @@ $("printButton").addEventListener("click",handleUI(async()=>{
  };
 
 })();
+
+ /* Compact History — AFTER all patches, BEFORE Startup */
+
+(()=>{
+ "use strict";
+
+ function logHTML(title,at,staff,lines){
+  return `
+   <div class="log">
+    <strong>${esc(title)}</strong>
+    <div class="small-text">
+     ${esc(timeLabel(at))}
+     · ${esc(staff||"Staff not recorded")}
+    </div>
+    ${lines.filter(Boolean).map(line=>`
+     <div class="note">${esc(line)}</div>
+    `).join("")}
+   </div>
+  `;
+ }
+
+ /* Merge reports from the same communication.
+    Preserve separate entries if contact details differ. */
+
+ function contactGroups(contacts){
+  const groups=new Map();
+
+  for(const contact of contacts){
+   const key=canonical({
+    communication:contact.communicationId||contact.id,
+    at:contact.at,
+    staff:contact.staff,
+    target:contact.target,
+    method:contact.method,
+    status:contact.deliveryStatus,
+    outcome:contact.outcome,
+    note:contact.note,
+    confirmedAt:contact.confirmedAt,
+    confirmedBy:contact.confirmedBy,
+    reminderAction:contact.doctorFollowupAction
+   });
+
+   if(!groups.has(key)) groups.set(key,[]);
+   groups.get(key).push(contact);
+  }
+
+  return [...groups.values()].sort((a,b)=>
+   String(b[0].at||"").localeCompare(String(a[0].at||""))
+  );
+ }
+
+ function compactResult(contact){
+  if(receiptConfirmed(contact)) return "Receipt confirmed";
+
+  return ({
+   sent:"Sent — receipt not confirmed",
+   connected:"Connected — receipt not confirmed",
+   "no-answer":"No answer",
+   voicemail:"Voicemail left",
+   failed:"Sending failed",
+   "not-met":"Unable to meet doctor"
+  })[contact.deliveryStatus]||contact.outcome||"Not recorded";
+ }
+
+ function contactHistoryHTML(contacts){
+  return contactGroups(contacts).map(group=>{
+   const contact=group[0];
+
+   const names=[...new Set(
+    group.map(item=>item.reportName).filter(Boolean)
+   )];
+
+   const lines=[
+    compactResult(contact),
+    names.length?"Reports: "+names.join(", "):"",
+    contact.note||""
+   ];
+
+   /* Show each date once; retain report-specific dates. */
+
+   const dates=new Map();
+
+   for(const item of group){
+    if(!item.nextDate) continue;
+
+    if(!dates.has(item.nextDate)){
+     dates.set(item.nextDate,new Set());
+    }
+
+    if(item.reportName){
+     dates.get(item.nextDate).add(item.reportName);
+    }
+   }
+
+   for(const [date,reports] of dates){
+    const label=contact.audience==="doctor"
+     ? "Next doctor follow-up"
+     : "Next contact";
+
+    lines.push(
+     `${label}: ${dateLabel(date)}`+
+     (dates.size>1&&reports.size
+      ? ` · ${[...reports].join(", ")}`
+      : "")
+    );
+   }
+
+   if(
+    contact.audience==="doctor"&&
+    contact.doctorFollowupAction==="clear"
+   ){
+    lines.push("Doctor reminder cleared");
+   }
+
+   /* Only show a separate confirmation time when it differs. */
+
+   if(
+    contact.confirmedAt&&
+    (
+     contact.confirmedAt!==contact.at||
+     (
+      contact.confirmedBy&&
+      contact.confirmedBy!==contact.staff
+     )
+    )
+   ){
+    lines.push(
+     "Receipt confirmed: "+timeLabel(contact.confirmedAt)+
+     (contact.confirmedBy?" · "+contact.confirmedBy:"")
+    );
+   }
+
+   return logHTML(
+    `${contact.target||(
+     contact.audience==="doctor"?"Doctor":"Patient"
+    )} · ${contact.method||"Method not recorded"}`,
+    contact.at,
+    contact.staff,
+    lines
+   );
+  }).join("");
+ }
+
+ function otherActivityHTML(state){
+  const items=reportHistoryItems(state).filter(item=>
+   item.text&&
+   item.text!=="Report or related contact updated"
+  );
+
+  /* Display changes, not the entire appointment snapshot. */
+
+  for(const item of state.arrangementHistory||[]){
+   const before=item.before||{};
+   const after=item.after||{};
+   const lines=[];
+
+   if(
+    before.appointmentStatus!==after.appointmentStatus||
+    before.appointmentDate!==after.appointmentDate
+   ){
+    lines.push(
+     "Appointment: "+
+     (APPOINTMENTS[after.appointmentStatus]||"Not arranged")+
+     (after.appointmentDate
+      ? " · "+dateLabel(after.appointmentDate)
+      : "")
+    );
+   }
+
+   if(
+    (before.nextFollowupDate||"")!==
+    (after.nextFollowupDate||"")
+   ){
+    lines.push(
+     after.nextFollowupDate
+      ? "Next contact: "+dateLabel(after.nextFollowupDate)
+      : "Patient reminder cleared"
+    );
+   }
+
+   if((before.caseNote||"")!==(after.caseNote||"")){
+    lines.push(
+     after.caseNote
+      ? "Notes: "+after.caseNote
+      : "Follow-up notes cleared"
+    );
+   }
+
+   if(item.reason){
+    lines.push("Correction reason: "+item.reason);
+   }
+
+   if(lines.length){
+    items.push({
+     at:item.at,
+     staff:item.staff,
+     title:"Appointment / follow-up",
+     text:lines.join("\n")
+    });
+   }
+  }
+
+  for(const item of state.followupNotes||[]){
+   if(!item.note) continue;
+
+   items.push({
+    at:item.at,
+    staff:item.staff,
+    title:"Arrangement notes",
+    text:item.note
+   });
+  }
+
+  for(const item of state.tracingHistory||[]){
+   items.push({
+    at:item.at,
+    staff:item.staff,
+    title:item.type==="cancel"
+     ? "Case tracing cancelled"
+     : "Case tracing resumed",
+    text:item.reason||""
+   });
+  }
+
+  items.sort((a,b)=>
+   String(b.at||"").localeCompare(String(a.at||""))
+  );
+
+  return items.map(item=>
+   logHTML(item.title,item.at,item.staff,[item.text])
+  ).join("");
+ }
+
+ /* Replace previous nested History renderers. */
+
+ readableHistoryHTML=function(state){
+  const doctors=state.contacts.filter(contact=>
+   contact.audience==="doctor"
+  );
+
+  const patients=state.contacts.filter(contact=>
+   contact.audience!=="doctor"
+  );
+
+  const sections=[
+   ["Doctor contact history",contactHistoryHTML(doctors)],
+   ["Patient contact history",contactHistoryHTML(patients)],
+   ["Other activity",otherActivityHTML(state)]
+  ];
+
+  return sections.map(([title,html],index)=>`
+   <section class="${index?"section":""}">
+    <h3>${esc(title)}</h3>
+    ${html||'<p class="muted">No records.</p>'}
+   </section>
+  `).join("");
+ };
+
+})();
 /* Startup */
 
 async function connect(){
