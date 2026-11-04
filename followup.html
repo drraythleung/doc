@@ -4859,6 +4859,120 @@ $("printButton").addEventListener("click",handleUI(async()=>{
  };
 
 })();
+ /* Report progress — latest doctor AND patient contact status
+   Keep AFTER all other patches, BEFORE Startup */
+
+(()=>{
+ "use strict";
+
+ function latestPatientContact(state,report){
+  return state.contacts
+   .map((contact,index)=>({contact,index}))
+   .filter(({contact})=>
+    contact.audience==="patient"&&
+    contact.reportId===report.id&&
+    (contact.reviewCycleId||"legacy")===cycleId(report)
+   )
+   .sort((a,b)=>
+    String(b.contact.at||"").localeCompare(
+     String(a.contact.at||"")
+    )||
+    String(b.contact.recordedAt||"").localeCompare(
+     String(a.contact.recordedAt||"")
+    )||
+    b.index-a.index
+   )[0]?.contact||null;
+ }
+
+ const originalReportTable=reportTable;
+
+ reportTable=function(state,list){
+  // Preserve existing progress badges, actions and doctor reminders.
+  const template=document.createElement("template");
+  template.innerHTML=originalReportTable(state,list);
+
+  const rows=[
+   ...template.content.querySelectorAll("[data-row-report]")
+  ];
+
+  for(const {group,report} of list){
+   const row=rows.find(element=>
+    element.dataset.rowGroup===group.id&&
+    element.dataset.rowReport===report.id
+   );
+
+   if(!row) continue;
+
+   const progressCell=row.cells[1];
+   const doctorSummary=progressCell.querySelector(
+    ".doctor-contact-summary"
+   );
+
+   const patient=latestPatientContact(state,report);
+   const current=stage(state,group,report);
+
+   // Show contact status when there is a contact record,
+   // or the report is at a doctor/patient contact stage.
+   const showStatus=
+    !!doctorSummary||
+    !!patient||
+    current.key==="doctor"||
+    current.key==="patient";
+
+   if(!showStatus) continue;
+
+   const status=document.createElement("div");
+   status.className="doctor-contact-summary";
+   status.innerHTML="<strong>Latest contact status</strong>";
+
+   /* Doctor: retain the existing latest contact and reminder. */
+
+   const doctorBlock=document.createElement("div");
+   doctorBlock.style.marginTop="5px";
+
+   if(doctorSummary){
+    doctorSummary.remove();
+
+    const heading=doctorSummary.querySelector("strong");
+    if(heading) heading.textContent="Doctor";
+
+    // Outer container now provides the spacing and styling.
+    doctorSummary.classList.remove("doctor-contact-summary");
+
+    doctorBlock.append(doctorSummary);
+   }else{
+    doctorBlock.innerHTML=`
+     <strong>Doctor</strong><br>
+     No doctor contact recorded
+    `;
+   }
+
+   status.append(doctorBlock);
+
+   /* Patient: latest report-linked contact in this review cycle. */
+
+   const patientBlock=document.createElement("div");
+   patientBlock.style.marginTop="8px";
+
+   patientBlock.innerHTML=patient?`
+    <strong>Patient</strong><br>
+    ${esc(timeLabel(patient.at))}
+    · ${esc(patient.target||"Patient")}<br>
+    ${esc(patient.method||"Method not recorded")}
+    · ${esc(deliveryLabel(patient))}
+   `:`
+    <strong>Patient</strong><br>
+    No patient contact recorded
+   `;
+
+   status.append(patientBlock);
+   progressCell.append(status);
+  }
+
+  return template.innerHTML;
+ };
+
+})();
 /* Startup */
 
 async function connect(){
