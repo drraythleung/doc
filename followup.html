@@ -434,6 +434,43 @@ tbody tr:last-child td{border-bottom:0}
 .section{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
 #printArea{display:none}
 
+/* Doctor contact log */
+
+.doctor-report-actions{
+ display:flex;
+ flex-direction:column;
+ align-items:flex-start;
+ gap:6px;
+}
+
+.doctor-contact-summary{
+ margin-top:8px;
+ font-size:12px;
+ white-space:normal;
+ overflow-wrap:anywhere;
+ color:var(--muted);
+}
+
+.doctor-contact-summary strong{
+ color:var(--text);
+}
+
+.doctor-contact-history{
+ margin-top:14px;
+ border-top:1px solid var(--line);
+ padding-top:10px;
+}
+
+.doctor-contact-history>summary{
+ font-size:12px;
+ color:var(--muted);
+}
+
+.doctor-contact-summary .warning{
+ display:block;
+ margin-top:4px;
+}
+ 
 @media(max-width:1000px){
  #caseEditor{grid-template-columns:minmax(0,1fr) minmax(330px,1fr)}
  .brand img{width:100px}
@@ -1666,10 +1703,9 @@ function openContact(target=null){
      ${field("Contact method *",`
       <select id="contactMethod" required>
        <option value="">Select</option>
-       <option value="Telephone">Telephone</option>
-       <option value="Email">Clinic-approved email</option>
-       <option value="WhatsApp">Clinic-approved WhatsApp</option>
-       <option value="In person">In person</option>
+<option value="Telephone">Telephone</option>
+<option value="Email">Clinic-approved email</option>
+<option value="WhatsApp">Clinic-approved WhatsApp</option>
       </select>`)}
      ${field("Result *",`
       <select id="contactDelivery" required>
@@ -1775,21 +1811,19 @@ function refreshContactFields(){
 
 function refreshDeliveryOptions(){
  const method=$("contactMethod").value;
+
  const list=method==="Telephone"?[
   ["confirmed","Connected — receipt confirmed"],
-  ["connected","Connected — receipt not confirmed"],
   ["no-answer","No answer"],
   ["voicemail","Voicemail left"]
- ]:method==="In person"?[
-  ["confirmed","Met — receipt confirmed"],
-  ["connected","Met — receipt not confirmed"]
- ]:method?[
+ ]:["Email","WhatsApp"].includes(method)?[
   ["sent","Sent — receipt not confirmed"],
   ["confirmed","Receipt explicitly confirmed"]
  ]:[];
 
  $("contactDelivery").innerHTML=options([
-  ["",method?"Select result":"Select a method first"],...list
+  ["",method?"Select result":"Select a method first"],
+  ...list
  ]);
 }
 
@@ -2061,8 +2095,9 @@ function readableHistoryHTML(state){
  for(const contact of state.contacts){
   items.push({
    at:contact.at,staff:contact.staff,
-   title:contact.reportName||
-    (contact.audience==="doctor"?"Doctor contact":"Patient contact"),
+title:
+ (contact.audience==="doctor"?"Doctor contact":"Patient contact")+
+ (contact.reportName?" · "+contact.reportName:""),
    text:`${contact.target||"Recipient"} · ${contact.method||""} · `+
     deliveryLabel(contact)+
     (contact.note?"\n"+contact.note:"")+
@@ -2463,16 +2498,19 @@ console.error("Save failed:", JSON.stringify({
     "This patient record was updated elsewhere. Your changes were not saved. "+
     "Reload and check the latest record before trying again.";
    message("The record has changed. Reload and check.",true);
-}else if(error?.code === "P0001"){
- // The server explicitly rejected this save.
- // Retain recoverySnapshot, but do not offer the same request as a retry.
- pendingWrite = null;
 
- blockedReason =
-  "Changes were not saved. Reload and check the patient record " +
-  "before trying again. If this continues, contact the administrator.";
+  }else if(error?.code==="P0001"){
+ pendingWrite=null;
 
- message("Changes were not saved. Reload and check.", true);
+ const reason=String(
+  error.message||"Server validation rejected the save."
+ );
+
+ blockedReason=
+  "Changes were not saved. "+reason+" "+
+  "Reload and check before trying again.";
+
+ message("Changes were not saved: "+reason,true);
 
 }else{
  // The outcome is uncertain, so keep the same-request retry available.
@@ -2539,9 +2577,12 @@ if(report.cancelled){
    if(report.cancelled||!report.receivedDate){
     throw new Error("Record receipt first.");
    }
-   if((report.triage||"pending")!=="pending"||report.reviewedAt){
-    throw new Error("A review already exists. Use Corrections.");
-   }
+if(
+ (report.triage||"pending")!=="pending"||
+ (report.reviewedAt&&report.reviewPending!==true)
+){
+ throw new Error("A review already exists. Use Corrections.");
+}
    recordClassification(report,outcome,staff);
    appendNurseNote(report,note,staff);
   });
@@ -2618,12 +2659,12 @@ const followupAction=value("followupAction");
   }));
 
   await commit("Patient contact / appointment recorded",(state,staff)=>{
-   const allowed={
-    Telephone:["confirmed","connected","no-answer","voicemail"],
-    Email:["sent","confirmed"],
-    WhatsApp:["sent","confirmed"],
-    "In person":["confirmed","connected"]
-   };
+const allowed={
+ Telephone:["confirmed","no-answer","voicemail"],
+ Email:["sent","confirmed"],
+ WhatsApp:["sent","confirmed"]
+};
+   
 
    if(recordContact&&!allowed[method]?.includes(delivery)){
     throw new Error("Select a contact method and result.");
@@ -2664,7 +2705,7 @@ if(!["keep","complete","reschedule"].includes(followupAction)){
    }
 
    if(followupAction==="complete"){
-    if(!recordContact||!["confirmed","connected"].includes(delivery)){
+    if(!recordContact||delivery!=="confirmed"){
      throw new Error(
       "Record successful patient contact before marking this follow-up "+
       "as completed. For unanswered calls, voicemail or messages sent "+
@@ -3709,6 +3750,786 @@ $("printButton").addEventListener("click",handleUI(async()=>{
   }
 
   return originalMatchesTab(state,tab);
+ };
+
+})();
+
+ /* Doctor contact log — keep after other patches, before Startup */
+
+(()=>{
+ "use strict";
+
+ const DOCTOR_RESULTS={
+  Telephone:[
+   ["no-answer","No answer"],
+   ["voicemail","Voicemail left"],
+   ["connected","Connected — report receipt not confirmed"],
+   ["confirmed","Doctor confirmed report receipt"]
+  ],
+  WhatsApp:[
+   ["sent","Sent — report receipt not confirmed"],
+   ["confirmed","Doctor confirmed report receipt"],
+   ["failed","Sending failed"]
+  ],
+  Email:[
+   ["sent","Sent — report receipt not confirmed"],
+   ["confirmed","Doctor confirmed report receipt"],
+   ["failed","Sending failed"]
+  ],
+  "In person":[
+   ["not-met","Unable to meet doctor"],
+   ["connected","Met — report receipt not confirmed"],
+   ["confirmed","Doctor confirmed report receipt"]
+  ]
+ };
+
+ /* Hong Kong contact time */
+
+ function hkDateTimeInput(iso=new Date().toISOString()){
+  const parts=new Intl.DateTimeFormat("en-GB",{
+   timeZone:"Asia/Hong_Kong",
+   year:"numeric",
+   month:"2-digit",
+   day:"2-digit",
+   hour:"2-digit",
+   minute:"2-digit",
+   hourCycle:"h23"
+  }).formatToParts(new Date(iso));
+
+  const p=Object.fromEntries(
+   parts.map(item=>[item.type,item.value])
+  );
+
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+ }
+
+ function parseHKContactTime(value){
+  if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)){
+   throw new Error("Enter a valid contact date and time.");
+  }
+
+  const datePart=value.slice(0,10);
+  const hour=Number(value.slice(11,13));
+  const minute=Number(value.slice(14,16));
+
+  if(
+   !validDate(datePart)||
+   hour>23||
+   minute>59
+  ){
+   throw new Error("Enter a valid contact date and time.");
+  }
+
+  // Explicit Hong Kong offset; independent of browser timezone.
+  const date=new Date(value+":00+08:00");
+
+  if(
+   Number.isNaN(date.getTime())||
+   hkDateTimeInput(date.toISOString())!==value
+  ){
+   throw new Error("Enter a valid contact date and time.");
+  }
+
+  if(date.getTime()>Date.now()){
+   throw new Error("Contact time cannot be in the future.");
+  }
+
+  return date.toISOString();
+ }
+
+ /* Report-linked doctor contacts */
+
+ function doctorContacts(state,report,currentCycleOnly=true){
+  return state.contacts.filter(contact=>
+   contact.audience==="doctor"&&
+   contact.reportId===report.id&&
+   (
+    !currentCycleOnly||
+    (contact.reviewCycleId||"legacy")===cycleId(report)
+   )
+  );
+ }
+
+ function latestDoctorContact(state,report){
+  return [...doctorContacts(state,report)]
+   .sort((a,b)=>
+    String(b.at||"").localeCompare(String(a.at||""))||
+    String(b.recordedAt||"").localeCompare(
+     String(a.recordedAt||"")
+    )
+   )[0]||null;
+ }
+
+ /*
+  * Reminder changes are recorded in append-only contact entries.
+  * Latest reminder instruction wins in save order.
+  * Backdated contact time does not overwrite this ordering.
+  */
+ function doctorReminderDate(state,report){
+  if(
+   state.tracingStatus==="cancelled"||
+   !needsDoctorReview(report)
+  ){
+   return "";
+  }
+
+  const contacts=doctorContacts(state,report);
+
+  for(let i=contacts.length-1;i>=0;i--){
+   const contact=contacts[i];
+
+   if(
+    Object.hasOwn(contact,"nextDate")&&
+    typeof contact.nextDate==="string"
+   ){
+    return contact.nextDate;
+   }
+  }
+
+  return "";
+ }
+
+ function dueDoctorReports(state){
+  return entries(state).filter(({report})=>{
+   const date=doctorReminderDate(state,report);
+   return !!date&&date<=today();
+  });
+ }
+
+ /* Delivery labels */
+
+ const originalDeliveryLabel=deliveryLabel;
+
+ deliveryLabel=function(contact){
+  if(contact.audience!=="doctor"){
+   return originalDeliveryLabel(contact);
+  }
+
+  if(receiptConfirmed(contact)){
+   return "Doctor confirmed report receipt — review not implied";
+  }
+
+  return ({
+   sent:"Sent — report receipt not confirmed",
+   connected:"Contact made — report receipt not confirmed",
+   "no-answer":"No answer",
+   voicemail:"Voicemail left",
+   failed:"Sending failed",
+   "not-met":"Unable to meet doctor"
+  })[contact.deliveryStatus]||
+   contact.outcome||
+   "Not recorded";
+ };
+
+ /* Contact rendering, used by print and doctor contact history */
+
+ const originalContactHTML=contactHTML;
+
+ contactHTML=function(contact){
+  const doctor=contact.audience==="doctor";
+
+  return `
+   <div class="small-text" style="margin-top:10px">
+    <strong>${doctor?"Doctor contact":"Patient contact"}</strong>
+   </div>
+
+   ${originalContactHTML(contact)}
+
+   ${doctor&&contact.recordedAt?`
+    <div class="small-text">
+     Logged: ${esc(timeLabel(contact.recordedAt))}
+     · ${esc(contact.staff||"Staff not recorded")}
+    </div>
+   `:""}
+
+   ${doctor&&contact.doctorFollowupAction?`
+    <div class="small-text">
+     Doctor reminder:
+     ${esc(
+      contact.doctorFollowupAction==="clear"
+       ? "Cleared — does not complete doctor review"
+       : contact.nextDate
+        ? dateLabel(contact.nextDate)
+        : "Not set"
+     )}
+    </div>
+   `:""}
+  `;
+ };
+
+ /*
+  * Keep "Latest contact" in Appointment & contact patient-specific.
+  * Doctor contacts are shown beside their reports instead.
+  */
+ const originalRecentContactsHTML=recentContactsHTML;
+
+ recentContactsHTML=function(state){
+  return originalRecentContactsHTML({
+   ...state,
+   contacts:state.contacts.filter(contact=>
+    contact.audience!=="doctor"
+   )
+  });
+ };
+
+ /* Report table: additional button and latest doctor contact */
+
+ const originalReportTable=reportTable;
+
+ reportTable=function(state,list){
+  const template=document.createElement("template");
+  template.innerHTML=originalReportTable(state,list);
+
+  for(const {group,report} of list){
+   const row=[
+    ...template.content.querySelectorAll("[data-row-report]")
+   ].find(element=>
+    element.dataset.rowGroup===group.id&&
+    element.dataset.rowReport===report.id
+   );
+
+   if(!row) continue;
+
+   const current=stage(state,group,report);
+   const latest=latestDoctorContact(state,report);
+   const reminder=doctorReminderDate(state,report);
+
+   if(current.key==="doctor"){
+    const actionCell=row.cells[2];
+    const existingActions=actionCell.innerHTML;
+
+    actionCell.innerHTML=`
+     <div class="doctor-report-actions">
+      <button type="button"
+       data-doctor-contact
+       data-doctor-group="${esc(group.id)}"
+       data-doctor-report="${esc(report.id)}">
+       Record doctor contact
+      </button>
+
+      ${existingActions}
+     </div>
+    `;
+   }
+
+   if(latest||reminder){
+    row.cells[1].insertAdjacentHTML("beforeend",`
+     <div class="doctor-contact-summary">
+      ${latest?`
+       <strong>Latest doctor contact</strong><br>
+       ${esc(timeLabel(latest.at))}
+       · ${esc(latest.target||"Doctor")}<br>
+       ${esc(latest.method||"")}
+       · ${esc(deliveryLabel(latest))}
+      `:""}
+
+      ${reminder?`
+       <div>
+        Next doctor follow-up:
+        ${esc(dateLabel(reminder))}
+       </div>
+      `:""}
+
+      ${reminder&&reminder<=today()?`
+       <span class="warning">Doctor follow-up due</span>
+      `:""}
+     </div>
+    `);
+   }
+  }
+
+  return template.innerHTML;
+ };
+
+ /* Worklist reminder and follow-up filter */
+
+ const originalMetrics=metrics;
+
+ metrics=function(state){
+  const result=originalMetrics(state);
+  result.doctorDue=dueDoctorReports(state);
+  return result;
+ };
+
+ const originalMatchesTab=matchesTab;
+
+ matchesTab=function(state,tab){
+  if(
+   tab==="followup"&&
+   state.tracingStatus!=="cancelled"&&
+   dueDoctorReports(state).length>0
+  ){
+   return true;
+  }
+
+  return originalMatchesTab(state,tab);
+ };
+
+ const originalOutstandingText=outstandingText;
+
+ outstandingText=function(state){
+  const existing=originalOutstandingText(state);
+  const due=dueDoctorReports(state).length;
+
+  return due
+   ? `${existing} · Doctor follow-up due: ${due}`
+   : existing;
+ };
+
+ /* Doctor contact workspace */
+
+ function refreshDoctorResults(){
+  const method=$("doctorContactMethod").value;
+
+  $("doctorContactResult").innerHTML=options([
+   ["",method?"Select result":"Select a method first"],
+   ...(DOCTOR_RESULTS[method]||[])
+  ]);
+ }
+
+ function refreshDoctorFollowupFields(){
+  const reschedule=
+   $("doctorFollowupAction").value==="reschedule";
+
+  $("doctorFollowupFields").hidden=!reschedule;
+  $("doctorNextDate").disabled=!reschedule;
+  $("doctorNextDate").required=reschedule;
+ }
+
+ function openDoctorContact(target){
+  const state=selected.state;
+
+  const {group,report}=findReport(
+   state,target.groupId,target.reportId
+  );
+
+  if(stage(state,group,report).key!=="doctor"){
+   throw new Error(
+    "This report is not currently awaiting doctor review."
+   );
+  }
+
+  const eligible=entries(state).filter(item=>
+   stage(state,item.group,item.report).key==="doctor"
+  );
+
+  const previous=doctorContacts(state,report,false);
+  const reminder=doctorReminderDate(state,report);
+
+  const opened=startWorkspace(
+   "Record doctor contact",
+   report.name||group.name,
+   `
+    ${report.triage==="urgent"?`
+     <div class="notice red">
+      Urgent result — follow the clinic's immediate escalation
+      procedure. Logging or sending a message does not complete
+      doctor review.
+     </div>
+    `:""}
+
+    <div class="form-grid">
+     ${field("Doctor *",doctorInput(
+      latestDoctorContact(state,report)?.target||
+      report.doctorName||
+      state.metadata?.clinician||
+      ""
+     ))}
+
+     ${field("Contact method *",`
+ <select id="doctorContactMethod" required>
+  <option value="">Select</option>
+  <option value="Telephone">Telephone</option>
+  <option value="Email">Clinic-approved email</option>
+  <option value="WhatsApp">Clinic-approved WhatsApp</option>
+  <option value="In person">In person</option>
+ </select>
+`)}
+
+     ${field("Result *",`
+      <select id="doctorContactResult" required>
+       <option value="">Select a method first</option>
+      </select>
+     `)}
+
+     ${field("Contact date & time — Hong Kong *",`
+      <input id="doctorContactAt"
+       type="datetime-local"
+       value="${hkDateTimeInput()}"
+       required>
+      <small>
+       Use the actual contact time. The system separately
+       records when this entry is saved.
+      </small>
+     `)}
+    </div>
+
+    <div class="notice blue">
+     <strong>Reports involved *</strong>
+
+     <p class="small-text">
+      Select only reports included in this contact with
+      the named doctor.
+     </p>
+
+     ${eligible.map(item=>`
+      <label class="checkline" style="margin:7px 0">
+       <input type="checkbox"
+        data-doctor-linked-group="${esc(item.group.id)}"
+        data-doctor-linked-report="${esc(item.report.id)}"
+        ${item.report.id===report.id?"checked":""}>
+
+       <span>
+        ${esc(item.report.name||item.group.name)}
+        · ${esc(CLASSIFICATIONS[item.report.triage])}
+       </span>
+      </label>
+     `).join("")}
+    </div>
+
+    <div class="form-grid">
+     ${field("Notes / reply",`
+      <textarea id="doctorContactNote"
+       rows="3" maxlength="2000"></textarea>
+     `)}
+
+     ${field("Doctor follow-up arrangement *",`
+      <select id="doctorFollowupAction" required>
+       <option value="keep">Keep each report's existing reminder</option>
+       <option value="reschedule">Set a new doctor follow-up date</option>
+       <option value="clear">Clear doctor reminder — reason required</option>
+      </select>
+
+      <small>
+       Current reminder for this report:
+       ${esc(dateLabel(reminder))}.
+       This does not change the patient reminder.
+      </small>
+     `)}
+    </div>
+
+    <div id="doctorFollowupFields" class="form-grid" hidden>
+     ${field("Next doctor follow-up date *",`
+      <input id="doctorNextDate"
+       type="date"
+       min="${today()}"
+       value="${esc(reminder>=today()?reminder:"")}"
+       disabled>
+     `)}
+    </div>
+
+    <p class="small-text">
+     Doctor receipt confirmation is not a doctor review.
+     Use Record review only after the doctor has actually
+     reviewed the report.
+    </p>
+
+    ${previous.length?`
+     <details class="doctor-contact-history">
+      <summary>
+       Previous doctor contacts (${previous.length})
+      </summary>
+
+      ${[...previous].reverse().map(contact=>`
+       ${(contact.reviewCycleId||"legacy")!==cycleId(report)?`
+        <div class="small-text">
+         Previous review cycle
+        </div>
+       `:""}
+
+       ${contactHTML(contact)}
+      `).join("")}
+     </details>
+    `:""}
+   `,
+   {type:"doctorContact",target}
+  );
+
+  if(opened){
+   $("actionSave").textContent="Save contact log";
+   refreshDoctorFollowupFields();
+  }
+ }
+
+ /* Additional button events */
+
+ function handleDoctorContactClick(event){
+  const button=event.target.closest("[data-doctor-contact]");
+  if(!button) return;
+
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  if(editingLocked()) return;
+
+  openDoctorContact({
+   groupId:button.dataset.doctorGroup,
+   reportId:button.dataset.doctorReport
+  });
+ }
+
+ $("groups").addEventListener(
+  "click",
+  handleUI(handleDoctorContactClick),
+  true
+ );
+
+ $("actionFields").addEventListener(
+  "click",
+  handleUI(handleDoctorContactClick),
+  true
+ );
+
+ $("actionFields").addEventListener("change",event=>{
+  if(actionContext?.type!=="doctorContact") return;
+
+  if(event.target.id==="doctorContactMethod"){
+   refreshDoctorResults();
+  }
+
+  if(event.target.id==="doctorFollowupAction"){
+   refreshDoctorFollowupFields();
+  }
+ });
+
+ /*
+  * Capture this submit before the existing form handlers.
+  * Other actions continue unchanged.
+  */
+ $("actionForm").addEventListener(
+  "submit",
+  handleUI(async event=>{
+   if(actionContext?.type!=="doctorContact") return;
+
+   event.preventDefault();
+   event.stopImmediatePropagation();
+
+   if(editingLocked()) return;
+
+   $("actionError").hidden=true;
+
+   const context=clone(actionContext);
+   const value=id=>$(id)?.value.trim()||"";
+
+   const doctor=value("actionDoctor");
+   const method=value("doctorContactMethod");
+   const result=value("doctorContactResult");
+   const contactTime=value("doctorContactAt");
+   const note=value("doctorContactNote");
+   const followupAction=value("doctorFollowupAction");
+   const nextDate=value("doctorNextDate");
+
+   const linked=[
+    ...$("actionFields").querySelectorAll(
+     "[data-doctor-linked-report]:checked"
+    )
+   ].map(element=>({
+    groupId:element.dataset.doctorLinkedGroup,
+    reportId:element.dataset.doctorLinkedReport
+   }));
+
+   await commit(
+    "Doctor contact recorded",
+    (state,staff)=>{
+     if(!doctor||doctor.length>100){
+      throw new Error(
+       "Enter a doctor name of 1–100 characters."
+      );
+     }
+
+     if(
+      !DOCTOR_RESULTS[method]?.some(
+       ([key])=>key===result
+      )
+     ){
+      throw new Error("Select a contact method and result.");
+     }
+
+     const at=parseHKContactTime(contactTime);
+
+     if(
+      !linked.length||
+      !linked.some(item=>
+       item.groupId===context.target.groupId&&
+       item.reportId===context.target.reportId
+      )
+     ){
+      throw new Error(
+       "Keep the report being followed up selected."
+      );
+     }
+
+     if(
+      !["keep","reschedule","clear"].includes(followupAction)
+     ){
+      throw new Error("Select a doctor follow-up arrangement.");
+     }
+
+     if(
+      followupAction==="reschedule"&&
+      (!validDate(nextDate)||nextDate<today())
+     ){
+      throw new Error(
+       "Select a doctor follow-up date of today or later."
+      );
+     }
+
+     if(followupAction==="clear"&&!note){
+      throw new Error(
+       "Explain why the doctor reminder is being cleared. "+
+       "Clearing it does not complete doctor review."
+      );
+     }
+
+     if(note.length>2000){
+      throw new Error("Notes must be at most 2,000 characters.");
+     }
+
+     const reports=linked.map(target=>{
+      const item=findReport(
+       state,target.groupId,target.reportId
+      );
+
+      if(stage(state,item.group,item.report).key!=="doctor"){
+       throw new Error(
+        "A selected report is no longer awaiting doctor review."
+       );
+      }
+
+      return item.report;
+     });
+
+     const recordedAt=new Date().toISOString();
+     const communicationId=uuid();
+
+     for(const report of reports){
+      const reminder=followupAction==="keep"
+       ? doctorReminderDate(state,report)
+       : followupAction==="reschedule"
+        ? nextDate
+        : "";
+
+      state.contacts.push({
+       id:uuid(),
+       communicationId,
+       audience:"doctor",
+
+       // Actual communication time and separate logging time.
+       at,
+       recordedAt,
+       staff,
+
+       target:doctor,
+       method,
+       deliveryStatus:result,
+       outcome:deliveryLabel({
+        audience:"doctor",
+        deliveryStatus:result
+       }),
+       note,
+
+       reportId:report.id,
+       reportName:report.name||"",
+       reviewCycleId:cycleId(report),
+
+       doctorFollowupAction:followupAction,
+       nextDate:reminder,
+
+       confirmedAt:result==="confirmed"?at:"",
+       confirmedBy:result==="confirmed"?staff:""
+      });
+     }
+
+     /*
+      * Deliberately do NOT change:
+      * report.reviewedAt
+      * report.reviewPending
+      * report.triage
+      * report.patientContactRequired
+      * state.nextFollowupDate
+      */
+    }
+   );
+  }),
+  true
+ );
+
+ /* Clearly labelled doctor contacts in History */
+
+ const originalReadableHistoryHTML=readableHistoryHTML;
+
+ readableHistoryHTML=function(state){
+  const doctors=state.contacts.filter(contact=>
+   contact.audience==="doctor"
+  );
+
+  if(!doctors.length){
+   return originalReadableHistoryHTML(state);
+  }
+
+  const remaining={
+   ...state,
+   contacts:state.contacts.filter(contact=>
+    contact.audience!=="doctor"
+   )
+  };
+
+  return `
+   <h3>Doctor contact history</h3>
+
+   ${[...doctors]
+    .sort((a,b)=>
+     String(b.at||"").localeCompare(String(a.at||""))
+    )
+    .map(contactHTML)
+    .join("")}
+
+   <section class="section">
+    <h3>Other activity</h3>
+    ${originalReadableHistoryHTML(remaining)}
+   </section>
+  `;
+ };
+
+ const originalSavedActivityLabel=savedActivityLabel;
+
+ savedActivityLabel=function(action){
+  if(action==="Doctor contact recorded"){
+   return "Doctor contact recorded";
+  }
+
+  return originalSavedActivityLabel(action);
+ };
+
+ /* Print report-specific current doctor reminders */
+
+ const originalPrintReportHTML=printReportHTML;
+
+ printReportHTML=function(state){
+  const reminders=entries(state)
+   .map(({report})=>({
+    report,
+    date:doctorReminderDate(state,report)
+   }))
+   .filter(item=>!!item.date);
+
+  return `
+   ${originalPrintReportHTML(state)}
+
+   ${reminders.length?`
+    <section class="section">
+     <h3>Doctor follow-up reminders</h3>
+
+     ${reminders.map(({report,date})=>`
+      <p>
+       <strong>${esc(report.name)}</strong>
+       · ${esc(dateLabel(date))}
+       ${date<=today()?" · Due":""}
+      </p>
+     `).join("")}
+    </section>
+   `:""}
+  `;
  };
 
 })();
