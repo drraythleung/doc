@@ -490,6 +490,35 @@ tbody tr:last-child td{border-bottom:0}
  #printArea .table-wrap{overflow:visible}
  #printArea .badge{color:#111;background:#fff;border-color:#ccc}
 }
+ /* Urgent tab */
+.tabs button[data-tab="urgent"]{
+ color:var(--red);
+ background:#fff1f2;
+ border-color:#fecaca;
+}
+.tabs button[data-tab="urgent"]:hover:not(:disabled){
+ background:#ffe4e6;
+}
+.tabs button[data-tab="urgent"].active{
+ color:#fff;
+ background:var(--red);
+ border-color:var(--red);
+}
+
+/* Priority tab */
+.tabs button[data-tab="priority"]{
+ color:var(--amber);
+ background:#fff8e5;
+ border-color:#ead39a;
+}
+.tabs button[data-tab="priority"]:hover:not(:disabled){
+ background:#fef3c7;
+}
+.tabs button[data-tab="priority"].active{
+ color:#fff;
+ background:var(--amber);
+ border-color:var(--amber);
+}
 </style>
 </head>
 
@@ -3649,7 +3678,40 @@ $("printButton").addEventListener("click",handleUI(async()=>{
  };
 
 })();
- 
+ /* Urgent / Priority worklist tabs — keep before Startup */
+
+(()=>{
+ "use strict";
+
+ // Insert after Active patients, before Awaiting reports.
+ TABS.splice(0,TABS.length,
+  ["all","Active patients"],
+  ["urgent","Urgent"],
+  ["priority","Priority"],
+  ["missing","Awaiting reports"],
+  ["review","Awaiting review"],
+  ["followup","Contact / appointment"],
+  ["cancelled","Cancelled tracing"]
+ );
+
+ const originalMatchesTab=matchesTab;
+
+ matchesTab=function(state,tab){
+  if(tab==="urgent"||tab==="priority"){
+   if(state.tracingStatus==="cancelled") return false;
+
+   const classification=tab==="urgent"?"urgent":"doctor";
+
+   return entries(state).some(({report})=>
+    report.triage===classification&&
+    needsDoctorReview(report)
+   );
+  }
+
+  return originalMatchesTab(state,tab);
+ };
+
+})();
 /* Startup */
 
 async function connect(){
