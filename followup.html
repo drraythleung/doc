@@ -5450,6 +5450,303 @@ $("printButton").addEventListener("click",handleUI(async()=>{
  };
 
 })();
+ /* Investigation History UI — place immediately BEFORE Startup */
+
+(()=>{
+ "use strict";
+
+ const previousReportTable=reportTable;
+
+ reportTable=function(state,list){
+  const template=document.createElement("template");
+  template.innerHTML=previousReportTable(state,list);
+
+  for(const row of template.content.querySelectorAll(
+   "[data-row-report]"
+  )){
+   // Keep progress badge; remove long contact summaries.
+   row.cells[1]
+    .querySelectorAll(".doctor-contact-summary")
+    .forEach(element=>element.remove());
+
+   const cell=row.cells[2];
+   let actions=cell.querySelector(".doctor-report-actions");
+
+   if(!actions){
+    actions=document.createElement("div");
+    actions.className="doctor-report-actions";
+
+    while(cell.firstChild){
+     actions.append(cell.firstChild);
+    }
+
+    cell.append(actions);
+   }
+
+   const history=document.createElement("button");
+   history.type="button";
+   history.className="small";
+   history.dataset.investigationHistory=row.dataset.rowGroup;
+   history.textContent="History";
+
+   actions.append(history);
+  }
+
+  return template.innerHTML;
+ };
+
+ function timelineItems(state,group){
+  const reportIds=new Set(group.reports.map(report=>report.id));
+
+  // Reuse report-change/review/correction history,
+  // restricted to this investigation.
+  const scopedState={
+   ...state,
+   groups:[group]
+  };
+
+  const items=reportHistoryItems(scopedState).filter(item=>
+   item.text&&
+   item.text!=="Report or related contact updated"&&
+   !item.text.startsWith("Nurse notes:\n")
+  );
+
+  for(const report of group.reports){
+   const name=report.name||group.name;
+   const nurses=[...(report.nurseReviewHistory||[])];
+
+   if(
+    report.nurseAt&&
+    !nurses.some(item=>item.at===report.nurseAt)
+   ){
+    nurses.push({
+     at:report.nurseAt,
+     staff:report.nurseName,
+     classification:report.triage
+    });
+   }
+
+   for(const item of nurses){
+    items.push({
+     title:"Nurse review · "+name,
+     at:item.at,
+     staff:item.staff,
+     text:
+      "Classification: "+
+      (CLASSIFICATIONS[item.classification]||"Not recorded")+
+      (item.reason?"\nReason: "+item.reason:"")
+    });
+   }
+
+   const notes=report.noteHistory||[];
+
+   if(notes.length){
+    for(const item of notes){
+     items.push({
+      title:"Nurse note · "+name,
+      at:item.at,
+      staff:item.staff,
+      text:item.note||""
+     });
+    }
+   }else if(report.nurseNote){
+    items.push({
+     title:"Nurse note · "+name,
+     at:report.nurseAt,
+     staff:report.nurseName,
+     text:report.nurseNote
+    });
+   }
+
+   // Older records may have receipt data without an action log.
+   const receiptLogged=(report.actionLog||[]).some(event=>
+    (event.before?.receivedDate||"")!==
+    (event.after?.receivedDate||"")
+   );
+
+   if(report.receivedDate&&!receiptLogged){
+    items.push({
+     title:"Report received · "+name,
+     at:report.receivedRecordedAt,
+     staff:report.receivedRecordedBy,
+     text:"Received date: "+dateLabel(report.receivedDate)
+    });
+   }
+  }
+
+  // Merge reports included in the same communication.
+  const communications=new Map();
+
+  for(const contact of state.contacts){
+   if(!reportIds.has(contact.reportId)) continue;
+
+   const key=canonical({
+    communication:contact.communicationId||contact.id,
+    audience:contact.audience,
+    at:contact.at,
+    staff:contact.staff,
+    target:contact.target,
+    method:contact.method,
+    status:contact.deliveryStatus,
+    outcome:contact.outcome,
+    note:contact.note,
+    confirmedAt:contact.confirmedAt,
+    confirmedBy:contact.confirmedBy,
+    reminderAction:contact.doctorFollowupAction
+   });
+
+   if(!communications.has(key)){
+    communications.set(key,[]);
+   }
+
+   communications.get(key).push(contact);
+  }
+
+  for(const contacts of communications.values()){
+   const contact=contacts[0];
+   const doctor=contact.audience==="doctor";
+
+   const names=[...new Set(contacts.map(item=>
+    item.reportName||
+    group.reports.find(report=>report.id===item.reportId)?.name||
+    group.name
+   ))];
+
+   const lines=[
+    (contact.target||(doctor?"Doctor":"Patient"))+
+     " · "+(contact.method||"Method not recorded"),
+    deliveryLabel(contact),
+    "Reports: "+names.join(", ")
+   ];
+
+   if(contact.note) lines.push(contact.note);
+
+   for(const item of contacts){
+    if(!item.nextDate) continue;
+
+    const reportName=item.reportName||
+     group.reports.find(report=>report.id===item.reportId)?.name||
+     group.name;
+
+    const line=
+     (doctor?"Next doctor follow-up: ":"Next contact: ")+
+     dateLabel(item.nextDate)+
+     (names.length>1?" · "+reportName:"");
+
+    if(!lines.includes(line)) lines.push(line);
+   }
+
+   if(doctor&&contact.doctorFollowupAction==="clear"){
+    lines.push("Doctor reminder cleared — does not complete review");
+   }
+
+   if(
+    contact.confirmedAt&&
+    (
+     contact.confirmedAt!==contact.at||
+     (
+      contact.confirmedBy&&
+      contact.confirmedBy!==contact.staff
+     )
+    )
+   ){
+    lines.push(
+     "Receipt confirmed: "+timeLabel(contact.confirmedAt)+
+     (contact.confirmedBy?" · "+contact.confirmedBy:"")
+    );
+   }
+
+   items.push({
+    title:doctor?"Doctor contact":"Patient contact",
+    at:contact.at,
+    staff:contact.staff,
+    text:lines.join("\n")
+   });
+  }
+
+  return items.sort((a,b)=>
+   String(b.at||"").localeCompare(String(a.at||""))
+  );
+ }
+
+ function openInvestigationHistory(groupId){
+  if(!selected||editingLocked()) return;
+
+  const group=selected.state.groups.find(item=>
+   item.id===groupId
+  );
+
+  if(!group){
+   throw new Error("Investigation not found. Refresh and try again.");
+  }
+
+  const items=timelineItems(selected.state,group);
+
+  const html=`
+   <p class="small-text">
+    Investigation-specific activity · latest first
+   </p>
+
+   ${items.length?items.map(item=>`
+    <div class="log">
+     <strong>${esc(item.title)}</strong>
+     <div class="small-text">
+      ${esc(timeLabel(item.at))}
+      · ${esc(item.staff||"Staff not recorded")}
+     </div>
+     <div class="note">${esc(item.text)}</div>
+    </div>
+   `).join(""):`
+    <p class="muted">
+     No activity recorded for this investigation.
+    </p>
+   `}
+  `;
+
+  startWorkspace(
+   "Investigation history",
+   group.name,
+   html,
+   {
+    type:"history",
+    caseId:selected.id,
+    investigationGroupId:group.id
+   },
+   true
+  );
+ }
+
+ $("groups").addEventListener("click",handleUI(event=>{
+  const button=event.target.closest(
+   "[data-investigation-history]"
+  );
+
+  if(!button) return;
+
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  openInvestigationHistory(
+   button.dataset.investigationHistory
+  );
+ }),true);
+
+ // Allow read-only investigation history on cancelled cases.
+ const previousUpdateControls=updateControls;
+
+ updateControls=function(){
+  previousUpdateControls();
+
+  $("groups")
+   .querySelectorAll("[data-investigation-history]")
+   .forEach(button=>{
+    button.disabled=editingLocked();
+   });
+ };
+
+ $("historyButton").textContent="All case history";
+
+})();
 /* Startup */
 
 async function connect(){
