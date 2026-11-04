@@ -133,7 +133,11 @@ small,.muted,.small-text{color:var(--muted)}
 }
 .badge.blue{color:var(--blue);background:#eff6ff;border-color:#bfdbfe}
 .badge.green{color:var(--green);background:#ecfdf5;border-color:#a7e3c9}
-.badge.amber{color:var(--amber);background:#fff8e5;border-color:#ead39a}
+.badge.amber{
+ color:#713f12;
+ background:#fef9c3;
+ border-color:#facc15;
+}
 .badge.red{color:var(--red);background:#fff1f2;border-color:#fecaca}
 
 #app{
@@ -542,19 +546,21 @@ tbody tr:last-child td{border-bottom:0}
  border-color:var(--red);
 }
 
-/* Priority tab */
+/* Priority tab — yellow */
 .tabs button[data-tab="priority"]{
- color:var(--amber);
- background:#fff8e5;
- border-color:#ead39a;
+ color:#713f12;
+ background:#fef9c3;
+ border-color:#facc15;
 }
+
 .tabs button[data-tab="priority"]:hover:not(:disabled){
- background:#fef3c7;
+ background:#fef08a;
 }
+
 .tabs button[data-tab="priority"].active{
- color:#fff;
- background:var(--amber);
- border-color:var(--amber);
+ color:#422006;
+ background:#facc15;
+ border-color:#ca8a04;
 }
 </style>
 </head>
@@ -1047,15 +1053,32 @@ function emptyReport(name){
 
 function stage(state,group,report){
  if(report.cancelled){
-  return {key:"cancelled",label:"Cancelled",colour:"",order:90};
+  return {
+   key:"cancelled",
+   label:"Cancelled",
+   colour:"",
+   order:90
+  };
  }
 
  if(!report.receivedDate){
-  return {key:"received",label:"Awaiting report",colour:"amber",order:50};
+  return {
+   key:"received",
+   label:"Awaiting report",
+   colour:"blue",
+   order:50
+  };
  }
+
  if(!nurseDone(report)){
-  return {key:"nurse",label:"Nurse review pending",colour:"blue",order:30};
+  return {
+   key:"nurse",
+   label:"Nurse review pending",
+   colour:"blue",
+   order:30
+  };
  }
+
  if(needsDoctorReview(report)){
   return {
    key:"doctor",
@@ -1064,17 +1087,45 @@ function stage(state,group,report){
     : report.triage==="doctor"
      ? "Priority · doctor review"
      : "Doctor review pending",
-   colour:report.triage==="urgent"?"red":"blue",
-   order:report.triage==="urgent"?0:report.triage==="doctor"?20:35
+
+   colour:report.triage==="urgent"
+    ? "red"
+    : report.triage==="doctor"
+     ? "amber"
+     : "blue",
+
+   order:report.triage==="urgent"
+    ? 0
+    : report.triage==="doctor"
+     ? 20
+     : 35
   };
  }
+
  if(patientPending(state,report)){
-  return {key:"patient",label:"Patient receipt pending",colour:"amber",order:40};
+  return {
+   key:"patient",
+   label:"Patient receipt pending",
+   colour:"blue",
+   order:40
+  };
  }
+
  if(!report.archived){
-  return {key:"filed",label:"Filing pending",colour:"amber",order:60};
+  return {
+   key:"filed",
+   label:"Filing pending",
+   colour:"blue",
+   order:60
+  };
  }
- return {key:"complete",label:"Completed",colour:"green",order:80};
+
+ return {
+  key:"complete",
+  label:"Completed",
+  colour:"green",
+  order:80
+ };
 }
 
 function metrics(state){
@@ -1276,8 +1327,8 @@ function groupsHTML(state){
   ${pending.length?reportTable(state,pending):
    '<p class="muted">No outstanding report actions.</p>'}
 
-  ${emptyGroups.length?`
-   <div class="notice">
+${emptyGroups.length?`
+ <div class="notice blue">
     ${emptyGroups.map(group=>`
      <div class="row" style="margin:6px 0">
       <span>${esc(group.name)} — report list needed</span>
@@ -1371,13 +1422,29 @@ function renderDetail(){
  $("patientReference").textContent=
   "Patient reference: "+(m.patientReference||"Not entered");
 
- $("caseSummary").innerHTML=`
-  ${badge(`${counts.pending.length} pending`,
-   counts.pending.length?"amber":"green")}
-  ${counts.urgent.length?badge(`${counts.urgent.length} urgent`,"red"):""}
-  ${counts.urgent.length?
-   '<span class="warning">Escalate urgent results now</span>':""}
- `;
+ 
+ const priorityCount=counts.doctor.filter(
+ item=>item.report.triage==="doctor"
+).length;
+
+$("caseSummary").innerHTML=`
+ ${badge(
+  `${counts.pending.length} pending`,
+  counts.pending.length?"blue":"green"
+ )}
+
+ ${priorityCount
+  ? badge(`${priorityCount} priority`,"amber")
+  : ""}
+
+ ${counts.urgent.length
+  ? badge(`${counts.urgent.length} urgent`,"red")
+  : ""}
+
+ ${counts.urgent.length
+  ? '<span class="warning">Escalate urgent results now</span>'
+  : ""}
+`;
 
  $("groups").innerHTML=groupsHTML(state);
  $("groups").querySelectorAll("[data-archive]").forEach(details=>{
