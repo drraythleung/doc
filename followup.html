@@ -584,6 +584,39 @@ tbody tr:last-child td{border-bottom:0}
  outline:2px solid var(--blue);
  outline-offset:-2px;
 }
+ /* Classification colour persists after doctor review */
+
+/* Urgent — pale red */
+.report-table tbody tr.urgent-row,
+.report-table tbody tr.urgent-row.selected-row,
+.report-table tbody tr.urgent-row[data-investigation-history]{
+ background:#fff1f2;
+}
+
+.report-table tbody tr.urgent-row:hover,
+.report-table tbody tr.urgent-row[data-investigation-history]:hover{
+ background:#ffe4e6;
+}
+
+.report-table tbody tr.urgent-row.selected-row{
+ box-shadow:inset 3px 0 var(--red);
+}
+
+/* Priority — pale yellow */
+.report-table tbody tr.priority-row,
+.report-table tbody tr.priority-row.selected-row,
+.report-table tbody tr.priority-row[data-investigation-history]{
+ background:#fef9c3;
+}
+
+.report-table tbody tr.priority-row:hover,
+.report-table tbody tr.priority-row[data-investigation-history]:hover{
+ background:#fef08a;
+}
+
+.report-table tbody tr.priority-row.selected-row{
+ box-shadow:inset 3px 0 #ca8a04;
+}
 </style>
 </head>
 
@@ -5507,7 +5540,46 @@ function openInvestigationHistory(groupId,reportId){
  $("historyButton").textContent="All case history";
 
 })();
+/* Persistent Urgent / Priority row colours
+   AFTER all patches, BEFORE Startup */
 
+(()=>{
+ "use strict";
+
+ const previousReportTable=reportTable;
+
+ reportTable=function(state,list){
+  const template=document.createElement("template");
+  template.innerHTML=previousReportTable(state,list);
+
+  const rows=[
+   ...template.content.querySelectorAll("[data-row-report]")
+  ];
+
+  for(const {group,report} of list){
+   const row=rows.find(element=>
+    element.dataset.rowGroup===group.id&&
+    element.dataset.rowReport===report.id
+   );
+
+   if(!row) continue;
+
+   // Colour follows classification, not doctor-review progress.
+   row.classList.toggle(
+    "urgent-row",
+    report.triage==="urgent"
+   );
+
+   row.classList.toggle(
+    "priority-row",
+    report.triage==="doctor"
+   );
+  }
+
+  return template.innerHTML;
+ };
+
+})();
 /* Startup */
 
 async function connect(){
