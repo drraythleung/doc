@@ -5012,10 +5012,6 @@ $("printButton").addEventListener("click",handleUI(async()=>{
   for(const row of template.content.querySelectorAll(
    "[data-row-report]"
   )){
-   // Remove long contact summaries.
-   row.cells[1]
-    .querySelectorAll(".doctor-contact-summary")
-    .forEach(element=>element.remove());
 
    // No separate History buttons.
    row.querySelectorAll("button[data-investigation-history]")
