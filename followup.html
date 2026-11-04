@@ -4973,6 +4973,483 @@ $("printButton").addEventListener("click",handleUI(async()=>{
  };
 
 })();
+
+ /* Investigation History — AFTER all patches, BEFORE Startup */
+
+(()=>{
+ "use strict";
+
+ /* Keep progress compact; add investigation-level History. */
+
+ const originalReportTable=reportTable;
+
+ reportTable=function(state,list){
+  const template=document.createElement("template");
+  template.innerHTML=originalReportTable(state,list);
+
+  const rows=[
+   ...template.content.querySelectorAll("[data-row-report]")
+  ];
+
+  for(const {group,report} of list){
+   const row=rows.find(element=>
+    element.dataset.rowGroup===group.id&&
+    element.dataset.rowReport===report.id
+   );
+
+   if(!row) continue;
+
+   // Remove previous doctor / combined contact summaries.
+   row.cells[1]
+    .querySelectorAll(".doctor-contact-summary")
+    .forEach(element=>element.remove());
+
+   const history=document.createElement("button");
+   history.type="button";
+   history.className="small";
+   history.dataset.investigationHistory=group.id;
+   history.textContent="History";
+   history.setAttribute(
+    "aria-label",
+    `History — ${group.name}`
+   );
+
+   const actions=row.cells[2].querySelector(
+    ".doctor-report-actions"
+   );
+
+   if(actions){
+    actions.append(history);
+   }else{
+    const container=document.createElement("div");
+    container.className="doctor-report-actions";
+
+    while(row.cells[2].firstChild){
+     container.append(row.cells[2].firstChild);
+    }
+
+    container.append(history);
+    row.cells[2].append(container);
+   }
+  }
+
+  return template.innerHTML;
+ };
+
+ /* Build one chronological timeline for this investigation. */
+
+ function investigationEvents(state,group){
+  const events=[];
+  const reportIds=new Set(group.reports.map(report=>report.id));
+
+  function add(title,at,staff,text,reportName=""){
+   events.push({
+    title,
+    at:at||"",
+    staff:staff||"",
+    text:text||"",
+    reportName
+   });
+  }
+
+  for(const report of group.reports){
+   const name=report.name||group.name;
+   const logs=report.actionLog||[];
+   const nurseHistory=report.nurseReviewHistory||[];
+   const trackingHistory=report.trackingHistory||[];
+
+   /* Meaningful changes only.
+      Contact-only snapshots are deliberately not displayed. */
+
+   for(const event of logs){
+    const before=event.before||{};
+    const after=event.after||{};
+    const lines=[];
+
+    if(
+     (before.receivedDate||"")!==
+     (after.receivedDate||"")
+    ){
+     lines.push(
+      "Received date: "+
+      dateLabel(before.receivedDate)+
+      " → "+dateLabel(after.receivedDate)
+     );
+    }
+
+    const matchingNurse=nurseHistory.some(item=>
+     item.at===after.nurseAt&&
+     item.classification===after.triage
+    );
+
+    if(
+     (before.triage||"pending")!==
+     (after.triage||"pending")&&
+     !matchingNurse
+    ){
+     lines.push(
+      "Classification: "+
+      (CLASSIFICATIONS[before.triage||"pending"]||"Not recorded")+
+      " → "+
+      (CLASSIFICATIONS[after.triage||"pending"]||"Not recorded")
+     );
+    }
+
+    if(!!before.archived!==!!after.archived){
+     lines.push(
+      after.archived
+       ? "Filed in the clinic system"
+       : "Filing status changed to not filed"
+     );
+    }
+
+    if(
+     !!before.cancelled!==!!after.cancelled&&
+     !trackingHistory.length
+    ){
+     lines.push(
+      after.cancelled
+       ? "Report tracking cancelled"
+       : "Report tracking restored"
+     );
+    }
+
+    if(before.name&&before.name!==after.name){
+     lines.push("Report renamed: "+after.name);
+    }
+
+    if(
+     after.reviewPending===true&&
+     before.reviewedAt&&
+     (
+      before.reviewPending!==true||
+      before.reviewCycleId!==after.reviewCycleId
+     )
+    ){
+     lines.push("Another doctor review required");
+    }
+
+    if(lines.length){
+     add(
+      "Report updated",
+      event.at,
+      event.staff,
+      lines.join("\n"),
+      name
+     );
+    }
+   }
+
+   /* Receipt fallback for older records without action logs. */
+
+   const receiptLogged=logs.some(event=>
+    (event.before?.receivedDate||"")!==
+    (event.after?.receivedDate||"")
+   );
+
+   if(report.receivedDate&&!receiptLogged){
+    add(
+     "Report received",
+     report.receivedRecordedAt,
+     report.receivedRecordedBy,
+     "Received date: "+dateLabel(report.receivedDate),
+     name
+    );
+   }
+
+   /* Nurse classifications, including previous reviews. */
+
+   const nurses=[...nurseHistory];
+
+   if(report.nurseAt&&!nurses.some(item=>
+    item.at===report.nurseAt
+   )){
+    nurses.push({
+     at:report.nurseAt,
+     staff:report.nurseName,
+     classification:report.triage
+    });
+   }
+
+   for(const item of nurses){
+    add(
+     "Nurse review",
+     item.at,
+     item.staff,
+     "Classification: "+
+     (CLASSIFICATIONS[item.classification]||"Not recorded")+
+     (item.reason?"\nReason: "+item.reason:""),
+     name
+    );
+   }
+
+   /* Nurse notes: preserve individual notes where available. */
+
+   const notes=report.noteHistory||[];
+
+   if(notes.length){
+    for(const item of notes){
+     add("Nurse note",item.at,item.staff,item.note,name);
+    }
+   }else if(report.nurseNote){
+    add(
+     "Nurse note",
+     report.nurseAt,
+     report.nurseName,
+     report.nurseNote,
+     name
+    );
+   }
+
+   /* Actual doctor reviews — not receipt confirmations. */
+
+   const reviews=[...(report.reviewHistory||[])];
+
+   if(report.reviewedAt&&!reviews.some(item=>
+    item.at===report.reviewedAt
+   )){
+    reviews.push({
+     at:report.reviewedAt,
+     doctor:report.reviewDoctorName||report.doctorName,
+     recordedBy:report.reviewRecordedBy,
+     note:report.reviewNote,
+     patientContactRequired:report.patientContactRequired
+    });
+   }
+
+   for(const item of reviews){
+    const lines=[
+     "Reviewing doctor: "+(item.doctor||"Not recorded")
+    ];
+
+    if(typeof item.patientContactRequired==="boolean"){
+     lines.push(
+      "Patient contact required: "+
+      (item.patientContactRequired?"Yes":"No")
+     );
+    }
+
+    if(item.note) lines.push(item.note);
+
+    add(
+     "Doctor review",
+     item.at,
+     item.recordedBy,
+     lines.join("\n"),
+     name
+    );
+   }
+
+   for(const item of report.correctionHistory||[]){
+    add(
+     "Correction reason",
+     item.at,
+     item.staff,
+     item.reason,
+     name
+    );
+   }
+
+   for(const item of trackingHistory){
+    add(
+     item.type==="cancel"
+      ? "Report tracking cancelled"
+      : "Report tracking restored",
+     item.at,
+     item.staff,
+     item.reason,
+     name
+    );
+   }
+  }
+
+  /* Investigation-linked contacts only.
+     Merge reports included in the same communication. */
+
+  const communications=new Map();
+
+  for(const contact of state.contacts){
+   if(!reportIds.has(contact.reportId)) continue;
+
+   const key=canonical({
+    communication:contact.communicationId||contact.id,
+    audience:contact.audience,
+    at:contact.at,
+    target:contact.target,
+    method:contact.method,
+    status:contact.deliveryStatus,
+    outcome:contact.outcome,
+    note:contact.note,
+    staff:contact.staff,
+    confirmedAt:contact.confirmedAt,
+    confirmedBy:contact.confirmedBy
+   });
+
+   if(!communications.has(key)){
+    communications.set(key,[]);
+   }
+
+   communications.get(key).push(contact);
+  }
+
+  for(const contacts of communications.values()){
+   const contact=contacts[0];
+   const doctor=contact.audience==="doctor";
+
+   const names=[...new Set(contacts.map(item=>{
+    return item.reportName||
+     group.reports.find(report=>report.id===item.reportId)?.name||
+     "";
+   }).filter(Boolean))];
+
+   const lines=[
+    `${contact.target||(doctor?"Doctor":"Patient")} · ${
+     contact.method||"Method not recorded"
+    }`,
+    deliveryLabel(contact)
+   ];
+
+   if(contact.note) lines.push(contact.note);
+
+   for(const item of contacts){
+    if(!item.nextDate) continue;
+
+    const line=
+     (doctor?"Next doctor follow-up: ":"Next contact: ")+
+     dateLabel(item.nextDate)+
+     (contacts.length>1
+      ? " · "+(
+       item.reportName||
+       group.reports.find(report=>report.id===item.reportId)?.name||
+       "Report"
+      )
+      : "");
+
+    if(!lines.includes(line)) lines.push(line);
+   }
+
+   if(doctor&&contact.doctorFollowupAction==="clear"){
+    lines.push("Doctor reminder cleared — review not completed");
+   }
+
+   if(
+    contact.confirmedAt&&
+    (
+     contact.confirmedAt!==contact.at||
+     (
+      contact.confirmedBy&&
+      contact.confirmedBy!==contact.staff
+     )
+    )
+   ){
+    lines.push(
+     "Receipt confirmed: "+timeLabel(contact.confirmedAt)+
+     (contact.confirmedBy?" · "+contact.confirmedBy:"")
+    );
+   }
+
+   add(
+    doctor?"Doctor contact":"Patient contact",
+    contact.at,
+    contact.staff,
+    lines.join("\n"),
+    names.join(", ")
+   );
+  }
+
+  return events.sort((a,b)=>
+   String(b.at).localeCompare(String(a.at))
+  );
+ }
+
+ function openInvestigationHistory(groupId){
+  if(!selected||editingLocked()) return;
+
+  const group=selected.state.groups.find(item=>
+   item.id===groupId
+  );
+
+  if(!group){
+   throw new Error("Investigation not found. Refresh and try again.");
+  }
+
+  const events=investigationEvents(selected.state,group);
+
+  const html=events.length?events.map(item=>`
+   <div class="log">
+    <strong>${esc(item.title)}</strong>
+
+    ${group.reports.length>1&&item.reportName?`
+     <div class="small-text">
+      Report: ${esc(item.reportName)}
+     </div>
+    `:""}
+
+    <div class="small-text">
+     ${esc(timeLabel(item.at))}
+     · ${esc(item.staff||"Staff not recorded")}
+    </div>
+
+    ${item.text?`
+     <div class="note">${esc(item.text)}</div>
+    `:""}
+   </div>
+  `).join(""):`
+   <p class="muted">No activity recorded for this investigation.</p>
+  `;
+
+  startWorkspace(
+   "Investigation history",
+   group.name,
+   html,
+   {
+    type:"history",
+    caseId:selected.id,
+    investigationGroupId:group.id
+   },
+   true
+  );
+ }
+
+ /* Open History in the existing right-hand workspace. */
+
+ function historyClick(event){
+  const button=event.target.closest(
+   "[data-investigation-history]"
+  );
+
+  if(!button) return;
+
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  openInvestigationHistory(
+   button.dataset.investigationHistory
+  );
+ }
+
+ $("groups").addEventListener(
+  "click",
+  handleUI(historyClick),
+  true
+ );
+
+ /* History remains viewable for cancelled cases.
+    Editing actions remain disabled. */
+
+ const originalUpdateControls=updateControls;
+
+ updateControls=function(){
+  originalUpdateControls();
+
+  $("groups")
+   .querySelectorAll("[data-investigation-history]")
+   .forEach(button=>{
+    button.disabled=editingLocked();
+   });
+ };
+
+})();
 /* Startup */
 
 async function connect(){
