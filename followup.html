@@ -811,7 +811,7 @@ const STEP_LABELS={
  plan:"Edit report list",
  received:"Record received",
  nurse:"Nurse review",
- doctor:"Record review",
+ doctor:"Doctor review",
  patient:"Record contact",
  filed:"Confirm filing"
 };
@@ -1829,7 +1829,7 @@ function reportTable(state,list){
             data-doctor-contact
             data-doctor-group="${esc(group.id)}"
             data-doctor-report="${esc(report.id)}">
-            Record doctor contact
+            Inform doctor 
            </button>
           `:""}
           ${STEP_LABELS[current.key]
