@@ -604,6 +604,100 @@ tbody tr:last-child td{border-bottom:0}
  .tabs button{padding:7px 9px}
  #saveActions{position:sticky;bottom:0;z-index:2}
 }
+/* Patient row: click anywhere to open */
+
+#caseBody tr[data-case-id]{
+ cursor:pointer;
+ transition:background .12s ease;
+}
+
+#caseBody tr[data-case-id]:hover{
+ background:#eff6ff;
+}
+
+#caseBody tr[data-case-id]:focus-visible{
+ outline:3px solid #93c5fd;
+ outline-offset:-3px;
+}
+
+/* Persistent patient search */
+
+#searchArea{
+ position:relative;
+}
+
+.patient-search-results{
+ position:absolute;
+ top:calc(100% + 6px);
+ left:0;
+ right:0;
+ z-index:40;
+ max-height:340px;
+ overflow:auto;
+ background:#fff;
+ border:1px solid var(--line);
+ border-radius:10px;
+ box-shadow:0 12px 28px #17233422;
+}
+
+.patient-search-result{
+ display:block;
+ width:100%;
+ text-align:left;
+ border:0;
+ border-radius:0;
+ padding:10px 12px;
+ font-weight:400;
+}
+
+.patient-search-result + .patient-search-result{
+ border-top:1px solid var(--line);
+}
+
+.patient-search-result:hover:not(:disabled),
+.patient-search-result:focus-visible{
+ background:#eff6ff;
+}
+
+.patient-search-result strong{
+ display:block;
+}
+
+.patient-search-result.current{
+ background:#f8fafc;
+}
+
+.search-result-footer{
+ padding:8px 12px;
+ font-size:12px;
+ color:var(--muted);
+ border-top:1px solid var(--line);
+}
+
+/* Routine batch */
+
+.batch-report-choice{
+ align-items:flex-start;
+}
+
+.batch-report-choice input{
+ margin-top:3px;
+}
+
+.batch-selection-count{
+ font-size:12px;
+ color:var(--muted);
+ margin:8px 0;
+}
+
+.report-heading-actions{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:8px;
+ flex-wrap:wrap;
+}
+ 
 @media print{
  @page{margin:15mm}
  body{background:#fff;color:#111;font-size:11px}
@@ -1153,8 +1247,41 @@ function nurseDone(report){
 }
 
 function needsDoctorReview(report){
- return !report.cancelled&&!!report.receivedDate&&
-  (!report.reviewedAt||report.reviewPending===true);
+ if(report.cancelled||!report.receivedDate){
+  return false;
+ }
+
+ /*
+  Only reports explicitly screened under the new optional
+  Routine workflow may skip doctor review.
+
+  Existing Routine reports without this flag retain
+  their previous doctor-review requirement.
+ */
+ if(
+  report.triage==="routine"&&
+  report.routineDoctorReviewRequired===false
+ ){
+  return false;
+ }
+
+ return !report.reviewedAt||report.reviewPending===true;
+}
+
+function canRecordDoctorContact(report){
+ if(
+  report.cancelled||
+  !report.receivedDate||
+  !nurseDone(report)
+ ){
+  return false;
+ }
+
+ /*
+  Routine contact is optional and does not automatically
+  create a mandatory doctor review.
+ */
+ return needsDoctorReview(report)||report.triage==="routine";
 }
 
 function receiptConfirmed(contact){
@@ -1220,11 +1347,14 @@ function preserveLegacyReview(report){
   });
  }
 }
-
 function openNewReviewCycle(report){
  preserveLegacyReview(report);
+
  report.reviewCycleId=uuid();
  report.reviewPending=true;
+
+ // An explicitly requested review must not be skipped.
+ report.routineDoctorReviewRequired=true;
 }
 
 function appendNurseNote(report,note,staff){
@@ -2474,13 +2604,13 @@ function openDoctorContact(target){
  const state=selected.state;
  const {group,report}=findReport(state,target.groupId,target.reportId);
 
- if(stage(state,group,report).key!=="doctor"){
-  throw new Error("This report is not awaiting doctor review.");
- }
+if(!canRecordDoctorContact(report)){
+ throw new Error("Doctor contact is not available for this report.");
+}
 
- const eligible=entries(state).filter(item=>
-  stage(state,item.group,item.report).key==="doctor"
- );
+const eligible=entries(state).filter(item=>
+ canRecordDoctorContact(item.report)
+);
 
  const previous=doctorContacts(state,report,false);
  const reminder=doctorReminderDate(state,report);
@@ -4168,9 +4298,11 @@ async function submitDoctorContact(context){
   const reports=linked.map(target=>{
    const item=findReport(state,target.groupId,target.reportId);
 
-   if(stage(state,item.group,item.report).key!=="doctor"){
-    throw new Error("A selected report is no longer awaiting doctor review.");
-   }
+if(!canRecordDoctorContact(item.report)){
+ throw new Error(
+  "Doctor contact is no longer available for a selected report."
+ );
+}
 
    return item.report;
   });
@@ -4900,7 +5032,823 @@ function bindEvents(){
   }
  });
 }
+/* =========================================================
+   Workflow / UI patch
+   Place BEFORE the Startup section.
+   ========================================================= */
 
+let patientSearchDismissed=false;
+
+/* ---------- Persistent patient switcher ---------- */
+
+const patientSearchResults=document.createElement("div");
+
+patientSearchResults.id="patientSearchResults";
+patientSearchResults.className="patient-search-results";
+patientSearchResults.hidden=true;
+patientSearchResults.setAttribute(
+ "aria-label",
+ "Patient search results"
+);
+
+$("searchArea").append(patientSearchResults);
+
+$("search").placeholder=
+ "Find patient — Patient No, surname / initials or report";
+
+$("search").setAttribute(
+ "aria-controls",
+ "patientSearchResults"
+);
+
+$("search").setAttribute("aria-expanded","false");
+
+function hidePatientSearchResults(){
+ patientSearchResults.hidden=true;
+ $("search").setAttribute("aria-expanded","false");
+}
+
+function renderPatientSearchResults(){
+ const query=value("search");
+
+ if(
+  activeTab!=="case"||
+  !query||
+  patientSearchDismissed
+ ){
+  hidePatientSearchResults();
+  return;
+ }
+
+ // Switching is not restricted by the previous worklist tab.
+ const matches=records.filter(searchMatches);
+ const visible=matches.slice(0,20);
+ const locked=busy||!!pendingWrite||integrityHold;
+
+ patientSearchResults.innerHTML=visible.length
+  ? visible.map(record=>{
+     const metadata=record.state.metadata||{};
+     const current=record.id===selected?.id;
+
+     return `
+      <button
+       type="button"
+       class="patient-search-result ${current?"current":""}"
+       data-switch-case="${esc(record.id)}"
+       ${locked?"disabled":""}>
+       <strong>
+        ${esc(metadata.patientName||"Name not entered")}
+       </strong>
+       <span class="small-text">
+        ${esc(metadata.patientReference||"Reference not entered")}
+        ${current?" · Current patient":""}
+        ${isTracingCancelled(record.state)
+         ?" · Tracing cancelled"
+         :""}
+       </span>
+      </button>
+     `;
+    }).join("")+
+    (matches.length>visible.length?`
+     <div class="search-result-footer">
+      Showing ${visible.length} of ${matches.length}.
+      Refine your search.
+     </div>
+    `:"")
+  : '<div class="empty">No matching patients.</div>';
+
+ patientSearchResults.hidden=false;
+ $("search").setAttribute("aria-expanded","true");
+}
+
+patientSearchResults.addEventListener("click",handleUI(async event=>{
+ const element=event.target;
+ if(!(element instanceof Element)) return;
+
+ const button=element.closest("[data-switch-case]");
+ if(!button||button.disabled) return;
+
+ const id=button.dataset.switchCase;
+
+ if(id===selected?.id){
+  patientSearchDismissed=true;
+  hidePatientSearchResults();
+  return;
+ }
+
+ /*
+  openCase already checks pending writes, busy state,
+  and asks before discarding unsaved changes.
+ */
+ await openCase(id);
+
+ if(selected?.id===id){
+  patientSearchDismissed=true;
+  hidePatientSearchResults();
+ }
+}));
+
+$("search").addEventListener("input",()=>{
+ patientSearchDismissed=false;
+ renderPatientSearchResults();
+});
+
+$("search").addEventListener("focus",()=>{
+ patientSearchDismissed=false;
+ renderPatientSearchResults();
+});
+
+$("search").addEventListener("keydown",event=>{
+ if(event.key==="Escape"){
+  patientSearchDismissed=true;
+  hidePatientSearchResults();
+ }
+
+ if(event.key==="ArrowDown"&&!patientSearchResults.hidden){
+  const first=patientSearchResults.querySelector(
+   "button:not(:disabled)"
+  );
+
+  if(first){
+   event.preventDefault();
+   first.focus();
+  }
+ }
+});
+
+patientSearchResults.addEventListener("keydown",event=>{
+ if(event.key==="Escape"){
+  patientSearchDismissed=true;
+  hidePatientSearchResults();
+  $("search").focus();
+ }
+});
+
+document.addEventListener("click",event=>{
+ if(
+  event.target instanceof Node&&
+  !$("searchArea").contains(event.target)
+ ){
+  patientSearchDismissed=true;
+  hidePatientSearchResults();
+ }
+});
+
+/* ---------- Clickable worklist rows ---------- */
+
+const renderListBeforeWorkflowPatch=renderList;
+
+renderList=function(){
+ renderListBeforeWorkflowPatch();
+
+ // Keep the search bar visible inside a patient.
+ $("searchArea").hidden=false;
+
+ /*
+  Convert the existing Open button into a clickable row.
+  Remove data-open so the old button event handler
+  cannot trigger a second open request.
+ */
+ $("caseBody").querySelectorAll("tr").forEach(row=>{
+  const openButton=row.querySelector("[data-open]");
+  if(!openButton) return;
+
+  const id=openButton.dataset.open;
+  const name=row.querySelector(".name")?.textContent||"patient";
+
+  row.dataset.caseId=id;
+  row.tabIndex=0;
+  row.setAttribute("aria-label",`Open patient: ${name}`);
+
+  const actionCell=openButton.closest("td");
+  if(actionCell) actionCell.remove();
+ });
+
+ // The previous fourth header was only for the Open button.
+ const headers=$("caseBody")
+  .closest("table")
+  ?.querySelectorAll("thead th");
+
+ if(headers?.length===4){
+  headers[3].remove();
+ }
+
+ const emptyCell=$("caseBody").querySelector(".empty");
+ if(emptyCell) emptyCell.colSpan=3;
+
+ renderPatientSearchResults();
+};
+
+function activatePatientRow(event){
+ if(
+  busy||
+  pendingWrite||
+  integrityHold||
+  !(event.target instanceof Element)
+ ){
+  return;
+ }
+
+ if(event.target.closest("button,a,input,select,textarea")){
+  return;
+ }
+
+ const row=event.target.closest("tr[data-case-id]");
+ if(!row) return;
+
+ if(event.type==="keydown"){
+  if(
+   event.target!==row||
+   !["Enter"," "].includes(event.key)
+  ){
+   return;
+  }
+
+  event.preventDefault();
+ }else{
+  // Selecting text in a row must not open the patient.
+  const selection=window.getSelection();
+
+  if(
+   selection&&!selection.isCollapsed&&
+   (
+    row.contains(selection.anchorNode)||
+    row.contains(selection.focusNode)
+   )
+  ){
+   return;
+  }
+ }
+
+ void openCase(row.dataset.caseId);
+}
+
+$("caseBody").addEventListener("click",activatePatientRow);
+$("caseBody").addEventListener("keydown",activatePatientRow);
+
+/* ---------- Routine screening ---------- */
+
+const openStepBeforeWorkflowPatch=openStep;
+
+openStep=function(target,key){
+ if(key!=="nurse"){
+  return openStepBeforeWorkflowPatch(target,key);
+ }
+
+ const {group,report}=findReport(
+  selected.state,
+  target.groupId,
+  target.reportId
+ );
+
+ if(stage(selected.state,group,report).key!=="nurse"){
+  throw new Error("This report has changed. Use its next action.");
+ }
+
+ startWorkspace("Nurse review",report.name||group.name,`
+  <p class="small-text">
+   Received: ${esc(dateLabel(report.receivedDate))}
+  </p>
+
+  ${[
+   [
+    "routine",
+    "Routine",
+    "Doctor notification / review is optional under clinic protocol"
+   ],
+   [
+    "doctor",
+    "Priority",
+    "Doctor review required"
+   ],
+   [
+    "urgent",
+    "Urgent",
+    "Escalate now — doctor review required"
+   ]
+  ].map(([classification,label,help])=>`
+   <label class="choice">
+    <input
+     type="radio"
+     name="classification"
+     value="${classification}"
+     required>
+    <span>
+     <strong>${esc(label)}</strong>
+     <small>${esc(help)}</small>
+    </span>
+   </label>
+  `).join("")}
+
+  <div class="notice blue">
+   <label class="checkline">
+    <input id="routineDoctorRequired" type="checkbox">
+    <span>
+     Request doctor review for Routine — optional
+    </span>
+   </label>
+   <p class="small-text" style="margin-top:6px">
+    Priority and Urgent always require doctor review.
+    Informing the doctor is recorded separately.
+   </p>
+  </div>
+
+  <div class="form-grid">
+   ${field("Comments (optional)",`
+    <textarea
+     id="nurseNote"
+     rows="2"
+     maxlength="2000"></textarea>
+    <small>
+     Do not enter HKID, date of birth, address or phone number.
+    </small>
+   `)}
+  </div>
+
+  <p class="small-text">
+   Classify only after reading the report.
+   Follow the clinic's approved screening criteria.
+  </p>
+ `,{type:"nurse",target});
+};
+
+submitNurse=async function(context){
+ const outcome=$("actionFields")
+  .querySelector('input[name="classification"]:checked')
+  ?.value;
+
+ const note=value("nurseNote");
+ const routineDoctorRequired=checked("routineDoctorRequired");
+
+ return commit(
+  "Nurse initial classification recorded",
+  (state,staff)=>{
+   const {group,report}=findReport(
+    state,
+    context.target.groupId,
+    context.target.reportId
+   );
+
+   if(!["routine","doctor","urgent"].includes(outcome)){
+    throw new Error("Select a classification.");
+   }
+
+   if(stage(state,group,report).key!=="nurse"){
+    throw new Error("This report is no longer awaiting nurse review.");
+   }
+
+   if(
+    (report.triage||"pending")!=="pending"||
+    (report.reviewedAt&&report.reviewPending!==true)
+   ){
+    throw new Error("A review already exists. Use Corrections.");
+   }
+
+   recordClassification(report,outcome,staff);
+
+   report.routineDoctorReviewRequired=
+    outcome!=="routine"||routineDoctorRequired;
+
+   report.reviewPending=
+    report.routineDoctorReviewRequired;
+
+   /*
+    No doctor review is fabricated:
+    reviewedAt / doctor name are not populated here.
+   */
+   if(outcome==="routine"&&!routineDoctorRequired){
+    report.patientContactRequired=false;
+   }
+
+   appendNurseNote(report,note,staff);
+  }
+ );
+};
+
+SUBMIT_HANDLERS.nurse=submitNurse;
+
+/* ---------- Batch routine screening ---------- */
+
+function eligibleBatchRoutineReports(state){
+ return entries(state).filter(({group,report})=>
+  stage(state,group,report).key==="nurse"&&
+  (report.triage||"pending")==="pending"&&
+  (!report.reviewedAt||report.reviewPending===true)
+ );
+}
+
+function updateRoutineBatchCount(){
+ const counter=$("routineBatchCount");
+ if(!counter) return;
+
+ const count=$("actionFields").querySelectorAll(
+  "[data-batch-routine-report]:checked"
+ ).length;
+
+ counter.textContent=`${count} report${count===1?"":"s"} selected`;
+}
+
+function openRoutineBatch(){
+ const eligible=eligibleBatchRoutineReports(selected.state);
+
+ if(!eligible.length){
+  throw new Error(
+   "No received reports are awaiting initial nurse review."
+  );
+ }
+
+ const opened=startWorkspace(
+  "Batch review as Routine",
+  selected.state.metadata?.patientName||"",
+  `
+   <div class="notice blue">
+    Select only reports you have read and assessed as Routine
+    under the clinic's approved criteria.
+    Doctor notification / review is not required by this workflow.
+   </div>
+
+   <div class="actions">
+    <button type="button" class="small" data-batch-select-all>
+     Select all
+    </button>
+    <button type="button" class="small" data-batch-clear-all>
+     Clear selection
+    </button>
+   </div>
+
+   <p id="routineBatchCount" class="batch-selection-count">
+    0 reports selected
+   </p>
+
+   ${eligible.map(({group,report})=>`
+    <label class="choice batch-report-choice">
+     <input
+      type="checkbox"
+      data-batch-routine-group="${esc(group.id)}"
+      data-batch-routine-report="${esc(report.id)}">
+     <span>
+      <strong>${esc(report.name||group.name)}</strong>
+      <small>
+       ${esc(group.name)}
+       · Received ${esc(dateLabel(report.receivedDate))}
+      </small>
+     </span>
+    </label>
+   `).join("")}
+
+   <div class="form-grid">
+    ${field("Comments — applied to selected reports (optional)",`
+     <textarea
+      id="batchRoutineNote"
+      rows="2"
+      maxlength="2000"></textarea>
+    `)}
+   </div>
+
+   <label class="checkline">
+    <input id="batchRoutineConfirmed" type="checkbox" required>
+    <span>
+     I have read every selected report and assessed each as Routine.
+    </span>
+   </label>
+  `,
+  {type:"batchRoutine"}
+ );
+
+ if(opened){
+  $("actionSave").textContent="Review selected as Routine";
+  updateRoutineBatchCount();
+ }
+}
+
+async function submitRoutineBatch(){
+ const linked=selectedLinks(
+  "[data-batch-routine-report]:checked",
+  "batchRoutineGroup",
+  "batchRoutineReport"
+ );
+
+ const note=value("batchRoutineNote");
+ const confirmed=checked("batchRoutineConfirmed");
+
+ return commit(
+  "Batch nurse routine review recorded",
+  (state,staff)=>{
+   if(!linked.length){
+    throw new Error("Select at least one report.");
+   }
+
+   if(!confirmed){
+    throw new Error("Confirm you have read every selected report.");
+   }
+
+   /*
+    Validate every selected report before changing any of them.
+    The existing version-controlled save handles the whole batch.
+   */
+   const reports=linked.map(target=>{
+    const {group,report}=findReport(
+     state,
+     target.groupId,
+     target.reportId
+    );
+
+    if(
+     stage(state,group,report).key!=="nurse"||
+     (report.triage||"pending")!=="pending"||
+     (report.reviewedAt&&report.reviewPending!==true)
+    ){
+     throw new Error(
+      "A selected report is no longer eligible. Reload and check."
+     );
+    }
+
+    return report;
+   });
+
+   const batchId=uuid();
+
+   for(const report of reports){
+    recordClassification(report,"routine",staff);
+
+    report.routineDoctorReviewRequired=false;
+    report.reviewPending=false;
+    report.patientContactRequired=false;
+
+    const review=report.nurseReviewHistory?.[
+     report.nurseReviewHistory.length-1
+    ];
+
+    if(review) review.batchId=batchId;
+
+    appendNurseNote(report,note,staff);
+   }
+  }
+ );
+}
+
+SUBMIT_HANDLERS.batchRoutine=submitRoutineBatch;
+
+/* Add the batch button to the Reports heading */
+
+const reportsHeading=document.querySelector(
+ ".overview-column > .column-heading"
+);
+
+reportsHeading.classList.add("report-heading-actions");
+
+const routineBatchButton=document.createElement("button");
+
+routineBatchButton.id="routineBatchButton";
+routineBatchButton.type="button";
+routineBatchButton.className="small";
+routineBatchButton.textContent="Batch review as Routine";
+
+reportsHeading.append(routineBatchButton);
+
+routineBatchButton.addEventListener(
+ "click",
+ handleUI(openRoutineBatch)
+);
+
+/* ---------- Optional Inform doctor for Routine ---------- */
+
+const renderDetailBeforeWorkflowPatch=renderDetail;
+
+renderDetail=function(){
+ renderDetailBeforeWorkflowPatch();
+
+ if(!selected) return;
+
+ $("groups").querySelectorAll("[data-row-report]").forEach(row=>{
+  const {group,report}=findReport(
+   selected.state,
+   row.dataset.rowGroup,
+   row.dataset.rowReport
+  );
+
+  if(
+   report.triage!=="routine"||
+   !canRecordDoctorContact(report)||
+   row.querySelector("[data-doctor-contact]")
+  ){
+   return;
+  }
+
+  const actions=row.querySelector(".doctor-report-actions");
+  if(!actions) return;
+
+  actions.insertAdjacentHTML("afterbegin",`
+   <button
+    type="button"
+    data-doctor-contact
+    data-doctor-group="${esc(group.id)}"
+    data-doctor-report="${esc(report.id)}">
+    Inform doctor — optional
+   </button>
+  `);
+ });
+
+ updateControls();
+};
+
+/* ---------- Add reports directly from Report lists ---------- */
+
+const openManageBeforeWorkflowPatch=openManage;
+
+openManage=function(){
+ openManageBeforeWorkflowPatch();
+
+ if(actionContext?.type!=="manage") return;
+
+ $("actionFields").insertAdjacentHTML("afterbegin",`
+  <div class="actions">
+   <button
+    type="button"
+    class="primary"
+    data-add-tracked-investigation>
+    + Add reports to trace
+   </button>
+  </div>
+
+  <p class="small-text">
+   Add an investigation or reports that are not in the quotation.
+  </p>
+ `);
+};
+
+function openAddTrackedInvestigation(){
+ startWorkspace(
+  "Add reports to trace",
+  selected.state.metadata?.patientName||"",
+  `
+   <div class="notice blue">
+    Add reports for this patient's follow-up.
+    This does not change the quotation or its charges.
+   </div>
+
+   <div class="form-grid">
+    ${field("Investigation / report list name *",`
+     <input
+      id="newInvestigationName"
+      maxlength="300"
+      required
+      placeholder="For example: Additional blood tests">
+    `)}
+
+    ${field("Expected reports — one per line *",`
+     <textarea
+      id="newInvestigationReports"
+      rows="5"
+      maxlength="15000"
+      required
+      placeholder="FBC&#10;Liver function&#10;Renal function"></textarea>
+    `)}
+
+    ${field("Reason / comments (optional)",`
+     <textarea
+      id="newInvestigationReason"
+      rows="2"
+      maxlength="2000"></textarea>
+    `)}
+   </div>
+
+   <p class="small-text">
+    New reports start as Awaiting report.
+    Record receipt when they arrive.
+   </p>
+  `,
+  {type:"addTrackedInvestigation"}
+ );
+}
+
+async function submitAddTrackedInvestigation(){
+ const name=value("newInvestigationName");
+ const reason=value("newInvestigationReason");
+
+ const names=value("newInvestigationReports")
+  .split("\n")
+  .map(item=>item.trim())
+  .filter(Boolean);
+
+ return commit(
+  "Additional report list added",
+  (state,staff)=>{
+   if(!name||name.length>300){
+    throw new Error(
+     "Enter an investigation name of 1–300 characters."
+    );
+   }
+
+   if(!names.length||names.length>100){
+    throw new Error("Enter between 1 and 100 report names.");
+   }
+
+   if(names.some(item=>item.length>300)){
+    throw new Error(
+     "Each report name must be no longer than 300 characters."
+    );
+   }
+
+   const at=new Date().toISOString();
+
+   state.groups.push({
+    id:uuid(),
+    name,
+    code:"",
+    qty:names.length,
+
+    // The quotation sync must preserve manually added groups.
+    manuallyAdded:true,
+    addedAt:at,
+    addedBy:staff,
+    additionReason:reason,
+
+    reports:names.map(emptyReport),
+
+    planReviewed:true,
+    planVerifiedAt:at,
+    planVerifiedBy:staff,
+    planVerifiedSourceRevision:state.sourceRevision??null
+   });
+  }
+ );
+}
+
+SUBMIT_HANDLERS.addTrackedInvestigation=
+ submitAddTrackedInvestigation;
+
+/* ---------- Extra workspace events ---------- */
+
+$("actionFields").addEventListener("click",handleUI(event=>{
+ const element=event.target;
+ if(!(element instanceof Element)||editingLocked()) return;
+
+ if(element.closest("[data-add-tracked-investigation]")){
+  openAddTrackedInvestigation();
+  return;
+ }
+
+ const selectAll=element.closest("[data-batch-select-all]");
+ const clearAll=element.closest("[data-batch-clear-all]");
+
+ if(selectAll||clearAll){
+  $("actionFields").querySelectorAll(
+   "[data-batch-routine-report]"
+  ).forEach(input=>{
+   input.checked=!!selectAll;
+  });
+
+  actionDirty=true;
+  updateRoutineBatchCount();
+  updateControls();
+ }
+}));
+
+$("actionFields").addEventListener("change",event=>{
+ if(
+  event.target instanceof Element&&
+  event.target.matches("[data-batch-routine-report]")
+ ){
+  updateRoutineBatchCount();
+ }
+});
+
+/* ---------- Controls / audit labels ---------- */
+
+const updateControlsBeforeWorkflowPatch=updateControls;
+
+updateControls=function(){
+ updateControlsBeforeWorkflowPatch();
+
+ const locked=editingLocked();
+ const cancelled=!!selected&&isTracingCancelled(selected.state);
+
+ routineBatchButton.disabled=
+  !selected||
+  locked||
+  cancelled||
+  !eligibleBatchRoutineReports(selected.state).length;
+
+ patientSearchResults.querySelectorAll("button").forEach(button=>{
+  button.disabled=busy||!!pendingWrite||integrityHold;
+ });
+
+ $("search").disabled=busy||!!pendingWrite||integrityHold;
+ $("clearSearchButton").disabled=
+  busy||!!pendingWrite||integrityHold;
+};
+
+const savedActivityLabelBeforeWorkflowPatch=savedActivityLabel;
+
+savedActivityLabel=function(action){
+ return ({
+  "Batch nurse routine review recorded":
+   "Batch nurse Routine review",
+  "Additional report list added":
+   "Additional reports added"
+ })[action]||savedActivityLabelBeforeWorkflowPatch(action);
+};
 /* Startup */
 
 async function connect(){
