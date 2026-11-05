@@ -986,13 +986,24 @@ function reportTable(s,a){
     class="${colour}" tabindex="0" aria-label="View history: ${esc(r.name||g.name)}">
     <td><div class="report-name">${esc(r.name||g.name)}</div></td>
     <td>${badge(current.label,current.colour)}${contactSummary(s,r)}</td>
-    <td><div class="report-actions">
-     ${canRecordDoctorContact(r)?`<button type="button" data-doctor-contact
-      data-group="${esc(g.id)}" data-report="${esc(r.id)}">
-      ${r.triage==="routine"&&!needsDoctorReview(r)?"Doctor contact · optional":"Doctor contact"}
-     </button>`:""}
-     ${STEP_LABELS[current.key]?reportButton(g,r,current.key):""}
-    </div></td>
+<td><div class="report-actions">
+ ${canRecordDoctorContact(r)?`<button type="button" data-doctor-contact
+  data-group="${esc(g.id)}" data-report="${esc(r.id)}">
+  ${r.triage==="routine"&&!needsDoctorReview(r)
+   ?"Doctor contact · optional"
+   :"Doctor contact"}
+ </button>`:""}
+
+ ${STEP_LABELS[current.key]?reportButton(g,r,current.key):""}
+
+ ${!r.cancelled && !r.receivedDate ? `
+  <button type="button" class="danger small"
+   data-cancel-report="${esc(r.id)}"
+   data-group="${esc(g.id)}">
+   Cancel tracking
+  </button>
+ ` : ""}
+</div></td>
    </tr>`;
   }).join("")}</tbody></table></div>`;
 }
