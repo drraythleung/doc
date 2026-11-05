@@ -931,8 +931,24 @@ function renderList(){
    aria-label="Open patient: ${esc(m.patientName||"patient")}">
    <td><div class="name">${esc(m.patientName||"Name not entered")}</div>
     <div class="small-text">${esc(m.patientReference||"Reference not entered")}</div></td>
-   <td>${count.urgent.length?'<div class="warning">Urgent review needed</div>':""}
-    ${esc(outstandingText(s))}</td>
+<td>
+ ${
+  count.urgent.length||
+  count.doctor.some(x=>x.report.triage==="doctor")
+  ? `<div class="actions" style="margin:0 0 7px">
+      ${count.urgent.length?
+       badge(`Urgent: ${count.urgent.length}`,"red"):""}
+
+      ${count.doctor.some(x=>x.report.triage==="doctor")?
+       badge(
+        `Priority: ${count.doctor.filter(x=>x.report.triage==="doctor").length}`,
+        "amber"
+       ):""}
+     </div>`
+  : ""
+ }
+ <div>${esc(outstandingText(s))}</div>
+</td>
    <td><strong>${esc(APPOINTMENTS[s.appointmentStatus]||"Not arranged")}</strong>
     ${s.appointmentDate?`<div class="small-text">${esc(dateLabel(s.appointmentDate))}</div>`:""}
     <div class="small-text">Next contact: ${esc(dateLabel(s.nextFollowupDate))}</div>
