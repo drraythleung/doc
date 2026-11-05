@@ -3950,10 +3950,17 @@ async function sendPendingWrite(){
    blockedReason=
     "Someone else updated this record. Your changes were not saved. Reload and check.";
   }else if(error?.code==="P0001"){
-   pendingWrite=null;
-   blockedReason=
-    "Changes were not saved. Reload and check. If it happens again, contact your administrator.";
-  }
+ pendingWrite=null;
+
+ const reason=String(
+  error.message||"The server rejected this change."
+ );
+
+ blockedReason=
+  "Changes were not saved. Server reason: "+
+  reason+
+  " Download a backup before reloading.";
+}
 
   // Other failures have an uncertain outcome.
   // Keep the original request for an idempotent retry.
