@@ -384,12 +384,20 @@ tbody tr:last-child td{border-bottom:0}
 
    <div id="caseEditor">
     <section class="overview-column" aria-label="Patient overview">
-     <div class="column-heading row">
-      <h2>Reports</h2>
-      <button id="routineBatchButton" type="button" class="small">
-       Batch Routine
-      </button>
-     </div>
+<div class="column-heading row">
+ <h2>Reports</h2>
+ <div class="actions" style="margin:0">
+  <button id="receiveBatchButton" type="button" class="small">
+   Batch Receive
+  </button>
+  <button id="routineBatchButton" type="button" class="small">
+   Batch Routine
+  </button>
+  <button id="filingBatchButton" type="button" class="small">
+   Batch Filing
+  </button>
+ </div>
+</div>
      <div id="overviewScroll" class="overview-scroll">
       <div id="groups"></div>
       <section class="appointment-card">
@@ -820,6 +828,17 @@ function eligibleBatchRoutineReports(s){
  return entries(s).filter(({group,report:r})=>stage(s,group,r).key==="nurse"&&
   (r.triage||"pending")==="pending"&&(!r.reviewedAt||r.reviewPending===true));
 }
+ function eligibleBatchReceiveReports(s){
+ return entries(s).filter(({group,report})=>
+  stage(s,group,report).key==="received"
+ );
+}
+
+function eligibleBatchFilingReports(s){
+ return entries(s).filter(({group,report})=>
+  stage(s,group,report).key==="filed"
+ );
+}
 function updateControls(){
  const locked=editingLocked(),cancelled=!!selected&&isTracingCancelled(selected.state);
  const navigationLocked=busy||!!pendingWrite||integrityHold;
@@ -843,6 +862,10 @@ function updateControls(){
  for(const id of ["patientButton","historyButton"]) $(id).disabled=!selected||locked;
  $("routineBatchButton").disabled=!selected||locked||cancelled||
   !eligibleBatchRoutineReports(selected.state).length;
+ $("receiveBatchButton").disabled=!selected||locked||cancelled||
+ !eligibleBatchReceiveReports(selected.state).length;
+$("filingBatchButton").disabled=!selected||locked||cancelled||
+ !eligibleBatchFilingReports(selected.state).length;
  $("groups").querySelectorAll("button").forEach(b=>b.disabled=locked||cancelled);
  $("groups").querySelectorAll("tr[data-report]").forEach(r=>{
   r.tabIndex=locked?-1:0;
@@ -1215,10 +1238,21 @@ function openDoctorContact(target){
  `,{type:"doctorContact",target},false,"Save doctor contact");
 }
 function updateBatchCount(){
- const count=$("actionFields").querySelectorAll("[data-batch-report]:checked").length;
- if($("batchCount")) $("batchCount").textContent=`${count} selected`;
- if(actionContext?.type==="batchRoutine"){
-  $("actionSave").textContent=`Mark ${count} report${count===1?"":"s"} as Routine`;
+ const count=$("actionFields")
+  .querySelectorAll("[data-batch-report]:checked").length;
+
+ if($("batchCount")){
+  $("batchCount").textContent=`${count} selected`;
+ }
+
+ const labels={
+  batchRoutine:`Mark ${count} report${count===1?"":"s"} as Routine`,
+  batchReceive:`Receive ${count} report${count===1?"":"s"}`,
+  batchFiling:`File ${count} report${count===1?"":"s"}`
+ };
+
+ if(labels[actionContext?.type]){
+  $("actionSave").textContent=labels[actionContext.type];
  }
 }
 function openRoutineBatch(){
@@ -1241,6 +1275,81 @@ function openRoutineBatch(){
    <span>I have reviewed the selected reports as Routine.</span>
   </label>
  `,{type:"batchRoutine"},false,"Mark selected as Routine");
+ if(opened) updateBatchCount();
+}
+ function openBatchReceive(){
+ openBatchReportAction("batchReceive");
+}
+
+function openBatchFiling(){
+ openBatchReportAction("batchFiling");
+}
+
+function openBatchReportAction(type){
+ const receive=type==="batchReceive";
+ const a=receive?
+  eligibleBatchReceiveReports(selected.state):
+  eligibleBatchFilingReports(selected.state);
+
+ if(!a.length){
+  throw new Error(receive?
+   "No reports are awaiting receipt.":
+   "No reports are awaiting filing.");
+ }
+
+ const opened=startWorkspace(
+  receive?"Batch Receive":"Batch Filing",
+  selected.state.metadata?.patientName||"",
+  `
+  <p class="small-text">
+   ${receive?
+    "Select reports received on the same date.":
+    "Only reports that have completed the required review and patient contact are shown."}
+  </p>
+
+  ${receive?`
+   <div class="form-grid">
+    ${field("Received date — applies to selected reports *",
+     `<input id="batchReceivedDate" type="date"
+      value="${today()}" max="${today()}" required>`)}
+   </div>
+  `:""}
+
+  <div class="actions">
+   <button type="button" class="small" data-batch-all>Select all</button>
+   <button type="button" class="small" data-batch-none>Clear</button>
+   <span id="batchCount" class="small-text"></span>
+  </div>
+
+  ${a.map(({group:g,report:r})=>`
+   <label class="choice">
+    <input type="checkbox"
+     data-batch-group="${esc(g.id)}"
+     data-batch-report="${esc(r.id)}">
+    <span>
+     <strong>${esc(r.name||g.name)}</strong>
+     <small>
+      ${esc(g.name||"Report list")} ·
+      ${receive?"Awaiting report":
+       `Received ${esc(dateLabel(r.receivedDate))} · Awaiting filing`}
+     </small>
+    </span>
+   </label>
+  `).join("")}
+
+  <label class="checkline">
+   <input id="batchConfirmed" type="checkbox" required>
+   <span>${receive?
+    "I confirm that the selected reports were received on the date above.":
+    "I confirm that the selected reports have been filed in the clinic system."}
+   </span>
+  </label>
+  `,
+  {type},
+  false,
+  receive?"Receive selected reports":"File selected reports"
+ );
+
  if(opened) updateBatchCount();
 }
 function openManage(){
@@ -1858,6 +1967,89 @@ async function submitBatch(){
   });
  });
 }
+ async function submitBatchReceive(){
+ const linked=selectedLinks(
+  "[data-batch-report]:checked",
+  "batchGroup",
+  "batchReport"
+ );
+ const date=value("batchReceivedDate");
+ const confirmed=checked("batchConfirmed");
+
+ return commit("Batch report receipt recorded",(s,staff)=>{
+  if(!linked.length){
+   throw new Error("Select at least one report.");
+  }
+  if(!confirmed){
+   throw new Error("Confirm receipt of the selected reports.");
+  }
+  if(!validDate(date)||date>today()){
+   throw new Error("Received date must be today or earlier.");
+  }
+
+  // Validate every selected report before updating any of them.
+  const reports=linked.map(t=>{
+   const {group:g,report:r}=findReport(s,t.groupId,t.reportId);
+   if(stage(s,g,r).key!=="received"){
+    throw new Error(
+     "A selected report is no longer awaiting receipt. Close and reopen Batch Receive."
+    );
+   }
+   return r;
+  });
+
+  const at=new Date().toISOString();
+  const batchId=uuid();
+
+  reports.forEach(r=>{
+   r.receivedDate=date;
+   r.receivedRecordedAt=at;
+   r.receivedRecordedBy=staff;
+   r.receivedBatchId=batchId;
+   r.reviewCycleId=r.reviewCycleId||uuid();
+   r.reviewPending=true;
+  });
+ });
+}
+
+async function submitBatchFiling(){
+ const linked=selectedLinks(
+  "[data-batch-report]:checked",
+  "batchGroup",
+  "batchReport"
+ );
+ const confirmed=checked("batchConfirmed");
+
+ return commit("Batch report filing recorded",(s,staff)=>{
+  if(!linked.length){
+   throw new Error("Select at least one report.");
+  }
+  if(!confirmed){
+   throw new Error("Confirm filing of the selected reports.");
+  }
+
+  // Do not allow batch filing to bypass required review/contact.
+  const reports=linked.map(t=>{
+   const {group:g,report:r}=findReport(s,t.groupId,t.reportId);
+   if(stage(s,g,r).key!=="filed"){
+    throw new Error(
+     "A selected report is no longer awaiting filing. Complete its required review and contact first."
+    );
+   }
+   return r;
+  });
+
+  const at=new Date().toISOString();
+  const batchId=uuid();
+
+  reports.forEach(r=>{
+   r.archived=true;
+   r.filedAt=at;
+   r.filedBy=staff;
+   r.filingBatchId=batchId;
+  });
+ });
+}
 async function submitPlan(c){
  const existing=[...$("actionFields").querySelectorAll("[data-plan-report]")]
   .map(el=>({id:el.dataset.planReport,name:el.value.trim()}));
@@ -1961,11 +2153,25 @@ async function submitCaseTracing(c){
  });
 }
 const SUBMIT_HANDLERS={
- received:submitReceived,nurse:submitNurse,review:submitReview,filed:submitFiling,
- contact:submitContact,appointment:submitAppointment,doctorContact:submitDoctorContact,
- batchRoutine:submitBatch,plan:submitPlan,addTrackedInvestigation:submitAddList,
- correction:submitCorrection,cancel:submitTracking,restore:submitTracking,
- arrangementCorrection:submitArrangementCorrection,caseTracing:submitCaseTracing
+ received:submitReceived,
+ nurse:submitNurse,
+ review:submitReview,
+ filed:submitFiling,
+ contact:submitContact,
+ appointment:submitAppointment,
+ doctorContact:submitDoctorContact,
+
+ batchRoutine:submitBatch,
+ batchReceive:submitBatchReceive,
+ batchFiling:submitBatchFiling,
+
+ plan:submitPlan,
+ addTrackedInvestigation:submitAddList,
+ correction:submitCorrection,
+ cancel:submitTracking,
+ restore:submitTracking,
+ arrangementCorrection:submitArrangementCorrection,
+ caseTracing:submitCaseTracing
 };
 
 /* Printing */
@@ -2116,6 +2322,13 @@ function bindEvents(){
  $("historyButton").addEventListener("click",handleUI(openHistory));
  $("tracingButton").addEventListener("click",handleUI(openTracingAction));
  $("routineBatchButton").addEventListener("click",handleUI(openRoutineBatch));
+ $("receiveBatchButton").addEventListener(
+ "click",handleUI(openBatchReceive)
+);
+
+$("filingBatchButton").addEventListener(
+ "click",handleUI(openBatchFiling)
+);
  $("printButton").addEventListener("click",handleUI(printSaved));
  $("caseBody").addEventListener("click",activatePatientRow);
  $("caseBody").addEventListener("keydown",activatePatientRow);
