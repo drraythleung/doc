@@ -1105,7 +1105,9 @@ function startWorkspace(title,subtitle,html,context,readOnly=false,saveLabel="Sa
  $("actionSubtitle").hidden=!subtitle;
  $("actionFields").innerHTML=html;
  $("saveActions").hidden=readOnly;
- $("actionSave").textContent=saveLabel;
+$("actionSave").textContent=saveLabel;
+$("actionSave").classList.add("primary");
+$("actionSave").classList.remove("danger");
  $("workspaceIdle").hidden=true;
  $("actionWorkspace").hidden=false;
  $("workspaceScroll").scrollTop=0;
@@ -1457,7 +1459,6 @@ function openTracingAction(){
    ${cancelled?field("Next contact date",`<input id="resumeTracingDate" type="date" min="${today()}">`):""}
   </div>
  `,{type:"caseTracing",cancel:!cancelled},false,cancelled?"Resume tracing":"Cancel tracing");
- $("actionSave").classList.toggle("danger",!cancelled);
 }
 function showSaved(context){
  if(!selected||editingLocked()) return;
