@@ -1514,7 +1514,10 @@ function latestPatientContact(state,report){
 }
 
 function doctorReminderDate(state,report){
- if(isTracingCancelled(state)||!needsDoctorReview(report)){
+ if(
+  isTracingCancelled(state)||
+  !canRecordDoctorContact(report)
+ ){
   return "";
  }
 
@@ -1534,7 +1537,6 @@ function doctorReminderDate(state,report){
 
  return "";
 }
-
 function dueDoctorReports(state){
  return entries(state).filter(({report})=>{
   const date=doctorReminderDate(state,report);
@@ -2734,7 +2736,7 @@ function refreshDoctorFollowupFields(){
 /* Report lists and corrections */
 
 function openManage(){
- startWorkspace(
+ return startWorkspace(
   "Report lists",
   "",
   selected.state.groups.map(group=>`
@@ -2747,7 +2749,9 @@ function openManage(){
     </div>
     <div class="small-text">
      ${group.reports.length} report${group.reports.length===1?"":"s"}
-     · Quotation quantity: ${esc(group.qty)}
+  · ${group.manuallyAdded
+ ? "Manually added"
+ : `Quotation quantity: ${esc(group.qty)}`}
     </div>
    </div>
   `).join("")||'<p class="muted">No investigations.</p>',
@@ -2761,9 +2765,12 @@ function openPlan(groupId,target=null){
  if(!group) throw new Error("Investigation not found.");
 
  startWorkspace("Edit report list",group.name,`
-  <p class="small-text">
-   Quotation quantity: ${esc(group.qty)}. One entry per expected report.
-  </p>
+<p class="small-text">
+ ${group.manuallyAdded
+  ? "Manually added report list."
+  : `Quotation quantity: ${esc(group.qty)}.`}
+ One entry per expected report.
+</p>
 
   ${group.reports.map(report=>`
    <div class="form-grid">
@@ -5177,11 +5184,16 @@ $("search").addEventListener("keydown",event=>{
 });
 
 patientSearchResults.addEventListener("keydown",event=>{
- if(event.key==="Escape"){
-  patientSearchDismissed=true;
-  hidePatientSearchResults();
-  $("search").focus();
- }
+ if(event.key!=="Escape") return;
+
+ event.preventDefault();
+
+ // Focus first; the focus listener may reopen the results.
+ $("search").focus();
+
+ // Then dismiss them.
+ patientSearchDismissed=true;
+ hidePatientSearchResults();
 });
 
 document.addEventListener("click",event=>{
@@ -5657,9 +5669,9 @@ renderDetail=function(){
 const openManageBeforeWorkflowPatch=openManage;
 
 openManage=function(){
- openManageBeforeWorkflowPatch();
+ const opened=openManageBeforeWorkflowPatch();
 
- if(actionContext?.type!=="manage") return;
+ if(!opened||actionContext?.type!=="manage") return;
 
  $("actionFields").insertAdjacentHTML("afterbegin",`
   <div class="actions">
