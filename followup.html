@@ -2720,6 +2720,2493 @@ async function connect(){
   message("Could not connect. Reload or contact your administrator.",true);
  }
 }
+ /* ==========================================================
+   Workflow replacement
+   Insert BEFORE:
+   bindEvents();
+   renderList();
+   updateControls();
+   void connect();
+
+   Keeps schemaVersion: 1.
+   workflowVersion: 2 is an optional report-level marker.
+   ========================================================== */
+
+const WF_BASE={
+ controls:updateControls,
+ actionClick,
+ fieldChange:handleFieldChange,
+ cycle:openNewReviewCycle,
+ empty:emptyReport,
+ reportEvents
+};
+
+const WF_PHASES=[
+ ["received","Receive"],
+ ["nurse","Nurse triage"],
+ ["doctor","Doctor contact"],
+ ["review","Doctor instructions"],
+ ["patient","Patient contact"],
+ ["appointment","Appointment"],
+ ["filed","Filing"]
+];
+
+const WF_ACTIONS={
+ doctor:[
+  ["retry","Retry doctor contact"],
+  ["await-advice","Obtain outstanding doctor instructions"],
+  ["duty-doctor","Contact duty / on-call doctor"],
+  ["clinical-lead","Escalate to clinical lead"],
+  ["other","Other arrangement"]
+ ],
+ patient:[
+  ["retry","Retry patient contact"],
+  ["alternate-channel","Use another approved channel"],
+  ["authorized-recipient","Contact an authorized representative"],
+  ["clinical-team","Refer to clinical team"],
+  ["other","Other arrangement"]
+ ],
+ appointment:[
+  ["book","Arrange / rearrange appointment"],
+  ["doctor-plan","Discuss the appointment plan with doctor"],
+  ["clinical-team","Refer to clinical team"],
+  ["other","Other arrangement"]
+ ]
+};
+
+const WF_ADVICE=[
+ ["","Select the instructions actually given"],
+ ["inform","Inform patient of results"],
+ ["followup","Arrange follow-up appointment"],
+ ["no-further","No further clinical action"],
+ ["repeat","Repeat investigation — enter details"],
+ ["other","Other / dictated instructions — enter details"]
+];
+
+let wfPicked=new Set();
+
+Object.assign(STEP_LABELS,{
+ received:"Receive",
+ nurse:"Nurse triage",
+ doctor:"Notify doctor",
+ review:"Record instructions",
+ patient:"Contact patient",
+ appointment:"Arrange appointment",
+ filed:"File"
+});
+
+/* A sending failure must be recordable for patient messages too. */
+for(const method of ["Email","WhatsApp"]){
+ if(!PATIENT_RESULTS[method].some(([key])=>key==="failed")){
+  PATIENT_RESULTS[method].push(["failed","Sending failed"]);
+ }
+}
+
+const wfKey=t=>JSON.stringify([t.groupId,t.reportId]);
+const wfTarget=x=>({groupId:x.group.id,reportId:x.report.id});
+const wfTargetsUnique=a=>{
+ const map=new Map();
+ a.filter(Boolean).forEach(t=>map.set(wfKey(t),t));
+ return [...map.values()];
+};
+
+function wfResolved(s,targets){
+ return targets.map(t=>({
+  ...findReport(s,t.groupId,t.reportId),
+  target:t
+ }));
+}
+
+function wfPickedTargets(){
+ if(!selected) return [];
+ return entries(selected.state)
+  .filter(x=>wfPicked.has(wfKey(wfTarget(x))))
+  .map(wfTarget);
+}
+
+function wfFormTargets(){
+ return [...$("actionFields").querySelectorAll("[data-wf-target]:checked")]
+  .map(el=>({
+   groupId:el.dataset.wfGroup,
+   reportId:el.dataset.wfReport
+  }));
+}
+
+function wfFutureTime(input){
+ if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(input)||
+  !validDate(input.slice(0,10))||
+  Number(input.slice(11,13))>23||
+  Number(input.slice(14,16))>59){
+  throw new Error("Enter a valid next follow-up date and time.");
+ }
+ const d=new Date(input+":00+08:00");
+ if(Number.isNaN(d.getTime())||
+  hkDateTimeInput(d.toISOString())!==input||
+  d.getTime()<=Date.now()){
+  throw new Error("Next follow-up must be a future date and time.");
+ }
+ return d.toISOString();
+}
+
+function wfPlanDue(plan){
+ if(!plan) return false;
+ if(plan.nextAt){
+  const time=new Date(plan.nextAt).getTime();
+  return Number.isFinite(time)&&time<=Date.now();
+ }
+ return !!plan.nextDate&&validDate(plan.nextDate)&&plan.nextDate<=today();
+}
+
+function wfPlanText(plan){
+ if(!plan?.nextAt&&!plan?.nextDate) return "";
+ return [
+  plan.nextAt?timeLabel(plan.nextAt):dateLabel(plan.nextDate),
+  plan.nextOwner?`Owner: ${plan.nextOwner}`:"",
+  plan.nextActionLabel||plan.nextAction||"",
+  plan.escalationState?
+   `Escalation: ${
+    {
+     pending:"Still outstanding",
+     attempted:"Attempted",
+     accepted:"Handover accepted"
+    }[plan.escalationState]||plan.escalationState
+   }${plan.escalationTarget?" · "+plan.escalationTarget:""}`:""
+ ].filter(Boolean).join(" · ");
+}
+
+/* ---------------- Workflow rules ---------------- */
+
+function wfDoctorRequired(r){
+ if(!nurseDone(r)) return false;
+ if(["doctor","urgent"].includes(r.triage)) return true;
+ if(r.triage!=="routine") return false;
+
+ if(r.routineDoctorReviewRequired===false&&r.reviewPending!==true){
+  return false;
+ }
+ return r.routineDoctorReviewRequired===true||
+  r.reviewPending===true||
+  !r.reviewedAt;
+}
+
+function wfDoctorAcknowledged(s,r){
+ return doctorContacts(s,r).some(receiptConfirmed);
+}
+
+needsDoctorReview=function(r){
+ return !r.cancelled&&!!r.receivedDate&&nurseDone(r)&&
+  wfDoctorRequired(r)&&(!r.reviewedAt||r.reviewPending===true);
+};
+
+function wfAppointmentSatisfied(s,r){
+ if(r.appointmentRequired!==true) return true;
+ const link=r.followupAppointment;
+ return !!link&&
+  validDate(link.date)&&
+  link.date===s.appointmentDate&&
+  ["booked","attended"].includes(s.appointmentStatus);
+}
+
+patientPending=function(s,r){
+ if(r.cancelled||!r.receivedDate||!nurseDone(r)) return false;
+ if(wfDoctorRequired(r)&&
+  (needsDoctorReview(r)||!wfDoctorAcknowledged(s,r))){
+  return false;
+ }
+ return r.patientContactRequired===true&&!patientConfirmed(s,r);
+};
+
+function wfCanFile(s,r){
+ if(r.cancelled||!r.receivedDate||!nurseDone(r)) return false;
+ if(wfDoctorRequired(r)&&
+  (!wfDoctorAcknowledged(s,r)||needsDoctorReview(r))){
+  return false;
+ }
+ if(r.workflowVersion===2&&typeof r.patientContactRequired!=="boolean"){
+  return false;
+ }
+ if(r.patientContactRequired===true&&!patientConfirmed(s,r)){
+  return false;
+ }
+ return wfAppointmentSatisfied(s,r);
+}
+
+stage=function(s,g,r){
+ if(r.cancelled){
+  return {key:"cancelled",label:"Cancelled",colour:"",order:90};
+ }
+
+ /* Do not silently reopen historical filed records. */
+ if(r.archived){
+  if(r.workflowVersion===2&&!wfCanFile(s,r)){
+   return {
+    key:"invalid",
+    label:"Filed — workflow needs checking",
+    colour:"red",
+    order:-1
+   };
+  }
+  return {key:"complete",label:"Completed",colour:"green",order:80};
+ }
+
+ if(!r.receivedDate){
+  return {key:"received",label:"Awaiting report",colour:"blue",order:50};
+ }
+ if(!nurseDone(r)){
+  return {key:"nurse",label:"Awaiting nurse triage",colour:"blue",order:30};
+ }
+
+ const urgent=r.triage==="urgent";
+ const priority=r.triage==="doctor";
+ const colour=urgent?"red":priority?"amber":"blue";
+ const prefix=urgent?"Urgent · ":priority?"Priority · ":"";
+ const order=urgent?0:priority?10:35;
+
+ if(wfDoctorRequired(r)&&!wfDoctorAcknowledged(s,r)){
+  return {
+   key:"doctor",
+   label:prefix+"Doctor receipt unconfirmed",
+   colour,order
+  };
+ }
+ if(needsDoctorReview(r)){
+  return {
+   key:"review",
+   label:prefix+"Awaiting doctor instructions",
+   colour,order:order+1
+  };
+ }
+ if(patientPending(s,r)){
+  return {
+   key:"patient",
+   label:prefix+"Patient notification unconfirmed",
+   colour,order:order+2
+  };
+ }
+ if(!wfAppointmentSatisfied(s,r)){
+  return {
+   key:"appointment",
+   label:prefix+"Appointment not arranged",
+   colour,order:order+3
+  };
+ }
+ return {key:"filed",label:"Awaiting filing",colour:"blue",order:60};
+};
+
+canRecordDoctorContact=function(r){
+ return !r.cancelled&&!r.archived&&!!r.receivedDate&&nurseDone(r)&&
+  (needsDoctorReview(r)||r.triage==="routine");
+};
+
+emptyReport=function(name){
+ return {
+  ...WF_BASE.empty(name),
+  workflowVersion:2,
+  appointmentRequired:false
+ };
+};
+
+openNewReviewCycle=function(r){
+ WF_BASE.cycle(r);
+ r.archived=false;
+ r.patientContactRequired=true;
+ delete r.followupAppointment;
+ delete r.workflowDoctorPlan;
+ delete r.workflowAppointmentPlan;
+};
+
+function wfRequestReview(r,staff,reason){
+ openNewReviewCycle(r);
+ r.workflowVersion=2;
+ r.reviewRequests=[...(r.reviewRequests||[]),{
+  id:uuid(),at:new Date().toISOString(),staff,reason,cycleId:cycleId(r)
+ }];
+}
+
+function wfOutstandingDoctorPlan(s,r){
+ if(!wfDoctorRequired(r)||
+  (!needsDoctorReview(r)&&wfDoctorAcknowledged(s,r))){
+  return null;
+ }
+ return latestContact(s,r,"doctor")||
+  (r.workflowDoctorPlan?.reviewCycleId===cycleId(r)?
+   r.workflowDoctorPlan:null);
+}
+
+doctorReminderDate=function(s,r){
+ if(isTracingCancelled(s)||r.cancelled||r.archived) return "";
+ return wfOutstandingDoctorPlan(s,r)?.nextDate||"";
+};
+
+function wfPatientNextDate(s){
+ const dates=[s.nextFollowupDate||""];
+
+ if(s.workflowPatientReminder?.nextDate){
+  dates.push(s.workflowPatientReminder.nextDate);
+ }
+
+ for(const {report:r} of entries(s)){
+  if(r.cancelled||r.archived) continue;
+  if(patientPending(s,r)){
+   dates.push(latestContact(s,r,"patient")?.nextDate||"");
+  }
+  if(r.appointmentRequired===true&&!wfAppointmentSatisfied(s,r)){
+   dates.push(r.workflowAppointmentPlan?.nextDate||"");
+  }
+ }
+ return dates.filter(validDate).sort()[0]||"";
+}
+
+metrics=function(s){
+ const active=entries(s).filter(x=>!x.report.cancelled);
+ const cancelled=isTracingCancelled(s);
+ const keyed=active.map(x=>({...x,current:stage(s,x.group,x.report)}));
+ const clinical=keyed.filter(x=>
+  ["doctor","review","patient","appointment","invalid"].includes(x.current.key)
+ );
+ const doctor=keyed.filter(x=>["doctor","review"].includes(x.current.key));
+ const patient=keyed.filter(x=>x.current.key==="patient");
+ const appointment=keyed.filter(x=>x.current.key==="appointment");
+
+ const patientDue=patient.some(x=>wfPlanDue(latestContact(s,x.report,"patient")))||
+  appointment.some(x=>wfPlanDue(x.report.workflowAppointmentPlan))||
+  wfPlanDue(s.workflowPatientReminder);
+
+ return {
+  active,
+  pending:keyed.filter(x=>x.current.key!=="complete"),
+  missing:keyed.filter(x=>x.current.key==="received"),
+  nurse:keyed.filter(x=>x.current.key==="nurse"),
+  doctor,
+  notify:doctor.filter(x=>x.current.key==="doctor"),
+  instructions:doctor.filter(x=>x.current.key==="review"),
+  patient,
+  appointment,
+  filing:keyed.filter(x=>x.current.key==="filed"),
+  urgent:clinical.filter(x=>x.report.triage==="urgent"),
+  priority:clinical.filter(x=>x.report.triage==="doctor"),
+  doctorDue:cancelled?[]:doctor.filter(x=>
+   wfPlanDue(wfOutstandingDoctorPlan(s,x.report))
+  ),
+  due:!cancelled&&(patientDue||
+   (!!s.nextFollowupDate&&s.nextFollowupDate<=today())),
+  missed:!cancelled&&(s.appointmentStatus==="missed"||
+   (s.appointmentStatus==="booked"&&
+    !!s.appointmentDate&&s.appointmentDate<today())),
+  arrange:!cancelled&&appointment.length>0
+ };
+};
+
+matchesTab=function(s,tab){
+ if(tab==="cancelled") return isTracingCancelled(s);
+ if(isTracingCancelled(s)) return false;
+ const m=metrics(s);
+ return tab==="all"||
+  (tab==="urgent"&&m.urgent.length>0)||
+  (tab==="priority"&&m.priority.length>0)||
+  (tab==="missing"&&m.missing.length>0)||
+  (tab==="review"&&(m.nurse.length>0||m.doctor.length>0))||
+  (tab==="followup"&&(
+   m.patient.length>0||m.appointment.length>0||
+   m.due||m.missed||m.doctorDue.length>0
+  ));
+};
+
+outstandingText=function(s){
+ if(isTracingCancelled(s)) return "Case tracing stopped";
+ const m=metrics(s);
+ return [
+  m.missing.length?`Awaiting reports: ${m.missing.length}`:"",
+  m.nurse.length?`Nurse triage: ${m.nurse.length}`:"",
+  m.notify.length?`Doctor receipt: ${m.notify.length}`:"",
+  m.instructions.length?`Doctor instructions: ${m.instructions.length}`:"",
+  m.patient.length?`Patient notification: ${m.patient.length}`:"",
+  m.appointment.length?`Appointment: ${m.appointment.length}`:"",
+  m.filing.length?`Filing: ${m.filing.length}`:"",
+  m.doctorDue.length?`Doctor follow-up due: ${m.doctorDue.length}`:"",
+  m.due?"Patient follow-up due":""
+ ].filter(Boolean).join(" · ")||"No pending report actions";
+};
+
+function wfEligible(s,phase,opts={}){
+ return entries(s).filter(({group:g,report:r})=>{
+  if(r.cancelled||r.archived) return false;
+  const key=stage(s,g,r).key;
+  if(phase==="doctor"){
+   return ["doctor","review"].includes(key)||
+    (opts.requestRoutine&&r.triage==="routine"&&
+     !!r.receivedDate&&nurseDone(r)&&!wfDoctorRequired(r));
+  }
+  return key===phase;
+ });
+}
+
+eligibleBatchReceiveReports=s=>wfEligible(s,"received");
+eligibleBatchRoutineReports=s=>wfEligible(s,"nurse");
+eligibleBatchFilingReports=s=>wfEligible(s,"filed");
+
+/* ---------------- Layout additions ---------------- */
+
+document.head.insertAdjacentHTML("beforeend",`
+<style id="workflowStyles">
+#caseEditor,#caseEditor.workspace-open{
+ grid-template-columns:minmax(0,3fr) minmax(350px,2fr);
+}
+.wf-selection-bar{
+ flex:1 0 100%;padding-top:10px;margin-top:4px;
+ border-top:1px solid var(--line);
+}
+.wf-selection-bar .actions{margin:6px 0 0}
+.wf-selection-bar button{font-size:12px;padding:6px 8px}
+.report-table th.wf-pick-cell{width:34px}
+.report-table th.wf-name-cell{width:30%}
+.report-table th.wf-progress-cell{width:43%}
+.report-table td.wf-pick-cell{padding-right:0}
+.wf-pick-cell input{margin:3px 0}
+.wf-result-grid,.wf-triage-grid{
+ display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;
+}
+.wf-result-grid .choice,.wf-triage-grid .choice{
+ flex:1 1 110px;margin:0;padding:9px;
+}
+.wf-result-grid .choice{font-size:12px}
+.wf-rail{
+ display:grid;grid-template-columns:repeat(7,minmax(0,1fr));
+ gap:4px;margin-bottom:12px;
+}
+.wf-rail span{
+ padding:5px 2px;text-align:center;font-size:10px;
+ border-bottom:3px solid var(--line);color:var(--muted);
+}
+.wf-rail .done{border-color:var(--green);color:var(--green)}
+.wf-rail .current{
+ border-color:var(--blue);color:var(--blue);font-weight:700;
+}
+.wf-rail .skip{border-bottom-style:dashed}
+.wf-scope{
+ margin:10px 0;padding:9px 10px;background:var(--soft);
+ border:1px solid var(--line);border-radius:8px;
+}
+.wf-scope summary{font-size:12px;font-weight:700}
+.wf-scope-list{max-height:230px;overflow:auto;margin-top:8px}
+.wf-plan{
+ border:1px solid #bfdbfe;border-radius:9px;
+ background:#eff6ff;padding:10px;margin:12px 0;
+}
+.wf-plan .form-grid{margin:8px 0}
+.wf-escalation{
+ border-top:1px solid #fecaca;margin-top:10px;padding-top:10px;
+}
+.wf-statement{
+ padding:9px 10px;background:var(--soft);
+ border-radius:8px;font-size:12px;margin-top:12px;
+}
+.wf-file-option{
+ padding:9px 10px;border:1px solid #a7e3c9;
+ border-radius:8px;background:#ecfdf5;margin-top:12px;
+}
+.wf-instructions{font-size:12px;margin-top:7px}
+.wf-instructions summary{color:var(--muted)}
+.wf-idle-counts{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+#wfAddButton{white-space:nowrap}
+@media(max-width:1000px){
+ #caseEditor,#caseEditor.workspace-open{
+  grid-template-columns:minmax(0,1fr) minmax(330px,1fr);
+ }
+ .report-table tr{position:relative;padding-left:40px!important}
+ .report-table td.wf-pick-cell{
+  position:absolute;left:10px;top:10px;width:20px!important;
+ }
+}
+@media(max-width:760px){
+ #caseEditor,#caseEditor.workspace-open{
+  display:flex;flex-direction:column;
+ }
+ .wf-rail span{font-size:9px}
+ .wf-result-grid .choice,.wf-triage-grid .choice{flex-basis:100px}
+}
+</style>
+`);
+
+const wfHeading=$("groups").closest(".overview-column")
+ .querySelector(".column-heading");
+
+wfHeading.querySelector("h2").insertAdjacentHTML("afterend",`
+ <button id="wfAddButton" type="button" class="small">+ Add reports</button>
+`);
+
+wfHeading.insertAdjacentHTML("beforeend",`
+ <div id="wfSelectionBar" class="wf-selection-bar" hidden></div>
+`);
+
+document.body.insertAdjacentHTML("beforeend",`
+ <datalist id="wfEscalationTargets">
+  <option value="Duty / on-call doctor"></option>
+  <option value="Responsible doctor"></option>
+  <option value="Clinical lead"></option>
+  <option value="Clinical team"></option>
+ </datalist>
+`);
+
+/* ---------------- Overview rendering ---------------- */
+
+function wfPendingPlan(s,r){
+ const current=stage(s,{},r);
+ if(["doctor","review"].includes(current.key)){
+  return wfOutstandingDoctorPlan(s,r);
+ }
+ if(current.key==="patient") return latestContact(s,r,"patient");
+ if(current.key==="appointment") return r.workflowAppointmentPlan;
+ return null;
+}
+
+contactSummary=function(s,r){
+ const doctor=latestContact(s,r,"doctor");
+ const patient=latestContact(s,r,"patient");
+ const current=stage(s,{},r);
+ const plan=wfPendingPlan(s,r);
+ const lines=[];
+
+ if(doctor&&["doctor","review"].includes(current.key)){
+  lines.push(`<div><strong>Doctor:</strong> ${esc(deliveryLabel(doctor))}</div>`);
+ }
+ if(patient&&current.key==="patient"){
+  lines.push(`<div><strong>Patient:</strong> ${esc(deliveryLabel(patient))}</div>`);
+ }
+ if(plan?.nextAt||plan?.nextDate){
+  lines.push(`<div>${esc(wfPlanText(plan))}
+   ${wfPlanDue(plan)?'<span class="warning"> · Due</span>':""}
+  </div>`);
+ }
+ return lines.length?
+  `<div class="contact-summary">${lines.join("")}</div>`:"";
+};
+
+reportTable=function(s,list,archived=false){
+ return `<div class="table-wrap"><table class="report-table">
+  <thead><tr>
+   ${archived?"":'<th class="wf-pick-cell" aria-label="Select reports"></th>'}
+   <th class="wf-name-cell">Report</th>
+   <th class="wf-progress-cell">Progress / arrangement</th>
+   ${archived?"":"<th>Next action</th>"}
+  </tr></thead>
+  <tbody>${list.map(({group:g,report:r})=>{
+   const current=stage(s,g,r);
+   const target={groupId:g.id,reportId:r.id};
+   return `<tr data-group="${esc(g.id)}" data-report="${esc(r.id)}">
+    ${archived?"":`<td class="wf-pick-cell">
+     <input type="checkbox" data-wf-pick
+      data-group="${esc(g.id)}" data-report="${esc(r.id)}"
+      aria-label="Select ${esc(r.name||g.name)}"
+      ${wfPicked.has(wfKey(target))?"checked":""}
+      ${isTracingCancelled(s)?"disabled":""}>
+    </td>`}
+    <td>
+     <button type="button" class="report-link" data-report-history
+      data-group="${esc(g.id)}" data-report="${esc(r.id)}">
+      ${esc(r.name||g.name)}
+     </button>
+     ${r.name!==g.name?`<div class="small-text">${esc(g.name)}</div>`:""}
+    </td>
+    <td>
+     ${badge(current.label,current.colour)}
+     ${archived?"":contactSummary(s,r)}
+     ${!archived&&r.reviewNote&&!needsDoctorReview(r)?
+      `<details class="wf-instructions">
+       <summary>Recorded instructions</summary>
+       <div class="note">${esc(r.reviewNote)}</div>
+      </details>`:""}
+     ${r.followupAppointment?.date?
+      `<div class="small-text" style="margin-top:5px">
+       Linked appointment: ${esc(dateLabel(r.followupAppointment.date))}
+      </div>`:""}
+    </td>
+    ${archived?"":`<td><div class="report-actions">
+     ${STEP_LABELS[current.key]?reportButton(g,r,current.key):""}
+     ${current.key==="invalid"?
+      `<button type="button" class="danger small"
+       data-correct-report="${esc(r.id)}" data-group="${esc(g.id)}">
+       Check / correct
+      </button>`:""}
+    </div></td>`}
+   </tr>`;
+  }).join("")}</tbody>
+ </table></div>`;
+};
+
+updateSelection=function(){
+ const links=actionContext?.type==="flow"?
+  wfFormTargets():
+  actionContext?.target?[actionContext.target]:[];
+ const current=new Set(links.map(wfKey));
+
+ $("groups").querySelectorAll("tr[data-report]").forEach(row=>{
+  const key=wfKey({
+   groupId:row.dataset.group,
+   reportId:row.dataset.report
+  });
+  row.classList.toggle("selected",current.has(key)||wfPicked.has(key));
+ });
+};
+
+function wfRenderSelectionBar(){
+ const bar=$("wfSelectionBar");
+ if(!selected){bar.hidden=true;return;}
+
+ const available=new Set(entries(selected.state)
+  .filter(x=>!x.report.cancelled&&!x.report.archived)
+  .map(x=>wfKey(wfTarget(x))));
+ wfPicked=new Set([...wfPicked].filter(key=>available.has(key)));
+
+ const targets=wfPickedTargets();
+ bar.hidden=!targets.length;
+ if(!targets.length) return;
+
+ const locked=editingLocked()||isTracingCancelled(selected.state);
+ const picked=new Set(targets.map(wfKey));
+
+ bar.innerHTML=`
+  <div class="row">
+   <strong class="small-text">${targets.length} selected</strong>
+   <button type="button" class="small" data-wf-clear-selection
+    ${locked?"disabled":""}>Clear</button>
+  </div>
+  <div class="actions">
+   ${WF_PHASES.map(([phase,label])=>{
+    const count=wfEligible(selected.state,phase)
+     .filter(x=>picked.has(wfKey(wfTarget(x)))).length;
+    return count?`<button type="button"
+     data-wf-selection-action="${esc(phase)}" ${locked?"disabled":""}>
+     ${esc(label)} (${count})
+    </button>`:"";
+   }).join("")}
+  </div>
+  <div class="small-text">
+   Each action affects eligible checked reports only.
+  </div>`;
+}
+
+function wfRenderIdle(s){
+ const m=metrics(s);
+ $("workspaceIdle").innerHTML=`
+  <div>
+   <h3>Action workspace</h3>
+   <p>Choose the next action on the left.</p>
+   <div class="wf-idle-counts">
+    ${m.nurse.length?badge(`Triage ${m.nurse.length}`,"blue"):""}
+    ${m.notify.length?badge(`Doctor receipt ${m.notify.length}`,"blue"):""}
+    ${m.instructions.length?badge(`Instructions ${m.instructions.length}`,"blue"):""}
+    ${m.patient.length?badge(`Patient ${m.patient.length}`,"blue"):""}
+    ${m.appointment.length?badge(`Appointment ${m.appointment.length}`,"blue"):""}
+    ${m.filing.length?badge(`Filing ${m.filing.length}`,"blue"):""}
+   </div>
+   <p class="small-text" style="margin-top:12px">
+    Save opens the next required step here.
+    Select several reports to apply the same action together.
+   </p>
+  </div>`;
+}
+
+renderDetail=function(){
+ if(!selected) return;
+ const s=selected.state,m=s.metadata||{},count=metrics(s);
+ const scroll=$("overviewScroll").scrollTop;
+ const archives=new Set([...$("groups").querySelectorAll("details[data-archive][open]")]
+  .map(el=>el.dataset.archive));
+
+ $("detailTitle").textContent=m.patientName||"Name not entered";
+ $("patientReference").textContent="Reference: "+(m.patientReference||"Not entered");
+
+ $("caseSummary").innerHTML=isTracingCancelled(s)?
+  badge("Case tracing stopped","red")+
+   (count.urgent.length?'<span class="warning">Urgent actions still outstanding</span>':""):
+  badge(`${count.pending.length} pending`,count.pending.length?"blue":"green")+
+   (count.urgent.length?badge(`${count.urgent.length} urgent`,"red"):"")+
+   (count.priority.length?badge(`${count.priority.length} priority`,"amber"):"");
+
+ $("groups").innerHTML=groupsHTML(s);
+ $("groups").querySelectorAll("[data-archive]").forEach(el=>{
+  el.open=archives.has(el.dataset.archive);
+ });
+
+ $("appointmentOverview").innerHTML=`
+  <div>
+   <span class="meta-label">Appointment</span>
+   <strong>${esc(APPOINTMENTS[s.appointmentStatus]||"Not arranged")}</strong>
+   ${s.appointmentDate?` · ${esc(dateLabel(s.appointmentDate))}`:""}
+  </div>
+  <div>
+   <span class="meta-label">Next patient contact / arrangement</span>
+   <strong>${esc(dateLabel(wfPatientNextDate(s)))}</strong>
+  </div>
+  ${count.appointment.length?
+   `<div class="small-text">
+    ${count.appointment.length} report(s) require an appointment arrangement
+   </div>`:""}
+  ${count.missed?'<div class="warning">Check attendance / rearrangement</div>':""}
+  ${count.due?'<div class="warning">Patient follow-up due</div>':""}
+  ${s.caseNote?`<details class="full">
+   <summary class="small-text">Notes</summary>
+   <div class="note">${esc(s.caseNote)}</div>
+  </details>`:""}`;
+
+ const patients=s.contacts.filter(c=>c.audience!=="doctor");
+ const last=[...patients].sort((a,b)=>
+  String(b.at||"").localeCompare(String(a.at||""))
+ )[0];
+
+ $("recentContacts").innerHTML=last?`
+  <div class="latest-contact">
+   <strong>Latest patient contact</strong> · ${esc(timeLabel(last.at))}<br>
+   ${esc(last.method||"")} · ${esc(deliveryLabel(last))}
+   ${last.nextAt?`<div>${esc(wfPlanText(last))}</div>`:""}
+   ${last.note?`<details><summary>Notes</summary>
+    <div class="note">${esc(last.note)}</div>
+   </details>`:""}
+  </div>`:"";
+
+ wfRenderIdle(s);
+ $("overviewScroll").scrollTop=scroll;
+ updateSelection();
+ updateControls();
+};
+
+updateBatchMenu=function(locked,cancelled){
+ const s=selected?.state;
+ for(const [id,label,phase] of [
+  ["receiveBatchButton","Batch Receive","received"],
+  ["routineBatchButton","Batch Routine","nurse"],
+  ["filingBatchButton","Batch Filing","filed"]
+ ]){
+  const n=s?wfEligible(s,phase).length:0;
+  $(id).textContent=`${label} (${n})`;
+  $(id).hidden=false;
+  $(id).disabled=!s||locked||cancelled||!n;
+ }
+ $("batchTools").hidden=true;
+ $("batchTools").open=false;
+};
+
+/* ---------------- Form components ---------------- */
+
+function wfRail(s,r,current){
+ const doctor=wfDoctorRequired(r);
+ const states=[
+  ["received","Receive",!!r.receivedDate,false],
+  ["nurse","Triage",nurseDone(r),false],
+  ["doctor","Notify Dr",doctor&&wfDoctorAcknowledged(s,r),nurseDone(r)&&!doctor],
+  ["review","Dr advice",doctor&&!needsDoctorReview(r),nurseDone(r)&&!doctor],
+  ["patient","Patient",patientConfirmed(s,r),
+   nurseDone(r)&&r.patientContactRequired===false],
+  ["appointment","Appt",wfAppointmentSatisfied(s,r)&&r.appointmentRequired===true,
+   nurseDone(r)&&r.appointmentRequired!==true],
+  ["filed","File",!!r.archived,false]
+ ];
+ return `<div class="wf-rail" aria-label="Report workflow">
+  ${states.map(([key,label,done,skip])=>
+   `<span class="${key===current?"current":done?"done":skip?"skip":""}">
+    ${done?"✓ ":skip?"— ":""}${esc(label)}
+   </span>`
+  ).join("")}
+ </div>`;
+}
+
+function wfScope(eligible,targets,open){
+ const checkedKeys=new Set(targets.map(wfKey));
+ return `<details class="wf-scope" ${open?"open":""}>
+  <summary><span id="wfScopeCount"></span> · report selection</summary>
+  <div class="actions">
+   <button type="button" class="small" data-wf-scope-all>Select all eligible</button>
+   <button type="button" class="small" data-wf-scope-none>Clear</button>
+  </div>
+  <div class="wf-scope-list">
+   ${eligible.map(x=>`<label class="checkline">
+    <input type="checkbox" data-wf-target
+     data-wf-group="${esc(x.group.id)}" data-wf-report="${esc(x.report.id)}"
+     ${checkedKeys.has(wfKey(wfTarget(x)))?"checked":""}>
+    <span>${esc(x.report.name||x.group.name)}
+     <small> · ${esc(stage(selected.state,x.group,x.report).label)}</small>
+    </span>
+   </label>`).join("")}
+  </div>
+ </details>`;
+}
+
+function wfChoices(name,items,current=""){
+ return `<div class="wf-result-grid">
+  ${items.map(([key,label])=>`<label class="choice">
+   <input type="radio" name="${esc(name)}" value="${esc(key)}"
+    ${key===current?"checked":""}>
+   <span>${esc(label)}</span>
+  </label>`).join("")}
+ </div>`;
+}
+
+function wfRadioValue(name){
+ return $("actionFields").querySelector(
+  `input[name="${name}"]:checked`
+ )?.value||"";
+}
+
+function wfDoctorName(current){
+ return doctorInput(current).replace('id="actionDoctor"','id="wfDoctorName"')
+  .replace(" required","");
+}
+
+function wfPreferredMethod(s,audience){
+ const c=[...s.contacts].reverse().find(x=>
+  x.audience===audience&&
+  (audience==="doctor"?DOCTOR_RESULTS:PATIENT_RESULTS)[x.method]
+ );
+ return c?.method||"Telephone";
+}
+
+function wfMethodSelect(id,current,doctor=false){
+ return `<select id="${esc(id)}">
+  ${options([
+   ["Telephone","Telephone"],
+   ["Email","Email"],
+   ["WhatsApp","WhatsApp"],
+   ...(doctor?[["In person","In person"]]:[])
+  ],current)}
+ </select>`;
+}
+
+function wfPlanFields(prefix,audience,prior=null){
+ const future=prior?.nextAt&&new Date(prior.nextAt).getTime()>Date.now();
+ return `<div id="${prefix}PlanBox" class="wf-plan" hidden>
+  <strong>Outstanding action — follow-up arrangement</strong>
+  <p class="small-text" style="margin-top:4px">
+   This does not complete report receipt, instructions or patient notification.
+  </p>
+  <div class="form-grid">
+   ${field("Next follow-up time (HK) *",
+    `<input id="${prefix}NextAt" type="datetime-local"
+     value="${future?esc(hkDateTimeInput(prior.nextAt)):""}">`)}
+   <div class="actions" style="margin:0">
+    <button type="button" class="small"
+     data-wf-time="30" data-wf-prefix="${prefix}">+30 min</button>
+    <button type="button" class="small"
+     data-wf-time="60" data-wf-prefix="${prefix}">+1 hour</button>
+    <button type="button" class="small" data-wf-tomorrow
+     data-wf-prefix="${prefix}">Tomorrow 09:00</button>
+   </div>
+   ${field("Responsible staff / team *",
+    `<input id="${prefix}Owner" maxlength="100"
+     value="${esc(future?prior.nextOwner||value("operator"):value("operator"))}">`)}
+   ${field("Next action *",
+    `<select id="${prefix}NextAction">
+     ${options(WF_ACTIONS[audience],
+      future?prior.nextAction||WF_ACTIONS[audience][0][0]:
+       WF_ACTIONS[audience][0][0])}
+    </select>`)}
+   ${field("Arrangement details",
+    `<textarea id="${prefix}PlanNote" rows="2" maxlength="2000">${
+     future?esc(prior.planNote||""):""
+    }</textarea>`)}
+  </div>
+  <div id="${prefix}EscalationBox" class="wf-escalation" hidden>
+   <p class="warning">
+    Urgent — follow the clinic's immediate escalation procedure.
+    A future reminder alone is not escalation.
+   </p>
+   <div class="form-grid">
+    ${field("Actual escalation status *",
+     `<select id="${prefix}EscalationState">
+      ${options([
+       ["","Select actual status"],
+       ["pending","Not yet escalated — still outstanding"],
+       ["attempted","Escalation attempted"],
+       ["accepted","Handover / escalation accepted"]
+      ],future?prior.escalationState||"":"")}
+     </select>`)}
+    ${field("Escalation recipient / route *",
+     `<input id="${prefix}EscalationTarget"
+      list="wfEscalationTargets" maxlength="150"
+      value="${future?esc(prior.escalationTarget||""):""}">`)}
+   </div>
+   <p class="small-text">
+    Handover accepted is not confirmation that the doctor received the report,
+    gave instructions, or that the patient was informed.
+   </p>
+  </div>
+ </div>`;
+}
+
+function wfCareFields(reports,doctor=false){
+ const reasons=doctor?[
+  ["","Select the documented reason"],
+  ["doctor","Doctor advised no additional patient notification"],
+  ["plan","Covered by the documented care plan"],
+  ["other","Other — enter details"]
+ ]:[
+  ["","Select the approved reason"],
+  ["protocol","Approved routine-results protocol"],
+  ["plan","Existing documented care plan"],
+  ["other","Other — enter details"]
+ ];
+
+ return `
+  <div class="form-grid">
+   ${field("Patient notification",
+    `<select id="wfPatientRequired">
+     ${options([
+      ["yes","Required — inform patient and confirm receipt"],
+      ["no","Not required — record the reason"]
+     ],"yes")}
+    </select>`)}
+  </div>
+  <div id="wfWaiverFields" class="form-grid" hidden>
+   ${field("Reason patient notification is not required *",
+    `<select id="wfWaiverReason">${options(reasons)}</select>`)}
+   ${field("Additional details",
+    '<textarea id="wfWaiverDetail" rows="2" maxlength="2000"></textarea>')}
+  </div>
+  <label class="checkline">
+   <input id="wfAppointmentRequired" type="checkbox"
+    ${reports.some(r=>r.appointmentRequired===true)?"checked":""}>
+   <span>Follow-up appointment required under the recorded care plan</span>
+  </label>`;
+}
+
+function wfNurseFields(reports,receive=false,preset=""){
+ return `
+  <section class="section">
+   <h3>${receive?"Receive only, or screen now":"Nurse triage"}</h3>
+   <p class="small-text">
+    Select a classification only after screening every selected report
+    under the clinic's approved criteria.
+   </p>
+   ${wfChoices("wfClassification",[
+    ...(receive?[["pending","Receive only — not screened yet"]]:[]),
+    ["routine","Routine"],
+    ["doctor","Priority"],
+    ["urgent","Urgent"]
+   ],preset||(receive?"pending":""))}
+   <div id="wfRoutineOptions" hidden>
+    <label class="checkline">
+     <input id="wfRoutineDoctorRequired" type="checkbox">
+     <span>Request doctor review for these Routine reports</span>
+    </label>
+    <div id="wfRoutineCare">
+     ${wfCareFields(reports,false)}
+    </div>
+   </div>
+   <div class="form-grid">
+    ${field("Nurse notes — optional",
+     '<textarea id="wfNurseNote" rows="2" maxlength="2000"></textarea>')}
+   </div>
+  </section>`;
+}
+
+function wfAdviceFields(reports,withDoctorName=false,currentDoctor=""){
+ return `
+  ${withDoctorName?`<div class="form-grid">
+   ${field("Reviewing doctor *",wfDoctorName(currentDoctor))}
+  </div>`:""}
+  <p class="small-text">
+   Record instructions actually given. These choices are documentation
+   shortcuts, not suggested clinical decisions.
+  </p>
+  <div class="form-grid">
+   ${field("Doctor instructions *",
+    `<select id="wfAdviceKind">${options(WF_ADVICE)}</select>`)}
+   ${field("Instructions / additional details",
+    '<textarea id="wfAdviceNote" rows="3" maxlength="2000"></textarea>')}
+  </div>
+  ${wfCareFields(reports,true)}
+  ${withDoctorName?`<details class="archive">
+   <summary>Instruction time (HK)</summary>
+   <input id="wfReviewAt" type="datetime-local" value="${hkDateTimeInput()}">
+  </details>`:""}`;
+}
+
+function wfAppointmentFields(s){
+ const usable=["booked","attended"].includes(s.appointmentStatus)&&
+  validDate(s.appointmentDate||"");
+
+ return `<section class="section">
+  <h3>Appointment</h3>
+  <p class="small-text">
+   Current: ${esc(APPOINTMENTS[s.appointmentStatus]||"Not arranged")}
+   ${s.appointmentDate?" · "+esc(dateLabel(s.appointmentDate)):""}
+  </p>
+  <div class="form-grid">
+   ${field("Arrangement",
+    `<select id="wfAppointmentMode">
+     ${options([
+      ["keep","No change"],
+      ...(usable?[["use","Use this existing appointment for selected reports"]]:[]),
+      ["book","Book / update appointment"],
+      ["wait","Not yet arranged — record follow-up"],
+      ["declined","Patient declined — refer the required plan back to doctor"],
+      ["attended","Record attended"],
+      ["missed","Did not attend — record follow-up"]
+     ],"keep")}
+    </select>`)}
+  </div>
+  <div id="wfAppointmentDateBox" class="form-grid" hidden>
+   ${field("Appointment date *",
+    `<input id="wfAppointmentDate" type="date"
+     value="${esc(s.appointmentDate||"")}">`)}
+  </div>
+  <div id="wfAppointmentNoteBox" class="form-grid" hidden>
+   ${field("Appointment notes / patient's decision",
+    '<textarea id="wfAppointmentNote" rows="2" maxlength="2000"></textarea>')}
+  </div>
+  <p id="wfAppointmentWarning" class="small-text" hidden>
+   If a required appointment is declined or missed, the selected reports
+   return to doctor review. They will not be filed as resolved.
+  </p>
+  ${wfPlanFields("wfAppointment","appointment")}
+ </section>`;
+}
+
+function wfPatientFields(s,reports){
+ const method=wfPreferredMethod(s,"patient");
+ const prior=reports[0]?latestContact(s,reports[0],"patient"):null;
+
+ return `<div id="wfPatientFields">
+  <div class="form-grid">
+   ${field("Patient contact method",wfMethodSelect("wfPatientMethod",method))}
+  </div>
+  <div id="wfPatientResults">
+   ${wfChoices("wfPatientResult",PATIENT_RESULTS[method].map(([key,label])=>[
+    key,key==="confirmed"?"Informed — receipt confirmed":label
+   ]))}
+  </div>
+  <p class="small-text">
+   “Confirmed” means the selected reports and current instructions were
+   communicated to the patient or an authorized recipient.
+   Sent messages and voicemail do not confirm receipt.
+  </p>
+  <details class="archive">
+   <summary>Contact time / authorized representative</summary>
+   <div class="form-grid">
+    ${field("Contact time (HK)",
+     `<input id="wfPatientAt" type="datetime-local" value="${hkDateTimeInput()}">`)}
+    ${field("Authorized representative — leave blank for patient",
+     '<input id="wfPatientRecipient" maxlength="150">')}
+    <label class="checkline">
+     <input id="wfRecipientAuthorized" type="checkbox">
+     <span>If a representative is entered, their authority has been checked.</span>
+    </label>
+   </div>
+  </details>
+  <div class="form-grid">
+   ${field("Contact notes — optional for linked reports",
+    '<textarea id="wfPatientNote" rows="2" maxlength="2000"></textarea>')}
+  </div>
+  ${wfPlanFields("wfPatient","patient",prior)}
+  ${wfAppointmentFields(s)}
+  ${s.nextFollowupDate||s.workflowPatientReminder?`
+   <label class="checkline">
+    <input id="wfClearPatientReminder" type="checkbox">
+    <span>Clear the existing general patient reminder after completion</span>
+   </label>`:""}
+ </div>`;
+}
+
+function wfInstructionPreview(s,targets){
+ const rows=wfResolved(s,targets);
+ if(!rows.length) return "";
+ return `<div class="notice">
+  <strong>Current recorded instructions</strong>
+  ${rows.map(({report:r,group:g})=>`
+   <div style="margin-top:7px">
+    <strong>${esc(r.name||g.name)}</strong>
+    <div class="note">${esc(
+     r.reviewNote&&!needsDoctorReview(r)?
+      r.reviewNote:
+      r.triage==="routine"&&!wfDoctorRequired(r)?
+       r.nurseNote||"Routine — follow the recorded nurse / approved protocol arrangement.":
+       "Doctor instructions are still outstanding."
+    )}</div>
+   </div>`).join("")}
+ </div>`;
+}
+
+/* ---------------- Open the actual action form ---------------- */
+
+function wfOpenFlow(phase,requested=[],opts={}){
+ const s=selected.state;
+ const eligible=wfEligible(s,phase,opts);
+ const keys=new Set(eligible.map(x=>wfKey(wfTarget(x))));
+ const targets=wfTargetsUnique(requested).filter(t=>keys.has(wfKey(t)));
+
+ if(!eligible.length&&!opts.general){
+  throw new Error("No reports are eligible for this action. Refresh and check.");
+ }
+
+ const first=targets.length?
+  wfResolved(s,targets)[0]:
+  eligible[0];
+ const reports=targets.length?
+  wfResolved(s,targets).map(x=>x.report):
+  eligible.map(x=>x.report);
+
+ const doctor=first?
+  latestContact(s,first.report,"doctor")?.target||
+  first.report.reviewDoctorName||
+  first.report.doctorName||
+  s.metadata?.clinician||"":
+  s.metadata?.clinician||"";
+
+ let body="";
+
+ if(phase==="received"){
+  body=`<div class="form-grid">
+   ${field("Received date *",
+    `<input id="wfReceivedDate" type="date" value="${today()}" max="${today()}">`)}
+  </div>${wfNurseFields(reports,true)}`;
+ }else if(phase==="nurse"){
+  body=wfNurseFields(reports,false,opts.routinePreset?"routine":"");
+ }else if(phase==="doctor"){
+  const method=wfPreferredMethod(s,"doctor");
+  body=`
+   ${opts.requestRoutine?`<div class="notice">
+    This requests doctor review for the selected Routine reports.
+    The report remains open until the requested instructions are recorded.
+   </div>`:""}
+   <div class="form-grid">
+    ${field("Doctor *",wfDoctorName(doctor))}
+    ${field("Contact method",wfMethodSelect("wfDoctorMethod",method,true))}
+   </div>
+   <div id="wfDoctorResults">
+    ${wfChoices("wfDoctorResult",DOCTOR_RESULTS[method])}
+   </div>
+   <details class="archive">
+    <summary>Contact time (HK)</summary>
+    <input id="wfDoctorAt" type="datetime-local" value="${hkDateTimeInput()}">
+   </details>
+   <div class="form-grid">
+    ${field("Contact notes — optional",
+     '<textarea id="wfDoctorNote" rows="2" maxlength="2000"></textarea>')}
+   </div>
+   <div id="wfAdviceToggle" hidden>
+    <label class="checkline">
+     <input id="wfAdviceNow" type="checkbox">
+     <span>Doctor instructions are available — record them in this save</span>
+    </label>
+   </div>
+   <div id="wfAdviceFields" class="section" hidden>
+    <h3>Doctor instructions</h3>
+    ${wfAdviceFields(reports)}
+   </div>
+   ${wfPlanFields("wfDoctor","doctor",
+    first?wfOutstandingDoctorPlan(s,first.report):null)}`;
+ }else if(phase==="review"){
+  body=wfAdviceFields(reports,true,doctor);
+ }else if(phase==="patient"){
+  body=wfInstructionPreview(s,targets)+wfPatientFields(s,reports);
+ }else if(phase==="appointment"){
+  body=wfInstructionPreview(s,targets)+wfAppointmentFields(s);
+ }else if(phase==="filed"){
+  body=`<div class="notice">
+   Only reports with the required receipt, triage, doctor communication,
+   instructions, patient notification and appointment arrangement completed
+   can be filed.
+  </div>
+  <p>Press Confirm filed only after filing the selected reports
+   in the clinic system.</p>`;
+ }
+
+ if(["received","nurse","doctor","review"].includes(phase)){
+  body+=`
+   <div id="wfPatientNowWrap" class="section" hidden>
+    <label class="checkline">
+     <input id="wfPatientNow" type="checkbox">
+     <span>Patient contact has also been made — record it in this save</span>
+    </label>
+   </div>
+   ${wfPatientFields(s,reports)}`;
+ }
+
+ if(phase!=="filed"){
+  body+=`<div id="wfFileWrap" class="wf-file-option" hidden>
+   <label class="checkline" style="margin:0">
+    <input id="wfFileAfter" type="checkbox">
+    <span>I have also filed every selected report in the clinic system.</span>
+   </label>
+  </div>`;
+ }
+
+ const carry=wfTargetsUnique(opts.carry||requested);
+ const html=`
+  ${first?wfRail(s,first.report,phase):""}
+  ${eligible.length?wfScope(
+   eligible,targets,
+   targets.length!==1||opts.batch===true
+  ):'<p class="small-text">General action — no report linked.</p>'}
+  ${carry.length>targets.length?`<p class="small-text">
+   This action applies only to eligible selected reports.
+   Other selected reports are unchanged.
+  </p>`:""}
+  <p id="wfUrgentNotice" class="notice red" hidden>
+   Urgent — follow the clinic's immediate escalation procedure.
+   Recording a contact attempt or reminder does not resolve the result.
+  </p>
+  ${body}
+  <div id="wfStatement" class="wf-statement"></div>`;
+
+ const opened=startWorkspace(
+  WF_PHASES.find(([key])=>key===phase)?.[1]||"Report action",
+  s.metadata?.patientName||"",
+  html,
+  {
+   type:"flow",phase,links:targets,carryLinks:carry,
+   target:targets[0]||null,
+   general:opts.general===true,
+   requestRoutine:opts.requestRoutine===true
+  },
+  false,
+  "Save & continue"
+ );
+ if(opened) wfRefreshFlow();
+ return opened;
+}
+
+openStep=function(target,key){
+ const {group,report}=findReport(selected.state,target.groupId,target.reportId);
+ if(stage(selected.state,group,report).key!==key){
+  throw new Error("This report has changed. Use its current next action.");
+ }
+ wfOpenFlow(key,[target]);
+};
+
+openContact=function(target=null){
+ if(target){
+  wfOpenFlow("patient",[target]);
+  return;
+ }
+ const eligible=wfEligible(selected.state,"patient");
+ const keys=new Set(eligible.map(x=>wfKey(wfTarget(x))));
+ let targets=wfPickedTargets().filter(t=>keys.has(wfKey(t)));
+ if(!targets.length&&eligible.length===1) targets=[wfTarget(eligible[0])];
+ wfOpenFlow("patient",targets,{general:true,batch:eligible.length>1});
+};
+
+openAppointment=function(){
+ const eligible=wfEligible(selected.state,"appointment");
+ const keys=new Set(eligible.map(x=>wfKey(wfTarget(x))));
+ let targets=wfPickedTargets().filter(t=>keys.has(wfKey(t)));
+ if(!targets.length&&eligible.length===1) targets=[wfTarget(eligible[0])];
+ wfOpenFlow("appointment",targets,{general:true,batch:eligible.length>1});
+};
+
+openDoctorContact=function(target){
+ const {report}=findReport(selected.state,target.groupId,target.reportId);
+ wfOpenFlow("doctor",[target],{
+  requestRoutine:report.triage==="routine"&&!wfDoctorRequired(report)
+ });
+};
+
+doctorContactButton=function(g,r,label="Doctor contact"){
+ const request=r.triage==="routine"&&!wfDoctorRequired(r);
+ return `<button type="button" data-doctor-contact
+  data-group="${esc(g.id)}" data-report="${esc(r.id)}">
+  ${esc(request?"Request doctor review (optional)":label)}
+ </button>`;
+};
+
+function wfOpenBatch(phase,opts={}){
+ const eligible=wfEligible(selected.state,phase);
+ const keys=new Set(eligible.map(x=>wfKey(wfTarget(x))));
+ const requested=wfPickedTargets().filter(t=>keys.has(wfKey(t)));
+ wfOpenFlow(phase,requested,{
+  ...opts,batch:true,carry:requested
+ });
+}
+
+openBatchReceive=()=>wfOpenBatch("received");
+openRoutineBatch=()=>wfOpenBatch("nurse",{routinePreset:true});
+openBatchFiling=()=>wfOpenBatch("filed");
+
+/* ---------------- Conditional fields and save summary ---------------- */
+
+function wfSetHidden(id,hidden){
+ if($(id)) $(id).hidden=hidden;
+}
+
+function wfHasAdvice(){
+ return actionContext?.phase==="review"||
+  (actionContext?.phase==="doctor"&&
+   wfRadioValue("wfDoctorResult")==="confirmed"&&checked("wfAdviceNow"));
+}
+
+function wfRoutineWithoutDoctor(){
+ return ["received","nurse"].includes(actionContext?.phase)&&
+  wfRadioValue("wfClassification")==="routine"&&
+  !checked("wfRoutineDoctorRequired");
+}
+
+function wfPlanVisibility(prefix,show,urgent){
+ wfSetHidden(prefix+"PlanBox",!show);
+ wfSetHidden(prefix+"EscalationBox",!urgent);
+ const tomorrow=$(prefix+"PlanBox")?.querySelector("[data-wf-tomorrow]");
+ if(tomorrow) tomorrow.hidden=urgent;
+}
+
+function wfProspectiveAppointmentOK(s,reports,required){
+ if(!required) return true;
+ const mode=value("wfAppointmentMode");
+ if(["book","attended"].includes(mode)){
+  return validDate(value("wfAppointmentDate"));
+ }
+ if(mode==="use"){
+  return ["booked","attended"].includes(s.appointmentStatus)&&
+   validDate(s.appointmentDate||"");
+ }
+ if(mode==="keep"){
+  return reports.every(r=>wfAppointmentSatisfied(s,{
+   ...r,appointmentRequired:true
+  }));
+ }
+ return false;
+}
+
+function wfRefreshFlow(){
+ if(actionContext?.type!=="flow") return;
+
+ const c=actionContext,s=selected.state,targets=wfFormTargets();
+ const rows=wfResolved(s,targets),reports=rows.map(x=>x.report);
+ const nurse=wfRadioValue("wfClassification");
+ const routine=wfRoutineWithoutDoctor();
+ const advice=wfHasAdvice();
+ const doctorResult=wfRadioValue("wfDoctorResult");
+
+ if(value("wfAdviceKind")==="followup"&&$("wfAppointmentRequired")){
+  $("wfAppointmentRequired").checked=true;
+ }
+
+ const care=routine||advice;
+ const patientNeeded=care?
+  value("wfPatientRequired")==="yes":
+  reports.some(r=>r.patientContactRequired===true);
+ const appointmentRequired=care?
+  checked("wfAppointmentRequired"):
+  reports.some(r=>r.appointmentRequired===true);
+ const urgent=reports.some(r=>r.triage==="urgent")||
+  (["received","nurse"].includes(c.phase)&&nurse==="urgent");
+
+ wfSetHidden("wfUrgentNotice",!urgent);
+ wfSetHidden("wfRoutineOptions",nurse!=="routine");
+ wfSetHidden("wfRoutineCare",!routine);
+ wfSetHidden("wfAdviceToggle",doctorResult!=="confirmed");
+ wfSetHidden("wfAdviceFields",!advice);
+ wfSetHidden("wfWaiverFields",!care||value("wfPatientRequired")!=="no");
+
+ const canRecordPatientNow=care&&patientNeeded;
+ wfSetHidden("wfPatientNowWrap",!canRecordPatientNow);
+ if(!canRecordPatientNow&&$("wfPatientNow")){
+  $("wfPatientNow").checked=false;
+ }
+
+ const patientActive=c.phase==="patient"||
+  (canRecordPatientNow&&checked("wfPatientNow"));
+ wfSetHidden("wfPatientFields",!patientActive);
+
+ const doctorNeedsPlan=c.phase==="doctor"&&!!doctorResult&&(
+  doctorResult!=="confirmed"||
+  (!advice&&(c.requestRoutine||reports.some(needsDoctorReview)))
+ );
+ wfPlanVisibility("wfDoctor",doctorNeedsPlan,urgent);
+
+ const patientResult=wfRadioValue("wfPatientResult");
+ const patientNeedsPlan=patientActive&&!!patientResult&&patientResult!=="confirmed";
+ wfPlanVisibility("wfPatient",patientNeedsPlan,urgent);
+
+ const appointmentActive=patientActive||c.phase==="appointment";
+ const mode=value("wfAppointmentMode");
+ wfSetHidden("wfAppointmentDateBox",!["book","attended","missed"].includes(mode));
+ wfSetHidden("wfAppointmentNoteBox",mode==="keep"||mode==="use");
+ wfSetHidden("wfAppointmentWarning",
+  !appointmentRequired||!["declined","missed"].includes(mode));
+
+ const appointmentNeedsPlan=appointmentActive&&(
+  ["wait","declined","missed"].includes(mode)||
+  (c.phase==="appointment"&&mode==="keep"&&
+   !wfProspectiveAppointmentOK(s,reports,appointmentRequired))
+ );
+ wfPlanVisibility("wfAppointment",
+  appointmentNeedsPlan&&!patientNeedsPlan,urgent);
+
+ const appointmentOK=wfProspectiveAppointmentOK(s,reports,appointmentRequired);
+ const patientOK=care?
+  (!patientNeeded||(patientActive&&patientResult==="confirmed")):
+  c.phase==="patient"?
+   patientResult==="confirmed":
+   reports.every(r=>!patientPending(s,r));
+
+ const canCombinedFile=targets.length>0&&appointmentOK&&patientOK&&(
+  routine||
+  advice||
+  c.phase==="patient"||
+  (c.phase==="appointment"&&reports.every(r=>
+   !needsDoctorReview(r)&&
+   (!wfDoctorRequired(r)||wfDoctorAcknowledged(s,r))&&
+   !patientPending(s,r)
+  ))
+ );
+
+ wfSetHidden("wfFileWrap",!canCombinedFile);
+ if(!canCombinedFile&&$("wfFileAfter")){
+  $("wfFileAfter").checked=false;
+ }
+
+ if($("wfScopeCount")){
+  $("wfScopeCount").textContent=`${targets.length} selected`;
+ }
+
+ const statements=[];
+ if(c.phase==="received"){
+  statements.push("Record receipt on the selected date.");
+ }
+ if(["received","nurse"].includes(c.phase)&&nurse&&nurse!=="pending"){
+  statements.push(`Record your screening as ${CLASSIFICATIONS[nurse]}.`);
+ }
+ if(c.phase==="doctor"&&doctorResult){
+  statements.push(`Doctor contact: ${deliveryLabel({
+   audience:"doctor",deliveryStatus:doctorResult
+  })}.`);
+ }
+ if(advice) statements.push("Record the selected doctor instructions.");
+ if(patientActive&&patientResult){
+  statements.push(`Patient contact: ${deliveryLabel({
+   audience:"patient",deliveryStatus:patientResult
+  })}.`);
+ }
+ if(appointmentActive&&mode!=="keep"){
+  statements.push("Record the selected appointment arrangement.");
+ }
+ if(c.phase==="filed"||checked("wfFileAfter")){
+  statements.push("Confirm actual filing in the clinic system.");
+ }
+
+ $("wfStatement").textContent=statements.length?
+  statements.join(" "):
+  "Only checked reports are affected. No clinical outcome is inferred automatically.";
+
+ $("actionSave").textContent=c.phase==="filed"?
+  `Confirm filed (${targets.length})`:
+  targets.length?
+   `Save ${targets.length} report${targets.length===1?"":"s"} & continue`:
+   c.general?"Save general action":"Select reports to continue";
+
+ c.links=targets;
+ c.target=targets[0]||null;
+ updateSelection();
+ updateControls();
+}
+
+/* ---------------- Form validation ---------------- */
+
+function wfReadCare(doctor=false){
+ const required=value("wfPatientRequired");
+ if(!["yes","no"].includes(required)){
+  throw new Error("Select whether patient notification is required.");
+ }
+
+ let reason="";
+ if(required==="no"){
+  const key=value("wfWaiverReason");
+  const detail=value("wfWaiverDetail");
+  const allowed=doctor?
+   {
+    doctor:"Doctor advised no additional patient notification",
+    plan:"Covered by the documented care plan",
+    other:"Other"
+   }:
+   {
+    protocol:"Approved routine-results protocol",
+    plan:"Existing documented care plan",
+    other:"Other"
+   };
+  if(!Object.hasOwn(allowed,key)||(key==="other"&&!detail)){
+   throw new Error("Record the reason patient notification is not required.");
+  }
+  reason=[allowed[key],detail].filter(Boolean).join(": ");
+ }
+
+ return {
+  patientRequired:required==="yes",
+  waiverReason:reason,
+  appointmentRequired:checked("wfAppointmentRequired")
+ };
+}
+
+function wfReadPlan(prefix,audience,required,urgent){
+ if(!required) return null;
+
+ const nextAt=wfFutureTime(value(prefix+"NextAt"));
+ const owner=value(prefix+"Owner");
+ const action=value(prefix+"NextAction");
+ const note=value(prefix+"PlanNote");
+ const label=WF_ACTIONS[audience].find(([key])=>key===action)?.[1];
+
+ if(!owner||!label){
+  throw new Error("Enter the follow-up owner and next action.");
+ }
+ if(action==="other"&&!note){
+  throw new Error("Enter details of the other follow-up arrangement.");
+ }
+
+ const state=value(prefix+"EscalationState");
+ const target=value(prefix+"EscalationTarget");
+ if(urgent&&(!["pending","attempted","accepted"].includes(state)||!target)){
+  throw new Error("Record the actual urgent escalation status and recipient / route.");
+ }
+
+ return {
+  nextAt,
+  nextDate:hkDateTimeInput(nextAt).slice(0,10),
+  nextOwner:owner,
+  nextAction:action,
+  nextActionLabel:label,
+  planNote:note,
+  ...(urgent?{escalationState:state,escalationTarget:target}:{})
+ };
+}
+
+function wfReadContact(audience,needsPlan,urgent){
+ const doctor=audience==="doctor";
+ const prefix=doctor?"wfDoctor":"wfPatient";
+ const method=value(prefix+"Method");
+ const result=wfRadioValue(prefix+"Result");
+ const allowed=doctor?DOCTOR_RESULTS:PATIENT_RESULTS;
+
+ if(!allowed[method]?.some(([key])=>key===result)){
+  throw new Error(`Select the actual ${audience} contact result.`);
+ }
+
+ let target=doctor?value("wfDoctorName"):value("wfPatientRecipient")||"Patient";
+ if(doctor&&!target) throw new Error("Enter the doctor name.");
+
+ if(!doctor&&value("wfPatientRecipient")&&!checked("wfRecipientAuthorized")){
+  throw new Error("Confirm the representative's authority before recording disclosure.");
+ }
+
+ return {
+  target,method,result,
+  at:parseHKContactTime(value(prefix+"At")),
+  note:value(prefix+"Note"),
+  plan:wfReadPlan(prefix,audience,needsPlan,urgent)
+ };
+}
+
+function wfReadAdvice(){
+ const kind=value("wfAdviceKind");
+ const note=value("wfAdviceNote");
+ const label=WF_ADVICE.find(([key])=>key===kind)?.[1];
+ const doctor=value("wfDoctorName");
+
+ if(!doctor||!kind||!label){
+  throw new Error("Enter the doctor and select the instructions actually given.");
+ }
+ if(["repeat","other"].includes(kind)&&!note){
+  throw new Error("Enter the actual repeat-investigation or other instructions.");
+ }
+
+ const care=wfReadCare(true);
+ if(kind==="followup") care.appointmentRequired=true;
+
+ const base={
+  inform:"Inform patient of results",
+  followup:"Arrange follow-up appointment",
+  "no-further":"No further clinical action",
+  repeat:"Repeat investigation",
+  other:"Doctor instructions"
+ }[kind];
+
+ const text=[
+  base,
+  note,
+  care.patientRequired?"Patient notification required":
+   "Patient notification not required: "+care.waiverReason,
+  care.appointmentRequired?"Follow-up appointment required":""
+ ].filter(Boolean).join("\n");
+
+ return {
+  doctor,kind,text,care,
+  at:parseHKContactTime(
+   value("wfReviewAt")||value("wfDoctorAt")||hkDateTimeInput()
+  )
+ };
+}
+
+function wfReadAppointment(required,urgent,patientPlan=null,forcePending=false){
+ const mode=value("wfAppointmentMode")||"keep";
+ const date=value("wfAppointmentDate");
+ const note=value("wfAppointmentNote");
+
+ if(!["keep","use","book","wait","declined","attended","missed"].includes(mode)){
+  throw new Error("Select an appointment arrangement.");
+ }
+ if(["book","attended","missed"].includes(mode)&&!validDate(date)){
+  throw new Error("Enter a valid appointment date.");
+ }
+ if(["declined","missed"].includes(mode)&&!note){
+  throw new Error("Record the patient's decision or missed-appointment details.");
+ }
+
+ const needsPlan=["wait","declined","missed"].includes(mode)||
+  (forcePending&&mode==="keep");
+
+ return {
+  mode,date,note,
+  plan:needsPlan?
+   patientPlan||wfReadPlan("wfAppointment","appointment",true,urgent):
+   null,
+  required
+ };
+}
+
+/* ---------------- State mutations ---------------- */
+
+function wfApplyReceipt(r,date,staff,batchId=""){
+ if(!validDate(date)||date>today()){
+  throw new Error("Received date must be today or earlier.");
+ }
+ if(r.cancelled||r.receivedDate){
+  throw new Error("A selected report is no longer awaiting receipt.");
+ }
+ r.workflowVersion=2;
+ r.receivedDate=date;
+ r.receivedRecordedAt=new Date().toISOString();
+ r.receivedRecordedBy=staff;
+ r.reviewCycleId=r.reviewCycleId||uuid();
+ r.reviewPending=true;
+ if(batchId) r.receivedBatchId=batchId;
+}
+
+function wfApplyNurse(r,outcome,staff,note,requestDoctor,care,batchId=""){
+ if(!["routine","doctor","urgent"].includes(outcome)||
+  r.cancelled||!r.receivedDate||(r.triage||"pending")!=="pending"){
+  throw new Error("A selected report is not eligible for initial nurse triage.");
+ }
+
+ recordClassification(r,outcome,staff);
+ r.workflowVersion=2;
+ r.routineDoctorReviewRequired=outcome!=="routine"||requestDoctor;
+ r.reviewPending=r.routineDoctorReviewRequired;
+ r.archived=false;
+
+ if(outcome==="routine"&&!requestDoctor){
+  r.patientContactRequired=care.patientRequired;
+  r.patientNotificationWaiverReason=care.waiverReason;
+  r.appointmentRequired=care.appointmentRequired;
+  appendNurseNote(r,[
+   note,
+   care.waiverReason?"Patient notification not required: "+care.waiverReason:"",
+   care.appointmentRequired?"Follow-up appointment required":""
+  ].filter(Boolean).join("\n"),staff);
+ }else{
+  r.patientContactRequired=true;
+  appendNurseNote(r,note,staff);
+ }
+ if(batchId&&r.nurseReviewHistory?.length){
+  r.nurseReviewHistory.at(-1).batchId=batchId;
+ }
+}
+
+function wfAppendContact(s,reports,audience,info,staff){
+ const communicationId=uuid();
+ const recordedAt=new Date().toISOString();
+
+ for(const r of reports.length?reports:[null]){
+  s.contacts.push({
+   id:uuid(),communicationId,audience,
+   at:info.at,recordedAt,staff,target:info.target,
+   method:info.method,deliveryStatus:info.result,
+   outcome:deliveryLabel({audience,deliveryStatus:info.result}),
+   note:info.note,
+   reportId:r?.id||"",
+   reportName:r?.name||"",
+   reviewCycleId:r?cycleId(r):"",
+   confirmedAt:info.result==="confirmed"?info.at:"",
+   confirmedBy:info.result==="confirmed"?staff:"",
+   nextDate:info.plan?.nextDate||"",
+   ...(info.plan||{}),
+   ...(audience==="doctor"?{
+    doctorFollowupAction:info.plan?"reschedule":"clear"
+   }:{}),
+   ...(audience==="patient"&&info.result==="confirmed"?{
+    communicationScope:"reports-and-current-instructions",
+    instructionsCommunicated:true
+   }:{})
+  });
+
+  if(r&&audience==="doctor"&&info.result==="confirmed"){
+   r.notifiedAt=info.at;
+  }
+ }
+ if(!reports.length&&audience==="patient"){
+  s.workflowPatientReminder=info.plan?
+   {...info.plan,recordedAt,recordedBy:staff}:null;
+ }
+}
+
+function wfApplyAdvice(s,r,info,staff,batchId=""){
+ if(!nurseDone(r)||!wfDoctorAcknowledged(s,r)){
+  throw new Error("Record confirmed doctor receipt before recording instructions.");
+ }
+ if(!needsDoctorReview(r)){
+  throw new Error("A selected report is no longer awaiting instructions.");
+ }
+
+ preserveLegacyReview(r);
+ r.reviewCycleId=r.reviewCycleId||uuid();
+ r.reviewHistory.push({
+  id:uuid(),cycleId:cycleId(r),
+  at:info.at,doctor:info.doctor,recordedBy:staff,
+  note:info.text,
+  instructionCode:info.kind,
+  patientContactRequired:info.care.patientRequired,
+  patientNotificationWaiverReason:info.care.waiverReason,
+  appointmentRequired:info.care.appointmentRequired,
+  ...(batchId?{batchId}:{})
+ });
+
+ r.workflowVersion=2;
+ r.reviewDoctorName=info.doctor;
+ r.doctorName=info.doctor;
+ r.reviewedAt=info.at;
+ r.reviewRecordedAt=new Date().toISOString();
+ r.reviewRecordedBy=staff;
+ r.reviewNote=info.text;
+ r.reviewPending=false;
+ r.patientContactRequired=info.care.patientRequired;
+ r.patientNotificationWaiverReason=info.care.waiverReason;
+ r.appointmentRequired=info.care.appointmentRequired;
+ delete r.workflowDoctorPlan;
+}
+
+function wfApplyAppointment(s,reports,info,staff){
+ const before=arrangementSnapshot(s);
+ const at=new Date().toISOString();
+
+ if(info.mode==="use"){
+  if(!["booked","attended"].includes(s.appointmentStatus)||
+   !validDate(s.appointmentDate||"")){
+   throw new Error("The existing appointment cannot be used. Check and book it.");
+  }
+ }else if(info.mode!=="keep"){
+  const status={
+   book:"booked",wait:"unscheduled",declined:"declined",
+   attended:"attended",missed:"missed"
+  }[info.mode];
+  s.appointmentStatus=status;
+  s.appointmentDate=["book","attended","missed"].includes(info.mode)?info.date:"";
+ }
+
+ if(["use","book","attended"].includes(info.mode)){
+  for(const r of reports.filter(r=>r.appointmentRequired===true)){
+   r.followupAppointment={
+    date:s.appointmentDate,status:s.appointmentStatus,
+    at,staff,reviewCycleId:cycleId(r)
+   };
+   delete r.workflowAppointmentPlan;
+  }
+ }
+
+ if(info.plan){
+  for(const r of reports.filter(r=>r.appointmentRequired===true)){
+   r.workflowAppointmentPlan={
+    ...info.plan,recordedAt:at,recordedBy:staff,
+    reviewCycleId:cycleId(r)
+   };
+  }
+  if(!reports.length){
+   s.workflowPatientReminder={
+    ...info.plan,recordedAt:at,recordedBy:staff
+   };
+  }
+ }
+
+ if(["declined","missed"].includes(info.mode)){
+  for(const r of reports.filter(r=>r.appointmentRequired===true)){
+   wfRequestReview(r,staff,
+    `${info.mode==="declined"?"Required appointment declined":"Required appointment missed"}: ${info.note}`);
+   if(info.plan){
+    r.workflowDoctorPlan={
+     ...info.plan,recordedAt:at,recordedBy:staff,
+     reviewCycleId:cycleId(r)
+    };
+   }
+  }
+ }
+
+ appendArrangement(s,before,staff);
+ if(info.note){
+  s.followupNotes=[...(s.followupNotes||[]),{
+   id:uuid(),at,staff,note:info.note,type:"arrangement"
+  }];
+ }
+}
+
+function wfMarkFiled(s,reports,staff,batchId=""){
+ const at=new Date().toISOString();
+ for(const r of reports){
+  if(!wfCanFile(s,r)){
+   throw new Error(
+    "Complete required doctor receipt, instructions, patient notification and appointment arrangement before filing."
+   );
+  }
+  r.archived=true;
+  r.filedAt=at;
+  r.filedBy=staff;
+  if(batchId) r.filingBatchId=batchId;
+ }
+}
+
+/* ---------------- Unified submit ---------------- */
+
+async function wfSubmitFlow(c){
+ const links=wfFormTargets();
+ if(!links.length&&!c.general){
+  throw new Error("Select at least one report.");
+ }
+
+ const s=selected.state;
+ const rows=wfResolved(s,links);
+ const reports=rows.map(x=>x.report);
+ const phase=c.phase;
+ const outcome=wfRadioValue("wfClassification");
+ const routine=wfRoutineWithoutDoctor();
+ const adviceActive=wfHasAdvice();
+ const urgent=reports.some(r=>r.triage==="urgent")||outcome==="urgent";
+
+ let care=null,advice=null,doctorContact=null,patientContact=null,appointment=null;
+ const requestDoctor=checked("wfRoutineDoctorRequired");
+ const patientActive=phase==="patient"||
+  ((routine||adviceActive)&&value("wfPatientRequired")==="yes"&&checked("wfPatientNow"));
+
+ if(routine) care=wfReadCare(false);
+ if(adviceActive) advice=wfReadAdvice();
+
+ if(["received","nurse"].includes(phase)){
+  if(phase==="nurse"&&!["routine","doctor","urgent"].includes(outcome)){
+   throw new Error("Select the nurse classification.");
+  }
+  if(phase==="received"&&!["pending","routine","doctor","urgent"].includes(outcome)){
+   throw new Error("Select Receive only or a nurse classification.");
+  }
+ }
+
+ if(phase==="doctor"){
+  const result=wfRadioValue("wfDoctorResult");
+  const needsPlan=result!=="confirmed"||
+   (!adviceActive&&(c.requestRoutine||reports.some(needsDoctorReview)));
+  doctorContact=wfReadContact("doctor",needsPlan,urgent);
+ }
+
+ if(patientActive){
+  const result=wfRadioValue("wfPatientResult");
+  patientContact=wfReadContact("patient",result!=="confirmed",urgent);
+  if(!links.length&&!patientContact.note){
+   throw new Error("Add a note for a general patient contact.");
+  }
+ }
+
+ const appointmentRequired=advice?
+  advice.care.appointmentRequired:
+  care?care.appointmentRequired:
+  reports.some(r=>r.appointmentRequired===true);
+
+ if(patientActive||phase==="appointment"){
+  const pending=phase==="appointment"&&
+   !wfProspectiveAppointmentOK(s,reports,appointmentRequired);
+  appointment=wfReadAppointment(
+   appointmentRequired,urgent,patientContact?.plan||null,pending
+  );
+ }
+
+ if(phase==="appointment"&&!links.length&&
+  appointment.mode==="keep"&&!appointment.note){
+  throw new Error("Select an appointment change or follow-up arrangement.");
+ }
+
+ actionContext.links=links;
+ actionContext.target=links[0]||null;
+ actionContext.carryLinks=wfTargetsUnique([...(c.carryLinks||[]),...links]);
+ actionContext.pauseAfterSave=!!doctorContact?.plan||
+  !!patientContact?.plan||!!appointment?.plan;
+
+ const date=value("wfReceivedDate");
+ const note=value("wfNurseNote");
+ const fileAfter=checked("wfFileAfter");
+ const clearReminder=checked("wfClearPatientReminder");
+
+ return commit(
+  `Workflow: ${WF_PHASES.find(([key])=>key===phase)?.[1]||phase} (${links.length} reports)`,
+  (state,staff)=>{
+   const eligibleKeys=new Set(
+    wfEligible(state,phase,c).map(x=>wfKey(wfTarget(x)))
+   );
+   if(links.some(t=>!eligibleKeys.has(wfKey(t)))){
+    throw new Error("A selected report has changed. Reopen its current action.");
+   }
+
+   const current=wfResolved(state,links).map(x=>x.report);
+   const batchId=current.length>1?uuid():"";
+
+   if(phase==="received"){
+    current.forEach(r=>wfApplyReceipt(r,date,staff,batchId));
+   }
+
+   if(phase==="nurse"||(phase==="received"&&outcome!=="pending")){
+    current.forEach(r=>wfApplyNurse(
+     r,outcome,staff,note,requestDoctor,care,batchId
+    ));
+   }
+
+   if(phase==="doctor"){
+    for(const r of current){
+     if(c.requestRoutine&&!wfDoctorRequired(r)){
+      wfRequestReview(r,staff,"Doctor review requested for Routine report");
+     }else if(adviceActive&&r.reviewedAt&&r.reviewPending!==true){
+      /* New advice must not reuse an old patient's confirmation. */
+      wfRequestReview(r,staff,"New doctor instructions received");
+     }
+    }
+    wfAppendContact(state,current,"doctor",doctorContact,staff);
+   }
+
+   if(advice){
+    current.forEach(r=>wfApplyAdvice(state,r,advice,staff,batchId));
+   }
+
+   if(patientContact){
+    if(current.some(r=>!patientPending(state,r))){
+     throw new Error("A selected report is not awaiting patient notification.");
+    }
+    wfAppendContact(state,current,"patient",patientContact,staff);
+   }
+
+   if(appointment){
+    wfApplyAppointment(state,current,appointment,staff);
+   }
+
+   if(clearReminder){
+    if(!patientContact||patientContact.result!=="confirmed"||
+     entries(state).some(({report:r})=>
+      !r.cancelled&&!r.archived&&(
+       patientPending(state,r)||
+       (r.appointmentRequired===true&&!wfAppointmentSatisfied(state,r))
+      )
+     )){
+     throw new Error("Complete all outstanding patient / appointment actions before clearing the general reminder.");
+    }
+    const before=arrangementSnapshot(state);
+    state.nextFollowupDate="";
+    state.workflowPatientReminder=null;
+    appendArrangement(state,before,staff);
+   }
+
+   if(phase==="filed"||fileAfter){
+    wfMarkFiled(state,current,staff,batchId);
+   }
+  }
+ );
+}
+
+SUBMIT_HANDLERS.flow=wfSubmitFlow;
+
+/* ---------------- Add reports: same workflow ---------------- */
+
+openAddList=function(){
+ startWorkspace("Add reports",selected.state.metadata?.patientName||"",`
+  <p class="small-text">
+   Adds follow-up tracking only. The quotation is unchanged.
+   New reports use the same receive → triage → follow-up → filing workflow.
+  </p>
+  <div class="form-grid">
+   ${field("List name",
+    '<input id="newListName" value="Additional reports" maxlength="300">')}
+   ${field("Reports — one per line *",
+    '<textarea id="newListReports" rows="5" maxlength="15000" placeholder="FBC&#10;Liver function&#10;Renal function"></textarea>')}
+   ${field("Notes — optional",
+    '<textarea id="newListReason" rows="2" maxlength="2000"></textarea>')}
+  </div>
+  <label class="checkline">
+   <input id="wfNewReceived" type="checkbox">
+   <span>These reports have already been received</span>
+  </label>
+  <div id="wfNewReceiptFields" class="form-grid" hidden>
+   ${field("Received date",
+    `<input id="wfNewReceivedDate" type="date" value="${today()}" max="${today()}">`)}
+  </div>
+ `,{type:"addTrackedInvestigation"},false,"Add reports & continue");
+};
+
+SUBMIT_HANDLERS.addTrackedInvestigation=async function(){
+ const name=value("newListName")||"Additional reports";
+ const names=value("newListReports").split("\n").map(x=>x.trim()).filter(Boolean);
+ const reason=value("newListReason");
+ const received=checked("wfNewReceived");
+ const date=value("wfNewReceivedDate");
+
+ if(name.length>300||!names.length||names.length>100||
+  names.some(n=>n.length>300)){
+  throw new Error("Enter 1–100 reports; names must be 1–300 characters.");
+ }
+ if(received&&(!validDate(date)||date>today())){
+  throw new Error("Enter a valid received date, today or earlier.");
+ }
+
+ const gid=uuid();
+ const reports=names.map(emptyReport);
+ const links=reports.map(r=>({groupId:gid,reportId:r.id}));
+ actionContext.links=links;
+ actionContext.carryLinks=links;
+
+ return commit("Additional report list added",(s,staff)=>{
+  const at=new Date().toISOString();
+  if(received) reports.forEach(r=>wfApplyReceipt(r,date,staff));
+  s.groups.push({
+   id:gid,name,code:"",qty:reports.length,manuallyAdded:true,
+   addedAt:at,addedBy:staff,additionReason:reason,
+   reports:clone(reports),
+   planReviewed:true,planVerifiedAt:at,planVerifiedBy:staff,
+   planVerifiedSourceRevision:s.sourceRevision??null
+  });
+ });
+};
+
+/* Reports added to an existing list also continue through the workflow. */
+SUBMIT_HANDLERS.plan=async function(c){
+ const existing=[...$("actionFields").querySelectorAll("[data-plan-report]")]
+  .map(el=>({id:el.dataset.planReport,name:el.value.trim()}));
+ const names=value("additionalReports").split("\n")
+  .map(x=>x.trim()).filter(Boolean);
+ const additions=names.map(emptyReport);
+ const links=additions.map(r=>({groupId:c.groupId,reportId:r.id}));
+ actionContext.links=links;
+ actionContext.carryLinks=links;
+
+ return commit("Report tracking plan verified / updated",(s,staff)=>{
+  const g=s.groups.find(x=>x.id===c.groupId);
+  if(!g) throw new Error("Report list not found.");
+  if(g.reports.length+additions.length>100){
+   throw new Error("Maximum 100 reports per list.");
+  }
+  if(names.some(n=>n.length>300)){
+   throw new Error("Report names must be 1–300 characters.");
+  }
+  for(const x of existing){
+   const r=g.reports.find(r=>r.id===x.id);
+   if(!r||!x.name||x.name.length>300){
+    throw new Error("Report names must be 1–300 characters.");
+   }
+   if((r.receivedDate||r.cancelled)&&r.name!==x.name){
+    throw new Error("Processed reports cannot be renamed.");
+   }
+   r.name=x.name;
+  }
+  g.reports.push(...clone(additions));
+  if(!g.reports.length) throw new Error("Add at least one report.");
+  g.planReviewed=true;
+  g.planVerifiedAt=new Date().toISOString();
+  g.planVerifiedBy=staff;
+  g.planVerifiedSourceRevision=s.sourceRevision??null;
+ });
+};
+
+/* ---------------- Corrections cannot bypass filing gates ---------------- */
+
+SUBMIT_HANDLERS.correction=async function(c){
+ const date=value("detailDate");
+ const triage=value("detailTriage");
+ const filed=checked("detailFiled");
+ const reopen=checked("reopenReview");
+ const reason=value("correctionReason");
+
+ return commit("Report correction recorded",(s,staff)=>{
+  if(!reason) throw new Error("Enter a correction reason.");
+  const {report:r}=findReport(s,c.target.groupId,c.target.reportId);
+  if(r.cancelled) throw new Error("Restore the report first.");
+  if(!Object.hasOwn(CLASSIFICATIONS,triage)){
+   throw new Error("Select a classification.");
+  }
+  if(date&&(!validDate(date)||date>today())){
+   throw new Error("Received date must be today or earlier.");
+  }
+  if(r.receivedDate&&!date){
+   throw new Error("The recorded received date cannot be cleared.");
+  }
+  if(!date&&(triage!=="pending"||filed||reopen)){
+   throw new Error("Record receipt first.");
+  }
+
+  const wasFiled=r.archived;
+  const changed=(r.triage||"pending")!==triage;
+
+  if(!r.receivedDate&&date){
+   wfApplyReceipt(r,date,staff);
+  }else{
+   r.receivedDate=date;
+  }
+
+  if(changed){
+   recordClassification(r,triage,staff,reason);
+   r.archived=false;
+   if(nurseDone(r)){
+    r.routineDoctorReviewRequired=true;
+    r.reviewPending=true;
+    r.patientContactRequired=true;
+   }
+  }else if(reopen){
+   wfRequestReview(r,staff,reason);
+  }
+
+  if(filed){
+   if((!wasFiled||changed||reopen)&&!wfCanFile(s,r)){
+    throw new Error(
+     "This correction leaves required actions outstanding. Uncheck Filed and complete the workflow before filing again."
+    );
+   }
+   r.archived=true;
+   if(!wasFiled){
+    r.filedAt=new Date().toISOString();
+    r.filedBy=staff;
+   }
+  }else{
+   r.archived=false;
+  }
+
+  r.correctionHistory=[...(r.correctionHistory||[]),{
+   id:uuid(),at:new Date().toISOString(),staff,reason,cycleId:cycleId(r)
+  }];
+ });
+};
+
+/* ---------------- Save -> real next form, not an extra Next screen ---------------- */
+
+showSaved=function(context){
+ if(!selected||editingLocked()) return;
+ message("Saved.",false,true);
+
+ const candidates=wfTargetsUnique([
+  ...(context?.carryLinks||[]),
+  ...(context?.links||[]),
+  ...(context?.target?[context.target]:[])
+ ]);
+
+ const available=new Map(entries(selected.state)
+  .map(x=>[wfKey(wfTarget(x)),x]));
+
+ const pending=candidates
+  .map(t=>available.get(wfKey(t)))
+  .filter(Boolean)
+  .map(x=>({...x,current:stage(selected.state,x.group,x.report)}))
+  .filter(x=>STEP_LABELS[x.current.key])
+  .sort((a,b)=>a.current.order-b.current.order);
+
+ if(!pending.length||isTracingCancelled(selected.state)){
+  closeWorkspace(true);
+  wfRenderIdle(selected.state);
+  return;
+ }
+
+ const phase=pending[0].current.key;
+ const next=pending.filter(x=>x.current.key===phase).map(wfTarget);
+
+ if(context?.pauseAfterSave){
+  startWorkspace("Saved — follow-up remains open",
+   selected.state.metadata?.patientName||"",
+   pending.map(({group:g,report:r,current})=>`
+    <section class="section">
+     <strong>${esc(r.name||g.name)}</strong>
+     <p style="margin-top:6px">${badge(current.label,current.colour)}</p>
+     ${contactSummary(selected.state,r)}
+     <div class="actions">${reportButton(g,r,current.key)}</div>
+    </section>
+   `).join(""),
+   {type:"saved",target:next[0]},
+   true
+  );
+  return;
+ }
+
+ wfOpenFlow(phase,next,{
+  batch:next.length>1,
+  carry:candidates
+ });
+};
+
+/* ---------------- History includes arrangements and reopened reviews ---------------- */
+
+contactEvent=function(group){
+ const c=group[0],doctor=c.audience==="doctor";
+ const lines=[
+  `${c.target||(doctor?"Doctor":"Patient")} · ${c.method||"Method not recorded"}`,
+  deliveryLabel(c),
+  c.note||""
+ ].filter(Boolean);
+
+ unique(group.map(x=>wfPlanText(x))).forEach(text=>{
+  if(text) lines.push("Follow-up: "+text);
+ });
+ unique(group.map(x=>x.planNote)).forEach(note=>{
+  if(note) lines.push("Arrangement details: "+note);
+ });
+ if(c.instructionsCommunicated){
+  lines.push("Reports and current instructions communicated");
+ }
+ if(c.confirmedAt&&(c.confirmedAt!==c.at||c.confirmedBy!==c.staff)){
+  lines.push(`Receipt confirmed: ${timeLabel(c.confirmedAt)}${
+   c.confirmedBy?" · "+c.confirmedBy:""
+  }`);
+ }
+
+ return historyEvent(
+  doctor?"Doctor contact":"Patient contact",
+  c.at,c.staff,lines.join("\n"),
+  unique(group.map(x=>x.reportName)).join(", ")
+ );
+};
+
+reportEvents=function(g){
+ const events=WF_BASE.reportEvents(g);
+ for(const r of g.reports){
+  for(const request of r.reviewRequests||[]){
+   events.push(historyEvent(
+    "Doctor review requested",
+    request.at,request.staff,request.reason,r.name||g.name
+   ));
+  }
+ }
+ return events;
+};
+
+/* ---------------- Events and controls ---------------- */
+
+handleFieldChange=function(e){
+ if(actionContext?.type==="addTrackedInvestigation"){
+  if(e.target.id==="wfNewReceived"){
+   $("wfNewReceiptFields").hidden=!checked("wfNewReceived");
+   actionDirty=true;
+   updateControls();
+   return;
+  }
+ }
+
+ if(actionContext?.type!=="flow"){
+  WF_BASE.fieldChange(e);
+  return;
+ }
+
+ actionDirty=true;
+ const id=e.target.id;
+
+ if(id==="wfDoctorMethod"){
+  $("wfDoctorResults").innerHTML=wfChoices(
+   "wfDoctorResult",DOCTOR_RESULTS[value(id)]||[]
+  );
+  if($("wfAdviceNow")) $("wfAdviceNow").checked=false;
+ }
+ if(id==="wfPatientMethod"){
+  $("wfPatientResults").innerHTML=wfChoices(
+   "wfPatientResult",
+   (PATIENT_RESULTS[value(id)]||[]).map(([key,label])=>[
+    key,key==="confirmed"?"Informed — receipt confirmed":label
+   ])
+  );
+ }
+ if(id==="wfAdviceKind"&&value(id)==="followup"){
+  $("wfAppointmentRequired").checked=true;
+ }
+
+ wfRefreshFlow();
+};
+
+actionClick=function(e){
+ if(!(e.target instanceof Element)||editingLocked()) return;
+ const el=e.target;
+
+ const all=el.closest("[data-wf-scope-all]");
+ const none=el.closest("[data-wf-scope-none]");
+ if(all||none){
+  $("actionFields").querySelectorAll("[data-wf-target]").forEach(input=>{
+   input.checked=!!all;
+  });
+  actionDirty=true;
+  wfRefreshFlow();
+  return;
+ }
+
+ const time=el.closest("[data-wf-time],[data-wf-tomorrow]");
+ if(time){
+  const prefix=time.dataset.wfPrefix;
+  let d;
+  if(time.hasAttribute("data-wf-tomorrow")){
+   d=new Date(today()+"T09:00:00+08:00");
+   d.setUTCDate(d.getUTCDate()+1);
+  }else{
+   d=new Date(Date.now()+Number(time.dataset.wfTime)*60000);
+  }
+  $(prefix+"NextAt").value=hkDateTimeInput(d.toISOString());
+  actionDirty=true;
+  wfRefreshFlow();
+  return;
+ }
+
+ WF_BASE.actionClick(e);
+};
+
+updateControls=function(){
+ WF_BASE.controls();
+
+ const locked=editingLocked()||
+  (!!selected&&isTracingCancelled(selected.state));
+
+ $("wfAddButton").disabled=!selected||locked;
+ $("groups").querySelectorAll("[data-wf-pick]").forEach(input=>{
+  input.disabled=locked;
+ });
+
+ if(actionContext?.type==="flow"){
+  $("actionSave").disabled=editingLocked()||
+   (!actionContext.general&&!wfFormTargets().length);
+ }else{
+  $("actionSave").disabled=editingLocked();
+ }
+
+ wfRenderSelectionBar();
+};
+
+$("wfAddButton").addEventListener("click",handleUI(openAddList));
+
+$("groups").addEventListener("change",handleUI(e=>{
+ if(!(e.target instanceof Element)||editingLocked()) return;
+ const input=e.target.closest("[data-wf-pick]");
+ if(!input) return;
+ const key=wfKey(targetFrom(input));
+ if(input.checked) wfPicked.add(key);else wfPicked.delete(key);
+ updateSelection();
+ updateControls();
+}));
+
+$("wfSelectionBar").addEventListener("click",handleUI(e=>{
+ if(!(e.target instanceof Element)||editingLocked()) return;
+
+ if(e.target.closest("[data-wf-clear-selection]")){
+  wfPicked.clear();
+  $("groups").querySelectorAll("[data-wf-pick]").forEach(input=>{
+   input.checked=false;
+  });
+  updateSelection();
+  updateControls();
+  return;
+ }
+
+ const button=e.target.closest("[data-wf-selection-action]");
+ if(!button) return;
+
+ const phase=button.dataset.wfSelectionAction;
+ const carry=wfPickedTargets();
+ const eligible=new Set(wfEligible(selected.state,phase)
+  .map(x=>wfKey(wfTarget(x))));
+ const targets=carry.filter(t=>eligible.has(wfKey(t)));
+
+ wfOpenFlow(phase,targets,{
+  batch:targets.length>1,carry
+ });
+}));
+
+/* Refresh due indicators without replacing a focused overview/worklist row. */
+setInterval(()=>{
+ if(!ready||busy||pendingWrite||integrityHold||
+  document.visibilityState!=="visible") return;
+ const focus=document.activeElement;
+ if($("groups").contains(focus)||$("caseBody").contains(focus)) return;
+ if(activeTab==="case"&&selected) renderDetail();
+ else renderList();
+},60000);
+
+/* ---------------- Print the same saved workflow / arrangements ---------------- */
+
+printSaved=async function(){
+ if(!selected||editingLocked()||actionDirty){
+  throw new Error("Save or check your changes before printing.");
+ }
+
+ const s=clone(selected.state);
+ $("printArea").innerHTML=`
+  <div class="brand">
+   <img src="./amclogo.png" alt="Adventist Medical Center">
+   <h1>Report Follow-up Summary</h1>
+  </div>
+  <p>Printed ${esc(timeLabel(new Date().toISOString()))}</p>
+  <div class="patient-meta">${patientHTML(s)}</div>
+
+  <section class="section">
+   <h2>Appointment & follow-up</h2>
+   <p>
+    ${esc(APPOINTMENTS[s.appointmentStatus]||"Not arranged")}
+    ${s.appointmentDate?" · "+esc(dateLabel(s.appointmentDate)):""}<br>
+    Next patient contact / arrangement:
+    ${esc(dateLabel(wfPatientNextDate(s)))}
+   </p>
+   ${s.caseNote?`<div class="note">${esc(s.caseNote)}</div>`:""}
+   <p>Case tracing: ${isTracingCancelled(s)?"Stopped":"Active"}</p>
+  </section>
+
+  <section class="section">
+   <h2>Reports</h2>
+   <table>
+    <thead><tr><th>Report</th><th>Progress / details</th></tr></thead>
+    <tbody>${entries(s).map(({group:g,report:r})=>{
+     const current=stage(s,g,r);
+     const plan=wfPendingPlan(s,r);
+     return `<tr>
+      <td><strong>${esc(r.name||g.name)}</strong></td>
+      <td>
+       <strong>${esc(current.label)}</strong>
+       <div>Classification: ${esc(CLASSIFICATIONS[r.triage]||"Pending")}</div>
+       ${r.receivedDate?`<div>Received: ${esc(dateLabel(r.receivedDate))}</div>`:""}
+       ${r.nurseNote?`<div class="note">Nurse notes: ${esc(r.nurseNote)}</div>`:""}
+       ${r.reviewedAt?`
+        <div>Doctor: ${esc(r.reviewDoctorName||r.doctorName||"Not recorded")}
+         · ${esc(timeLabel(r.reviewedAt))}</div>
+        <div class="note">${esc(r.reviewNote||"")}</div>`:""}
+       ${r.patientNotificationWaiverReason?
+        `<div>Patient notification waiver:
+         ${esc(r.patientNotificationWaiverReason)}</div>`:""}
+       ${r.appointmentRequired?
+        `<div>Follow-up appointment required</div>`:""}
+       ${r.followupAppointment?.date?
+        `<div>Linked appointment:
+         ${esc(dateLabel(r.followupAppointment.date))}</div>`:""}
+       ${plan?`<div class="note">${esc(wfPlanText(plan))}</div>`:""}
+       <div>Filing: ${r.archived?"Filed":"Not filed"}</div>
+       ${r.cancelled?`<div class="note">${esc(r.cancelReason)}</div>`:""}
+      </td>
+     </tr>`;
+    }).join("")}</tbody>
+   </table>
+  </section>
+
+  <section class="section">
+   <h2>Contacts</h2>
+   ${eventsHTML(contactEvents(s.contacts),true)}
+  </section>
+  <section class="section">
+   <h2>Other activity</h2>
+   ${eventsHTML([...s.groups.flatMap(reportEvents),...caseEvents(s)],true)}
+  </section>
+  <p class="small-text">
+   Follow-up summary — not the original clinical report.
+  </p>`;
+
+ await Promise.all([...$("printArea").querySelectorAll("img")].map(img=>
+  img.decode?img.decode().catch(()=>{}):Promise.resolve()
+ ));
+
+ const old=document.title;
+ document.title=`${s.quotationNumber||"Patient"}-Followup`;
+ try{window.print()}finally{document.title=old}
+};
 bindEvents();
 renderList();
 updateControls();
