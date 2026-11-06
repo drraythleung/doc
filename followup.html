@@ -282,6 +282,126 @@ tbody tr:last-child td{border-bottom:0}
  #printArea tr,#printArea .log{break-inside:avoid}
  #printArea th,#printArea td{padding:8px;border-color:#ccc}
 }
+ /* Keep the desktop workspace visible, including when idle. */
+#caseEditor,
+#caseEditor.workspace-open{
+ grid-template-columns:minmax(0,3fr) minmax(350px,2fr);
+}
+
+#workspaceIdle{
+ flex:1;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ padding:28px;
+ text-align:center;
+ color:var(--muted);
+}
+
+#workspaceIdle>div{
+ max-width:280px;
+}
+
+#workspaceIdle h3{
+ color:var(--text);
+}
+
+#workspaceIdle p:last-child{
+ margin-bottom:0;
+}
+
+/* Persistent batch buttons. */
+.batch-buttons{
+ justify-content:flex-end;
+ gap:6px;
+}
+
+/* Integrated management screen. */
+.management-list{
+ margin-top:12px;
+ padding:12px;
+ border:1px solid var(--line);
+ border-radius:9px;
+ background:#fff;
+}
+
+.management-list>.row{
+ align-items:flex-start;
+}
+
+.management-list .manage-row:last-child{
+ border-bottom:0;
+}
+
+.management-report-info{
+ flex:1;
+ min-width:0;
+ overflow-wrap:anywhere;
+}
+
+.management-status{
+ margin-top:5px;
+}
+
+.management-list .manage-row>.row{
+ align-items:flex-start;
+}
+
+/* Compact report cards when the desktop columns are narrower. */
+@media(max-width:1000px){
+ #caseEditor,
+ #caseEditor.workspace-open{
+  grid-template-columns:minmax(0,1fr) minmax(330px,1fr);
+ }
+
+ .report-table,
+ .report-table tbody,
+ .report-table tr,
+ .report-table td{
+  display:block;
+  width:100%;
+ }
+
+ .report-table thead{
+  display:none;
+ }
+
+ .report-table tr{
+  padding:10px;
+  border-bottom:1px solid var(--line);
+ }
+
+ .report-table td{
+  padding:0;
+  border:0;
+ }
+
+ .report-table td+td{
+  margin-top:7px;
+ }
+}
+
+/* Mobile remains stacked rather than forcing two narrow columns. */
+@media(max-width:760px){
+ #caseEditor,
+ #caseEditor.workspace-open{
+  display:flex;
+  flex-direction:column;
+ }
+
+ #workspaceIdle{
+  padding:24px 16px;
+  min-height:180px;
+ }
+
+ .batch-buttons{
+  justify-content:flex-start;
+ }
+
+ .management-list{
+  padding:10px;
+ }
+}
 </style>
 </head>
 <body>
@@ -356,27 +476,35 @@ tbody tr:last-child td{border-bottom:0}
     <div class="actions">
      <button id="backButton" type="button">← Worklist</button>
      <button id="printButton" type="button">Print / PDF</button>
-     <details id="caseTools" class="case-tools">
-      <summary>Case actions</summary>
-      <div class="tools-menu">
-       <button id="tracingButton" type="button" class="danger">Stop case tracing</button>
-      </div>
-     </details>
+   <button id="tracingButton" type="button" class="danger">
+ Stop case tracing
+</button>
+<!-- 保留原有 JS 引用，畫面不顯示 -->
+<details id="caseTools" hidden></details>
+     
     </div>
    </div>
    <div id="caseEditor">
     <section class="overview-column" aria-label="Patient overview">
+    
      <div class="column-heading row">
-      <h2>Reports</h2>
-      <details id="batchTools" class="batch-tools" hidden>
-       <summary>Batch actions</summary>
-       <div class="batch-menu">
-        <button id="receiveBatchButton" type="button" class="small">Receive reports</button>
-        <button id="routineBatchButton" type="button" class="small">Mark Routine</button>
-        <button id="filingBatchButton" type="button" class="small">File reports</button>
-       </div>
-      </details>
-     </div>
+ <h2>Reports</h2>
+
+ <div class="actions batch-buttons" style="margin:0">
+  <button id="receiveBatchButton" type="button" class="small">
+   Batch Receive (0)
+  </button>
+  <button id="routineBatchButton" type="button" class="small">
+   Batch Routine (0)
+  </button>
+  <button id="filingBatchButton" type="button" class="small">
+   Batch Filing (0)
+  </button>
+ </div>
+
+ <!-- 保留原有 JS 引用，畫面不顯示 -->
+ <details id="batchTools" hidden></details>
+</div>
      <div id="overviewScroll" class="overview-scroll">
       <div id="groups"></div>
       <section class="appointment-card">
@@ -391,15 +519,29 @@ tbody tr:last-child td{border-bottom:0}
        <div id="recentContacts"></div>
       </section>
      </div>
-     <nav class="other-tools" aria-label="Other patient actions">
-      <button id="patientButton" type="button">Details</button>
-      <button id="historyButton" type="button">History</button>
-      <button id="correctionButton" type="button">Corrections</button>
-      <button id="manageButton" type="button">Manage reports</button>
-     </nav>
+    
+<nav class="other-tools" aria-label="Other patient actions">
+ <button id="patientButton" type="button">Details</button>
+ <button id="historyButton" type="button">History</button>
+ <button id="manageButton" type="button">Manage & correct</button>
+
+ <!-- 保留原有 JS 引用，統一由 Manage & correct 進入 -->
+ <button id="correctionButton" type="button" hidden>Corrections</button>
+</nav>
+     
     </section>
-    <aside id="workColumn" class="work-column" aria-label="Action workspace" hidden>
-     <section id="actionWorkspace" hidden aria-labelledby="actionTitle">
+<aside id="workColumn" class="work-column" aria-label="Action workspace">
+ <div id="workspaceIdle">
+  <div>
+   <h3>Action workspace</h3>
+   <p>Select a report action to continue.</p>
+   <p class="small-text">
+    Select a report name to view its history and other actions.
+   </p>
+  </div>
+ </div>
+
+ <section id="actionWorkspace" hidden aria-labelledby="actionTitle">
       <div class="workspace-heading">
        <div class="row">
         <h3 id="actionTitle" tabindex="-1"></h3>
@@ -794,20 +936,25 @@ function eligibleBatchFilingReports(s){
 }
 function updateBatchMenu(locked,cancelled){
  const s=selected?.state;
+
  const receive=s?eligibleBatchReceiveReports(s).length:0;
  const routine=s?eligibleBatchRoutineReports(s).length:0;
  const filing=s?eligibleBatchFilingReports(s).length:0;
+
  for(const [id,label,count] of [
-  ["receiveBatchButton","Receive reports",receive],
-  ["routineBatchButton","Mark Routine",routine],
-  ["filingBatchButton","File reports",filing]
+  ["receiveBatchButton","Batch Receive",receive],
+  ["routineBatchButton","Batch Routine",routine],
+  ["filingBatchButton","Batch Filing",filing]
  ]){
-  $(id).textContent=`${label} (${count})`;
-  $(id).hidden=!count;
-  $(id).disabled=!s||locked||cancelled||!count;
+  const button=$(id);
+
+  button.textContent=`${label} (${count})`;
+  button.hidden=false;
+  button.disabled=!s||locked||cancelled||count===0;
  }
- $("batchTools").hidden=!s||cancelled||!(receive||routine||filing);
- if($("batchTools").hidden) $("batchTools").open=false;
+
+ $("batchTools").hidden=true;
+ $("batchTools").open=false;
 }
 function updateControls(){
  const locked=editingLocked(),cancelled=!!selected&&isTracingCancelled(selected.state);
@@ -1062,13 +1209,28 @@ function patientHTML(s){
 
 function closeWorkspace(force=false){
  if(busy&&!force) return false;
- if(!force&&actionDirty&&!confirm("Discard unsaved changes?")) return false;
- viewToken++;actionContext=null;actionDirty=false;
- $("actionWorkspace").hidden=true;$("workColumn").hidden=true;
+
+ if(!force&&actionDirty&&!confirm("Discard unsaved changes?")){
+  return false;
+ }
+
+ viewToken++;
+ actionContext=null;
+ actionDirty=false;
+
+ $("actionWorkspace").hidden=true;
+ $("workspaceIdle").hidden=false;
+ $("workColumn").hidden=false;
+
  $("caseEditor").classList.remove("workspace-open");
- $("actionFields").innerHTML="";$("historyContent").innerHTML="";
+
+ $("actionFields").innerHTML="";
+ $("historyContent").innerHTML="";
  $("actionError").hidden=true;
- updateSelection();updateControls();
+
+ updateSelection();
+ updateControls();
+
  return true;
 }
 function startWorkspace(title,subtitle,html,context,readOnly=false,saveLabel="Save"){
@@ -1086,7 +1248,9 @@ function startWorkspace(title,subtitle,html,context,readOnly=false,saveLabel="Sa
  $("actionFields").innerHTML=html;$("saveActions").hidden=readOnly;
  $("actionSave").textContent=saveLabel;
  $("actionSave").classList.add("primary");$("actionSave").classList.remove("danger");
- $("workColumn").hidden=false;$("actionWorkspace").hidden=false;
+$("workColumn").hidden=false;
+$("workspaceIdle").hidden=true;
+$("actionWorkspace").hidden=false;
  $("caseEditor").classList.add("workspace-open");
  $("workspaceScroll").scrollTop=0;
  $("batchTools").open=false;$("caseTools").open=false;
@@ -1304,14 +1468,117 @@ function openBatchReportAction(type){
  if(opened) updateBatchCount();
 }
 function openManage(){
- startWorkspace("Manage reports","",`
-  <div class="actions"><button type="button" class="primary" data-add-list>+ Add reports</button></div>
-  ${selected.state.groups.map(g=>`<div class="manage-row"><div class="row">
-   <strong>${esc(g.name)}</strong>
-   <button type="button" class="small" data-plan="${esc(g.id)}">Edit</button>
-  </div><div class="small-text">${g.reports.length} reports ·
-   ${g.manuallyAdded?"Manually added":`Quotation quantity: ${esc(g.qty)}`}</div></div>`).join("")}
- `,{type:"manage"},true);
+ const s=selected.state;
+
+ const html=`
+  <p class="small-text">
+   Add or edit report lists, correct existing records, or restore cancelled reports.
+  </p>
+
+  <div class="actions">
+   <button type="button" class="primary" data-add-list>
+    + Add reports
+   </button>
+  </div>
+
+  <section class="section">
+   <div class="row">
+    <div>
+     <h3>Appointment & follow-up</h3>
+     <div class="small-text">
+      ${esc(APPOINTMENTS[s.appointmentStatus]||"Not arranged")}
+      ${s.appointmentDate?
+       ` · ${esc(dateLabel(s.appointmentDate))}`:""}
+      <br>
+      Next contact: ${esc(dateLabel(s.nextFollowupDate))}
+     </div>
+    </div>
+
+    <button type="button" class="small" data-correct-arrangement>
+     Correct appointment / notes
+    </button>
+   </div>
+  </section>
+
+  <section class="section">
+   <h3>Report lists & corrections</h3>
+
+   ${s.groups.length?s.groups.map(g=>`
+    <section class="management-list">
+     <div class="row">
+      <div>
+       <strong>${esc(g.name||"Report list")}</strong>
+
+       <div class="small-text">
+        ${g.reports.length} report${g.reports.length===1?"":"s"}
+        ·
+        ${g.manuallyAdded?
+         "Manually added":
+         `Quotation quantity: ${esc(g.qty??"Not recorded")}`}
+       </div>
+      </div>
+
+      <button type="button" class="small" data-plan="${esc(g.id)}">
+       Edit reports
+      </button>
+     </div>
+
+     ${g.reports.length?`
+      <details class="archive">
+       <summary>
+        Individual reports & corrections (${g.reports.length})
+       </summary>
+
+       ${g.reports.map(r=>{
+        const current=stage(s,g,r);
+
+        return `
+         <div class="manage-row">
+          <div class="row">
+           <div class="management-report-info">
+            <strong>${esc(r.name||g.name)}</strong>
+
+            <div class="management-status">
+             ${badge(current.label,current.colour)}
+            </div>
+
+            ${r.receivedDate?`
+             <div class="small-text">
+              Received ${esc(dateLabel(r.receivedDate))}
+             </div>
+            `:""}
+           </div>
+
+           <button type="button"
+            class="small"
+            data-correct-report="${esc(r.id)}"
+            data-group="${esc(g.id)}">
+            ${r.cancelled?"Restore report":"Correct report"}
+           </button>
+          </div>
+         </div>
+        `;
+       }).join("")}
+      </details>
+     `:`
+      <p class="small-text" style="margin-top:8px">
+       No reports added. Use Edit reports to add them.
+      </p>
+     `}
+    </section>
+   `).join(""):`
+    <p class="muted">No report lists. Use + Add reports to start.</p>
+   `}
+  </section>
+ `;
+
+ startWorkspace(
+  "Manage & correct",
+  s.metadata?.patientName||"",
+  html,
+  {type:"manage"},
+  true
+ );
 }
 function openPlan(gid){
  const g=selected.state.groups.find(x=>x.id===gid);
@@ -1336,16 +1603,7 @@ function openAddList(){
  `,{type:"addTrackedInvestigation"},false,"Add reports");
 }
 function openCorrectionChooser(){
- startWorkspace("Corrections","",`
-  <div class="manage-row row"><strong>Appointment / notes</strong>
-   <button type="button" class="small" data-correct-arrangement>Correct</button></div>
-  ${entries(selected.state).map(({group:g,report:r})=>`<div class="manage-row row">
-   <div><strong>${esc(r.name||g.name)}</strong>
-    <div class="small-text">${esc(stage(selected.state,g,r).label)}</div></div>
-   <button type="button" class="small" data-correct-report="${esc(r.id)}"
-    data-group="${esc(g.id)}">${r.cancelled?"Restore report":"Correct"}</button>
-  </div>`).join("")}
- `,{type:"correctionChooser"},true);
+ openManage();
 }
 function openCorrection(target){
  const {report:r}=findReport(selected.state,target.groupId,target.reportId);
