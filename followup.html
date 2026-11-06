@@ -4,35 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Adventist Medical Center — Report Follow-up</title>
-
 <style>
 :root{
- --bg:#f1f5f9;
- --text:#172334;
- --muted:#64748b;
- --line:#dbe3ed;
- --soft:#f8fafc;
- --blue:#2459db;
- --red:#b91c1c;
- --green:#047857;
+ --bg:#f1f5f9;--text:#172334;--muted:#64748b;--line:#dbe3ed;
+ --soft:#f8fafc;--blue:#2459db;--red:#b91c1c;--green:#047857;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{
- margin:0;
- background:var(--bg);
- color:var(--text);
- font:14px/1.5 Arial,sans-serif;
-}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Arial,sans-serif}
 button,input,select,textarea{font:inherit}
 button{
- border:1px solid var(--line);
- border-radius:8px;
- padding:8px 12px;
- background:#fff;
- color:var(--text);
- font-weight:700;
- cursor:pointer;
+ border:1px solid var(--line);border-radius:8px;padding:8px 12px;
+ background:#fff;color:var(--text);font-weight:700;cursor:pointer;
 }
 button:hover:not(:disabled){background:#f1f5f9}
 button:disabled{opacity:.45;cursor:not-allowed}
@@ -42,75 +25,58 @@ button.danger{color:var(--red)}
 button.small{font-size:12px;padding:6px 9px}
 button:focus-visible,input:focus-visible,select:focus-visible,
 textarea:focus-visible,summary:focus-visible{
- outline:3px solid #93c5fd;
- outline-offset:2px;
+ outline:3px solid #93c5fd;outline-offset:2px;
 }
 input,select,textarea{
- width:100%;
- border:1px solid #cbd5e1;
- border-radius:8px;
- padding:9px 10px;
- background:#fff;
- color:var(--text);
+ width:100%;border:1px solid #cbd5e1;border-radius:8px;
+ padding:9px 10px;background:#fff;color:var(--text);
 }
 input[type=checkbox],input[type=radio]{
- width:18px;height:18px;
- accent-color:var(--blue);
- flex-shrink:0;
+ width:18px;height:18px;accent-color:var(--blue);flex-shrink:0;
 }
 textarea{resize:vertical}
 h1,h2,h3,p{margin:0 0 8px}
-h1{font-size:19px}
-h2{font-size:18px}
-h3{font-size:16px}
+h1{font-size:19px}h2{font-size:18px}h3{font-size:16px}
 small,.muted,.small-text{color:var(--muted)}
 .small-text{font-size:12px}
 .note{white-space:pre-wrap;overflow-wrap:anywhere}
 .name{font-weight:700}
-.row,.actions,.tabs{
- display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-}
+.row,.actions,.tabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .row{justify-content:space-between}
 .actions{margin:10px 0}
 .field{display:flex;flex-direction:column;gap:5px;font-weight:700}
 .field small{font-weight:400}
 .form-grid{display:grid;gap:12px;margin:12px 0}
-.checkline{
- display:flex;align-items:flex-start;gap:8px;
- font-weight:400;margin:8px 0;
-}
+.checkline{display:flex;align-items:flex-start;gap:8px;font-weight:400;margin:8px 0}
 .checkline input{margin-top:3px}
 .choice{
- display:flex;align-items:flex-start;gap:10px;
- padding:10px 12px;border:1px solid var(--line);
- border-radius:8px;margin:7px 0;cursor:pointer;
+ display:flex;align-items:flex-start;gap:10px;padding:10px 12px;
+ border:1px solid var(--line);border-radius:8px;margin:7px 0;cursor:pointer;
 }
 .choice input{margin-top:3px}
 .choice:has(input:checked){background:#eff6ff;border-color:#93b4ff}
 .choice small{display:block}
 .notice{
- border:1px solid #bfdbfe;background:#eff6ff;
- color:#164bab;border-radius:8px;padding:10px 12px;margin:10px 0;
+ border:1px solid #bfdbfe;background:#eff6ff;color:#164bab;
+ border-radius:8px;padding:10px 12px;margin:10px 0;
 }
 .notice.red{border-color:#fecaca;background:#fff1f2;color:var(--red)}
 .warning{color:var(--red);font-size:12px;font-weight:700}
 .badge{
- display:inline-block;border:1px solid var(--line);
- border-radius:6px;padding:3px 7px;
- background:var(--soft);font-size:12px;
+ display:inline-block;border:1px solid var(--line);border-radius:6px;
+ padding:3px 7px;background:var(--soft);font-size:12px;
 }
 .badge.blue{color:var(--blue);background:#eff6ff;border-color:#bfdbfe}
 .badge.green{color:var(--green);background:#ecfdf5;border-color:#a7e3c9}
 .badge.red{color:var(--red);background:#fff1f2;border-color:#fecaca}
 .badge.amber{color:#713f12;background:#fef9c3;border-color:#facc15}
-
 #app{
- max-width:1480px;margin:auto;height:100dvh;
- padding:12px;display:flex;flex-direction:column;gap:10px;
+ max-width:1480px;margin:auto;height:100dvh;padding:12px;
+ display:flex;flex-direction:column;gap:10px;
 }
 .app-header{
- background:#fff;border:1px solid var(--line);
- border-radius:12px;padding:12px 16px;flex-shrink:0;
+ background:#fff;border:1px solid var(--line);border-radius:12px;
+ padding:12px 16px;flex-shrink:0;
 }
 .header-line{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .brand{display:flex;align-items:center;gap:14px}
@@ -119,31 +85,42 @@ small,.muted,.small-text{color:var(--muted)}
 .header-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .operator{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}
 .operator input{width:175px;padding:7px 9px}
-.header-tools{position:relative}
 summary{cursor:pointer}
+.header-tools,.case-tools{position:relative}
 .header-tools>summary{font-size:12px;color:var(--muted)}
+.case-tools>summary,.batch-tools>summary{
+ border:1px solid var(--line);border-radius:8px;padding:7px 10px;
+ font-size:12px;font-weight:700;background:#fff;
+}
 .tools-menu{
- position:absolute;right:0;top:28px;z-index:50;
- width:250px;padding:12px;background:#fff;
- border:1px solid var(--line);border-radius:10px;
- box-shadow:0 10px 30px #17233420;
+ position:absolute;right:0;top:calc(100% + 7px);z-index:50;
+ width:250px;padding:12px;background:#fff;border:1px solid var(--line);
+ border-radius:10px;box-shadow:0 10px 30px #17233420;
 }
 .tools-menu button{width:100%;text-align:left;margin-bottom:7px}
+.tools-menu button:last-child{margin-bottom:0}
+.batch-tools{max-width:100%}
+.batch-menu{
+ display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;
+ padding-top:9px;
+}
+.batch-tools[open]{flex-basis:100%}
+.batch-tools>summary{width:max-content;margin-left:auto}
 .search-row{display:flex;gap:8px;margin-top:10px;position:relative}
 .search-row input{flex:1;min-width:0}
 .search-results{
  position:absolute;top:calc(100% + 6px);left:0;right:0;
- max-height:340px;overflow:auto;z-index:60;
- background:#fff;border:1px solid var(--line);
- border-radius:10px;box-shadow:0 12px 28px #17233422;
+ max-height:340px;overflow:auto;z-index:60;background:#fff;
+ border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 28px #17233422;
 }
 .search-result{
- display:block;width:100%;text-align:left;
- border:0;border-radius:0;font-weight:400;padding:10px 12px;
+ display:block;width:100%;text-align:left;border:0;border-radius:0;
+ font-weight:400;padding:10px 12px;
 }
 .search-result+.search-result{border-top:1px solid var(--line)}
 .search-result strong{display:block}
 .search-result.current{background:var(--soft)}
+#searchHint{margin:6px 0 0;font-size:12px;color:var(--muted)}
 #message{font-size:12px;margin-top:6px;overflow-wrap:anywhere}
 #message:empty{display:none}
 #writeNotice p{margin:0}
@@ -154,11 +131,10 @@ summary{cursor:pointer}
 .tabs button[data-tab=urgent].active{background:var(--red);color:#fff;border-color:var(--red)}
 .tabs button[data-tab=priority]{color:#713f12;background:#fef9c3;border-color:#facc15}
 .tabs button[data-tab=priority].active{background:#facc15;color:#422006}
-
 .main-panel{flex:1;min-height:0;display:flex;flex-direction:column}
 #listPanel{
- flex:1;min-height:0;display:flex;flex-direction:column;
- background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;
+ flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;
+ border:1px solid var(--line);border-radius:12px;padding:18px;
 }
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:9px}
 #listPanel>.table-wrap{flex:1;min-height:0}
@@ -171,7 +147,6 @@ tbody tr:last-child td{border-bottom:0}
 #caseBody tr[data-case-id]{cursor:pointer}
 #caseBody tr[data-case-id]:hover{background:#eff6ff}
 #caseBody tr:focus-visible{outline:3px solid #93c5fd;outline-offset:-3px}
-
 #detailPanel{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px}
 .patient-bar{
  background:#fff;border:1px solid var(--line);border-radius:12px;
@@ -182,35 +157,40 @@ tbody tr:last-child td{border-bottom:0}
 #caseSummary{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
 .patient-bar .actions{margin:0}
 #caseEditor{
- flex:1;min-height:0;display:grid;
- grid-template-columns:minmax(0,3fr) minmax(350px,2fr);gap:12px;
+ flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;
+}
+#caseEditor.workspace-open{
+ grid-template-columns:minmax(0,3fr) minmax(350px,2fr);
 }
 .overview-column,.work-column{
- background:#fff;border:1px solid var(--line);
- border-radius:12px;min-width:0;min-height:0;
- overflow:hidden;display:flex;flex-direction:column;
+ background:#fff;border:1px solid var(--line);border-radius:12px;
+ min-width:0;min-height:0;overflow:hidden;display:flex;flex-direction:column;
 }
 .column-heading{
  padding:14px 16px 10px;border-bottom:1px solid var(--line);flex-shrink:0;
 }
 .column-heading h2{margin:0}
 .overview-scroll{
- flex:1;min-height:0;overflow:auto;
- overscroll-behavior:contain;padding:12px 16px;
+ flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px 16px;
 }
 .report-table th:first-child{width:32%}
-.report-table th:nth-child(2){width:38%}
+.report-table th:nth-child(2){width:42%}
 .report-table th,.report-table td{padding:10px}
 .report-table button{font-size:12px;padding:7px 9px}
+.report-table .report-link{
+ border:0;border-radius:4px;padding:0;background:transparent;
+ color:var(--blue);text-align:left;font-size:14px;font-weight:700;
+ text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;
+ overflow-wrap:anywhere;
+}
+.report-table .report-link:hover:not(:disabled){background:transparent;color:#1d4ed8}
+.report-table .report-link:disabled{opacity:.6}
 .report-name{font-weight:700;overflow-wrap:anywhere}
-.report-table tr[data-report]{cursor:pointer}
 .report-table tbody tr:hover{background:var(--soft)}
 .report-table tr.selected{box-shadow:inset 3px 0 var(--blue);background:#eff6ff}
-.report-table tr.urgent{background:#fff1f2}
-.report-table tr.priority{background:#fef9c3}
-.report-table tr:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
 .report-actions{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .contact-summary{font-size:12px;color:var(--muted);margin-top:7px;overflow-wrap:anywhere}
+.contact-summary>div+div{margin-top:3px}
 .contact-summary strong{color:var(--text)}
 .archive{margin-top:10px}
 .archive>summary{font-size:12px;color:var(--muted);padding:5px 0}
@@ -220,13 +200,16 @@ tbody tr:last-child td{border-bottom:0}
 .meta-label{display:block;font-size:12px;color:var(--muted)}
 .patient-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .full{grid-column:1/-1}
-.latest-contact{margin-top:10px;padding:9px 10px;background:var(--soft);border-radius:8px;font-size:12px}
-.other-tools{border-top:1px solid var(--line);padding:9px 12px;display:flex;gap:6px;flex-wrap:wrap}
-.other-tools button{border:0;background:transparent;color:var(--muted);font-size:12px;padding:5px 7px}
-
-#workspaceIdle{
- flex:1;display:flex;align-items:center;justify-content:center;
- text-align:center;padding:30px;color:var(--muted);
+.latest-contact{
+ margin-top:10px;padding:9px 10px;background:var(--soft);border-radius:8px;font-size:12px;
+}
+.latest-contact details{margin-top:5px}
+.other-tools{
+ border-top:1px solid var(--line);padding:9px 12px;
+ display:flex;gap:6px;flex-wrap:wrap;
+}
+.other-tools button{
+ border:0;background:transparent;color:var(--muted);font-size:12px;padding:5px 7px;
 }
 #actionWorkspace{flex:1;min-height:0;display:flex;flex-direction:column}
 .workspace-heading{padding:14px 16px 10px;border-bottom:1px solid var(--line)}
@@ -243,32 +226,33 @@ tbody tr:last-child td{border-bottom:0}
 .log:last-child{border-bottom:0}
 .log .note{margin-top:4px;font-size:13px}
 .manage-row{padding:10px 0;border-bottom:1px solid var(--line)}
-.success{color:var(--green);font-weight:700;margin-bottom:12px}
 #printArea{display:none}
-
 @media(max-width:1000px){
- #caseEditor{grid-template-columns:minmax(0,1fr) minmax(330px,1fr)}
+ #caseEditor.workspace-open{grid-template-columns:minmax(0,1fr) minmax(330px,1fr)}
  .brand img{width:100px}
  .brand h1{font-size:16px}
- .report-table,.report-table tbody,.report-table tr,.report-table td{display:block;width:100%}
- .report-table thead{display:none}
- .report-table tr{padding:10px;border-bottom:1px solid var(--line)}
- .report-table td{padding:0;border:0}
- .report-table td+td{margin-top:7px}
+ #caseEditor.workspace-open .report-table,
+ #caseEditor.workspace-open .report-table tbody,
+ #caseEditor.workspace-open .report-table tr,
+ #caseEditor.workspace-open .report-table td{display:block;width:100%}
+ #caseEditor.workspace-open .report-table thead{display:none}
+ #caseEditor.workspace-open .report-table tr{padding:10px;border-bottom:1px solid var(--line)}
+ #caseEditor.workspace-open .report-table td{padding:0;border:0}
+ #caseEditor.workspace-open .report-table td+td{margin-top:7px}
 }
 @media(max-width:760px){
  #app{height:auto;min-height:100dvh;padding:8px}
  .app-header{padding:10px}
- .header-line{align-items:flex-start}
+ .header-line{align-items:flex-start;flex-wrap:wrap}
  .brand{gap:8px}
  .brand img{width:75px}
  .brand h1{font-size:14px}
- .header-controls{gap:6px;justify-content:flex-end}
+ .header-controls{gap:6px;justify-content:flex-end;flex:1}
  .operator{display:block}
  .operator input{width:125px}
  .patient-bar{padding:12px;align-items:flex-start;flex-wrap:wrap}
  #detailTitle{font-size:19px}
- #caseEditor{display:flex;flex-direction:column}
+ #caseEditor,#caseEditor.workspace-open{display:flex;flex-direction:column}
  .overview-scroll,.workspace-scroll{overflow:visible;padding:12px}
  .work-column{min-height:220px}
  #actionWorkspace{min-height:250px}
@@ -278,6 +262,13 @@ tbody tr:last-child td{border-bottom:0}
  .tabs{gap:5px}
  .tabs button{padding:7px 9px}
  #saveActions{position:sticky;bottom:0;z-index:2}
+ .report-table,.report-table tbody,.report-table tr,.report-table td{display:block;width:100%}
+ .report-table thead{display:none}
+ .report-table tr{padding:10px;border-bottom:1px solid var(--line)}
+ .report-table td{padding:0;border:0}
+ .report-table td+td{margin-top:7px}
+ .report-actions{flex-direction:row;flex-wrap:wrap}
+ .tools-menu{width:min(250px,calc(100vw - 40px))}
 }
 @media print{
  @page{margin:15mm}
@@ -293,7 +284,6 @@ tbody tr:last-child td{border-bottom:0}
 }
 </style>
 </head>
-
 <body>
 <div id="app">
  <header class="app-header">
@@ -303,8 +293,7 @@ tbody tr:last-child td{border-bottom:0}
     <h1>Report Follow-up</h1>
    </div>
    <div class="header-controls">
-    <label class="operator">
-     Staff *
+    <label class="operator">Staff *
      <input id="operator" maxlength="100" autocomplete="off" placeholder="Your name">
     </label>
     <button id="reloadButton" type="button" class="small" disabled>Refresh</button>
@@ -317,27 +306,23 @@ tbody tr:last-child td{border-bottom:0}
        <summary class="small-text">Help</summary>
        <p class="small-text" style="margin-top:8px">
         Screen reports under the clinic's approved criteria.
-        Use approved communication channels and avoid unnecessary
-        personal identifiers in notes.
+        Use approved communication channels and avoid unnecessary personal identifiers in notes.
        </p>
       </details>
      </div>
     </details>
    </div>
   </div>
-
   <div id="searchArea" class="search-row">
    <input id="search" type="search" autocomplete="off"
-    aria-label="Find a patient" aria-controls="searchResults"
-    aria-expanded="false"
-    placeholder="Find patient — name, reference or report">
-   <button id="clearSearchButton" type="button">Clear</button>
-   <div id="searchResults" class="search-results" hidden
-    aria-label="Patient search results"></div>
+    aria-label="Search patients" aria-controls="searchResults"
+    aria-describedby="searchHint" aria-expanded="false"
+    placeholder="Search name, reference or report">
+   <button id="clearSearchButton" type="button" hidden>Clear</button>
+   <div id="searchResults" class="search-results" hidden aria-label="Patient search results"></div>
   </div>
-
+  <p id="searchHint" hidden></p>
   <div id="message" role="status" aria-live="polite">Connecting…</div>
-
   <div id="writeNotice" class="notice red" role="alert" hidden>
    <p id="writeNoticeText"></p>
    <div class="actions">
@@ -347,27 +332,20 @@ tbody tr:last-child td{border-bottom:0}
    </div>
   </div>
  </header>
-
  <nav id="tabs" class="tabs" aria-label="Worklist categories"></nav>
-
  <main class="main-panel">
   <section id="listPanel">
-   <h2>Patient worklist</h2>
+   <h2>Worklist</h2>
    <p id="listCount" class="small-text"></p>
    <div class="table-wrap">
     <table>
-     <thead>
-      <tr>
-       <th>Patient</th>
-       <th>Pending actions</th>
-       <th>Appointment / next contact</th>
-      </tr>
-     </thead>
+     <thead><tr>
+      <th>Patient</th><th>Pending actions</th><th>Appointment / next contact</th>
+     </tr></thead>
      <tbody id="caseBody"></tbody>
     </table>
    </div>
   </section>
-
   <section id="detailPanel" hidden>
    <div class="patient-bar">
     <div>
@@ -378,33 +356,34 @@ tbody tr:last-child td{border-bottom:0}
     <div class="actions">
      <button id="backButton" type="button">← Worklist</button>
      <button id="printButton" type="button">Print / PDF</button>
-     <button id="tracingButton" type="button" class="danger">Cancel tracing</button>
+     <details id="caseTools" class="case-tools">
+      <summary>Case actions</summary>
+      <div class="tools-menu">
+       <button id="tracingButton" type="button" class="danger">Stop case tracing</button>
+      </div>
+     </details>
     </div>
    </div>
-
    <div id="caseEditor">
     <section class="overview-column" aria-label="Patient overview">
-<div class="column-heading row">
- <h2>Reports</h2>
- <div class="actions" style="margin:0">
-  <button id="receiveBatchButton" type="button" class="small">
-   Batch Receive
-  </button>
-  <button id="routineBatchButton" type="button" class="small">
-   Batch Routine
-  </button>
-  <button id="filingBatchButton" type="button" class="small">
-   Batch Filing
-  </button>
- </div>
-</div>
+     <div class="column-heading row">
+      <h2>Reports</h2>
+      <details id="batchTools" class="batch-tools" hidden>
+       <summary>Batch actions</summary>
+       <div class="batch-menu">
+        <button id="receiveBatchButton" type="button" class="small">Receive reports</button>
+        <button id="routineBatchButton" type="button" class="small">Mark Routine</button>
+        <button id="filingBatchButton" type="button" class="small">File reports</button>
+       </div>
+      </details>
+     </div>
      <div id="overviewScroll" class="overview-scroll">
       <div id="groups"></div>
       <section class="appointment-card">
        <div class="row">
-        <h3>Appointment & contact</h3>
+        <h3>Appointment & follow-up</h3>
         <div class="actions" style="margin:0">
-         <button id="contactButton" type="button" class="small">Patient contact</button>
+         <button id="contactButton" type="button" class="small">Contact patient</button>
          <button id="appointmentButton" type="button" class="small">Appointment</button>
         </div>
        </div>
@@ -413,15 +392,13 @@ tbody tr:last-child td{border-bottom:0}
       </section>
      </div>
      <nav class="other-tools" aria-label="Other patient actions">
-      <button id="patientButton" type="button">Patient details</button>
-      <button id="historyButton" type="button">Case history</button>
+      <button id="patientButton" type="button">Details</button>
+      <button id="historyButton" type="button">History</button>
       <button id="correctionButton" type="button">Corrections</button>
-      <button id="manageButton" type="button">Report lists</button>
+      <button id="manageButton" type="button">Manage reports</button>
      </nav>
     </section>
-
-    <aside class="work-column" aria-label="Action workspace">
-     <div id="workspaceIdle"><p>Select a report or action.</p></div>
+    <aside id="workColumn" class="work-column" aria-label="Action workspace" hidden>
      <section id="actionWorkspace" hidden aria-labelledby="actionTitle">
       <div class="workspace-heading">
        <div class="row">
@@ -458,63 +435,43 @@ const SUPABASE_URL="https://ypictveubevkggsmgyzk.supabase.co";
 const SUPABASE_KEY="sb_publishable_soGHa4Gfy7Ig2OCB50vNxw_jIAbQ4XS";
 
 const APPOINTMENTS={
- unscheduled:"Not arranged",
- booked:"Booked",
- attended:"Attended",
- missed:"Did not attend",
- declined:"Patient declined"
+ unscheduled:"Not arranged",booked:"Booked",attended:"Attended",
+ missed:"Did not attend",declined:"Patient declined"
 };
 const CLASSIFICATIONS={
- pending:"Awaiting nurse review",
- routine:"Routine",
- doctor:"Priority",
- urgent:"Urgent"
+ pending:"Awaiting nurse review",routine:"Routine",doctor:"Priority",urgent:"Urgent"
 };
 const STEP_LABELS={
- received:"Report received",
- nurse:"Nurse review",
- doctor:"Doctor review",
- patient:"Patient contact",
- filed:"Mark as filed"
+ received:"Receive",nurse:"Nurse review",doctor:"Record review",
+ patient:"Contact patient",filed:"File"
 };
 const TABS=[
- ["all","Active patients"],
- ["urgent","Urgent"],
- ["priority","Priority"],
- ["missing","Awaiting reports"],
- ["review","Awaiting review"],
- ["followup","Contact / appointment"],
- ["cancelled","Cancelled tracing"]
+ ["all","Active patients"],["urgent","Urgent"],["priority","Priority"],
+ ["missing","Awaiting reports"],["review","Awaiting review"],
+ ["followup","Contact / appointment"],["cancelled","Stopped case tracing"]
 ];
 const PATIENT_RESULTS={
  Telephone:[
-  ["confirmed","Receipt confirmed"],
-  ["no-answer","No answer"],
-  ["voicemail","Voicemail left"]
+  ["confirmed","Receipt confirmed"],["no-answer","No answer"],["voicemail","Voicemail left"]
  ],
  Email:[["sent","Sent — receipt unconfirmed"],["confirmed","Receipt confirmed"]],
  WhatsApp:[["sent","Sent — receipt unconfirmed"],["confirmed","Receipt confirmed"]]
 };
 const DOCTOR_RESULTS={
  Telephone:[
-  ["no-answer","No answer"],
-  ["voicemail","Voicemail left"],
-  ["connected","Connected — receipt unconfirmed"],
-  ["confirmed","Report receipt confirmed"]
+  ["no-answer","No answer"],["voicemail","Voicemail left"],
+  ["connected","Connected — receipt unconfirmed"],["confirmed","Report receipt confirmed"]
  ],
  Email:[
-  ["sent","Sent — receipt unconfirmed"],
-  ["confirmed","Report receipt confirmed"],
+  ["sent","Sent — receipt unconfirmed"],["confirmed","Report receipt confirmed"],
   ["failed","Sending failed"]
  ],
  WhatsApp:[
-  ["sent","Sent — receipt unconfirmed"],
-  ["confirmed","Report receipt confirmed"],
+  ["sent","Sent — receipt unconfirmed"],["confirmed","Report receipt confirmed"],
   ["failed","Sending failed"]
  ],
  "In person":[
-  ["not-met","Doctor unavailable"],
-  ["connected","Met — receipt unconfirmed"],
+  ["not-met","Doctor unavailable"],["connected","Met — receipt unconfirmed"],
   ["confirmed","Report receipt confirmed"]
  ]
 };
@@ -526,6 +483,7 @@ let records=[],selected=null,activeTab="all",previousTab="all";
 let pendingWrite=null,recoverySnapshot=null,blockedReason="",integrityHold=false;
 let actionContext=null,actionDirty=false,viewToken=0;
 let searchDismissed=false,messageTimer=null;
+let worklistSearch="";
 
 const $=id=>document.getElementById(id);
 const clone=x=>JSON.parse(JSON.stringify(x));
@@ -539,8 +497,7 @@ const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({
 function uuid(){
  if(crypto.randomUUID) return crypto.randomUUID();
  const a=crypto.getRandomValues(new Uint8Array(16));
- a[6]=(a[6]&15)|64;
- a[8]=(a[8]&63)|128;
+ a[6]=(a[6]&15)|64;a[8]=(a[8]&63)|128;
  const t=[...a].map(x=>x.toString(16).padStart(2,"0")).join("");
  return `${t.slice(0,8)}-${t.slice(8,12)}-${t.slice(12,16)}-${t.slice(16,20)}-${t.slice(20)}`;
 }
@@ -567,8 +524,8 @@ function timeLabel(t){
 }
 function hkDateTimeInput(iso=new Date().toISOString()){
  const p=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{
-  timeZone:"Asia/Hong_Kong",year:"numeric",month:"2-digit",
-  day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"
+  timeZone:"Asia/Hong_Kong",year:"numeric",month:"2-digit",day:"2-digit",
+  hour:"2-digit",minute:"2-digit",hourCycle:"h23"
  }).formatToParts(new Date(iso)).map(x=>[x.type,x.value]));
  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
 }
@@ -622,8 +579,7 @@ const editingLocked=()=>!ready||busy||!!pendingWrite||!!blockedReason||integrity
 const isTracingCancelled=s=>s?.tracingStatus==="cancelled";
 function showError(t){
  if(!$("actionWorkspace").hidden){
-  $("actionError").textContent=t;
-  $("actionError").hidden=false;
+  $("actionError").textContent=t;$("actionError").hidden=false;
   $("actionError").scrollIntoView({block:"nearest"});
  }else message(t,true);
 }
@@ -671,11 +627,15 @@ function stage(s,g,r){
  if(!nurseDone(r)) return {key:"nurse",label:"Awaiting nurse review",colour:"blue",order:30};
  if(needsDoctorReview(r)){
   const urgent=r.triage==="urgent",priority=r.triage==="doctor";
-  return {key:"doctor",
-   label:`${urgent?"Urgent":priority?"Priority":"Routine"} · await doctor review`,
-   colour:urgent?"red":priority?"amber":"blue",order:urgent?0:priority?20:35};
+  return {
+   key:"doctor",
+   label:`${urgent?"Urgent":priority?"Priority":"Routine"} · awaiting doctor review`,
+   colour:urgent?"red":priority?"amber":"blue",order:urgent?0:priority?20:35
+  };
  }
- if(patientPending(s,r)) return {key:"patient",label:"Patient receipt unconfirmed",colour:"blue",order:40};
+ if(patientPending(s,r)) return {
+  key:"patient",label:"Patient receipt unconfirmed",colour:"blue",order:40
+ };
  if(!r.archived) return {key:"filed",label:"Awaiting filing",colour:"blue",order:60};
  return {key:"complete",label:"Completed",colour:"green",order:80};
 }
@@ -700,9 +660,7 @@ function preserveLegacyReview(r){
 }
 function openNewReviewCycle(r){
  preserveLegacyReview(r);
- r.reviewCycleId=uuid();
- r.reviewPending=true;
- r.routineDoctorReviewRequired=true;
+ r.reviewCycleId=uuid();r.reviewPending=true;r.routineDoctorReviewRequired=true;
 }
 function recordClassification(r,outcome,staff,reason=""){
  if(!Object.hasOwn(CLASSIFICATIONS,outcome)) throw new Error("Select a classification.");
@@ -716,9 +674,10 @@ function recordClassification(r,outcome,staff,reason=""){
   });
  }
  const at=new Date().toISOString();
- r.nurseReviewHistory.push({id:uuid(),at,staff,classification:outcome,reason,cycleId:cycleId(r)});
- r.triage=outcome;
- r.nurseName=outcome==="pending"?"":staff;
+ r.nurseReviewHistory.push({
+  id:uuid(),at,staff,classification:outcome,reason,cycleId:cycleId(r)
+ });
+ r.triage=outcome;r.nurseName=outcome==="pending"?"":staff;
  r.nurseAt=outcome==="pending"?"":at;
  return true;
 }
@@ -757,8 +716,8 @@ function deliveryLabel(c){
  if(receiptConfirmed(c)) return c.audience==="doctor"?"Report receipt confirmed":"Receipt confirmed";
  return ({
   sent:"Sent — receipt unconfirmed",connected:"Connected — receipt unconfirmed",
-  "no-answer":"No answer",voicemail:"Voicemail left",
-  failed:"Sending failed","not-met":"Doctor unavailable"
+  "no-answer":"No answer",voicemail:"Voicemail left",failed:"Sending failed",
+  "not-met":"Doctor unavailable"
  })[c.deliveryStatus]||c.outcome||"Not recorded";
 }
 function arrangementSnapshot(s){
@@ -789,8 +748,7 @@ function metrics(s){
   patient:active.filter(x=>patientPending(s,x.report)),
   urgent:doctor.filter(x=>x.report.triage==="urgent"),
   doctorDue:active.filter(x=>{
-   const d=doctorReminderDate(s,x.report);
-   return d&&d<=today();
+   const d=doctorReminderDate(s,x.report);return d&&d<=today();
   }),
   due:!cancelled&&!!s.nextFollowupDate&&s.nextFollowupDate<=today(),
   missed:!cancelled&&(s.appointmentStatus==="missed"||
@@ -810,12 +768,12 @@ function matchesTab(s,tab){
   (tab==="followup"&&(m.patient.length>0||m.due||m.missed||m.arrange||m.doctorDue.length>0));
 }
 function outstandingText(s){
- if(isTracingCancelled(s)) return "Tracing cancelled";
+ if(isTracingCancelled(s)) return "Case tracing stopped";
  const m=metrics(s),a=[];
  if(m.nurse.length) a.push(`Nurse review: ${m.nurse.length}`);
  if(m.doctor.length) a.push(`Doctor review: ${m.doctor.length}`);
  if(m.patient.length) a.push(`Patient receipt: ${m.patient.length}`);
- if(m.missing.length) a.push(`Reports: ${m.missing.length}`);
+ if(m.missing.length) a.push(`Awaiting reports: ${m.missing.length}`);
  const filing=m.active.filter(x=>stage(s,x.group,x.report).key==="filed").length;
  if(filing) a.push(`Filing: ${filing}`);
  if(m.doctorDue.length) a.push(`Doctor follow-up due: ${m.doctorDue.length}`);
@@ -828,16 +786,28 @@ function eligibleBatchRoutineReports(s){
  return entries(s).filter(({group,report:r})=>stage(s,group,r).key==="nurse"&&
   (r.triage||"pending")==="pending"&&(!r.reviewedAt||r.reviewPending===true));
 }
- function eligibleBatchReceiveReports(s){
- return entries(s).filter(({group,report})=>
-  stage(s,group,report).key==="received"
- );
+function eligibleBatchReceiveReports(s){
+ return entries(s).filter(({group,report})=>stage(s,group,report).key==="received");
 }
-
 function eligibleBatchFilingReports(s){
- return entries(s).filter(({group,report})=>
-  stage(s,group,report).key==="filed"
- );
+ return entries(s).filter(({group,report})=>stage(s,group,report).key==="filed");
+}
+function updateBatchMenu(locked,cancelled){
+ const s=selected?.state;
+ const receive=s?eligibleBatchReceiveReports(s).length:0;
+ const routine=s?eligibleBatchRoutineReports(s).length:0;
+ const filing=s?eligibleBatchFilingReports(s).length:0;
+ for(const [id,label,count] of [
+  ["receiveBatchButton","Receive reports",receive],
+  ["routineBatchButton","Mark Routine",routine],
+  ["filingBatchButton","File reports",filing]
+ ]){
+  $(id).textContent=`${label} (${count})`;
+  $(id).hidden=!count;
+  $(id).disabled=!s||locked||cancelled||!count;
+ }
+ $("batchTools").hidden=!s||cancelled||!(receive||routine||filing);
+ if($("batchTools").hidden) $("batchTools").open=false;
 }
 function updateControls(){
  const locked=editingLocked(),cancelled=!!selected&&isTracingCancelled(selected.state);
@@ -850,27 +820,24 @@ function updateControls(){
  $("operator").disabled=busy||!!pendingWrite;
  $("search").disabled=navigationLocked;
  $("clearSearchButton").disabled=navigationLocked;
+ $("clearSearchButton").hidden=!value("search");
  $("caseEditor").inert=locked;
  $("caseBody").inert=navigationLocked;
  $("tabs").inert=navigationLocked;
+ $("caseTools").inert=!selected||locked;
  $("tracingButton").disabled=!selected||locked;
- $("tracingButton").textContent=cancelled?"Resume tracing":"Cancel tracing";
+ $("tracingButton").textContent=cancelled?"Resume case tracing":"Stop case tracing";
  $("tracingButton").classList.toggle("danger",!cancelled);
  for(const id of ["contactButton","appointmentButton","manageButton","correctionButton"]){
   $(id).disabled=!selected||locked||cancelled;
  }
  for(const id of ["patientButton","historyButton"]) $(id).disabled=!selected||locked;
- $("routineBatchButton").disabled=!selected||locked||cancelled||
-  !eligibleBatchRoutineReports(selected.state).length;
- $("receiveBatchButton").disabled=!selected||locked||cancelled||
- !eligibleBatchReceiveReports(selected.state).length;
-$("filingBatchButton").disabled=!selected||locked||cancelled||
- !eligibleBatchFilingReports(selected.state).length;
- $("groups").querySelectorAll("button").forEach(b=>b.disabled=locked||cancelled);
- $("groups").querySelectorAll("tr[data-report]").forEach(r=>{
-  r.tabIndex=locked?-1:0;
-  r.setAttribute("aria-disabled",String(locked));
+ updateBatchMenu(locked,cancelled);
+ $("groups").querySelectorAll("button").forEach(b=>{
+  b.disabled=locked||(cancelled&&!b.hasAttribute("data-report-history"));
  });
+ $("actionFields").querySelectorAll("[data-doctor-contact],[data-cancel-report],[data-correct-report]")
+  .forEach(b=>b.disabled=locked||cancelled);
  $("searchResults").querySelectorAll("button").forEach(b=>b.disabled=navigationLocked);
  $("writeNotice").hidden=!pendingWrite&&!blockedReason;
  $("writeNoticeText").textContent=pendingWrite?
@@ -881,8 +848,8 @@ $("filingBatchButton").disabled=!selected||locked||cancelled||
  for(const id of ["retryButton","resolveButton","exportPendingButton"]) $(id).disabled=busy;
  $("resolveButton").disabled=busy||!ready;
 }
-function searchMatches(r){
- const q=value("search").toLowerCase();
+function searchMatches(r,query=value("search")){
+ const q=query.trim().toLowerCase();
  if(!q) return true;
  const s=r.state,m=s.metadata||{};
  return [s.quotationNumber,m.patientName,m.patientReference,m.clinician,
@@ -890,14 +857,23 @@ function searchMatches(r){
  ].join(" ").toLowerCase().includes(q);
 }
 function hideSearchResults(){
- $("searchResults").hidden=true;
- $("search").setAttribute("aria-expanded","false");
+ $("searchResults").hidden=true;$("search").setAttribute("aria-expanded","false");
+}
+function updateSearchUI(){
+ const caseView=activeTab==="case";
+ $("search").placeholder=caseView?
+  "Switch patient — name, reference or report":"Search name, reference or report";
+ $("search").setAttribute("aria-label",caseView?"Search all patients to switch patient":"Search worklist");
+ $("searchHint").hidden=!caseView;
+ $("searchHint").textContent=caseView?
+  "Searches all patients. Your worklist filter is kept separately.":"";
+ $("clearSearchButton").hidden=!value("search");
 }
 function renderSearchResults(){
  if(activeTab!=="case"||!value("search")||searchDismissed){
   hideSearchResults();return;
  }
- const a=records.filter(searchMatches),shown=a.slice(0,20);
+ const a=records.filter(r=>searchMatches(r)),shown=a.slice(0,20);
  $("searchResults").innerHTML=shown.length?shown.map(r=>{
   const m=r.state.metadata||{},current=r.id===selected?.id;
   return `<button type="button" class="search-result ${current?"current":""}"
@@ -905,105 +881,99 @@ function renderSearchResults(){
    <strong>${esc(m.patientName||"Name not entered")}</strong>
    <span class="small-text">${esc(m.patientReference||"Reference not entered")}
    ${current?" · Current patient":""}
-   ${isTracingCancelled(r.state)?" · Tracing cancelled":""}</span>
+   ${isTracingCancelled(r.state)?" · Case tracing stopped":""}</span>
   </button>`;
- }).join("")+(a.length>20?`<div class="small-text" style="padding:10px">Showing 20 of ${a.length} — refine your search.</div>`:""):
+ }).join("")+(a.length>20?
+  `<div class="small-text" style="padding:10px">Showing 20 of ${a.length} — refine your search.</div>`:""):
   '<div class="empty">No matching patients.</div>';
- $("searchResults").hidden=false;
- $("search").setAttribute("aria-expanded","true");
+ $("searchResults").hidden=false;$("search").setAttribute("aria-expanded","true");
  updateControls();
 }
 function renderList(){
  const caseView=activeTab==="case";
- $("tabs").hidden=caseView;
- $("listPanel").hidden=caseView;
- $("detailPanel").hidden=!caseView;
+ $("tabs").hidden=caseView;$("listPanel").hidden=caseView;$("detailPanel").hidden=!caseView;
+ updateSearchUI();
+ if(caseView){
+  renderSearchResults();updateControls();return;
+ }
  $("tabs").innerHTML=TABS.map(([id,t])=>`
   <button type="button" data-tab="${id}" class="${activeTab===id?"active":""}"
    aria-pressed="${activeTab===id}">
    ${esc(t)} (${records.filter(r=>matchesTab(r.state,id)).length})
   </button>`).join("");
- const a=records.filter(r=>matchesTab(r.state,caseView?previousTab:activeTab)&&searchMatches(r));
- $("listCount").textContent=`${a.length} patient${a.length===1?"":"s"}`;
+ const a=records.filter(r=>matchesTab(r.state,activeTab)&&searchMatches(r));
+ const category=TABS.find(([id])=>id===activeTab)?.[1]||"Worklist";
+ $("listCount").textContent=`${a.length} patient${a.length===1?"":"s"} · ${category}`+
+  (value("search")?` · Search: “${value("search")}”`:"");
  $("caseBody").innerHTML=a.length?a.map(r=>{
   const s=r.state,m=s.metadata||{},count=metrics(s);
+  const priority=count.doctor.filter(x=>x.report.triage==="doctor").length;
   return `<tr data-case-id="${esc(r.id)}" tabindex="0"
    aria-label="Open patient: ${esc(m.patientName||"patient")}">
    <td><div class="name">${esc(m.patientName||"Name not entered")}</div>
     <div class="small-text">${esc(m.patientReference||"Reference not entered")}</div></td>
-<td>
- ${
-  count.urgent.length||
-  count.doctor.some(x=>x.report.triage==="doctor")
-  ? `<div class="actions" style="margin:0 0 7px">
-      ${count.urgent.length?
-       badge(`Urgent: ${count.urgent.length}`,"red"):""}
-
-      ${count.doctor.some(x=>x.report.triage==="doctor")?
-       badge(
-        `Priority: ${count.doctor.filter(x=>x.report.triage==="doctor").length}`,
-        "amber"
-       ):""}
-     </div>`
-  : ""
- }
- <div>${esc(outstandingText(s))}</div>
-</td>
+   <td>
+    ${count.urgent.length||priority?`<div class="actions" style="margin:0 0 7px">
+     ${count.urgent.length?badge(`Urgent: ${count.urgent.length}`,"red"):""}
+     ${priority?badge(`Priority: ${priority}`,"amber"):""}
+    </div>`:""}
+    <div>${esc(outstandingText(s))}</div>
+   </td>
    <td><strong>${esc(APPOINTMENTS[s.appointmentStatus]||"Not arranged")}</strong>
     ${s.appointmentDate?`<div class="small-text">${esc(dateLabel(s.appointmentDate))}</div>`:""}
     <div class="small-text">Next contact: ${esc(dateLabel(s.nextFollowupDate))}</div>
     ${count.missed?'<div class="warning">Check attendance</div>':""}
-    ${count.due?'<div class="warning">Contact due</div>':""}</td>
+    ${count.due?'<div class="warning">Contact due</div>':""}
+   </td>
   </tr>`;
  }).join(""):'<tr><td colspan="3" class="empty">No matching patients.</td></tr>';
- renderSearchResults();
- updateControls();
+ hideSearchResults();updateControls();
 }
 function reportButton(g,r,key){
  return `<button type="button" class="primary" data-step="${esc(key)}"
   data-group="${esc(g.id)}" data-report="${esc(r.id)}">${esc(STEP_LABELS[key])}</button>`;
 }
+function doctorContactButton(g,r,label="Doctor contact"){
+ return `<button type="button" data-doctor-contact
+  data-group="${esc(g.id)}" data-report="${esc(r.id)}">${esc(label)}</button>`;
+}
 function contactSummary(s,r){
  const doctor=latestContact(s,r,"doctor"),patient=latestContact(s,r,"patient");
  const reminder=doctorReminderDate(s,r),a=[];
- if(doctor) a.push(`<strong>Doctor</strong> · ${esc(doctor.target||"Doctor")}<br>
-  ${esc(doctor.method||"")} · ${esc(deliveryLabel(doctor))}
-  <div>${esc(timeLabel(doctor.at))}</div>`);
- if(reminder) a.push(`<div>Doctor follow-up: ${esc(dateLabel(reminder))}
-  ${reminder<=today()?'<span class="warning"> · Due</span>':""}</div>`);
- if(patient) a.push(`<strong>Patient</strong> · ${esc(patient.method||"")} · ${esc(deliveryLabel(patient))}
-  <div>${esc(timeLabel(patient.at))}</div>`);
- else if(patientPending(s,r)) a.push("Patient contact not recorded");
- return a.length?`<div class="contact-summary">${a.join('<div style="height:5px"></div>')}</div>`:"";
+ if(doctor&&needsDoctorReview(r)){
+  a.push(`<div><strong>Doctor:</strong> ${esc(deliveryLabel(doctor))}</div>`);
+ }
+ if(reminder){
+  a.push(`<div>Doctor follow-up: ${esc(dateLabel(reminder))}
+   ${reminder<=today()?'<span class="warning"> · Due</span>':""}</div>`);
+ }
+ if(patientPending(s,r)){
+  a.push(patient?
+   `<div><strong>Patient:</strong> ${esc(deliveryLabel(patient))}</div>`:
+   "<div>Patient contact not recorded</div>");
+ }
+ return a.length?`<div class="contact-summary">${a.join("")}</div>`:"";
 }
-function reportTable(s,a){
+function reportTable(s,a,archived=false){
  return `<div class="table-wrap"><table class="report-table">
-  <thead><tr><th>Report</th><th>Progress</th><th>Next action</th></tr></thead>
+  <thead><tr><th>Report</th><th>Progress</th>${archived?"":"<th>Next action</th>"}</tr></thead>
   <tbody>${a.map(({group:g,report:r})=>{
    const current=stage(s,g,r);
-   const colour=r.triage==="urgent"?"urgent":r.triage==="doctor"?"priority":"";
-   return `<tr data-group="${esc(g.id)}" data-report="${esc(r.id)}"
-    class="${colour}" tabindex="0" aria-label="View history: ${esc(r.name||g.name)}">
-    <td><div class="report-name">${esc(r.name||g.name)}</div></td>
-    <td>${badge(current.label,current.colour)}${contactSummary(s,r)}</td>
-<td><div class="report-actions">
- ${canRecordDoctorContact(r)?`<button type="button" data-doctor-contact
-  data-group="${esc(g.id)}" data-report="${esc(r.id)}">
-  ${r.triage==="routine"&&!needsDoctorReview(r)
-   ?"Doctor contact · optional"
-   :"Doctor contact"}
- </button>`:""}
-
- ${STEP_LABELS[current.key]?reportButton(g,r,current.key):""}
-
- ${!r.cancelled && !r.receivedDate ? `
-  <button type="button" class="danger small"
-   data-cancel-report="${esc(r.id)}"
-   data-group="${esc(g.id)}">
-   Cancel tracking
-  </button>
- ` : ""}
-</div></td>
+   return `<tr data-group="${esc(g.id)}" data-report="${esc(r.id)}">
+    <td><button type="button" class="report-link" data-report-history
+     data-group="${esc(g.id)}" data-report="${esc(r.id)}"
+     aria-label="View report history and actions: ${esc(r.name||g.name)}"
+     title="View report history and actions">${esc(r.name||g.name)}</button></td>
+    <td>${badge(current.label,current.colour)}
+     ${archived?"":contactSummary(s,r)}
+    </td>
+    ${archived?"":`<td><div class="report-actions">
+     ${STEP_LABELS[current.key]?reportButton(g,r,current.key):""}
+     ${current.key==="doctor"&&canRecordDoctorContact(r)?doctorContactButton(g,r):""}
+     ${!r.cancelled&&!r.receivedDate?
+      `<button type="button" class="danger small"
+       data-cancel-report="${esc(r.id)}" data-group="${esc(g.id)}">Cancel report</button>`:""}
+    </div></td>`}
    </tr>`;
   }).join("")}</tbody></table></div>`;
 }
@@ -1016,11 +986,11 @@ function groupsHTML(s){
  const empty=s.groups.filter(g=>!g.reports.length);
  return (pending.length?reportTable(s,pending):'<p class="muted">No pending report actions.</p>')+
   empty.map(g=>`<div class="row notice">${esc(g.name)} — add reports
-   <button type="button" data-plan="${esc(g.id)}">Edit report list</button></div>`).join("")+
+   <button type="button" data-plan="${esc(g.id)}">Edit reports</button></div>`).join("")+
   (completed.length?`<details class="archive" data-archive="completed">
-   <summary>Completed reports (${completed.length})</summary>${reportTable(s,completed)}</details>`:"")+
+   <summary>Completed reports (${completed.length})</summary>${reportTable(s,completed,true)}</details>`:"")+
   (cancelled.length?`<details class="archive" data-archive="cancelled">
-   <summary>Cancelled reports (${cancelled.length})</summary>${reportTable(s,cancelled)}</details>`:"");
+   <summary>Cancelled reports (${cancelled.length})</summary>${reportTable(s,cancelled,true)}</details>`:"");
 }
 function updateSelection(){
  $("groups").querySelectorAll("tr[data-report]").forEach(row=>{
@@ -1032,39 +1002,43 @@ function renderDetail(){
  if(!selected) return;
  const s=selected.state,m=s.metadata||{},count=metrics(s);
  const scroll=$("overviewScroll").scrollTop;
- const archives=new Set([...$("groups").querySelectorAll("details[open]")]
+ const archives=new Set([...$("groups").querySelectorAll("details[data-archive][open]")]
   .map(d=>d.dataset.archive));
+ const priority=count.doctor.filter(x=>x.report.triage==="doctor").length;
  $("detailTitle").textContent=m.patientName||"Name not entered";
  $("patientReference").textContent="Reference: "+(m.patientReference||"Not entered");
  $("caseSummary").innerHTML=isTracingCancelled(s)?
-  badge("Tracing cancelled","red")+(count.urgent.length?'<span class="warning">Urgent review still outstanding</span>':""):
+  badge("Case tracing stopped","red")+
+   (count.urgent.length?'<span class="warning">Urgent review still outstanding</span>':""):
   badge(`${count.pending.length} pending`,count.pending.length?"blue":"green")+
-  (count.urgent.length?badge(`${count.urgent.length} urgent`,"red"):"")+
-  (count.doctor.some(x=>x.report.triage==="doctor")?
-   badge(`${count.doctor.filter(x=>x.report.triage==="doctor").length} priority`,"amber"):"");
+   (count.urgent.length?badge(`${count.urgent.length} urgent`,"red"):"")+
+   (priority?badge(`${priority} priority`,"amber"):"");
  $("groups").innerHTML=groupsHTML(s);
  $("groups").querySelectorAll("[data-archive]").forEach(d=>d.open=archives.has(d.dataset.archive));
  $("appointmentOverview").innerHTML=`
   <div><span class="meta-label">Appointment</span>
    <strong>${esc(APPOINTMENTS[s.appointmentStatus]||"Not arranged")}</strong>
    ${s.appointmentDate?` · ${esc(dateLabel(s.appointmentDate))}`:""}</div>
-  <div><span class="meta-label">Next contact</span><strong>${esc(dateLabel(s.nextFollowupDate))}</strong></div>
+  <div><span class="meta-label">Next contact</span>
+   <strong>${esc(dateLabel(s.nextFollowupDate))}</strong></div>
   ${count.missed?'<div class="warning">Check attendance</div>':""}
   ${count.due?'<div class="warning">Contact due</div>':""}
   ${s.caseNote?`<details class="full"><summary class="small-text">Notes</summary>
    <div class="note">${esc(s.caseNote)}</div></details>`:""}`;
  const patients=s.contacts.filter(c=>c.audience!=="doctor"),last=patients.at(-1);
- const linked=last?.communicationId?patients.filter(c=>c.communicationId===last.communicationId):last?[last]:[];
+ const linked=last?.communicationId?
+  patients.filter(c=>c.communicationId===last.communicationId):last?[last]:[];
+ const reportNames=unique(linked.map(c=>c.reportName)),notes=unique(linked.map(c=>c.note));
  $("recentContacts").innerHTML=last?`<div class="latest-contact">
   <strong>Latest patient contact</strong> · ${esc(timeLabel(last.at))}<br>
   ${esc(last.method||"")} · ${esc(deliveryLabel(last))}
-  ${unique(linked.map(c=>c.reportName)).length?
-   `<br>${esc(unique(linked.map(c=>c.reportName)).join(", "))}`:""}
-  ${unique(linked.map(c=>c.note)).map(n=>`<div class="note">${esc(n)}</div>`).join("")}
+  ${reportNames.length||notes.length?`<details><summary>Details</summary>
+   ${reportNames.length?`<div>${esc(reportNames.join(", "))}</div>`:""}
+   ${notes.map(n=>`<div class="note">${esc(n)}</div>`).join("")}
+  </details>`:""}
  </div>`:"";
  $("overviewScroll").scrollTop=scroll;
- updateSelection();
- updateControls();
+ updateSelection();updateControls();
 }
 function replaceRecord(r){
  const i=records.findIndex(x=>x.id===r.id);
@@ -1089,16 +1063,12 @@ function patientHTML(s){
 function closeWorkspace(force=false){
  if(busy&&!force) return false;
  if(!force&&actionDirty&&!confirm("Discard unsaved changes?")) return false;
- viewToken++;
- actionContext=null;
- actionDirty=false;
- $("actionWorkspace").hidden=true;
- $("workspaceIdle").hidden=false;
- $("actionFields").innerHTML="";
- $("historyContent").innerHTML="";
+ viewToken++;actionContext=null;actionDirty=false;
+ $("actionWorkspace").hidden=true;$("workColumn").hidden=true;
+ $("caseEditor").classList.remove("workspace-open");
+ $("actionFields").innerHTML="";$("historyContent").innerHTML="";
  $("actionError").hidden=true;
- updateSelection();
- updateControls();
+ updateSelection();updateControls();
  return true;
 }
 function startWorkspace(title,subtitle,html,context,readOnly=false,saveLabel="Save"){
@@ -1106,24 +1076,21 @@ function startWorkspace(title,subtitle,html,context,readOnly=false,saveLabel="Sa
  if(editingLocked()) throw new Error("Check the save message before continuing.");
  if(isTracingCancelled(selected.state)&&context.type!=="caseTracing"&&
   !(readOnly&&["history","patientDetails","saved"].includes(context.type))){
-  throw new Error("Resume tracing before making changes.");
+  throw new Error("Resume case tracing before making changes.");
  }
  if(!readOnly) staffName();
  if(!closeWorkspace()) return false;
  actionContext=context;
  $("actionTitle").textContent=title;
- $("actionSubtitle").textContent=subtitle||"";
- $("actionSubtitle").hidden=!subtitle;
- $("actionFields").innerHTML=html;
- $("saveActions").hidden=readOnly;
-$("actionSave").textContent=saveLabel;
-$("actionSave").classList.add("primary");
-$("actionSave").classList.remove("danger");
- $("workspaceIdle").hidden=true;
- $("actionWorkspace").hidden=false;
+ $("actionSubtitle").textContent=subtitle||"";$("actionSubtitle").hidden=!subtitle;
+ $("actionFields").innerHTML=html;$("saveActions").hidden=readOnly;
+ $("actionSave").textContent=saveLabel;
+ $("actionSave").classList.add("primary");$("actionSave").classList.remove("danger");
+ $("workColumn").hidden=false;$("actionWorkspace").hidden=false;
+ $("caseEditor").classList.add("workspace-open");
  $("workspaceScroll").scrollTop=0;
- updateSelection();
- updateControls();
+ $("batchTools").open=false;$("caseTools").open=false;
+ updateSelection();updateControls();
  if(matchMedia("(max-width:760px)").matches){
   $("actionWorkspace").scrollIntoView({behavior:"smooth",block:"start"});
  }
@@ -1177,14 +1144,12 @@ function openStep(target,key){
   `,{type:"review",target},false,"Save doctor review");
  }else if(key==="patient") openContact(target);
  else if(key==="filed"){
-  startWorkspace("Mark as filed",r.name,
-   '<p>Filed in the clinic system?</p>',
+  startWorkspace("Mark as filed",r.name,"<p>Filed in the clinic system?</p>",
    {type:"filed",target},false,"Mark as filed");
  }
 }
 function openContact(target=null){
- const s=selected.state;
- const pending=entries(s).filter(x=>patientPending(s,x.report));
+ const s=selected.state,pending=entries(s).filter(x=>patientPending(s,x.report));
  if(target&&!patientPending(s,findReport(s,target.groupId,target.reportId).report)){
   throw new Error("This report is not awaiting patient receipt.");
  }
@@ -1200,13 +1165,13 @@ function openContact(target=null){
      ${target?.reportId===r.id?"checked disabled":""}>
     <span>${esc(r.name||g.name)}</span></label>`).join("")}</section>`:""}
   <details class="archive">
-   <summary>Representative name</summary>
+   <summary>Representative name (optional)</summary>
    <input id="patientRecipient" maxlength="150" aria-label="Representative name">
   </details>
   <div class="form-grid">
    ${field("Patient reminder",`<select id="patientFollowupAction">
-    ${options([["keep","Keep current reminder"],["reschedule","Set next contact date"],
-     ["complete","Clear — follow-up completed"]])}</select>
+    ${options([["keep","Keep reminder"],["reschedule","Set next contact"],
+     ["complete","Clear reminder — completed"]])}</select>
     <small>Current: ${esc(dateLabel(s.nextFollowupDate))}</small>`)}
   </div>
   <div id="patientNextFields" class="form-grid" hidden>
@@ -1219,10 +1184,11 @@ function openContact(target=null){
 function openAppointment(){
  const s=selected.state;
  startWorkspace("Appointment","",`<div class="form-grid">
-  ${field("Status *",`<select id="appointmentStatus">${options(Object.entries(APPOINTMENTS),s.appointmentStatus||"unscheduled")}</select>`)}
+  ${field("Status *",`<select id="appointmentStatus">
+   ${options(Object.entries(APPOINTMENTS),s.appointmentStatus||"unscheduled")}</select>`)}
   ${field("Appointment date",`<input id="appointmentDate" type="date" value="${esc(s.appointmentDate||"")}">`)}
   ${field("Patient reminder",`<select id="appointmentFollowupAction">
-   ${options([["keep","Keep current reminder"],["reschedule","Set next contact date"]])}</select>
+   ${options([["keep","Keep reminder"],["reschedule","Set next contact"]])}</select>
    <small>Current: ${esc(dateLabel(s.nextFollowupDate))}</small>`)}
  </div>
  <div id="appointmentNextFields" class="form-grid" hidden>
@@ -1237,7 +1203,8 @@ function openDoctorContact(target){
  const eligible=entries(s).filter(x=>canRecordDoctorContact(x.report));
  const prior=doctorContacts(s,r,false),reminder=doctorReminderDate(s,r);
  startWorkspace("Doctor contact",r.name||g.name,`
-  ${r.triage==="urgent"?'<div class="notice red">Urgent — escalate now.</div>':""}
+  ${r.triage==="urgent"&&needsDoctorReview(r)?
+   '<div class="notice red">Urgent — escalate now.</div>':""}
   <div class="form-grid">
    ${field("Doctor *",doctorInput(latestContact(s,r,"doctor")?.target||r.doctorName||s.metadata?.clinician||""))}
    ${field("Method *",`<select id="doctorContactMethod" required>${methodOptions(true)}</select>`)}
@@ -1254,9 +1221,9 @@ function openDoctorContact(target){
   <div class="form-grid">
    ${field("Notes / reply",'<textarea id="doctorContactNote" rows="3" maxlength="2000"></textarea>')}
    ${field("Doctor reminder",`<select id="doctorFollowupAction">
-    ${options([["keep","Keep each report's reminder"],["reschedule","Set next follow-up date"],
+    ${options([["keep","Keep each report's reminder"],["reschedule","Set next follow-up"],
      ["clear","Clear reminder"]])}</select>
-    <small>Current: ${esc(dateLabel(reminder))}</small>`)}
+    <small>Current report: ${esc(dateLabel(reminder))}</small>`)}
   </div>
   <div id="doctorNextFields" class="form-grid" hidden>
    ${field("Next doctor follow-up *",`<input id="doctorNextDate" type="date" min="${today()}" disabled>`)}
@@ -1267,22 +1234,14 @@ function openDoctorContact(target){
  `,{type:"doctorContact",target},false,"Save doctor contact");
 }
 function updateBatchCount(){
- const count=$("actionFields")
-  .querySelectorAll("[data-batch-report]:checked").length;
-
- if($("batchCount")){
-  $("batchCount").textContent=`${count} selected`;
- }
-
+ const count=$("actionFields").querySelectorAll("[data-batch-report]:checked").length;
+ if($("batchCount")) $("batchCount").textContent=`${count} selected`;
  const labels={
   batchRoutine:`Mark ${count} report${count===1?"":"s"} as Routine`,
   batchReceive:`Receive ${count} report${count===1?"":"s"}`,
   batchFiling:`File ${count} report${count===1?"":"s"}`
  };
-
- if(labels[actionContext?.type]){
-  $("actionSave").textContent=labels[actionContext.type];
- }
+ if(labels[actionContext?.type]) $("actionSave").textContent=labels[actionContext.type];
 }
 function openRoutineBatch(){
  const a=eligibleBatchRoutineReports(selected.state);
@@ -1290,14 +1249,15 @@ function openRoutineBatch(){
  const opened=startWorkspace("Batch Routine",selected.state.metadata?.patientName||"",`
   <div class="actions">
    <button type="button" class="small" data-batch-all>Select all</button>
-   <button type="button" class="small" data-batch-none>Clear</button>
+   <button type="button" class="small" data-batch-none>Clear selection</button>
    <span id="batchCount" class="small-text"></span>
   </div>
   ${a.map(({group:g,report:r})=>`<label class="choice">
    <input type="checkbox" data-batch-group="${esc(g.id)}" data-batch-report="${esc(r.id)}">
-   <span><strong>${esc(r.name||g.name)}</strong><small>Received ${esc(dateLabel(r.receivedDate))}</small></span>
+   <span><strong>${esc(r.name||g.name)}</strong>
+    <small>Received ${esc(dateLabel(r.receivedDate))}</small></span>
   </label>`).join("")}
-  <div class="form-grid">${field("Notes — applied to selected reports",
+  <div class="form-grid">${field("Notes for selected reports",
    '<textarea id="batchNote" rows="2" maxlength="2000"></textarea>')}</div>
   <label class="checkline">
    <input id="batchConfirmed" type="checkbox" required>
@@ -1306,84 +1266,46 @@ function openRoutineBatch(){
  `,{type:"batchRoutine"},false,"Mark selected as Routine");
  if(opened) updateBatchCount();
 }
- function openBatchReceive(){
- openBatchReportAction("batchReceive");
-}
-
-function openBatchFiling(){
- openBatchReportAction("batchFiling");
-}
-
+function openBatchReceive(){openBatchReportAction("batchReceive")}
+function openBatchFiling(){openBatchReportAction("batchFiling")}
 function openBatchReportAction(type){
  const receive=type==="batchReceive";
- const a=receive?
-  eligibleBatchReceiveReports(selected.state):
-  eligibleBatchFilingReports(selected.state);
-
- if(!a.length){
-  throw new Error(receive?
-   "No reports are awaiting receipt.":
-   "No reports are awaiting filing.");
- }
-
- const opened=startWorkspace(
-  receive?"Batch Receive":"Batch Filing",
-  selected.state.metadata?.patientName||"",
-  `
-  <p class="small-text">
-   ${receive?
-    "Select reports received on the same date.":
-    "Only reports that have completed the required review and patient contact are shown."}
-  </p>
-
-  ${receive?`
-   <div class="form-grid">
-    ${field("Received date — applies to selected reports *",
-     `<input id="batchReceivedDate" type="date"
-      value="${today()}" max="${today()}" required>`)}
-   </div>
-  `:""}
-
+ const a=receive?eligibleBatchReceiveReports(selected.state):eligibleBatchFilingReports(selected.state);
+ if(!a.length) throw new Error(receive?
+  "No reports are awaiting receipt.":"No reports are awaiting filing.");
+ const opened=startWorkspace(receive?"Batch Receive":"Batch Filing",
+  selected.state.metadata?.patientName||"",`
+  <p class="small-text">${receive?
+   "Select reports received on the same date.":
+   "Only reports with all required reviews and patient contact completed are shown."}</p>
+  ${receive?`<div class="form-grid">
+   ${field("Received date for selected reports *",
+    `<input id="batchReceivedDate" type="date" value="${today()}" max="${today()}" required>`)}
+  </div>`:""}
   <div class="actions">
    <button type="button" class="small" data-batch-all>Select all</button>
-   <button type="button" class="small" data-batch-none>Clear</button>
+   <button type="button" class="small" data-batch-none>Clear selection</button>
    <span id="batchCount" class="small-text"></span>
   </div>
-
-  ${a.map(({group:g,report:r})=>`
-   <label class="choice">
-    <input type="checkbox"
-     data-batch-group="${esc(g.id)}"
-     data-batch-report="${esc(r.id)}">
-    <span>
-     <strong>${esc(r.name||g.name)}</strong>
-     <small>
-      ${esc(g.name||"Report list")} ·
-      ${receive?"Awaiting report":
-       `Received ${esc(dateLabel(r.receivedDate))} · Awaiting filing`}
-     </small>
-    </span>
-   </label>
-  `).join("")}
-
+  ${a.map(({group:g,report:r})=>`<label class="choice">
+   <input type="checkbox" data-batch-group="${esc(g.id)}" data-batch-report="${esc(r.id)}">
+   <span><strong>${esc(r.name||g.name)}</strong>
+    <small>${esc(g.name||"Report list")} · ${receive?"Awaiting report":
+     `Received ${esc(dateLabel(r.receivedDate))} · Awaiting filing`}</small>
+   </span>
+  </label>`).join("")}
   <label class="checkline">
    <input id="batchConfirmed" type="checkbox" required>
    <span>${receive?
-    "I confirm that the selected reports were received on the date above.":
-    "I confirm that the selected reports have been filed in the clinic system."}
-   </span>
+    "I confirm the selected reports were received on the date above.":
+    "I confirm the selected reports have been filed in the clinic system."}</span>
   </label>
-  `,
-  {type},
-  false,
-  receive?"Receive selected reports":"File selected reports"
- );
-
+ `,{type},false,receive?"Receive selected reports":"File selected reports");
  if(opened) updateBatchCount();
 }
 function openManage(){
- startWorkspace("Report lists","",`
-  <div class="actions"><button type="button" class="primary" data-add-list>+ Add reports to trace</button></div>
+ startWorkspace("Manage reports","",`
+  <div class="actions"><button type="button" class="primary" data-add-list>+ Add reports</button></div>
   ${selected.state.groups.map(g=>`<div class="manage-row"><div class="row">
    <strong>${esc(g.name)}</strong>
    <button type="button" class="small" data-plan="${esc(g.id)}">Edit</button>
@@ -1394,7 +1316,7 @@ function openManage(){
 function openPlan(gid){
  const g=selected.state.groups.find(x=>x.id===gid);
  if(!g) throw new Error("Report list not found.");
- startWorkspace("Edit report list",g.name,`
+ startWorkspace("Edit reports",g.name,`
   ${g.reports.map(r=>`<div class="form-grid">${field("Report",
    `<input data-plan-report="${esc(r.id)}" value="${esc(r.name)}" maxlength="300" required
     ${r.receivedDate||r.cancelled?"readonly":""}>`)}</div>`).join("")}
@@ -1403,7 +1325,7 @@ function openPlan(gid){
  `,{type:"plan",groupId:gid});
 }
 function openAddList(){
- startWorkspace("Add reports to trace",selected.state.metadata?.patientName||"",`
+ startWorkspace("Add reports",selected.state.metadata?.patientName||"",`
   <p class="small-text">Follow-up only — quotation unchanged.</p>
   <div class="form-grid">
    ${field("List name *",'<input id="newListName" maxlength="300" required placeholder="Additional blood tests">')}
@@ -1421,7 +1343,7 @@ function openCorrectionChooser(){
    <div><strong>${esc(r.name||g.name)}</strong>
     <div class="small-text">${esc(stage(selected.state,g,r).label)}</div></div>
    <button type="button" class="small" data-correct-report="${esc(r.id)}"
-    data-group="${esc(g.id)}">${r.cancelled?"Restore":"Correct"}</button>
+    data-group="${esc(g.id)}">${r.cancelled?"Restore report":"Correct"}</button>
   </div>`).join("")}
  `,{type:"correctionChooser"},true);
 }
@@ -1431,7 +1353,8 @@ function openCorrection(target){
  startWorkspace("Correct report",r.name,`<div class="form-grid">
   ${field("Received date",`<input id="detailDate" type="date" max="${today()}"
    value="${esc(r.receivedDate||"")}" ${r.receivedDate?"required":""}>`)}
-  ${field("Classification",`<select id="detailTriage">${options(Object.entries(CLASSIFICATIONS),r.triage||"pending")}</select>`)}
+  ${field("Classification",`<select id="detailTriage">
+   ${options(Object.entries(CLASSIFICATIONS),r.triage||"pending")}</select>`)}
   <label class="checkline"><input id="detailFiled" type="checkbox" ${r.archived?"checked":""}>
    <span>Filed in the clinic system</span></label>
   <label class="checkline"><input id="reopenReview" type="checkbox">
@@ -1439,20 +1362,26 @@ function openCorrection(target){
   ${field("Reason *",'<textarea id="correctionReason" rows="2" maxlength="2000" required></textarea>')}
  </div>
  ${!r.receivedDate?`<div class="section"><button type="button" class="danger"
-  data-cancel-report="${esc(r.id)}" data-group="${esc(target.groupId)}">Cancel report tracking</button></div>`:""}
+  data-cancel-report="${esc(r.id)}" data-group="${esc(target.groupId)}">Cancel report</button></div>`:""}
  `,{type:"correction",target},false,"Save correction");
 }
 function openTracking(target,restore){
  const {report:r}=findReport(selected.state,target.groupId,target.reportId);
  if(!restore&&r.receivedDate) throw new Error("A received report cannot be cancelled.");
- startWorkspace(restore?"Restore report tracking":"Cancel report tracking",r.name,`
-  <div class="form-grid">${field("Reason *",'<textarea id="trackingReason" rows="2" maxlength="2000" required></textarea>')}</div>
- `,{type:restore?"restore":"cancel",target},false,restore?"Restore tracking":"Cancel tracking");
+ startWorkspace(restore?"Restore report":"Cancel report",r.name,`
+  <p class="small-text">${restore?
+   "Restores tracking for this report only.":
+   "Stops tracking this report only. Other reports are unchanged."}</p>
+  <div class="form-grid">
+   ${field("Reason *",'<textarea id="trackingReason" rows="2" maxlength="2000" required></textarea>')}
+  </div>
+ `,{type:restore?"restore":"cancel",target},false,restore?"Restore report":"Cancel report");
 }
 function openArrangementCorrection(){
  const s=selected.state;
  startWorkspace("Correct appointment / notes","",`<div class="form-grid">
-  ${field("Status",`<select id="correctStatus">${options(Object.entries(APPOINTMENTS),s.appointmentStatus||"unscheduled")}</select>`)}
+  ${field("Status",`<select id="correctStatus">
+   ${options(Object.entries(APPOINTMENTS),s.appointmentStatus||"unscheduled")}</select>`)}
   ${field("Appointment date",`<input id="correctDate" type="date" value="${esc(s.appointmentDate||"")}">`)}
   ${field("Next contact date",`<input id="correctNext" type="date" value="${esc(s.nextFollowupDate||"")}">`)}
   ${field("Case notes",`<textarea id="correctNote" rows="3" maxlength="2000">${esc(s.caseNote||"")}</textarea>`)}
@@ -1461,32 +1390,41 @@ function openArrangementCorrection(){
 }
 function openTracingAction(){
  const s=selected.state,cancelled=isTracingCancelled(s),urgent=metrics(s).urgent.length;
- startWorkspace(cancelled?"Resume tracing":"Cancel tracing",s.metadata?.patientName||"",`
-  ${!cancelled?'<p class="small-text">Removes this case from the active worklist. Records are kept.</p>':""}
-  ${!cancelled&&urgent?`<div class="notice red">${urgent} urgent review${urgent===1?"":"s"} outstanding.
-   Cancelling tracing does not resolve these results.</div>`:""}
+ startWorkspace(cancelled?"Resume case tracing":"Stop case tracing",
+  s.metadata?.patientName||"",`
+  <p class="small-text">${cancelled?
+   "Returns this patient to the active worklist.":
+   "Stops tracing for this patient, not just one report. Removes the case from the active worklist. Records are kept."}</p>
+  ${!cancelled&&urgent?`<div class="notice red">
+   ${urgent} urgent review${urgent===1?"":"s"} outstanding.
+   Stopping case tracing does not resolve these results.
+  </div>`:""}
   <div class="form-grid">
    ${field("Reason *",'<textarea id="caseTracingReason" rows="3" maxlength="2000" required></textarea>')}
    ${cancelled?field("Next contact date",`<input id="resumeTracingDate" type="date" min="${today()}">`):""}
   </div>
- `,{type:"caseTracing",cancel:!cancelled},false,cancelled?"Resume tracing":"Cancel tracing");
+ `,{type:"caseTracing",cancel:!cancelled},false,cancelled?"Resume case tracing":"Stop case tracing");
 }
 function showSaved(context){
  if(!selected||editingLocked()) return;
+ message("Saved.",false,true);
  let target=context?.target||null;
  if(!target&&context?.requiredReportId){
   const x=entries(selected.state).find(x=>x.report.id===context.requiredReportId);
   if(x) target={groupId:x.group.id,reportId:x.report.id};
  }
- let html='<p class="success">✓ Saved</p>',subtitle="";
- if(target){
-  const {group:g,report:r}=findReport(selected.state,target.groupId,target.reportId);
-  const current=stage(selected.state,g,r);
-  subtitle=r.name;
-  html+=`<p>${badge(current.label,current.colour)}</p>`;
-  if(STEP_LABELS[current.key]) html+=`<div class="actions">${reportButton(g,r,current.key)}</div>`;
+ if(!target){
+  closeWorkspace(true);return;
  }
- startWorkspace("Saved",subtitle,html,{type:"saved",target},true);
+ const {group:g,report:r}=findReport(selected.state,target.groupId,target.reportId);
+ const current=stage(selected.state,g,r);
+ if(isTracingCancelled(selected.state)||!STEP_LABELS[current.key]){
+  closeWorkspace(true);return;
+ }
+ startWorkspace("Next action",r.name,`
+  <p>${badge(current.label,current.colour)}</p>
+  <div class="actions">${reportButton(g,r,current.key)}</div>
+ `,{type:"saved",target},true);
 }
 
 /* History */
@@ -1497,7 +1435,8 @@ function historyEvent(title,at="",staff="",text="",reportName=""){
 function logHTML(x,showReport=false){
  return `<div class="log"><strong>${esc(x.title)}</strong>
   ${showReport&&x.reportName?`<div class="small-text">${esc(x.reportName)}</div>`:""}
-  ${x.at||x.staff?`<div class="small-text">${esc([x.at?timeLabel(x.at):"",x.staff].filter(Boolean).join(" · "))}</div>`:""}
+  ${x.at||x.staff?`<div class="small-text">${
+   esc([x.at?timeLabel(x.at):"",x.staff].filter(Boolean).join(" · "))}</div>`:""}
   ${x.text?`<div class="note">${esc(x.text)}</div>`:""}</div>`;
 }
 function eventsHTML(a,showReport=false){
@@ -1524,9 +1463,9 @@ function contactEvents(a){
  a.forEach((c,i)=>{
   const key=canonical({
    communication:c.communicationId||c.id||`entry-${i}`,audience:c.audience,
-   at:c.at,staff:c.staff,target:c.target,method:c.method,
-   status:c.deliveryStatus,note:c.note,confirmedAt:c.confirmedAt,
-   confirmedBy:c.confirmedBy,reminderAction:c.doctorFollowupAction
+   at:c.at,staff:c.staff,target:c.target,method:c.method,status:c.deliveryStatus,
+   note:c.note,confirmedAt:c.confirmedAt,confirmedBy:c.confirmedBy,
+   reminderAction:c.doctorFollowupAction
   });
   if(!groups.has(key)) groups.set(key,[]);
   groups.get(key).push(c);
@@ -1547,7 +1486,8 @@ function reportEvents(g){
    const b=e.before||{},n=e.after||{},lines=[];
    if(!e.before) lines.push("Report added to tracking");
    if((b.receivedDate||"")!==(n.receivedDate||"")){
-    lines.push(b.receivedDate?`Received date: ${dateLabel(b.receivedDate)} → ${dateLabel(n.receivedDate)}`:
+    lines.push(b.receivedDate?
+     `Received date: ${dateLabel(b.receivedDate)} → ${dateLabel(n.receivedDate)}`:
      `Received: ${dateLabel(n.receivedDate)}`);
    }
    if(!!b.archived!==!!n.archived) lines.push(n.archived?"Filed":"Marked not filed");
@@ -1559,7 +1499,8 @@ function reportEvents(g){
    if(lines.length) add("Report updated",e.at,e.staff,lines.join("\n"));
   }
   if(r.receivedDate&&!logs.some(e=>(e.before?.receivedDate||"")!==(e.after?.receivedDate||""))){
-   add("Report received",r.receivedRecordedAt,r.receivedRecordedBy,"Received: "+dateLabel(r.receivedDate));
+   add("Report received",r.receivedRecordedAt,r.receivedRecordedBy,
+    "Received: "+dateLabel(r.receivedDate));
   }
   const nurses=[...(r.nurseReviewHistory||[])];
   if(r.nurseAt&&!nurses.some(x=>x.at===r.nurseAt)){
@@ -1571,15 +1512,20 @@ function reportEvents(g){
   else if(r.nurseNote) add("Nurse notes",r.nurseAt,r.nurseName,r.nurseNote);
   const reviews=[...(r.reviewHistory||[])];
   if(r.reviewedAt&&!reviews.some(x=>x.at===r.reviewedAt)){
-   reviews.push({at:r.reviewedAt,doctor:r.reviewDoctorName||r.doctorName,
-    recordedBy:r.reviewRecordedBy,note:r.reviewNote,patientContactRequired:r.patientContactRequired});
+   reviews.push({
+    at:r.reviewedAt,doctor:r.reviewDoctorName||r.doctorName,
+    recordedBy:r.reviewRecordedBy,note:r.reviewNote,
+    patientContactRequired:r.patientContactRequired
+   });
   }
   reviews.forEach(x=>add("Doctor review",x.at,x.recordedBy,
    [`Doctor: ${x.doctor||"Not recorded"}`,
-    typeof x.patientContactRequired==="boolean"?`Patient contact: ${x.patientContactRequired?"Required":"Not required"}`:"",
+    typeof x.patientContactRequired==="boolean"?
+     `Patient contact: ${x.patientContactRequired?"Required":"Not required"}`:"",
     x.note||""].filter(Boolean).join("\n")));
   (r.correctionHistory||[]).forEach(x=>add("Correction",x.at,x.staff,x.reason));
-  (r.trackingHistory||[]).forEach(x=>add(x.type==="cancel"?"Tracking cancelled":"Tracking restored",x.at,x.staff,x.reason));
+  (r.trackingHistory||[]).forEach(x=>add(
+   x.type==="cancel"?"Report cancelled":"Report restored",x.at,x.staff,x.reason));
  }
  if(g.manuallyAdded&&g.addedAt){
   a.push(historyEvent("Manual report list added",g.addedAt,g.addedBy,g.additionReason||"",g.name));
@@ -1591,40 +1537,69 @@ function caseEvents(s){
  for(const x of s.arrangementHistory||[]){
   const b=x.before||{},n=x.after||{},lines=[];
   if(b.appointmentStatus!==n.appointmentStatus||b.appointmentDate!==n.appointmentDate){
-   lines.push(`Appointment: ${APPOINTMENTS[n.appointmentStatus]||"Not arranged"}${n.appointmentDate?" · "+dateLabel(n.appointmentDate):""}`);
+   lines.push(`Appointment: ${APPOINTMENTS[n.appointmentStatus]||"Not arranged"}${
+    n.appointmentDate?" · "+dateLabel(n.appointmentDate):""}`);
   }
   if((b.nextFollowupDate||"")!==(n.nextFollowupDate||"")){
-   lines.push(n.nextFollowupDate?"Next contact: "+dateLabel(n.nextFollowupDate):"Patient reminder cleared");
+   lines.push(n.nextFollowupDate?
+    "Next contact: "+dateLabel(n.nextFollowupDate):"Patient reminder cleared");
   }
-  if((b.caseNote||"")!==(n.caseNote||"")) lines.push(n.caseNote?"Notes: "+n.caseNote:"Case notes cleared");
+  if((b.caseNote||"")!==(n.caseNote||"")){
+   lines.push(n.caseNote?"Notes: "+n.caseNote:"Case notes cleared");
+  }
   if(x.reason) lines.push("Reason: "+x.reason);
   if(lines.length) a.push(historyEvent("Appointment / follow-up",x.at,x.staff,lines.join("\n")));
  }
- (s.followupNotes||[]).forEach(x=>{if(x.note)a.push(historyEvent("Arrangement notes",x.at,x.staff,x.note))});
+ (s.followupNotes||[]).forEach(x=>{
+  if(x.note) a.push(historyEvent("Arrangement notes",x.at,x.staff,x.note));
+ });
  (s.tracingHistory||[]).forEach(x=>a.push(historyEvent(
-  x.type==="cancel"?"Tracing cancelled":"Tracing resumed",x.at,x.staff,x.reason)));
+  x.type==="cancel"?"Case tracing stopped":"Case tracing resumed",x.at,x.staff,x.reason)));
  return a;
 }
 function readableHistoryHTML(s){
- return `<h3>Doctor contacts</h3>${eventsHTML(contactEvents(s.contacts.filter(c=>c.audience==="doctor")),true)}
-  <section class="section"><h3>Patient contacts</h3>
-   ${eventsHTML(contactEvents(s.contacts.filter(c=>c.audience!=="doctor")),true)}</section>
-  <section class="section"><h3>Other activity</h3>
-   ${eventsHTML([...s.groups.flatMap(reportEvents),...caseEvents(s)],true)}</section>`;
+ return `<h3>Doctor contacts</h3>${
+  eventsHTML(contactEvents(s.contacts.filter(c=>c.audience==="doctor")),true)}
+  <section class="section"><h3>Patient contacts</h3>${
+   eventsHTML(contactEvents(s.contacts.filter(c=>c.audience!=="doctor")),true)}</section>
+  <section class="section"><h3>Other activity</h3>${
+   eventsHTML([...s.groups.flatMap(reportEvents),...caseEvents(s)],true)}</section>`;
 }
 function openReportHistory(target){
- const {group:g}=findReport(selected.state,target.groupId,target.reportId);
- const ids=new Set(g.reports.map(r=>r.id));
- startWorkspace("Activity log",g.name,eventsHTML([
-  ...reportEvents(g),
-  ...contactEvents(selected.state.contacts.filter(c=>ids.has(c.reportId)))
- ],g.reports.length>1),{type:"history",target},true);
+ const s=selected.state,{group:g,report:r}=findReport(s,target.groupId,target.reportId);
+ const current=stage(s,g,r),cancelled=isTracingCancelled(s);
+ const singleGroup={...g,reports:[r]};
+ const contacts=s.contacts.filter(c=>c.reportId===r.id);
+ const reminder=doctorReminderDate(s,r);
+ const actions=cancelled?"":`
+  <div class="actions">
+   ${STEP_LABELS[current.key]?reportButton(g,r,current.key):""}
+   ${canRecordDoctorContact(r)?doctorContactButton(g,r,
+    needsDoctorReview(r)?"Doctor contact":"Doctor contact (optional)"):""}
+   <button type="button" class="small" data-correct-report="${esc(r.id)}"
+    data-group="${esc(g.id)}">${r.cancelled?"Restore report":"Correct report"}</button>
+  </div>`;
+ startWorkspace("Report history",r.name||g.name,`
+  <p>${badge(current.label,current.colour)}</p>
+  <div class="small-text">
+   Classification: ${esc(CLASSIFICATIONS[r.triage]||"Awaiting nurse review")}
+   ${r.receivedDate?` · Received ${esc(dateLabel(r.receivedDate))}`:""}
+  </div>
+  ${reminder?`<div class="small-text">Doctor follow-up: ${esc(dateLabel(reminder))}
+   ${reminder<=today()?'<span class="warning"> · Due</span>':""}</div>`:""}
+  ${actions}
+  <section class="section"><h3>Activity</h3>
+   ${eventsHTML([...reportEvents(singleGroup),...contactEvents(contacts)])}
+  </section>
+ `,{type:"history",target},true);
 }
 async function openHistory(){
  const caseId=selected.id;
- if(!startWorkspace("Case history","",readableHistoryHTML(selected.state),{type:"history",caseId},true)) return;
+ if(!startWorkspace("Case history","",readableHistoryHTML(selected.state),
+  {type:"history",caseId},true)) return;
  const token=viewToken;
- $("historyContent").innerHTML='<details class="archive"><summary>Save history</summary><div id="savedActivity">Loading…</div></details>';
+ $("historyContent").innerHTML=
+  '<details class="archive"><summary>Save history</summary><div id="savedActivity">Loading…</div></details>';
  try{
   const {data,error}=await client.from("amc_followup_audit")
    .select("id,actor_label,action,created_at").eq("case_id",caseId)
@@ -1634,7 +1609,9 @@ async function openHistory(){
   $("savedActivity").innerHTML=eventsHTML((data||[]).map(x=>
    historyEvent(x.action,x.created_at,x.actor_label)));
  }catch(error){
-  if(token===viewToken&&$("savedActivity")) $("savedActivity").textContent="Could not load save history.";
+  if(token===viewToken&&$("savedActivity")){
+   $("savedActivity").textContent="Could not load save history.";
+  }
  }
 }
 
@@ -1667,9 +1644,7 @@ async function readAllCases(){
   const {data,error}=await client.from("amc_followup_cases").select("*")
    .order("id",{ascending:true}).range(offset,offset+size-1);
   if(error) throw error;
-  const page=data||[];
-  page.forEach(validateRecord);
-  a.push(...page);
+  const page=data||[];page.forEach(validateRecord);a.push(...page);
   if(page.length<size) break;
  }
  return a.sort((a,b)=>String(b.updated_at).localeCompare(String(a.updated_at)));
@@ -1680,7 +1655,8 @@ async function refresh(sync=false){
   message("Check the save before updating quotations.",true);return;
  }
  if(actionDirty&&!confirm("Discard unsaved changes and refresh?")) return;
- if(pendingWrite&&!confirm("Save outcome is unconfirmed. Download a backup if needed, then reload and check?")) return;
+ if(pendingWrite&&!confirm(
+  "Save outcome is unconfirmed. Download a backup if needed, then reload and check?")) return;
  if(integrityHold&&!confirm("Keep your backup. Reload and check again?")) return;
  const uncertain=pendingWrite?clone(pendingWrite):null;
  busy=true;updateControls();message(sync?"Updating quotations…":"Loading…");
@@ -1733,52 +1709,61 @@ async function openCase(id){
  try{
   const r=await fetchCase(id);
   closeWorkspace(true);
-  if(activeTab!=="case") previousTab=activeTab;
+  if(activeTab!=="case"){
+   previousTab=activeTab;worklistSearch=$("search").value;
+  }
   selected=r;activeTab="case";blockedReason="";
+  $("search").value="";
   replaceRecord(r);
-  $("groups").innerHTML="";
-  $("overviewScroll").scrollTop=0;
+  $("groups").innerHTML="";$("overviewScroll").scrollTop=0;
+  $("batchTools").open=false;$("caseTools").open=false;
   searchDismissed=true;hideSearchResults();
   renderDetail();renderList();
-  $("headerTools").open=false;
-  $("detailTitle").focus({preventScroll:true});
+  $("headerTools").open=false;$("detailTitle").focus({preventScroll:true});
   message("");
- }catch(error){console.error(error);message("Could not open this patient.",true);}
- finally{busy=false;updateControls();}
+ }catch(error){
+  console.error(error);message("Could not open this patient.",true);
+ }finally{busy=false;updateControls();}
 }
-function reportSnapshot(r){
- const x=clone(r);delete x.actionLog;return x;
-}
+function reportSnapshot(r){const x=clone(r);delete x.actionLog;return x}
 function appendReportEvents(before,s,staff,action,requestId){
  const old=new Map(entries(before).map(({group:g,report:r})=>[`${g.id}:${r.id}`,r]));
  const at=new Date().toISOString();
  for(const {group:g,report:r} of entries(s)){
   const prior=old.get(`${g.id}:${r.id}`),b=prior?reportSnapshot(prior):null,n=reportSnapshot(r);
-  const bc=before.contacts.filter(c=>c.reportId===r.id),nc=s.contacts.filter(c=>c.reportId===r.id);
+  const bc=before.contacts.filter(c=>c.reportId===r.id);
+  const nc=s.contacts.filter(c=>c.reportId===r.id);
   if(same(b,n)&&same(bc,nc)) continue;
   r.actionLog=clone(prior?.actionLog||[]);
-  r.actionLog.push({id:uuid(),requestId,at,staff,action,before:b,after:n,
-   ...(same(bc,nc)?{}:{contactsBefore:bc,contactsAfter:nc})});
+  r.actionLog.push({
+   id:uuid(),requestId,at,staff,action,before:b,after:n,
+   ...(same(bc,nc)?{}:{contactsBefore:bc,contactsAfter:nc})
+  });
  }
 }
 async function commit(action,mutator){
  if(!selected||editingLocked()) return false;
  try{
   const context=clone(actionContext||{});
-  if(isTracingCancelled(selected.state)&&context.type!=="caseTracing")
-   throw new Error("Resume tracing before making changes.");
+  if(isTracingCancelled(selected.state)&&context.type!=="caseTracing"){
+   throw new Error("Resume case tracing before making changes.");
+  }
   const staff=staffName(),before=clone(selected.state),s=clone(before),requestId=uuid();
   mutator(s,staff);
-  if(same(before,s)){closeWorkspace(true);message("No changes.",false,true);return true;}
+  if(same(before,s)){
+   closeWorkspace(true);message("No changes.",false,true);return true;
+  }
   appendReportEvents(before,s,staff,action,requestId);
   pendingWrite={
-   caseId:selected.id,expectedVersion:selected.edit_version,
-   state:s,staff,action:action.slice(0,300),requestId,uiContext:context
+   caseId:selected.id,expectedVersion:selected.edit_version,state:s,
+   staff,action:action.slice(0,300),requestId,uiContext:context
   };
   recoverySnapshot=clone(pendingWrite);
   closeWorkspace(true);
   return await sendPendingWrite();
- }catch(error){console.error(error);showError(error.message||"Could not prepare the save.");return false;}
+ }catch(error){
+  console.error(error);showError(error.message||"Could not prepare the save.");return false;
+ }
 }
 async function sendPendingWrite(){
  if(!pendingWrite||busy) return false;
@@ -1796,7 +1781,8 @@ async function sendPendingWrite(){
   pendingWrite=null;selected=saved;replaceRecord(saved);
   if(!containsExpected(saved.state,req.state)){
    integrityHold=true;
-   blockedReason="The save response differs from the submitted record. Download a backup and reload to check. Do not enter it again.";
+   blockedReason=
+    "The save response differs from the submitted record. Download a backup and reload to check. Do not enter it again.";
   }else{
    integrityHold=false;blockedReason="";recoverySnapshot=null;confirmed=true;
   }
@@ -1806,14 +1792,14 @@ async function sendPendingWrite(){
   console.error("Save failed",error);
   if(String(error.message||"").includes("VERSION_CONFLICT")){
    pendingWrite=null;
-   blockedReason="Another update changed this record. Your changes were not saved. Download a backup and reload.";
+   blockedReason=
+    "Another update changed this record. Your changes were not saved. Download a backup and reload.";
   }else if(error.code==="P0001"){
    pendingWrite=null;
    blockedReason="Changes were not saved. Server reason: "+
     String(error.message||"Change rejected.")+" Download a backup before reloading.";
   }
-  message("");
-  return false;
+  message("");return false;
  }finally{
   busy=false;updateControls();
   if(confirmed) showSaved(req.uiContext);
@@ -1822,7 +1808,9 @@ async function sendPendingWrite(){
 function downloadBackup(){
  const snapshot=pendingWrite||recoverySnapshot;
  if(!snapshot) return;
- const url=URL.createObjectURL(new Blob([JSON.stringify(snapshot,null,2)],{type:"application/json"}));
+ const url=URL.createObjectURL(new Blob([JSON.stringify(snapshot,null,2)],{
+  type:"application/json"
+ }));
  const a=document.createElement("a");
  a.href=url;a.download=`followup-backup-${snapshot.requestId}.json`;a.click();
  setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -1837,7 +1825,9 @@ function selectedLinks(selector,gkey,rkey){
 }
 function validateAppointment(status,date,note){
  if(!Object.hasOwn(APPOINTMENTS,status)) throw new Error("Select an appointment status.");
- if(["booked","attended","missed"].includes(status)&&!date) throw new Error("Enter the appointment date.");
+ if(["booked","attended","missed"].includes(status)&&!date){
+  throw new Error("Enter the appointment date.");
+ }
  if(date&&!validDate(date)) throw new Error("Enter a valid appointment date.");
  if(status==="declined"&&!note) throw new Error("Add a note about the patient's decision.");
 }
@@ -1849,7 +1839,9 @@ async function submitReceived(c){
  return commit("Report receipt recorded",(s,staff)=>{
   if(!validDate(d)||d>today()) throw new Error("Received date must be today or earlier.");
   const {report:r}=findReport(s,c.target.groupId,c.target.reportId);
-  if(r.cancelled||r.receivedDate) throw new Error("Receipt cannot be recorded here. Check Corrections.");
+  if(r.cancelled||r.receivedDate){
+   throw new Error("Receipt cannot be recorded here. Check Corrections.");
+  }
   r.receivedDate=d;r.receivedRecordedAt=new Date().toISOString();r.receivedRecordedBy=staff;
   r.reviewCycleId=r.reviewCycleId||uuid();r.reviewPending=true;
  });
@@ -1861,7 +1853,9 @@ async function submitNurse(c){
   const {group:g,report:r}=findReport(s,c.target.groupId,c.target.reportId);
   if(!["routine","doctor","urgent"].includes(outcome)) throw new Error("Select a classification.");
   if(stage(s,g,r).key!=="nurse"||(r.triage||"pending")!=="pending"||
-   (r.reviewedAt&&r.reviewPending!==true)) throw new Error("Use Corrections for an existing review.");
+   (r.reviewedAt&&r.reviewPending!==true)){
+   throw new Error("Use Corrections for an existing review.");
+  }
   recordClassification(r,outcome,staff);
   r.routineDoctorReviewRequired=outcome!=="routine"||requested;
   r.reviewPending=r.routineDoctorReviewRequired;
@@ -1872,13 +1866,19 @@ async function submitNurse(c){
 async function submitReview(c){
  const doctor=value("actionDoctor"),requirement=value("patientRequired"),note=value("reviewNote");
  return commit("Doctor review recorded",(s,staff)=>{
-  if(!doctor||!["yes","no"].includes(requirement)) throw new Error("Enter the doctor and select patient contact.");
+  if(!doctor||!["yes","no"].includes(requirement)){
+   throw new Error("Enter the doctor and select patient contact.");
+  }
   const {report:r}=findReport(s,c.target.groupId,c.target.reportId);
-  if(!needsDoctorReview(r)||!nurseDone(r)) throw new Error("This report is not awaiting doctor review.");
+  if(!needsDoctorReview(r)||!nurseDone(r)){
+   throw new Error("This report is not awaiting doctor review.");
+  }
   preserveLegacyReview(r);r.reviewCycleId=r.reviewCycleId||uuid();
   const at=new Date().toISOString();
-  r.reviewHistory.push({id:uuid(),cycleId:cycleId(r),at,doctor,recordedBy:staff,note,
-   patientContactRequired:requirement==="yes"});
+  r.reviewHistory.push({
+   id:uuid(),cycleId:cycleId(r),at,doctor,recordedBy:staff,note,
+   patientContactRequired:requirement==="yes"
+  });
   r.reviewDoctorName=doctor;r.doctorName=doctor;r.reviewedAt=at;
   r.reviewRecordedBy=staff;r.reviewNote=note;r.reviewPending=false;
   r.patientContactRequired=requirement==="yes";
@@ -1887,7 +1887,9 @@ async function submitReview(c){
 async function submitFiling(c){
  return commit("Report filing recorded",s=>{
   const {group:g,report:r}=findReport(s,c.target.groupId,c.target.reportId);
-  if(stage(s,g,r).key!=="filed") throw new Error("Complete the required review and contact before filing.");
+  if(stage(s,g,r).key!=="filed"){
+   throw new Error("Complete the required review and contact before filing.");
+  }
   r.archived=true;
  });
 }
@@ -1897,10 +1899,16 @@ async function submitContact(c){
  const followup=value("patientFollowupAction"),next=value("patientNextDate");
  const linked=selectedLinks("[data-patient-report]:checked","patientGroup","patientReport");
  return commit("Patient contact / appointment recorded",(s,staff)=>{
-  if(!PATIENT_RESULTS[method]?.some(([k])=>k===delivery)) throw new Error("Select a method and result.");
-  if(c.requiredReportId&&!linked.some(x=>x.reportId===c.requiredReportId)) throw new Error("Keep this report selected.");
+  if(!PATIENT_RESULTS[method]?.some(([k])=>k===delivery)){
+   throw new Error("Select a method and result.");
+  }
+  if(c.requiredReportId&&!linked.some(x=>x.reportId===c.requiredReportId)){
+   throw new Error("Keep this report selected.");
+  }
   if(!linked.length&&!note) throw new Error("Add a note for this general contact.");
-  if(!["keep","reschedule","complete"].includes(followup)) throw new Error("Select a reminder option.");
+  if(!["keep","reschedule","complete"].includes(followup)){
+   throw new Error("Select a reminder option.");
+  }
   if(followup==="reschedule") nextDateRequired(next);
   if(followup==="complete"&&(delivery!=="confirmed"||!note)){
    throw new Error("Confirm receipt and add a completion note before clearing the reminder.");
@@ -1942,28 +1950,39 @@ async function submitAppointment(){
  });
 }
 async function submitDoctorContact(c){
- const doctor=value("actionDoctor"),method=value("doctorContactMethod"),result=value("doctorContactResult");
- const time=value("doctorContactAt"),note=value("doctorContactNote");
- const followup=value("doctorFollowupAction"),next=value("doctorNextDate");
+ const doctor=value("actionDoctor"),method=value("doctorContactMethod");
+ const result=value("doctorContactResult"),time=value("doctorContactAt");
+ const note=value("doctorContactNote"),followup=value("doctorFollowupAction");
+ const next=value("doctorNextDate");
  const linked=selectedLinks("[data-doctor-report]:checked","doctorGroup","doctorReport");
  return commit("Doctor contact recorded",(s,staff)=>{
   if(!doctor||doctor.length>100) throw new Error("Enter a doctor name of up to 100 characters.");
-  if(!DOCTOR_RESULTS[method]?.some(([k])=>k===result)) throw new Error("Select a method and result.");
+  if(!DOCTOR_RESULTS[method]?.some(([k])=>k===result)){
+   throw new Error("Select a method and result.");
+  }
   const at=parseHKContactTime(time);
-  if(!linked.length||!linked.some(x=>x.groupId===c.target.groupId&&x.reportId===c.target.reportId)){
+  if(!linked.length||!linked.some(x=>
+   x.groupId===c.target.groupId&&x.reportId===c.target.reportId)){
    throw new Error("Keep this report selected.");
   }
-  if(!["keep","reschedule","clear"].includes(followup)) throw new Error("Select a reminder option.");
+  if(!["keep","reschedule","clear"].includes(followup)){
+   throw new Error("Select a reminder option.");
+  }
   if(followup==="reschedule") nextDateRequired(next);
-  if(followup==="clear"&&!note) throw new Error("Add a reason for clearing the doctor reminder.");
+  if(followup==="clear"&&!note){
+   throw new Error("Add a reason for clearing the doctor reminder.");
+  }
   const reports=linked.map(t=>{
    const {report:r}=findReport(s,t.groupId,t.reportId);
-   if(!canRecordDoctorContact(r)) throw new Error("Doctor contact is not available for a selected report.");
+   if(!canRecordDoctorContact(r)){
+    throw new Error("Doctor contact is not available for a selected report.");
+   }
    return r;
   });
   const communicationId=uuid(),recordedAt=new Date().toISOString();
   for(const r of reports){
-   const reminder=followup==="keep"?doctorReminderDate(s,r):followup==="reschedule"?next:"";
+   const reminder=followup==="keep"?
+    doctorReminderDate(s,r):followup==="reschedule"?next:"";
    s.contacts.push({
     id:uuid(),communicationId,audience:"doctor",at,recordedAt,staff,target:doctor,method,
     deliveryStatus:result,outcome:deliveryLabel({audience:"doctor",deliveryStatus:result}),
@@ -1983,7 +2002,9 @@ async function submitBatch(){
   const reports=linked.map(t=>{
    const {group:g,report:r}=findReport(s,t.groupId,t.reportId);
    if(stage(s,g,r).key!=="nurse"||(r.triage||"pending")!=="pending"||
-    (r.reviewedAt&&r.reviewPending!==true)) throw new Error("A selected report is no longer eligible.");
+    (r.reviewedAt&&r.reviewPending!==true)){
+    throw new Error("A selected report is no longer eligible.");
+   }
    return r;
   });
   const batchId=uuid();
@@ -1995,86 +2016,47 @@ async function submitBatch(){
   });
  });
 }
- async function submitBatchReceive(){
- const linked=selectedLinks(
-  "[data-batch-report]:checked",
-  "batchGroup",
-  "batchReport"
- );
- const date=value("batchReceivedDate");
- const confirmed=checked("batchConfirmed");
-
+async function submitBatchReceive(){
+ const linked=selectedLinks("[data-batch-report]:checked","batchGroup","batchReport");
+ const date=value("batchReceivedDate"),confirmed=checked("batchConfirmed");
  return commit("Batch report receipt recorded",(s,staff)=>{
-  if(!linked.length){
-   throw new Error("Select at least one report.");
-  }
-  if(!confirmed){
-   throw new Error("Confirm receipt of the selected reports.");
-  }
+  if(!linked.length) throw new Error("Select at least one report.");
+  if(!confirmed) throw new Error("Confirm receipt of the selected reports.");
   if(!validDate(date)||date>today()){
    throw new Error("Received date must be today or earlier.");
   }
-
-  // Validate every selected report before updating any of them.
   const reports=linked.map(t=>{
    const {group:g,report:r}=findReport(s,t.groupId,t.reportId);
    if(stage(s,g,r).key!=="received"){
     throw new Error(
-     "A selected report is no longer awaiting receipt. Close and reopen Batch Receive."
-    );
+     "A selected report is no longer awaiting receipt. Close and reopen Batch Receive.");
    }
    return r;
   });
-
-  const at=new Date().toISOString();
-  const batchId=uuid();
-
+  const at=new Date().toISOString(),batchId=uuid();
   reports.forEach(r=>{
-   r.receivedDate=date;
-   r.receivedRecordedAt=at;
-   r.receivedRecordedBy=staff;
-   r.receivedBatchId=batchId;
-   r.reviewCycleId=r.reviewCycleId||uuid();
-   r.reviewPending=true;
+   r.receivedDate=date;r.receivedRecordedAt=at;r.receivedRecordedBy=staff;
+   r.receivedBatchId=batchId;r.reviewCycleId=r.reviewCycleId||uuid();r.reviewPending=true;
   });
  });
 }
-
 async function submitBatchFiling(){
- const linked=selectedLinks(
-  "[data-batch-report]:checked",
-  "batchGroup",
-  "batchReport"
- );
+ const linked=selectedLinks("[data-batch-report]:checked","batchGroup","batchReport");
  const confirmed=checked("batchConfirmed");
-
  return commit("Batch report filing recorded",(s,staff)=>{
-  if(!linked.length){
-   throw new Error("Select at least one report.");
-  }
-  if(!confirmed){
-   throw new Error("Confirm filing of the selected reports.");
-  }
-
-  // Do not allow batch filing to bypass required review/contact.
+  if(!linked.length) throw new Error("Select at least one report.");
+  if(!confirmed) throw new Error("Confirm filing of the selected reports.");
   const reports=linked.map(t=>{
    const {group:g,report:r}=findReport(s,t.groupId,t.reportId);
    if(stage(s,g,r).key!=="filed"){
     throw new Error(
-     "A selected report is no longer awaiting filing. Complete its required review and contact first."
-    );
+     "A selected report is no longer awaiting filing. Complete its required review and contact first.");
    }
    return r;
   });
-
-  const at=new Date().toISOString();
-  const batchId=uuid();
-
+  const at=new Date().toISOString(),batchId=uuid();
   reports.forEach(r=>{
-   r.archived=true;
-   r.filedAt=at;
-   r.filedBy=staff;
-   r.filingBatchId=batchId;
+   r.archived=true;r.filedAt=at;r.filedBy=staff;r.filingBatchId=batchId;
   });
  });
 }
@@ -2088,8 +2070,12 @@ async function submitPlan(c){
   if(g.reports.length+additional.length>100) throw new Error("Maximum 100 reports per list.");
   for(const x of existing){
    const r=g.reports.find(r=>r.id===x.id);
-   if(!r||!x.name||x.name.length>300) throw new Error("Report names must be 1–300 characters.");
-   if((r.receivedDate||r.cancelled)&&r.name!==x.name) throw new Error("Processed reports cannot be renamed.");
+   if(!r||!x.name||x.name.length>300){
+    throw new Error("Report names must be 1–300 characters.");
+   }
+   if((r.receivedDate||r.cancelled)&&r.name!==x.name){
+    throw new Error("Processed reports cannot be renamed.");
+   }
    r.name=x.name;
   }
   if(additional.some(x=>x.length>300)) throw new Error("Report names must be 1–300 characters.");
@@ -2117,13 +2103,16 @@ async function submitAddList(){
 }
 async function submitCorrection(c){
  const date=value("detailDate"),triage=value("detailTriage");
- const filed=checked("detailFiled"),reopen=checked("reopenReview"),reason=value("correctionReason");
+ const filed=checked("detailFiled"),reopen=checked("reopenReview");
+ const reason=value("correctionReason");
  return commit("Report correction recorded",(s,staff)=>{
   if(!reason) throw new Error("Enter a reason.");
   const {report:r}=findReport(s,c.target.groupId,c.target.reportId);
-  if(r.cancelled) throw new Error("Restore tracking first.");
+  if(r.cancelled) throw new Error("Restore the report first.");
   if(!Object.hasOwn(CLASSIFICATIONS,triage)) throw new Error("Select a classification.");
-  if(date&&(!validDate(date)||date>today())) throw new Error("Received date must be today or earlier.");
+  if(date&&(!validDate(date)||date>today())){
+   throw new Error("Received date must be today or earlier.");
+  }
   if(r.receivedDate&&!date) throw new Error("The recorded received date cannot be cleared.");
   if(!date&&(triage!=="pending"||filed||reopen)) throw new Error("Record receipt first.");
   if(!r.receivedDate&&date){
@@ -2146,9 +2135,13 @@ async function submitTracking(c){
   if(cancel&&r.receivedDate) throw new Error("A received report cannot be cancelled.");
   if(!Array.isArray(r.trackingHistory)) r.trackingHistory=[];
   if(r.cancelled&&r.cancelReason&&!r.trackingHistory.length){
-   r.trackingHistory.push({id:uuid(),type:"cancel",reason:r.cancelReason,at:"",staff:"",legacy:true});
+   r.trackingHistory.push({
+    id:uuid(),type:"cancel",reason:r.cancelReason,at:"",staff:"",legacy:true
+   });
   }
-  r.trackingHistory.push({id:uuid(),type:c.type,reason,at:new Date().toISOString(),staff});
+  r.trackingHistory.push({
+   id:uuid(),type:c.type,reason,at:new Date().toISOString(),staff
+  });
   r.cancelled=cancel;
   if(cancel) r.cancelReason=reason;else r.restoreReason=reason;
  });
@@ -2169,7 +2162,9 @@ async function submitCaseTracing(c){
  const reason=value("caseTracingReason"),next=c.cancel?"":value("resumeTracingDate");
  return commit(c.cancel?"Case tracing cancelled":"Case tracing resumed",(s,staff)=>{
   if(!reason) throw new Error("Enter a reason.");
-  if(isTracingCancelled(s)===c.cancel) throw new Error("Tracing has changed. Reload and check.");
+  if(isTracingCancelled(s)===c.cancel){
+   throw new Error("Case tracing has changed. Reload and check.");
+  }
   if(next) nextDateRequired(next);
   const before=arrangementSnapshot(s),at=new Date().toISOString();
   s.tracingHistory=[...(s.tracingHistory||[]),{
@@ -2181,31 +2176,20 @@ async function submitCaseTracing(c){
  });
 }
 const SUBMIT_HANDLERS={
- received:submitReceived,
- nurse:submitNurse,
- review:submitReview,
- filed:submitFiling,
- contact:submitContact,
- appointment:submitAppointment,
- doctorContact:submitDoctorContact,
-
- batchRoutine:submitBatch,
- batchReceive:submitBatchReceive,
- batchFiling:submitBatchFiling,
-
- plan:submitPlan,
- addTrackedInvestigation:submitAddList,
- correction:submitCorrection,
- cancel:submitTracking,
- restore:submitTracking,
- arrangementCorrection:submitArrangementCorrection,
- caseTracing:submitCaseTracing
+ received:submitReceived,nurse:submitNurse,review:submitReview,filed:submitFiling,
+ contact:submitContact,appointment:submitAppointment,doctorContact:submitDoctorContact,
+ batchRoutine:submitBatch,batchReceive:submitBatchReceive,batchFiling:submitBatchFiling,
+ plan:submitPlan,addTrackedInvestigation:submitAddList,correction:submitCorrection,
+ cancel:submitTracking,restore:submitTracking,
+ arrangementCorrection:submitArrangementCorrection,caseTracing:submitCaseTracing
 };
 
 /* Printing */
 
 async function printSaved(){
- if(!selected||editingLocked()||actionDirty) throw new Error("Save or check your changes before printing.");
+ if(!selected||editingLocked()||actionDirty){
+  throw new Error("Save or check your changes before printing.");
+ }
  const s=clone(selected.state);
  $("printArea").innerHTML=`
   <div class="brand"><img src="./amclogo.png" alt="Adventist Medical Center">
@@ -2217,7 +2201,7 @@ async function printSaved(){
     ${s.appointmentDate?" · "+esc(dateLabel(s.appointmentDate)):""}<br>
     Next contact: ${esc(dateLabel(s.nextFollowupDate))}</p>
    ${s.caseNote?`<div class="note">${esc(s.caseNote)}</div>`:""}
-   <p>Tracing: ${isTracingCancelled(s)?"Cancelled":"Active"}</p>
+   <p>Case tracing: ${isTracingCancelled(s)?"Stopped":"Active"}</p>
   </section>
   <section class="section"><h2>Reports</h2><table>
    <thead><tr><th>Report</th><th>Progress / details</th></tr></thead>
@@ -2235,12 +2219,18 @@ async function printSaved(){
      ${reminder?`<div>Doctor follow-up: ${esc(dateLabel(reminder))}</div>`:""}
      ${r.cancelled?`<div class="note">Cancellation: ${esc(r.cancelReason)}</div>`:""}
     </td></tr>`;
-   }).join("")}</tbody></table></section>
+   }).join("")}</tbody></table>
+  </section>
   <section class="section"><h2>Contacts</h2>${eventsHTML(contactEvents(s.contacts),true)}</section>
-  ${s.tracingHistory?.length?`<section class="section"><h2>Tracing history</h2>
-   ${eventsHTML(s.tracingHistory.map(x=>historyEvent(x.type==="cancel"?"Tracing cancelled":"Tracing resumed",x.at,x.staff,x.reason)))}</section>`:""}
-  <section class="section"><p class="small-text">Follow-up summary — not the original clinical report.</p></section>`;
- await Promise.all([...$("printArea").querySelectorAll("img")].map(i=>i.decode?i.decode().catch(()=>{}):Promise.resolve()));
+  ${s.tracingHistory?.length?`<section class="section"><h2>Case tracing history</h2>
+   ${eventsHTML(s.tracingHistory.map(x=>historyEvent(
+    x.type==="cancel"?"Case tracing stopped":"Case tracing resumed",x.at,x.staff,x.reason)))}
+  </section>`:""}
+  <section class="section">
+   <p class="small-text">Follow-up summary — not the original clinical report.</p>
+  </section>`;
+ await Promise.all([...$("printArea").querySelectorAll("img")].map(i=>
+  i.decode?i.decode().catch(()=>{}):Promise.resolve()));
  const old=document.title;
  document.title=`${s.quotationNumber||"Patient"}-Followup`;
  try{window.print()}finally{document.title=old}
@@ -2250,17 +2240,20 @@ async function printSaved(){
 
 function updateNextFields(selectId,wrapperId,inputId){
  const set=value(selectId)==="reschedule";
- $(wrapperId).hidden=!set;
- $(inputId).disabled=!set;
- $(inputId).required=set;
+ $(wrapperId).hidden=!set;$(inputId).disabled=!set;$(inputId).required=set;
 }
 function handleFieldChange(e){
+ if(!actionContext||!SUBMIT_HANDLERS[actionContext.type]) return;
  actionDirty=true;
  const id=e.target.id;
  if(id==="contactMethod"){
-  $("contactDelivery").innerHTML=options([["","Select result"],...(PATIENT_RESULTS[value(id)]||[])]);
+  $("contactDelivery").innerHTML=options([
+   ["","Select result"],...(PATIENT_RESULTS[value(id)]||[])
+  ]);
  }else if(id==="doctorContactMethod"){
-  $("doctorContactResult").innerHTML=options([["","Select result"],...(DOCTOR_RESULTS[value(id)]||[])]);
+  $("doctorContactResult").innerHTML=options([
+   ["","Select result"],...(DOCTOR_RESULTS[value(id)]||[])
+  ]);
  }else if(id==="patientFollowupAction"){
   updateNextFields(id,"patientNextFields","patientNextDate");
  }else if(id==="appointmentFollowupAction"){
@@ -2270,8 +2263,7 @@ function handleFieldChange(e){
  }
  if(e.target.name==="classification"){
   const routine=e.target.value==="routine";
-  $("routineReviewOption").hidden=!routine;
-  $("routineDoctorRequired").disabled=!routine;
+  $("routineReviewOption").hidden=!routine;$("routineDoctorRequired").disabled=!routine;
  }
  if(e.target.matches("[data-batch-report]")) updateBatchCount();
  updateControls();
@@ -2282,6 +2274,8 @@ function targetFrom(el){
 function actionClick(e){
  if(!(e.target instanceof Element)||editingLocked()) return;
  const el=e.target;
+ const history=el.closest("[data-report-history]");
+ if(history){openReportHistory(targetFrom(history));return;}
  const step=el.closest("[data-step]");
  if(step){openStep(targetFrom(step),step.dataset.step);return;}
  const doctor=el.closest("[data-doctor-contact]");
@@ -2291,21 +2285,21 @@ function actionClick(e){
  if(el.closest("[data-add-list]")){openAddList();return;}
  const correction=el.closest("[data-correct-report]");
  if(correction){
-  openCorrection({groupId:correction.dataset.group,reportId:correction.dataset.correctReport});return;
+  openCorrection({
+   groupId:correction.dataset.group,reportId:correction.dataset.correctReport
+  });return;
  }
  const cancel=el.closest("[data-cancel-report]");
  if(cancel){
-  openTracking({groupId:cancel.dataset.group,reportId:cancel.dataset.cancelReport},false);return;
+  openTracking({
+   groupId:cancel.dataset.group,reportId:cancel.dataset.cancelReport
+  },false);return;
  }
  if(el.closest("[data-correct-arrangement]")){openArrangementCorrection();return;}
  const all=el.closest("[data-batch-all]"),none=el.closest("[data-batch-none]");
  if(all||none){
   $("actionFields").querySelectorAll("[data-batch-report]").forEach(x=>x.checked=!!all);
-  actionDirty=true;updateBatchCount();updateControls();return;
- }
- if(e.currentTarget===$("groups")&&!el.closest("button,a,input,select,textarea,label,summary")){
-  const row=el.closest("tr[data-report]");
-  if(row&&!selectionInside(row)) openReportHistory(targetFrom(row));
+  actionDirty=true;updateBatchCount();updateControls();
  }
 }
 function selectionInside(row){
@@ -2332,14 +2326,15 @@ function bindEvents(){
  }));
  $("groups").addEventListener("click",handleUI(actionClick));
  $("actionFields").addEventListener("click",handleUI(actionClick));
- $("groups").addEventListener("keydown",handleUI(e=>{
-  if(["Enter"," "].includes(e.key)&&e.target.matches("tr[data-report]")&&!editingLocked()){
-   e.preventDefault();openReportHistory(targetFrom(e.target));
+ $("actionFields").addEventListener("input",()=>{
+  if(actionContext&&SUBMIT_HANDLERS[actionContext.type]){
+   actionDirty=true;updateControls();
   }
- }));
- $("actionFields").addEventListener("input",()=>{actionDirty=true;updateControls()});
+ });
  $("actionFields").addEventListener("change",handleUI(handleFieldChange));
- $("actionCancel").addEventListener("click",()=>closeWorkspace());
+ $("actionCancel").addEventListener("click",()=>{
+  if(closeWorkspace()) $("detailTitle").focus({preventScroll:true});
+ });
  $("patientButton").addEventListener("click",handleUI(()=>startWorkspace(
   "Patient details","",`<div class="patient-meta">${patientHTML(selected.state)}</div>`,
   {type:"patientDetails"},true)));
@@ -2350,33 +2345,34 @@ function bindEvents(){
  $("historyButton").addEventListener("click",handleUI(openHistory));
  $("tracingButton").addEventListener("click",handleUI(openTracingAction));
  $("routineBatchButton").addEventListener("click",handleUI(openRoutineBatch));
- $("receiveBatchButton").addEventListener(
- "click",handleUI(openBatchReceive)
-);
-
-$("filingBatchButton").addEventListener(
- "click",handleUI(openBatchFiling)
-);
+ $("receiveBatchButton").addEventListener("click",handleUI(openBatchReceive));
+ $("filingBatchButton").addEventListener("click",handleUI(openBatchFiling));
  $("printButton").addEventListener("click",handleUI(printSaved));
  $("caseBody").addEventListener("click",activatePatientRow);
  $("caseBody").addEventListener("keydown",activatePatientRow);
  $("tabs").addEventListener("click",e=>{
+  if(!(e.target instanceof Element)) return;
   const b=e.target.closest("[data-tab]");
   if(!b||busy||pendingWrite||integrityHold) return;
   activeTab=b.dataset.tab;previousTab=activeTab;renderList();
  });
  $("backButton").addEventListener("click",()=>{
   if(busy||pendingWrite||integrityHold||!closeWorkspace()) return;
-  activeTab=previousTab;hideSearchResults();renderList();
+  activeTab=previousTab;$("search").value=worklistSearch;
+  searchDismissed=true;$("caseTools").open=false;
+  hideSearchResults();renderList();
  });
  $("search").addEventListener("input",()=>{
+  if(activeTab!=="case") worklistSearch=$("search").value;
   searchDismissed=false;renderList();
  });
  $("search").addEventListener("focus",()=>{
   searchDismissed=false;renderSearchResults();
  });
  $("clearSearchButton").addEventListener("click",()=>{
-  $("search").value="";searchDismissed=false;renderList();$("search").focus();
+  $("search").value="";
+  if(activeTab!=="case") worklistSearch="";
+  searchDismissed=false;renderList();$("search").focus();
  });
  $("search").addEventListener("keydown",e=>{
   if(e.key==="Escape"){searchDismissed=true;hideSearchResults();}
@@ -2386,17 +2382,38 @@ $("filingBatchButton").addEventListener(
   }
  });
  $("searchResults").addEventListener("click",handleUI(async e=>{
+  if(!(e.target instanceof Element)) return;
   const b=e.target.closest("[data-switch-case]");
   if(!b||b.disabled) return;
   if(b.dataset.switchCase!==selected?.id) await openCase(b.dataset.switchCase);
-  if(selected?.id===b.dataset.switchCase){searchDismissed=true;hideSearchResults();}
+  if(selected?.id===b.dataset.switchCase){
+   searchDismissed=true;hideSearchResults();
+  }
  }));
  $("searchResults").addEventListener("keydown",e=>{
-  if(e.key!=="Escape") return;
-  e.preventDefault();$("search").focus();searchDismissed=true;hideSearchResults();
+  const buttons=[...$("searchResults").querySelectorAll("button:not(:disabled)")];
+  const index=buttons.indexOf(document.activeElement);
+  if(e.key==="Escape"){
+   e.preventDefault();$("search").focus();searchDismissed=true;hideSearchResults();
+  }else if(e.key==="ArrowDown"&&index>=0){
+   e.preventDefault();buttons[Math.min(index+1,buttons.length-1)]?.focus();
+  }else if(e.key==="ArrowUp"&&index>=0){
+   e.preventDefault();
+   if(index===0) $("search").focus();else buttons[index-1].focus();
+  }
  });
  document.addEventListener("click",e=>{
-  if(!$("searchArea").contains(e.target)){searchDismissed=true;hideSearchResults();}
+  if(!$("searchArea").contains(e.target)){
+   searchDismissed=true;hideSearchResults();
+  }
+  for(const id of ["headerTools","caseTools"]){
+   if(!$(id).contains(e.target)) $(id).open=false;
+  }
+ });
+ document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){
+   $("headerTools").open=false;$("caseTools").open=false;$("batchTools").open=false;
+  }
  });
  $("reloadButton").addEventListener("click",()=>void refresh());
  $("syncButton").addEventListener("click",()=>{
@@ -2445,7 +2462,6 @@ async function connect(){
   message("Could not connect. Reload or contact your administrator.",true);
  }
 }
-
 bindEvents();
 renderList();
 updateControls();
